@@ -1,115 +1,408 @@
-﻿const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+﻿// src/services/api.ts - Version simplifiée sans langues
 
-export type ApiOptions = {
-  method?: string;
-  body?: unknown;
-  token?: string | null;
-};
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
-async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: options.method || 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
-    },
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-  });
+// ==========================================
+// TYPES
+// ==========================================
 
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(payload.message || 'Requete API echouee');
-  }
-  return payload as T;
-}
-
-export type ApiUser = {
+export interface ApiUser {
   id: number;
-  email: string;
-  telephone?: string | null;
   nom: string;
   prenom: string;
-  name: string;
-  initials: string;
+  email: string;
+  telephone?: string;
+  bio?: string;
+  age?: number;
+  profession?: string;
+  profile_picture?: string;
+  ville_actuelle?: string;
+  ville_origine?: string;
+  navigation_light?: boolean;
   role: string;
-  avatar?: string | null;
-  age?: number | null;
-  bio?: string | null;
-  profession?: string | null;
-  verification?: boolean;
-};
+  nom_role?: string;
+  date_inscription?: string;
+  name?: string;
+  initials?: string;
+  avatar?: string;
+}
 
-export type ApiAnnonce = {
-  id: number;
-  reference: string;
+export interface ApiAnnonce {
+  id: string;
+  reference?: string;
   titre: string;
-  description?: string | null;
-  statut: string;
+  description?: string;
   type_annonce: 'existante' | 'creation';
   type_propriete?: string;
-  total_colocataires?: number | null;
-  surface_totale?: number | null;
-  quartier?: string | null;
-  ville?: string | null;
-  region?: string | null;
+  total_colocataires?: number;
+  surface_totale?: number;
+  quartier?: string;
+  ville?: string;
   prix?: number;
-  chambre?: { surface?: number | null; prix_loyer?: number | null; date_disponibilite?: string | null } | null;
+  photos: string[];
   services: string[];
   regles: string[];
-  photos: string[];
+  statut: 'active' | 'pending' | 'inactive' | 'archived';
+  chambre?: {
+    id?: number;
+    surface?: number;
+    est_meuble?: boolean;
+    prix_meubles?: number;
+    description_meubles?: string;
+    prix_loyer?: number;
+    prix_charges?: number;
+    type_garantie?: string;
+    montant_garantie?: number;
+    date_disponibilite?: string;
+  };
+  auteur?: {
+    id?: number;
+    nom: string;
+    prenom: string;
+  };
+  latitude?: number;
+  longitude?: number;
   booster?: boolean;
-  auteur?: string;
-};
+  date_creation?: string;
+  date_publication?: string;
+  date_expiration?: string;
+  views?: number;
+  candidatures?: number;
+}
 
-export type ApiNotification = {
+export interface ApiNotification {
   id_notification: number;
-  type_notification: 'message' | 'candidature' | 'systeme';
+  type_notification: 'message' | 'candidature' | 'systeme' | 'alerte' | 'info';
   titre: string;
   texte: string;
-  lien?: string | null;
-  est_lue: number | boolean;
   date_creation: string;
-};
+  est_lue: boolean;
+  lien?: string;
+}
+
+export interface ApiVille {
+  id_ville: number;
+  nom_ville: string;
+  code_postal?: string;
+  id_region?: number;
+  nom_region?: string;
+}
+
+export interface ApiRegion {
+  id_region: number;
+  nom_region: string;
+  code_region?: string;
+}
+
+// ==========================================
+// API OBJECT
+// ==========================================
 
 export const api = {
-  request,
+  // ==========================================
+  // AUTH
+  // ==========================================
   auth: {
-    login: (body: { email: string; mot_de_passe: string }) => request<{ user: ApiUser; token: string }>('/auth/login', { method: 'POST', body }),
-    register: (body: Record<string, unknown>) => request<{ user: ApiUser; token: string }>('/auth/register', { method: 'POST', body }),
-    me: (token: string) => request<ApiUser>('/auth/me', { token }),
-  },
-  annonces: {
-    list: (params?: Record<string, string | number | undefined>) => {
-      const search = new URLSearchParams();
-      Object.entries(params || {}).forEach(([key, value]) => {
-        if (value !== undefined && value !== '') search.set(key, String(value));
+    async me(token: string): Promise<ApiUser> {
+      const response = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
-      const suffix = search.toString() ? `?${search.toString()}` : '';
-      return request<ApiAnnonce[]>(`/annonces${suffix}`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de session' }));
+        throw new Error(error.message || 'Erreur de session');
+      }
+      return response.json();
     },
-    getById: (id: number | string) => request<ApiAnnonce>(`/annonces/${id}`),
-    create: (body: Record<string, unknown>, token: string) => request<ApiAnnonce>('/annonces', { method: 'POST', body, token }),
+
+    async login(credentials: { email: string; mot_de_passe: string }): Promise<{ user: ApiUser; token: string }> {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de connexion' }));
+        throw new Error(error.message || 'Email ou mot de passe incorrect');
+      }
+      return response.json();
+    },
+
+    async register(payload: Record<string, unknown>): Promise<{ user: ApiUser; token: string }> {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur d\'inscription' }));
+        throw new Error(error.message || 'Erreur lors de l\'inscription');
+      }
+      return response.json();
+    },
+
+    async changePassword(data: { currentPassword: string; newPassword: string }, token: string): Promise<{ message: string }> {
+      const response = await fetch(`${API_URL}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de changement de mot de passe' }));
+        throw new Error(error.message || 'Erreur lors du changement de mot de passe');
+      }
+      return response.json();
+    },
+
+    async logout(token: string): Promise<void> {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    },
   },
-  favoris: {
-    list: (token: string) => request<ApiAnnonce[]>('/favoris', { token }),
-    toggle: (idAnnonce: number | string, token: string) => request<{ favori: boolean }>(`/favoris/${idAnnonce}`, { method: 'POST', token }),
+
+  // ==========================================
+  // USERS
+  // ==========================================
+  users: {
+    async me(token: string): Promise<ApiUser> {
+      const response = await fetch(`${API_URL}/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de chargement du profil' }));
+        throw new Error(error.message || 'Erreur lors du chargement du profil');
+      }
+      return response.json();
+    },
+
+    async updateMe(data: Partial<ApiUser>, token: string): Promise<ApiUser> {
+      // Ne pas envoyer les champs qui causent des problèmes de clés étrangères
+      const cleanData: Partial<ApiUser> = {};
+      
+      // Liste des champs autorisés (sans les clés étrangères)
+      const allowedFields = ['nom', 'prenom', 'telephone', 'bio', 'age', 'profession', 'profile_picture'];
+      
+      for (const field of allowedFields) {
+        if (data[field as keyof ApiUser] !== undefined) {
+          cleanData[field as keyof ApiUser] = data[field as keyof ApiUser];
+        }
+      }
+      
+      // Ne pas envoyer ville_actuelle, ville_origine, langue_preferee qui causent des problèmes
+      
+      const response = await fetch(`${API_URL}/users/me`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cleanData),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de mise à jour' }));
+        throw new Error(error.message || 'Erreur lors de la mise à jour du profil');
+      }
+      return response.json();
+    },
+
+    async getById(id: string | number, token: string): Promise<ApiUser> {
+      const response = await fetch(`${API_URL}/users/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Utilisateur introuvable' }));
+        throw new Error(error.message || 'Utilisateur introuvable');
+      }
+      return response.json();
+    },
+
+    async list(filters?: { role?: string; q?: string }, token?: string): Promise<ApiUser[]> {
+      const params = new URLSearchParams();
+      if (filters?.role) params.append('role', filters.role);
+      if (filters?.q) params.append('q', filters.q);
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${API_URL}/users?${params.toString()}`, { headers });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de chargement' }));
+        throw new Error(error.message || 'Erreur lors du chargement des utilisateurs');
+      }
+      return response.json();
+    },
   },
-  candidatures: {
-    listMine: (token: string) => request<any[]>('/candidatures', { token }),
-    create: (body: Record<string, unknown>, token: string) => request<any>('/candidatures', { method: 'POST', body, token }),
+
+  // ==========================================
+  // ANNONCES
+  // ==========================================
+  annonces: {
+    async list(filters: Record<string, string | number> = {}): Promise<ApiAnnonce[]> {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
+        }
+      });
+
+      const response = await fetch(`${API_URL}/annonces?${params.toString()}`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de chargement' }));
+        throw new Error(error.message || 'Erreur lors du chargement des annonces');
+      }
+      
+      return response.json();
+    },
+
+    async getById(id: string, token?: string): Promise<ApiAnnonce> {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${API_URL}/annonces/${id}`, { headers });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Annonce introuvable' }));
+        throw new Error(error.message || 'Annonce introuvable');
+      }
+      
+      return response.json();
+    },
+
+    async create(data: Record<string, unknown>, token: string): Promise<ApiAnnonce> {
+      const response = await fetch(`${API_URL}/annonces`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de création' }));
+        throw new Error(error.message || 'Erreur lors de la création de l\'annonce');
+      }
+      
+      return response.json();
+    },
+
+    async update(id: string, data: Record<string, unknown>, token: string): Promise<ApiAnnonce> {
+      const response = await fetch(`${API_URL}/annonces/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de mise à jour' }));
+        throw new Error(error.message || 'Erreur lors de la mise à jour');
+      }
+      
+      return response.json();
+    },
+
+    async updateStatus(id: string, statut: string, token: string): Promise<{ message: string }> {
+      const response = await fetch(`${API_URL}/annonces/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ statut }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de mise à jour du statut' }));
+        throw new Error(error.message || 'Erreur lors de la mise à jour du statut');
+      }
+      
+      return response.json();
+    },
+
+    async delete(id: string, token: string): Promise<{ message: string }> {
+      const response = await fetch(`${API_URL}/annonces/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de suppression' }));
+        throw new Error(error.message || 'Erreur lors de la suppression');
+      }
+      
+      return response.json();
+    },
   },
+
+  // ==========================================
+  // NOTIFICATIONS
+  // ==========================================
   notifications: {
-    listMine: (token: string) => request<ApiNotification[]>('/notifications', { token }),
-    markAllRead: (token: string) => request<{ message: string }>('/notifications/read-all', { method: 'PATCH', token }),
-  },
-  partenaires: {
-    list: () => request<any[]>('/partenaires'),
-    createRequest: (body: Record<string, unknown>) => request<{ id_demande: number }>('/partenaires/requests', { method: 'POST', body }),
-  },
-  contact: {
-    create: (body: Record<string, unknown>) => request<{ id_message: number }>('/contact', { method: 'POST', body }),
+    async listMine(token: string): Promise<ApiNotification[]> {
+      const response = await fetch(`${API_URL}/notifications`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de chargement' }));
+        throw new Error(error.message || 'Erreur lors du chargement des notifications');
+      }
+      return response.json();
+    },
+
+    async markAllRead(token: string): Promise<{ message: string }> {
+      const response = await fetch(`${API_URL}/notifications/read-all`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de mise à jour' }));
+        throw new Error(error.message || 'Erreur lors du marquage des notifications');
+      }
+      return response.json();
+    },
   },
 };
 
-export { API_BASE };
-
+export default api;

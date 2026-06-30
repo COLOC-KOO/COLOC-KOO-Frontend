@@ -1,11 +1,83 @@
-﻿import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+﻿// src/context/AppContext.tsx
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { Lang, AuthState, User, Notification, Annonce } from '../types';
 import { api, type ApiUser, type ApiNotification, type ApiAnnonce } from '../services/api';
 import { setCatalogData } from '../data/annonces';
 
+// ============================================
+// TYPES
+// ============================================
+
+interface ChambreData {
+  surface?: number | null;
+  est_meuble?: boolean | null;
+  prix_meubles?: number | null;
+  description_meubles?: string | null;
+  prix_loyer: number;
+  prix_charges?: number | null;
+  type_garantie?: string | null;
+  montant_garantie?: number | null;
+  date_disponibilite?: string | null;
+}
+
+interface CreateAnnoncePayload {
+  reference?: string;
+  titre: string;
+  description?: string | null;
+  type_bailleur?: string;
+  mode_annonce?: string;
+  type_annonce: 'existante' | 'creation';
+  type_propriete?: string;
+  total_colocataires?: number | null;
+  surface_totale?: number | null;
+  adresse_exacte?: string | null;
+  quartier?: string | null;
+  id_ville: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  internet?: string | null;
+  parking_voitures?: number;
+  parking_motos?: number;
+  parking_couvert?: number;
+  services_communs?: Record<string, unknown> | null;
+  chambres?: ChambreData | null;
+  services?: string[];
+  regles?: string[];
+  photos?: string[];
+  contact?: string;
+}
+
+interface UpdateAnnoncePayload {
+  titre?: string;
+  description?: string | null;
+  statut?: string;
+  type_bailleur?: string;
+  mode_annonce?: string;
+  type_annonce?: string;
+  type_propriete?: string;
+  total_colocataires?: number | null;
+  surface_totale?: number | null;
+  adresse_exacte?: string | null;
+  quartier?: string | null;
+  id_ville?: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  internet?: string | null;
+  parking_voitures?: number;
+  parking_motos?: number;
+  parking_couvert?: number;
+  services_communs?: Record<string, unknown> | null;
+  date_publication?: string | null;
+  date_expiration?: string | null;
+  booster?: boolean;
+}
+
 interface AppContextType {
+  // Langue
   lang: Lang;
   setLang: (l: Lang) => void;
+  
+  // Authentification
   auth: AuthState;
   user: User | null;
   token: string | null;
@@ -13,18 +85,39 @@ interface AppContextType {
   loginWithCredentials: (email: string, password: string) => Promise<void>;
   registerWithCredentials: (payload: Record<string, unknown>) => Promise<void>;
   logout: () => void;
+  
+  // Mode
   liteMode: boolean;
   toggleLite: () => void;
+  
+  // Notifications
   notifications: Notification[];
   unreadCount: number;
   markAllRead: () => Promise<void>;
+  
+  // Modals
   showAuthModal: boolean;
   setShowAuthModal: (v: boolean) => void;
   authModalTab: 'login' | 'register';
   setAuthModalTab: (t: 'login' | 'register') => void;
+  
+  // Annonces - Gestion
+  createAnnonce: (data: CreateAnnoncePayload) => Promise<ApiAnnonce>;
+  updateAnnonce: (id: string, data: UpdateAnnoncePayload) => Promise<ApiAnnonce>;
+  deleteAnnonce: (id: string) => Promise<void>;
+  getAnnonce: (id: string) => Promise<ApiAnnonce>;
+  refreshCatalog: () => Promise<void>;
+  
+  // Annonces - États
+  isCreating: boolean;
+  isUpdating: boolean;
+  isDeleting: boolean;
+  catalogVersion: number;
 }
 
-const AppContext = createContext<AppContextType | null>(null);
+// ============================================
+// CONSTANTS
+// ============================================
 
 const TOKEN_KEY = 'colockoo_token';
 const USER_KEY = 'colockoo_user';
@@ -40,11 +133,15 @@ const DEMO_USERS: Record<AuthState, User | null> = {
 };
 
 const DEMO_NOTIFS: Notification[] = [
-  { id: 'n1', type: 'message', titre: 'Nouveau message', texte: 'Hery R. t\'a envoye un message', temps: 'il y a 5 min', lue: false, lien: '/messagerie' },
-  { id: 'n2', type: 'candidature', titre: 'Equipe complete', texte: 'L\'equipe "Les Tana 4" est complete - reponse attendue', temps: 'il y a 1 h', lue: false, lien: '/candidatures' },
-  { id: 'n3', type: 'systeme', titre: 'Candidature acceptee', texte: 'Ta candidature pour Ankadifotsy a ete acceptee', temps: 'hier', lue: false, lien: '/candidatures' },
-  { id: 'n4', type: 'message', titre: 'Nouveau message', texte: 'Na\u00efna M. t\'a envoye un message', temps: 'il y a 2 j', lue: true, lien: '/messagerie' },
+  { id: 'n1', type: 'message', titre: 'Nouveau message', texte: 'Hery R. t\'a envoyé un message', temps: 'il y a 5 min', lue: false, lien: '/messagerie' },
+  { id: 'n2', type: 'candidature', titre: 'Equipe complete', texte: 'L\'équipe "Les Tana 4" est complete - réponse attendue', temps: 'il y a 1 h', lue: false, lien: '/candidatures' },
+  { id: 'n3', type: 'systeme', titre: 'Candidature acceptée', texte: 'Ta candidature pour Ankadifotsy a été acceptée', temps: 'hier', lue: false, lien: '/candidatures' },
+  { id: 'n4', type: 'message', titre: 'Nouveau message', texte: 'Naïna M. t\'a envoyé un message', temps: 'il y a 2 j', lue: true, lien: '/messagerie' },
 ];
+
+// ============================================
+// HELPERS
+// ============================================
 
 function normalizeUser(user: ApiUser, fallbackRole: AuthState = 'coloc'): User {
   return {
@@ -69,7 +166,7 @@ function normalizeNotification(n: ApiNotification): Notification {
   };
 }
 
-function toTitle(value?: string | null) {
+function toTitle(value?: string | null): string {
   if (!value) return '';
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
@@ -89,7 +186,7 @@ function mapAnnonceToCard(item: ApiAnnonce): Annonce {
     colocataires: item.total_colocataires || 0,
     prix: price,
     prixLabel: `${price.toLocaleString('fr-FR')} Ar/mois`,
-    disponible: item.chambre?.date_disponibilite ? new Date(item.chambre.date_disponibilite).toLocaleDateString('fr-FR') : 'Des maintenant',
+    disponible: item.chambre?.date_disponibilite ? new Date(item.chambre.date_disponibilite).toLocaleDateString('fr-FR') : 'Dès maintenant',
     images: item.photos.length > 0 ? item.photos : [DEFAULT_IMAGE],
     tags: [
       ...item.services.slice(0, 2).map(service => ({ label: service, variant: 'cy' as const })),
@@ -99,7 +196,7 @@ function mapAnnonceToCard(item: ApiAnnonce): Annonce {
     regles: item.regles,
     description: item.description || undefined,
     proprio: item.auteur,
-    badge: item.booster ? 'Booste' : undefined,
+    badge: item.booster ? 'Boosté' : undefined,
     badgeColor: item.booster ? '#46BDD6' : undefined,
     featured: item.booster,
     verified: item.statut === 'active',
@@ -122,7 +219,17 @@ function buildCityList(items: Annonce[]) {
     }));
 }
 
+// ============================================
+// CONTEXT
+// ============================================
+
+const AppContext = createContext<AppContextType | null>(null);
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  // ============================================
+  // ÉTATS
+  // ============================================
+  
   const [lang, setLang] = useState<Lang>('FR');
   const [auth, setAuth] = useState<AuthState>('guest');
   const [user, setUser] = useState<User | null>(null);
@@ -132,7 +239,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
   const [catalogVersion, setCatalogVersion] = useState(0);
+  
+  // États pour les opérations sur les annonces
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const unreadCount = notifications.filter(n => !n.lue).length;
+
+  // ============================================
+  // FONCTIONS D'AUTHENTIFICATION
+  // ============================================
 
   const applySession = useCallback((nextUser: User | null, nextToken: string | null) => {
     setUser(nextUser);
@@ -145,18 +262,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } else {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
-    }
-  }, []);
-
-  const loadCatalog = useCallback(async () => {
-    try {
-      const remote = await api.annonces.list({ statut: 'active' });
-      const mapped = remote.map(mapAnnonceToCard);
-      setCatalogData({ annonces: mapped, villes: buildCityList(mapped) });
-      setCatalogVersion(v => v + 1);
-    } catch {
-      setCatalogData({});
-      setCatalogVersion(v => v + 1);
     }
   }, []);
 
@@ -173,21 +278,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setNotifications(DEMO_NOTIFS);
     }
   }, [applySession, token]);
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem(USER_KEY);
-    if (savedUser && !user) {
-      try {
-        const parsed = JSON.parse(savedUser) as User;
-        setUser(parsed);
-        setAuth(parsed.role);
-      } catch {
-        localStorage.removeItem(USER_KEY);
-      }
-    }
-    void loadCatalog();
-    void loadSession();
-  }, [loadCatalog, loadSession, user]);
 
   const login = useCallback((role: AuthState = 'coloc') => {
     setAuth(role);
@@ -229,6 +319,82 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(USER_KEY);
   }, []);
 
+  // ============================================
+  // FONCTIONS DU CATALOGUE
+  // ============================================
+
+  const loadCatalog = useCallback(async () => {
+    try {
+      const remote = await api.annonces.list({ statut: 'active' });
+      const mapped = remote.map(mapAnnonceToCard);
+      setCatalogData({ annonces: mapped, villes: buildCityList(mapped) });
+      setCatalogVersion(v => v + 1);
+    } catch {
+      setCatalogData({});
+      setCatalogVersion(v => v + 1);
+    }
+  }, []);
+
+  // ============================================
+  // FONCTIONS DES ANNONCES
+  // ============================================
+
+  const createAnnonce = useCallback(async (data: CreateAnnoncePayload): Promise<ApiAnnonce> => {
+    if (!token) {
+      throw new Error('Vous devez être connecté pour créer une annonce');
+    }
+    
+    setIsCreating(true);
+    try {
+      const result = await api.annonces.create(data, token);
+      await loadCatalog();
+      return result;
+    } finally {
+      setIsCreating(false);
+    }
+  }, [token, loadCatalog]);
+
+  const updateAnnonce = useCallback(async (id: string, data: UpdateAnnoncePayload): Promise<ApiAnnonce> => {
+    if (!token) {
+      throw new Error('Vous devez être connecté pour modifier une annonce');
+    }
+    
+    setIsUpdating(true);
+    try {
+      const result = await api.annonces.update(id, data, token);
+      await loadCatalog();
+      return result;
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [token, loadCatalog]);
+
+  const deleteAnnonce = useCallback(async (id: string): Promise<void> => {
+    if (!token) {
+      throw new Error('Vous devez être connecté pour supprimer une annonce');
+    }
+    
+    setIsDeleting(true);
+    try {
+      await api.annonces.delete(id, token);
+      await loadCatalog();
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [token, loadCatalog]);
+
+  const getAnnonce = useCallback(async (id: string): Promise<ApiAnnonce> => {
+    return await api.annonces.getById(id, token || undefined);
+  }, [token]);
+
+  const refreshCatalog = useCallback(async (): Promise<void> => {
+    await loadCatalog();
+  }, [loadCatalog]);
+
+  // ============================================
+  // AUTRES FONCTIONS
+  // ============================================
+
   const toggleLite = useCallback(() => setLiteMode(v => !v), []);
 
   const markAllRead = useCallback(async () => {
@@ -238,30 +404,87 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications(n => n.map(notif => ({ ...notif, lue: true })));
   }, [token]);
 
+  // ============================================
+  // INITIALISATION
+  // ============================================
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem(USER_KEY);
+    if (savedUser && !user) {
+      try {
+        const parsed = JSON.parse(savedUser) as User;
+        setUser(parsed);
+        setAuth(parsed.role);
+      } catch {
+        localStorage.removeItem(USER_KEY);
+      }
+    }
+    void loadCatalog();
+    void loadSession();
+  }, [loadCatalog, loadSession, user]);
+
+  // ============================================
+  // PROVIDER
+  // ============================================
+
+  const value: AppContextType = {
+    // Langue
+    lang,
+    setLang,
+    
+    // Authentification
+    auth,
+    user,
+    token,
+    login,
+    loginWithCredentials,
+    registerWithCredentials,
+    logout,
+    
+    // Mode
+    liteMode,
+    toggleLite,
+    
+    // Notifications
+    notifications,
+    unreadCount,
+    markAllRead,
+    
+    // Modals
+    showAuthModal,
+    setShowAuthModal,
+    authModalTab,
+    setAuthModalTab,
+    
+    // Annonces - Gestion
+    createAnnonce,
+    updateAnnonce,
+    deleteAnnonce,
+    getAnnonce,
+    refreshCatalog,
+    
+    // Annonces - États
+    isCreating,
+    isUpdating,
+    isDeleting,
+    catalogVersion,
+  };
+
   return (
-    <AppContext.Provider value={{
-      lang, setLang,
-      auth, user, token,
-      login,
-      loginWithCredentials,
-      registerWithCredentials,
-      logout,
-      liteMode, toggleLite,
-      notifications, unreadCount, markAllRead,
-      showAuthModal, setShowAuthModal,
-      authModalTab, setAuthModalTab,
-    }}>
+    <AppContext.Provider value={value}>
       {children}
     </AppContext.Provider>
   );
 }
 
-export function useApp() {
+// ============================================
+// HOOK
+// ============================================
+
+export function useApp(): AppContextType {
   const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useApp must be used within AppProvider');
+  if (!ctx) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
   return ctx;
 }
-
-
-
-
