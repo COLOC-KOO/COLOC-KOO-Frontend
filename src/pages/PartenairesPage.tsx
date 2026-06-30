@@ -1,16 +1,17 @@
-import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
+import { api } from '../services/api';
 
 const TIERS = ['Diamant', 'Or', 'Argent', 'Bronze'] as const;
 
-const PARTENAIRES = [
-  { id: 'p1', nom: 'BNI Madagascar', secteur: 'Banque & Finance', tier: 'Diamant' as const, remise: '5% sur frais de dossier', engagement: 'Accompagnement bancaire des nouveaux colocataires', logo: '🏦' },
-  { id: 'p2', nom: 'Orange Madagascar', secteur: 'Télécommunications', tier: 'Diamant' as const, remise: '20% sur forfaits fibre', engagement: 'Connexion internet prioritaire pour les colocs', logo: '📱' },
-  { id: 'p3', nom: 'Jirama', secteur: 'Eau & Électricité', tier: 'Or' as const, remise: 'Raccordement rapide', engagement: 'Mise en service prioritaire pour les nouvelles colocs', logo: '💡' },
-  { id: 'p4', nom: 'Moov Africa', secteur: 'Télécommunications', tier: 'Or' as const, remise: '15% sur abonnements data', engagement: 'Offres mobiles avantageuses pour les colocataires', logo: '📶' },
-  { id: 'p5', nom: 'Pizza Place', secteur: 'Restauration', tier: 'Argent' as const, remise: '10% sur commandes', engagement: 'Livraison offerte au-dessus de 50 000 Ar', logo: '🍕' },
-  { id: 'p6', nom: 'TechMada', secteur: 'High-Tech', tier: 'Argent' as const, remise: '8% sur appareils', engagement: 'Équipement tech pour votre coloc', logo: '💻' },
-  { id: 'p7', nom: 'Pharmacie Centrale', secteur: 'Santé', tier: 'Bronze' as const, remise: '5% sur achats', engagement: 'Santé de proximité pour colocataires', logo: '💊' },
-  { id: 'p8', nom: 'Supermarché Leader Price', secteur: 'Alimentation', tier: 'Bronze' as const, remise: 'Carte de fidélité', engagement: 'Courses du quotidien à prix avantageux', logo: '🛒' },
+const FALLBACK_PARTENAIRES = [
+  { id: 'p1', nom: 'BNI Madagascar', secteur: 'Banque & Finance', tier: 'Diamant' as const, remise: '5% sur frais de dossier', engagement: 'Accompagnement bancaire des nouveaux colocataires', logo: 'BNI' },
+  { id: 'p2', nom: 'Orange Madagascar', secteur: 'Telecommunications', tier: 'Diamant' as const, remise: '20% sur forfaits fibre', engagement: 'Connexion internet prioritaire pour les colocs', logo: 'OM' },
+  { id: 'p3', nom: 'Jirama', secteur: 'Eau & Electricite', tier: 'Or' as const, remise: 'Raccordement rapide', engagement: 'Mise en service prioritaire pour les nouvelles colocs', logo: 'J' },
+  { id: 'p4', nom: 'Moov Africa', secteur: 'Telecommunications', tier: 'Or' as const, remise: '15% sur abonnements data', engagement: 'Offres mobiles avantageuses pour les colocataires', logo: 'MA' },
+  { id: 'p5', nom: 'Pizza Place', secteur: 'Restauration', tier: 'Argent' as const, remise: '10% sur commandes', engagement: 'Livraison offerte au-dessus de 50 000 Ar', logo: 'PP' },
+  { id: 'p6', nom: 'TechMada', secteur: 'High-Tech', tier: 'Argent' as const, remise: '8% sur appareils', engagement: 'Equipement tech pour votre coloc', logo: 'TM' },
+  { id: 'p7', nom: 'Pharmacie Centrale', secteur: 'Sante', tier: 'Bronze' as const, remise: '5% sur achats', engagement: 'Sante de proximite pour colocataires', logo: 'PC' },
+  { id: 'p8', nom: 'Supermarche Leader Price', secteur: 'Alimentation', tier: 'Bronze' as const, remise: 'Carte de fidelite', engagement: 'Courses du quotidien a prix avantageux', logo: 'LP' },
 ];
 
 const TIER_STYLES = {
@@ -24,32 +25,66 @@ export default function PartenairesPage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ nom: '', email: '', secteur: '', tier: '', message: '' });
   const [sent, setSent] = useState(false);
+  const [partenaires, setPartenaires] = useState(FALLBACK_PARTENAIRES);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    let mounted = true;
+    api.partenaires.list()
+      .then(rows => {
+        if (!mounted || !Array.isArray(rows) || rows.length === 0) return;
+        const mapped = rows.map((p: any, index: number) => ({
+          id: String(p.id_partenaire || p.id || index),
+          nom: p.nom,
+          secteur: p.secteur || 'Partenaire',
+          tier: p.niveau || p.tier || 'Bronze',
+          remise: p.remise || '',
+          engagement: p.engagement || '',
+          logo: p.logo || p.nom?.slice(0, 2)?.toUpperCase() || 'P',
+        }));
+        setPartenaires(mapped);
+      })
+      .catch(() => null);
+    return () => { mounted = false; };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    setLoading(true);
+    setError('');
+    try {
+      await api.partenaires.createRequest({
+        nom_entreprise: form.nom,
+        email: form.email,
+        secteur: form.secteur,
+        niveau_souhaite: form.tier,
+        message: form.message,
+      });
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Envoi impossible');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-sc-bg">
-      {/* Hero */}
       <div className="bg-sc-dark py-10 px-5 text-center">
         <div className="w-14 h-14 rounded-2xl bg-sc-y1/20 flex items-center justify-center mx-auto mb-4">
           <i className="ti ti-building text-3xl text-sc-y1" />
         </div>
         <h1 className="font-bebas text-3xl text-white tracking-wide mb-2">Nos Partenaires</h1>
-        <p className="text-sm text-white/60 max-w-lg mx-auto">
-          Sarintany'COLOC s'associe aux meilleures entreprises de Madagascar pour offrir des avantages exclusifs à nos colocataires.
-        </p>
+        <p className="text-sm text-white/60 max-w-lg mx-auto">Sarintany'COLOC s'associe aux meilleures entreprises de Madagascar pour offrir des avantages exclusifs a nos colocataires.</p>
       </div>
 
-      {/* Stats */}
       <div className="bg-white border-b border-sc-bd">
         <div className="max-w-4xl mx-auto px-4 py-5 grid grid-cols-3 gap-4 text-center">
           {[
-            { n: '15+', l: 'Partenaires actifs' },
+            { n: `${partenaires.length}+`, l: 'Partenaires actifs' },
             { n: '4', l: 'Niveaux de partenariat' },
-            { n: '850+', l: 'Colocataires bénéficiaires' },
+            { n: '850+', l: 'Colocataires beneficiaires' },
           ].map(s => (
             <div key={s.l}>
               <p className="font-bebas text-2xl text-sc-cy tracking-wide">{s.n}</p>
@@ -60,27 +95,23 @@ export default function PartenairesPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Tiers */}
         {TIERS.map(tier => {
-          const partners = PARTENAIRES.filter(p => p.tier === tier);
+          const items = partenaires.filter(p => p.tier === tier);
           const style = TIER_STYLES[tier];
           return (
             <div key={tier} className="mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <span className={`px-3 py-1 rounded-xl text-xs font-bold ${style.badge}`}>
-                  {tier === 'Diamant' ? '💎' : tier === 'Or' ? '⭐' : tier === 'Argent' ? '🥈' : '🥉'} {tier}
+                  {tier}
                 </span>
                 <div className="flex-1 h-px bg-sc-bd" />
-                <span className="text-xs text-sc-gr2">{partners.length} partenaire{partners.length > 1 ? 's' : ''}</span>
+                <span className="text-xs text-sc-gr2">{items.length} partenaire{items.length > 1 ? 's' : ''}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {partners.map(p => (
-                  <div
-                    key={p.id}
-                    className={`rounded-2xl border-2 p-4 ${style.bg} ${style.border} ${style.top}`}
-                  >
+                {items.map(p => (
+                  <div key={p.id} className={`rounded-2xl border-2 p-4 ${style.bg} ${style.border} ${style.top}`}>
                     <div className="flex items-start gap-3 mb-2">
-                      <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
+                      <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm">
                         {p.logo}
                       </div>
                       <div>
@@ -102,34 +133,27 @@ export default function PartenairesPage() {
           );
         })}
 
-        {/* Become partner CTA */}
         <div className="bg-sc-dark rounded-2xl p-6 text-center">
           <div className="w-12 h-12 rounded-xl bg-sc-y1/20 flex items-center justify-center mx-auto mb-3">
             <i className="ti ti-handshake text-2xl text-sc-y1" />
           </div>
           <h2 className="font-bebas text-2xl text-white tracking-wide mb-2">Devenez partenaire</h2>
-          <p className="text-sm text-white/60 mb-4 max-w-md mx-auto">
-            Votre entreprise propose des services utiles aux colocataires ? Rejoignez notre réseau de partenaires et touchez des milliers d'utilisateurs.
-          </p>
+          <p className="text-sm text-white/60 mb-4 max-w-md mx-auto">Votre entreprise propose des services utiles aux colocataires ? Rejoignez notre reseau de partenaires et touchez des milliers d'utilisateurs.</p>
           <div className="flex flex-wrap gap-2 justify-center mb-5">
-            {['Visibilité sur 850+ profils', 'Logo sur toutes les pages', 'Newsletter mensuelle', 'Badge partenaire vérifié'].map(a => (
+            {['Visibilite sur 850+ profils', 'Logo sur toutes les pages', 'Newsletter mensuelle', 'Badge partenaire verifie'].map(a => (
               <span key={a} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 text-white/80 text-xs rounded-xl">
                 <i className="ti ti-check text-sc-y2 text-xs" />
                 {a}
               </span>
             ))}
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-6 py-3 bg-sc-y2 text-white border-none rounded-xl text-sm font-bold cursor-pointer hover:bg-[#7faa28] transition-colors inline-flex items-center gap-2"
-          >
+          <button onClick={() => setShowModal(true)} className="px-6 py-3 bg-sc-y2 text-white border-none rounded-xl text-sm font-bold cursor-pointer hover:bg-[#7faa28] transition-colors inline-flex items-center gap-2">
             <i className="ti ti-send text-sm" />
             Soumettre une demande
           </button>
         </div>
       </div>
 
-      {/* Partner request modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center py-8 px-4 overflow-y-auto">
           <div className="bg-white rounded-2xl w-full max-w-lg p-5 animate-fadeIn">
@@ -145,7 +169,7 @@ export default function PartenairesPage() {
                   {[
                     { label: 'Nom de l\'entreprise', field: 'nom', type: 'text', placeholder: 'Mon Entreprise SARL' },
                     { label: 'Email de contact', field: 'email', type: 'email', placeholder: 'contact@monentreprise.mg' },
-                    { label: 'Secteur d\'activité', field: 'secteur', type: 'text', placeholder: 'ex: Finance, Télécom, Restauration…' },
+                    { label: 'Secteur d\'activite', field: 'secteur', type: 'text', placeholder: 'ex: Finance, Telecom, Restauration...' },
                   ].map(f => (
                     <div key={f.field}>
                       <label className="block text-xs font-bold text-sc-dark mb-1">{f.label}</label>
@@ -160,7 +184,7 @@ export default function PartenairesPage() {
                     </div>
                   ))}
                   <div>
-                    <label className="block text-xs font-bold text-sc-dark mb-1">Niveau souhaité</label>
+                    <label className="block text-xs font-bold text-sc-dark mb-1">Niveau souhaite</label>
                     <div className="flex gap-2 flex-wrap">
                       {TIERS.map(t => (
                         <button
@@ -175,17 +199,18 @@ export default function PartenairesPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-sc-dark mb-1">Message (offre envisagée)</label>
+                    <label className="block text-xs font-bold text-sc-dark mb-1">Message (offre envisagee)</label>
                     <textarea
                       value={form.message}
                       onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                      placeholder="Décrivez l'avantage ou la remise que vous souhaitez offrir aux colocataires…"
+                      placeholder="Decrivez l'avantage ou la remise que vous souhaitez offrir aux colocataires..."
                       rows={3}
                       className="w-full border border-sc-bd rounded-xl px-3 py-2.5 text-sm outline-none focus:border-sc-cy resize-none"
                     />
                   </div>
-                  <button type="submit" className="w-full bg-sc-cy text-white border-none rounded-xl py-3 text-sm font-bold cursor-pointer hover:bg-sc-cy-d">
-                    Envoyer la demande
+                  {error && <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
+                  <button type="submit" disabled={loading} className="w-full bg-sc-cy text-white border-none rounded-xl py-3 text-sm font-bold cursor-pointer hover:bg-sc-cy-d disabled:opacity-60">
+                    {loading ? 'Envoi...' : 'Envoyer la demande'}
                   </button>
                 </form>
               </>
@@ -194,8 +219,8 @@ export default function PartenairesPage() {
                 <div className="w-14 h-14 rounded-full bg-sc-g-lt flex items-center justify-center mx-auto mb-4">
                   <i className="ti ti-circle-check text-3xl text-sc-y2" />
                 </div>
-                <h3 className="font-bebas text-xl text-sc-dark mb-2">Demande envoyée !</h3>
-                <p className="text-sm text-sc-gr1 mb-4">Notre équipe commerciale vous contactera sous 48h.</p>
+                <h3 className="font-bebas text-xl text-sc-dark mb-2">Demande envoyee !</h3>
+                <p className="text-sm text-sc-gr1 mb-4">Notre equipe commerciale vous contactera sous 48h.</p>
                 <button onClick={() => { setShowModal(false); setSent(false); }} className="bg-sc-cy text-white border-none rounded-xl px-5 py-2.5 text-sm font-bold cursor-pointer hover:bg-sc-cy-d">
                   Fermer
                 </button>
@@ -207,3 +232,4 @@ export default function PartenairesPage() {
     </div>
   );
 }
+

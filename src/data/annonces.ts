@@ -1,4 +1,4 @@
-import type { Annonce } from '../types';
+﻿import type { Annonce } from '../types';
 
 // Images placeholder Unsplash avec des maisons malgaches / appartements
 const imgs = {
@@ -15,12 +15,12 @@ const imgs = {
   a6: ['https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=600&q=80'],
 };
 
-export const ANNONCES: Annonce[] = [
+export let ANNONCES: Annonce[] = [
   {
     id: 1,
     type: 'coloc',
     logement: 'Maison',
-    titre: 'Belle maison avec jardin — 3 chambres dispo',
+    titre: 'Belle maison avec jardin â€” 3 chambres dispo',
     quartier: 'Ankadifotsy',
     ville: 'Antananarivo',
     surface: 110,
@@ -28,14 +28,14 @@ export const ANNONCES: Annonce[] = [
     colocataires: 4,
     prix: 810000,
     prixLabel: '810 000 Ar/mois',
-    disponible: 'Dès maintenant',
+    disponible: 'DÃ¨s maintenant',
     images: imgs.a1,
     tags: [
-      { label: 'Femme de ménage', variant: 'cy' },
+      { label: 'Femme de mÃ©nage', variant: 'cy' },
       { label: 'Gardien', variant: 'cy' },
       { label: 'Parking', variant: 'gr' },
     ],
-    services: ['Femme de ménage', 'Gardien', 'Parking voiture', 'Eau courante', 'Surpresseur'],
+    services: ['Femme de mÃ©nage', 'Gardien', 'Parking voiture', 'Eau courante', 'Surpresseur'],
     regles: ['Filles uniquement', 'Pas d\'animaux'],
     badge: 'Populaire',
     badgeColor: '#46BDD6',
@@ -43,13 +43,13 @@ export const ANNONCES: Annonce[] = [
     pinY: 230,
     featured: true,
     verified: true,
-    description: 'Grande maison lumineuse dans un quartier calme et sécurisé d\'Ankadifotsy. 3 chambres disponibles dans une colocation de 4 personnes déjà constituée. Jardin partagé, cuisine équipée, femme de ménage 3x/semaine.',
+    description: 'Grande maison lumineuse dans un quartier calme et sÃ©curisÃ© d\'Ankadifotsy. 3 chambres disponibles dans une colocation de 4 personnes dÃ©jÃ  constituÃ©e. Jardin partagÃ©, cuisine Ã©quipÃ©e, femme de mÃ©nage 3x/semaine.',
   },
   {
     id: 2,
     type: 'coloc',
     logement: 'Appartement',
-    titre: 'Appart moderne près INSCAE — 1 chambre libre',
+    titre: 'Appart moderne prÃ¨s INSCAE â€” 1 chambre libre',
     quartier: 'Analakely',
     ville: 'Antananarivo',
     surface: 75,
@@ -61,23 +61,23 @@ export const ANNONCES: Annonce[] = [
     images: imgs.a2,
     tags: [
       { label: 'Internet fibre', variant: 'cy' },
-      { label: 'Meublé', variant: 'gr' },
+      { label: 'MeublÃ©', variant: 'gr' },
       { label: 'Vue ville', variant: 'gy' },
     ],
     services: ['Connexion internet', 'Eau courante'],
     regles: ['Mixte', 'Non-fumeur'],
-    badge: 'Dispo bientôt',
+    badge: 'Dispo bientÃ´t',
     badgeColor: '#99CC33',
     pinX: 500,
     pinY: 400,
     verified: true,
-    description: 'Appartement moderne en plein centre-ville, idéal pour les étudiants ou jeunes professionnels.',
+    description: 'Appartement moderne en plein centre-ville, idÃ©al pour les Ã©tudiants ou jeunes professionnels.',
   },
   {
     id: 3,
     type: 'coloc',
     logement: 'Maison',
-    titre: 'Maison 5 chambres — quartier résidentiel',
+    titre: 'Maison 5 chambres â€” quartier rÃ©sidentiel',
     quartier: 'Masinandriana',
     ville: 'Antananarivo',
     surface: 130,
@@ -92,7 +92,7 @@ export const ANNONCES: Annonce[] = [
       { label: 'Parking moto', variant: 'gy' },
     ],
     services: ['Jardin', 'Eau courante', 'Porteurs d\'eau'],
-    regles: ['Mixte', 'Enfants acceptés'],
+    regles: ['Mixte', 'Enfants acceptÃ©s'],
     pinX: 757,
     pinY: 485,
     verified: false,
@@ -102,7 +102,7 @@ export const ANNONCES: Annonce[] = [
     id: 4,
     type: 'proprio',
     logement: 'Villa',
-    titre: 'Villa à constituer — 4 chambres',
+    titre: 'Villa Ã  constituer â€” 4 chambres',
     quartier: 'Iavoloha',
     ville: 'Antananarivo',
     surface: 160,
@@ -110,28 +110,28 @@ export const ANNONCES: Annonce[] = [
     colocataires: 4,
     prix: 420000,
     prixLabel: '420 000 Ar/mois',
-    disponible: 'Dès maintenant',
+    disponible: 'DÃ¨s maintenant',
     images: imgs.a4,
     tags: [
       { label: 'Piscine', variant: 'cy' },
-      { label: 'Femme de ménage', variant: 'cy' },
+      { label: 'Femme de mÃ©nage', variant: 'cy' },
       { label: 'Jardinier', variant: 'gr' },
     ],
-    services: ['Piscine', 'Femme de ménage', 'Jardinier', 'Gardien', 'Parking voiture'],
+    services: ['Piscine', 'Femme de mÃ©nage', 'Jardinier', 'Gardien', 'Parking voiture'],
     regles: ['Mixte', 'Non-fumeur'],
-    badge: 'Coloc à créer',
+    badge: 'Coloc Ã  crÃ©er',
     badgeColor: '#CCCC33',
     pinX: 165,
     pinY: 568,
     featured: true,
     verified: true,
-    description: 'Superbe villa avec piscine dans un domaine sécurisé. Le propriétaire cherche à constituer une colocation de qualité. Services premium inclus.',
+    description: 'Superbe villa avec piscine dans un domaine sÃ©curisÃ©. Le propriÃ©taire cherche Ã  constituer une colocation de qualitÃ©. Services premium inclus.',
   },
   {
     id: 5,
     type: 'proprio',
     logement: 'Appartement',
-    titre: 'Grand appartement — 3 chambres à Ivandry',
+    titre: 'Grand appartement â€” 3 chambres Ã  Ivandry',
     quartier: 'Ivandry',
     ville: 'Antananarivo',
     surface: 90,
@@ -139,26 +139,26 @@ export const ANNONCES: Annonce[] = [
     colocataires: 3,
     prix: 350000,
     prixLabel: '350 000 Ar/mois',
-    disponible: 'Dès maintenant',
+    disponible: 'DÃ¨s maintenant',
     images: imgs.a5,
     tags: [
       { label: 'Internet', variant: 'cy' },
-      { label: 'Machine à laver', variant: 'gr' },
+      { label: 'Machine Ã  laver', variant: 'gr' },
     ],
-    services: ['Connexion internet', 'Machine à laver', 'Eau courante'],
+    services: ['Connexion internet', 'Machine Ã  laver', 'Eau courante'],
     regles: ['Filles uniquement', 'Non-fumeur'],
-    badge: 'Coloc à créer',
+    badge: 'Coloc Ã  crÃ©er',
     badgeColor: '#CCCC33',
     pinX: 670,
     pinY: 248,
     verified: true,
-    description: 'Grand appartement lumineux à Ivandry. Le propriétaire cherche des colocataires sérieuses pour constituer une belle colocation.',
+    description: 'Grand appartement lumineux Ã  Ivandry. Le propriÃ©taire cherche des colocataires sÃ©rieuses pour constituer une belle colocation.',
   },
   {
     id: 6,
     type: 'coloc',
     logement: 'Appartement',
-    titre: 'Studio coloc — 2 colocataires',
+    titre: 'Studio coloc â€” 2 colocataires',
     quartier: 'Ampefiloha',
     ville: 'Antananarivo',
     surface: 45,
@@ -166,25 +166,25 @@ export const ANNONCES: Annonce[] = [
     colocataires: 2,
     prix: 180000,
     prixLabel: '180 000 Ar/mois',
-    disponible: '1er août',
+    disponible: '1er aoÃ»t',
     images: imgs.a6,
     tags: [
-      { label: 'Meublé', variant: 'gr' },
+      { label: 'MeublÃ©', variant: 'gr' },
       { label: 'Centre-ville', variant: 'cy' },
     ],
     services: ['Eau courante', 'Connexion internet'],
-    regles: ['Garçons uniquement'],
+    regles: ['GarÃ§ons uniquement'],
     pinX: 302,
     pinY: 560,
     verified: false,
-    description: 'Petit appartement économique idéal pour 2 colocataires en centre-ville.',
+    description: 'Petit appartement Ã©conomique idÃ©al pour 2 colocataires en centre-ville.',
   },
   // Mahajanga
   {
     id: 7,
     type: 'coloc',
     logement: 'Maison',
-    titre: 'Maison bord de mer — 3 chambres',
+    titre: 'Maison bord de mer â€” 3 chambres',
     quartier: 'Tsararano',
     ville: 'Mahajanga',
     surface: 120,
@@ -192,7 +192,7 @@ export const ANNONCES: Annonce[] = [
     colocataires: 3,
     prix: 320000,
     prixLabel: '320 000 Ar/mois',
-    disponible: 'Dès maintenant',
+    disponible: 'DÃ¨s maintenant',
     images: imgs.a1,
     tags: [
       { label: 'Vue mer', variant: 'cy' },
@@ -207,7 +207,7 @@ export const ANNONCES: Annonce[] = [
     id: 8,
     type: 'proprio',
     logement: 'Appartement',
-    titre: 'Appart à constituer — Port de Toamasina',
+    titre: 'Appart Ã  constituer â€” Port de Toamasina',
     quartier: 'Tanambao',
     ville: 'Toamasina',
     surface: 80,
@@ -215,20 +215,20 @@ export const ANNONCES: Annonce[] = [
     colocataires: 3,
     prix: 220000,
     prixLabel: '220 000 Ar/mois',
-    disponible: '1er août',
+    disponible: '1er aoÃ»t',
     images: imgs.a3,
     tags: [
       { label: 'Internet', variant: 'cy' },
     ],
     services: ['Connexion internet', 'Eau courante'],
     regles: ['Mixte', 'Non-fumeur'],
-    badge: 'Coloc à créer',
+    badge: 'Coloc Ã  crÃ©er',
     badgeColor: '#CCCC33',
     verified: false,
   },
 ];
 
-export const VILLES = [
+export let VILLES = [
   { nom: 'Antananarivo', count: 67, code: 'tana' },
   { nom: 'Mahajanga', count: 12, code: 'mjg' },
   { nom: 'Toamasina', count: 9, code: 'tms' },
@@ -237,8 +237,21 @@ export const VILLES = [
   { nom: 'Antsiranana', count: 4, code: 'dieg' },
 ];
 
-export const QUARTIERS_TANA = [
+export let QUARTIERS_TANA = [
   'Ankadifotsy', 'Analakely', 'Ivandry', 'Masinandriana', 
   'Ampefiloha', 'Iavoloha', 'Tanjombato', 'Ambohijatovo',
   'Faravohitra', 'Isoraka', 'Ambanidia',
 ];
+
+export function setCatalogData(next: { annonces?: Annonce[]; villes?: typeof VILLES; quartiers?: typeof QUARTIERS_TANA }) {
+  if (next.annonces) {
+    ANNONCES = next.annonces;
+  }
+  if (next.villes) {
+    VILLES = next.villes;
+  }
+  if (next.quartiers) {
+    QUARTIERS_TANA = next.quartiers;
+  }
+}
+

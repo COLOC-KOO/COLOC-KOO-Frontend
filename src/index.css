@@ -1,8 +1,8 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
 :root {
   --g1: #CCCC33;
@@ -107,3 +107,4 @@ body {
 .bo-nav-link.active {
   @apply bg-[rgba(70,189,214,0.12)] text-sc-cy font-bold;
 }
+
