@@ -1,5 +1,5 @@
-﻿// src/context/AppContext.tsx
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+﻿// AppContext.tsx
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import type { Lang, AuthState, User, Notification, Annonce } from '../types';
 import { api, type ApiUser, type ApiNotification, type ApiAnnonce } from '../services/api';
 import { setCatalogData } from '../data/annonces';
@@ -247,9 +247,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const unreadCount = notifications.filter(n => !n.lue).length;
 
-  // ============================================
-  // FONCTIONS D'AUTHENTIFICATION
-  // ============================================
+  // Ref pour éviter les appels multiples
+  const hasLoaded = useRef(false);
+  const initialLoadDone = useRef(false);
 
   const applySession = useCallback((nextUser: User | null, nextToken: string | null) => {
     setUser(nextUser);
@@ -265,19 +265,84 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const loadCatalog = useCallback(async () => {
+    // Éviter les appels multiples si déjà en cours
+    if (hasLoaded.current) return;
+    hasLoaded.current = true;
+    
+    try {
+      const remote = await api.annonces.list({ statut: 'active' });
+      const mapped = remote.map(mapAnnonceToCard);
+      setCatalogData({ annonces: mapped, villes: buildCityList(mapped) });
+      setCatalogVersion(v => v + 1);
+    } catch (error) {
+      console.error('Erreur chargement catalogue:', error);
+      setCatalogData({});
+      setCatalogVersion(v => v + 1);
+    } finally {
+      // Réinitialiser après 5 secondes pour permettre un rechargement manuel
+      setTimeout(() => {
+        hasLoaded.current = false;
+      }, 5000);
+    }
+  }, []);
+
   const loadSession = useCallback(async () => {
     if (!token) return;
+    
     try {
       const remoteUser = await api.auth.me(token);
       const nextUser = normalizeUser(remoteUser, remoteUser.role as AuthState);
       applySession(nextUser, token);
-      const remoteNotifs = await api.notifications.listMine(token);
-      setNotifications(remoteNotifs.length > 0 ? remoteNotifs.map(normalizeNotification) : DEMO_NOTIFS);
-    } catch {
+      
+      try {
+        const remoteNotifs = await api.notifications.listMine(token);
+        if (remoteNotifs.length > 0) {
+          setNotifications(remoteNotifs.map(normalizeNotification));
+        }
+      } catch {
+        // Garder les notifications de démo en cas d'erreur
+      }
+    } catch (error) {
+      console.error('Erreur chargement session:', error);
       applySession(null, null);
       setNotifications(DEMO_NOTIFS);
     }
   }, [applySession, token]);
+
+  // Chargement initial - UNE SEULE FOIS
+  useEffect(() => {
+    if (initialLoadDone.current) return;
+    initialLoadDone.current = true;
+
+    const init = async () => {
+      // Charger l'utilisateur depuis le localStorage
+      const savedUser = localStorage.getItem(USER_KEY);
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser) as User;
+          setUser(parsed);
+          setAuth(parsed.role);
+        } catch {
+          localStorage.removeItem(USER_KEY);
+        }
+      }
+
+      // Charger les données
+      await loadCatalog();
+      await loadSession();
+    };
+
+    init();
+  }, [loadCatalog, loadSession]); // ← Dépendances stables
+
+  // Recharger quand le token change (login/logout)
+  useEffect(() => {
+    if (initialLoadDone.current && token) {
+      loadSession();
+      loadCatalog();
+    }
+  }, [token, loadSession, loadCatalog]); // ← Dépendances stables
 
   const login = useCallback((role: AuthState = 'coloc') => {
     setAuth(role);
@@ -290,25 +355,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loginWithCredentials = useCallback(async (email: string, password: string) => {
-    const result = await api.auth.login({ email, mot_de_passe: password });
-    const nextUser = normalizeUser(result.user, result.user.role as AuthState);
-    applySession(nextUser, result.token);
     try {
-      const remoteNotifs = await api.notifications.listMine(result.token);
-      setNotifications(remoteNotifs.length > 0 ? remoteNotifs.map(normalizeNotification) : []);
-    } catch {
-      setNotifications([]);
+      const result = await api.auth.login({ email, mot_de_passe: password });
+      const nextUser = normalizeUser(result.user, result.user.role as AuthState);
+      applySession(nextUser, result.token);
+      
+      try {
+        const remoteNotifs = await api.notifications.listMine(result.token);
+        if (remoteNotifs.length > 0) {
+          setNotifications(remoteNotifs.map(normalizeNotification));
+        }
+      } catch {
+        setNotifications([]);
+      }
+      
+      setShowAuthModal(false);
+      // Recharger le catalogue après connexion
+      await loadCatalog();
+    } catch (error) {
+      console.error('Erreur de connexion:', error);
+      throw error;
     }
-    setShowAuthModal(false);
-  }, [applySession]);
+  }, [applySession, loadCatalog]);
 
   const registerWithCredentials = useCallback(async (payload: Record<string, unknown>) => {
-    const result = await api.auth.register(payload);
-    const nextUser = normalizeUser(result.user, result.user.role as AuthState);
-    applySession(nextUser, result.token);
-    setNotifications([]);
-    setShowAuthModal(false);
-  }, [applySession]);
+    try {
+      const result = await api.auth.register(payload);
+      const nextUser = normalizeUser(result.user, result.user.role as AuthState);
+      applySession(nextUser, result.token);
+      setNotifications([]);
+      setShowAuthModal(false);
+      // Recharger le catalogue après inscription
+      await loadCatalog();
+    } catch (error) {
+      console.error('Erreur d\'inscription:', error);
+      throw error;
+    }
+  }, [applySession, loadCatalog]);
 
   const logout = useCallback(() => {
     setAuth('guest');
@@ -399,11 +482,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const markAllRead = useCallback(async () => {
     if (token) {
-      await api.notifications.markAllRead(token);
+      try {
+        await api.notifications.markAllRead(token);
+      } catch (error) {
+        console.error('Erreur marquage notifications:', error);
+      }
     }
     setNotifications(n => n.map(notif => ({ ...notif, lue: true })));
   }, [token]);
 
+  const value: AppContextType = {
+    lang, setLang,
+    auth, user, token,
   // ============================================
   // INITIALISATION
   // ============================================
@@ -440,6 +530,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     loginWithCredentials,
     registerWithCredentials,
     logout,
+    liteMode, toggleLite,
+    notifications, unreadCount, markAllRead,
+    showAuthModal, setShowAuthModal,
+    authModalTab, setAuthModalTab,
     
     // Mode
     liteMode,
