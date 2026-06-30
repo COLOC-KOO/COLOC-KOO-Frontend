@@ -291,4 +291,3 @@ export default function CandidaturesPage() {
     </div>
   );
 }
-
