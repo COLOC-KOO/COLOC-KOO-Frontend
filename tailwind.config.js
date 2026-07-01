@@ -1,53 +1,58 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      colors: {
-        // Charte Sarintany'COLOC
-        'sc-y1': '#CCCC33',
-        'sc-y2': '#99CC33',
-        'sc-cy': '#46BDD6',
-        'sc-cy-d': '#3aadca',
-        'sc-dark': '#2C2C2C',
-        'sc-gr1': '#666666',
-        'sc-gr2': '#999999',
-        'sc-bd': '#e8e8e8',
-        'sc-bg': '#f5f7f2',
-        'sc-cy-lt': '#E8F7FA',
-        'sc-g-lt': '#F4F8E8',
-        'sc-red': '#cc3333',
-        'sc-red-lt': '#fdeced',
-        'sc-warn': '#E2B53A',
-        'sc-danger': '#E0604E',
-        'sc-mag': '#CD6CA8',
-        // Backoffice dark
-        'bo-bg': '#1f2023',
-        'bo-panel': '#26272b',
-        'bo-panel2': '#2c2e33',
-        'bo-line': '#3a3c42',
-        'bo-txt': '#e9eaec',
-        'bo-muted': '#9a9da4',
-      },
       fontFamily: {
-        'bebas': ['"Bebas Neue"', 'Arial', 'sans-serif'],
-        'sans': ['Arial', 'Helvetica', 'sans-serif'],
+        display: ['"Bebas Neue"', '"Inter"', 'sans-serif'],
+        sans: ['"Inter"', 'Arial', 'sans-serif']
       },
-      letterSpacing: {
-        'bebas': '0.03em',
+      colors: {
+        border: 'var(--border)',
+        input: 'var(--input)',
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        card: {
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)'
+        },
+        muted: {
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)'
+        },
+        primary: {
+          DEFAULT: 'var(--primary)',
+          foreground: 'var(--primary-foreground)'
+        },
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          foreground: 'var(--secondary-foreground)'
+        },
+        accent: {
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)'
+        },
+        destructive: {
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground)'
+        },
+        'brand-cyan': 'var(--brand-cyan)',
+        'brand-cyan-dark': 'var(--brand-cyan-dark)',
+        'brand-cyan-light': 'var(--brand-cyan-light)',
+        'brand-green': 'var(--brand-green)',
+        'brand-green-dark': 'var(--brand-green-dark)',
+        'brand-green-light': 'var(--brand-green-light)',
+        'brand-olive': 'var(--brand-olive)',
+        'brand-magenta': 'var(--brand-magenta)',
+        'brand-dark': 'var(--brand-dark)',
+        'brand-sand': 'var(--brand-sand)'
       },
       borderRadius: {
-        'sc': '12px',
-        'sc-lg': '16px',
-      },
-      boxShadow: {
-        'sc': '0 4px 18px rgba(44,44,44,.08)',
-        'sc-lg': '0 6px 24px rgba(0,0,0,.14)',
-      },
-    },
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 4px)',
+        sm: 'calc(var(--radius) - 8px)'
+      }
+    }
   },
-  plugins: [],
+  plugins: []
 }

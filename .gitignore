@@ -1,5 +1,32 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
-.env
+.wrangler/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# PM2
+.pm2/
+pids/
+logs/
 *.log
+npm-debug.log*
+
+# env
+.env
+.env.production
+.dev.vars
+
+# misc
 .DS_Store
+.vscode/*
+!.vscode/launch.json
+.idea/
+*.tar.gz
+*.zip
