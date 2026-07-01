@@ -12,7 +12,7 @@ routing via `react-router-dom` (`App.tsx`, `components/`, `pages/`).
 - **Stack** : React 18, Vite 5, TypeScript, Tailwind CSS, React Router v6, lucide-react (icônes).
 
 ## Structure du code
-```
+```gg
 src/
   App.tsx                 # Routing principal (react-router-dom)
   main.tsx                # Point d'entrée React
