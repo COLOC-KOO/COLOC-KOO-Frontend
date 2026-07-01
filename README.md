@@ -22,13 +22,13 @@ Plateforme de colocation à Madagascar, convertie en **React + Vite + TailwindCS
 | `/deposer` | Formulaire dépôt d'annonce (5 étapes) |
 | `/candidatures` | Mes candidatures (colocataires) |
 | `/partenaires` | Partenaires par niveaux |
-| `/contact` | Formulaire contact + FAQ |
+| `/contact` | Formulaire contact + FAQ |dfg
 | `/compte` | Mon compte (profil, annonces, sécurité) |
 | `/backoffice` | Back-office (modérateur + admin) |
 
 ## Démarrage
 
-```bash
+```bashfddf
 npm install
 npm run dev       # Dev server (Vite HMR)
 npm run build     # Build production
