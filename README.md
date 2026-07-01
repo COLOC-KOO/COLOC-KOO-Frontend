@@ -1,86 +1,93 @@
-# Sarintany'COLOC — Application React
+# Sarintany'COLOC
 
-Plateforme de colocation à Madagascar, convertie en **React + Vite + TailwindCSS + TypeScript**.
+Copie fonctionnelle complète (front public + back-office admin) de la plateforme de colocation
+**Sarintany'COLOC**, reconstruite en **React + Vite + TypeScript + Tailwind CSS**, avec un
+routing via `react-router-dom` (`App.tsx`, `components/`, `pages/`).
 
-## Stack technique
+## Aperçu du projet
+- **Nom** : Sarintany'COLOC
+- **Objectif** : Plateforme de colocation à Madagascar (Antananarivo, Toamasina, Mahajanga,
+  Fianarantsoa, Antsirabe, Nosy Be) — recherche d'annonces, dépôt d'annonce, candidature en ligne,
+  espace compte locataire, et back-office admin complet.
+- **Stack** : React 18, Vite 5, TypeScript, Tailwind CSS, React Router v6, lucide-react (icônes).
 
-- **React 18** + **TypeScript**
-- **Vite** (bundler)
-- **TailwindCSS v3** (charte Sarintany'COLOC)
-- **React Router v6** (SPA routing)
-- **Tabler Icons** (CDN)
-- **Bebas Neue** (police)
-
-## Pages disponibles
-
-| Route | Page |
-|-------|------|
-| `/` | Homepage — Hero, recherche, annonces vedettes |
-| `/recherche` | Résultats — Vue carte/liste, filtres |
-| `/annonce/:id` | Fiche colocation existante |
-| `/annonce-proprio/:id` | Fiche coloc à constituer |
-| `/deposer` | Formulaire dépôt d'annonce (5 étapes) |
-| `/candidatures` | Mes candidatures (colocataires) |
-| `/partenaires` | Partenaires par niveaux |
-| `/contact` | Formulaire contact + FAQ |dfg
-| `/compte` | Mon compte (profil, annonces, sécurité) |
-| `/backoffice` | Back-office (modérateur + admin) |
-
-## Démarrage
-
-```bashfddf
-npm install
-npm run dev       # Dev server (Vite HMR)
-npm run build     # Build production
-npm run preview   # Preview production build
-```
-
-## Architecture
-
+## Structure du code
 ```
 src/
-├── components/       # Composants partagés (Navbar, Footer, Logo, AuthModal, AnnonceCard)
-├── context/          # AppContext (auth, langue, lite mode, notifications)
-├── data/             # Données mockées (annonces, villes, quartiers)
-├── pages/
-│   ├── HomePage.tsx
-│   ├── ResultsPage.tsx
-│   ├── FicheColocPage.tsx
-│   ├── FichePropioPage.tsx
-│   ├── DepotPage.tsx
-│   ├── CandidaturesPage.tsx
-│   ├── ContactPage.tsx
-│   ├── PartenairesPage.tsx
-│   ├── ComptePage.tsx
-│   └── backoffice/
-│       ├── BackofficePage.tsx
-│       ├── BackofficeDashboard.tsx
-│       ├── BackofficeAnnonces.tsx
-│       ├── BackofficeMembers.tsx
-│       └── BackofficeStats.tsx
-└── types/            # Interfaces TypeScript
+  App.tsx                 # Routing principal (react-router-dom)
+  main.tsx                # Point d'entrée React
+  index.css               # Thème Tailwind + variables de couleur (oklch)
+  types/                  # Types TypeScript (Listing, Candidature, AdminUser, ...)
+  data/mockData.ts        # Données mock (annonces, utilisateurs, paiements, messages...)
+  lib/utils.ts            # Helpers (formatAr, unsplash, cn)
+  components/
+    Logo.tsx
+    ui/Button.tsx, ui/Badge.tsx
+    site/SiteHeader.tsx, SiteFooter.tsx, SiteLayout.tsx, ListingCard.tsx
+    admin/AdminLayout.tsx
+  pages/
+    Home.tsx, Annonces.tsx, AnnonceDetail.tsx, Deposer.tsx,
+    Partenaires.tsx, Contact.tsx, Auth.tsx, Compte.tsx, Candidatures.tsx, NotFound.tsx
+    admin/Dashboard.tsx, AdminAnnonces.tsx, AdminCandidatures.tsx,
+    AdminUtilisateurs.tsx, AdminPartenaires.tsx, AdminPaiements.tsx,
+    AdminMessages.tsx, AdminParametres.tsx
 ```
 
-## Charte graphique
+## Fonctionnalités côté client (site public)
+- **Accueil (`/`)** : hero avec recherche, exploration par ville, annonces vedettes,
+  section "Comment ça marche", CTA propriétaire/agence.
+- **Annonces (`/annonces`)** : liste filtrable (ville, type, prix max, options), grille de cartes.
+- **Détail annonce (`/annonces/:id`)** : galerie photo, description, équipements, colocataires
+  actuels, encart prix + bouton "Postuler", infos propriétaire.
+- **Déposer une annonce (`/deposer`)** : formulaire en 5 étapes (Type, Localisation, Détails,
+  Photos, Tarifs) avec stepper visuel.
+- **Partenaires (`/partenaires`)** : argumentaire B2B, 3 formules d'abonnement (Découverte, Pro,
+  Agence).
+- **Contact (`/contact`)** : coordonnées + formulaire de message.
+- **Authentification (`/auth`)** : connexion / inscription (mock), lien vers back-office admin.
+- **Espace compte (`/compte`)** : profil, dossier locatif (upload documents), notifications,
+  paiements, sécurité (onglets).
+- **Candidatures (`/candidatures`)** : suivi du pipeline de candidature (Envoyée → Reçue →
+  Dossier → Signature → Convention).
+- **404** : page d'erreur personnalisée.
 
-- **Jaune-vert 1** : `#CCCC33` (`sc-y1`)
-- **Jaune-vert 2** : `#99CC33` (`sc-y2`)
-- **Cyan** : `#46BDD6` (`sc-cy`)
-- **Fond** : `#f5f7f2` (`sc-bg`)
-- **Texte** : `#2C2C2C` (`sc-dark`)
-- **Backoffice dark** : `#1f2023` (`bo-bg`)
+## Fonctionnalités côté back-office (admin, `/admin/*`)
+Layout sombre avec sidebar de navigation, bandeau "DÉMO" (bascule de vue admin/proprio/locataire),
+recherche globale, notifications.
+- **Dashboard (`/admin`)** : KPIs (annonces actives, candidatures, utilisateurs, revenus),
+  candidatures récentes, top villes, dernières annonces.
+- **Annonces (`/admin/annonces`)** : table avec recherche, filtres statut, actions (voir, éditer,
+  supprimer).
+- **Candidatures (`/admin/candidatures`)** : vue Kanban (5 colonnes de statut).
+- **Utilisateurs (`/admin/utilisateurs`)** : table des utilisateurs (locataires, propriétaires,
+  agences) avec rôle/statut.
+- **Partenaires (`/admin/partenaires`)** : cartes agences/propriétaires (annonces, CA).
+- **Paiements (`/admin/paiements`)** : KPIs financiers + table des transactions.
+- **Messages (`/admin/messages`)** : boîte de réception + fil de conversation (support/modération).
+- **Paramètres (`/admin/parametres`)** : configuration plateforme (général, commissions, emails).
 
-## Fonctionnalités
+## Données
+Toutes les données sont des **mock data statiques** définies dans `src/data/mockData.ts`
+(aucun backend / base de données). Pour un usage réel, il faudrait connecter ces pages à une API
+(Cloudflare D1, KV ou service externe).
 
-- ✅ Navigation responsive avec dropdown notifications/profil
-- ✅ Mode "Lite" (économie de données)
-- ✅ Sélecteur de langue (FR/MG/ENG)
-- ✅ Authentification simulée (démo rapide)
-- ✅ Recherche avec suggestions
-- ✅ Filtres avancés (type, budget, services, règles)
-- ✅ Vue carte + vue liste
-- ✅ Fiches annonces détaillées
-- ✅ Formulaire dépôt en 5 étapes
-- ✅ Suivi candidatures
-- ✅ Back-office complet (dashboard, file d'annonces, membres, stats)
-- ✅ Modèle partenaires avec niveaux Diamant/Or/Argent/Bronze
+## Démarrage local
+```bash
+npm install
+npm run dev        # serveur de développement (Vite)
+npm run build      # build de production dans dist/
+npm run preview    # prévisualiser le build de production
+```
+
+## Déploiement
+Projet buildé en site statique (SPA), déployable sur **Cloudflare Pages** :
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name sarintany-coloc
+```
+
+## Prochaines étapes possibles
+- Connecter un vrai backend (Cloudflare D1 pour les annonces/utilisateurs/paiements).
+- Authentification réelle (sessions, JWT).
+- Upload de photos réel (Cloudflare R2).
+- Recherche/filtrage côté serveur, pagination.
