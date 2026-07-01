@@ -28,7 +28,7 @@ Plateforme de colocation à Madagascar, convertie en **React + Vite + TailwindCS
 
 ## Démarrage
 
-```bash
+```bashfddf
 npm install
 npm run dev       # Dev server (Vite HMR)
 npm run build     # Build production
