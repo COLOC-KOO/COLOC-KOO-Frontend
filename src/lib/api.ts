@@ -18,6 +18,12 @@ export interface AuthUser {
   roleLabel: Poste
   telephone?: string
   profession?: string
+  bio?: string | null
+  profilePicture?: string | null
+  dateNaissance?: string | null
+  age?: number | null
+  villeActuelle?: string | null
+  villeOrigine?: string | null
   createdAt?: string
 }
 
@@ -48,6 +54,25 @@ export interface ApiAnnonce {
   photos: string[]
   date_creation: string
   date_publication?: string
+}
+
+export interface ApiCandidature {
+  id_candidature: number
+  id_utilisateur: number
+  id_annonce: number
+  message: string | null
+  statut: string
+  date_creation: string
+  titre?: string
+  quartier?: string
+  prix_looyer?: number | null
+}
+
+export interface CreateCandidaturePayload {
+  id_annonce: number | string
+  message?: string
+  statut?: string
+  membres?: Array<Record<string, unknown>>
 }
 
 export interface Ville {
@@ -123,6 +148,26 @@ export const api = {
   me() {
     return request<AuthUser>('/auth/me')
   },
+  updateMe(payload: Record<string, unknown>) {
+    return request<AuthUser>('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
+  changePassword(payload: { mot_de_passe_actuel: string; nouveau_mot_de_passe: string }) {
+    return request<{ message: string }>('/auth/me/password', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
+  notifications() {
+    return request<Array<{ id_notification: number; titre: string; texte: string; est_lue: number; type_notification: string; date_creation: string; lien: string | null }>>('/notifications')
+  },
+  markNotificationsRead() {
+    return request<{ message: string }>('/notifications/read-all', {
+      method: 'PATCH',
+    })
+  },
   villes() {
     return request<Ville[]>('/meta/villes')
   },
@@ -157,6 +202,15 @@ export const api = {
   },
   deleteAnnonce(id: string | number) {
     return request<{ message: string }>(`/annonces/${id}`, { method: 'DELETE' })
+  },
+  candidatures() {
+    return request<ApiCandidature[]>('/candidatures')
+  },
+  createCandidature(payload: CreateCandidaturePayload) {
+    return request<ApiCandidature>('/candidatures', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
   },
 }
 

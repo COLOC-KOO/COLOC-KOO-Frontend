@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, BedDouble, Calendar, Check, Heart, MapPin, Share2, Shield, Users } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { annonceToListing, api } from '../lib/api'
+import { useAuth } from '../lib/auth'
 import { Listing } from '../types'
 import { formatAr } from '../lib/utils'
 import NotFound from './NotFound'
@@ -24,9 +25,14 @@ function StatItem({ icon, value, label }: { icon: React.ReactNode; value: string
 
 export default function AnnonceDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [listing, setListing] = useState<Listing | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [message, setMessage] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   useEffect(() => {
     if (!id) return
@@ -42,6 +48,30 @@ export default function AnnonceDetail() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
   }, [id])
+
+  const handleApply = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!id) return
+    if (!user) {
+      navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
+      return
+    }
+
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      await api.createCandidature({
+        id_annonce: Number(id),
+        message: message.trim() || undefined,
+        statut: 'en_attente',
+      })
+      navigate('/candidatures')
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Impossible d’envoyer la candidature.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -119,11 +149,33 @@ export default function AnnonceDetail() {
               <div className="text-sm text-muted-foreground">/ mois</div>
             </div>
             <div className="mt-5 space-y-2">
-              <Link to="/candidatures">
-                <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11">
-                  Postuler a cette coloc
-                </Button>
-              </Link>
+              {user ? (
+                <div className="rounded-xl border border-brand-cyan/20 bg-brand-cyan-light/50 p-3 text-sm">
+                  <div className="font-semibold text-brand-cyan-dark">Connecté en tant que {user.prenom || user.name || user.email}</div>
+                  <div className="text-muted-foreground mt-1">Tu peux envoyer ta candidature directement depuis cette page.</div>
+                </div>
+              ) : null}
+              {user ? (
+                <form onSubmit={handleApply} className="space-y-2">
+                  <textarea
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    rows={4}
+                    placeholder="Présentez-vous et ajoutez un message pour le propriétaire..."
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
+                  />
+                  <Button type="submit" className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11" disabled={submitting}>
+                    {submitting ? 'Envoi en cours...' : 'Postuler a cette coloc'}
+                  </Button>
+                  {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
+                </form>
+              ) : (
+                <Link to={`/auth?mode=signin&redirect=/annonces/${id}`}>
+                  <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11">
+                    Se connecter pour postuler
+                  </Button>
+                </Link>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" size="sm">
                   <Heart className="w-4 h-4" /> Sauver
