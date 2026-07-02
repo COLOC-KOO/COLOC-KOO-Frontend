@@ -19,6 +19,14 @@ import AdminPartenaires from './pages/admin/AdminPartenaires'
 import AdminPaiements from './pages/admin/AdminPaiements'
 import AdminMessages from './pages/admin/AdminMessages'
 import AdminParametres from './pages/admin/AdminParametres'
+import AdminSignalements from './pages/admin/AdminSignalement'
+import AdminJournalActions from './pages/admin/AdminJournalActions'
+import AdminVersements from './pages/admin/AdminVersement'
+import AdminEquipeObjectifs from './pages/admin/AdminequipeObjectif'
+import AdminConfiguration from './pages/admin/AdminConfiguration'
+import AdminPerformance from './pages/admin/AdminPerformance'
+import AdminStatistiquesColocation from './pages/admin/AdminStatistiqueColoc'
+import AdminTechnique from './pages/admin/AdminTechnique'
 
 export default function App() {
   return (
@@ -43,7 +51,14 @@ export default function App() {
       <Route path="/admin/paiements" element={<AdminPaiements />} />
       <Route path="/admin/messages" element={<AdminMessages />} />
       <Route path="/admin/parametres" element={<AdminParametres />} />
-
+      <Route path="/admin/signalements-conversations" element={<AdminSignalements />} />
+      <Route path="/admin/journal-actions" element={<AdminJournalActions />} />
+      <Route path="/admin/versements" element={<AdminVersements />} />
+      <Route path="/admin/equipe-objectifs" element={<AdminEquipeObjectifs />} />
+        <Route path="/admin/configuration" element={<AdminConfiguration />} />
+         <Route path="/admin/performances" element={<AdminPerformance/>} />
+          <Route path="/admin/statistiques-colocation" element={<AdminStatistiquesColocation/>} />
+               <Route path="/admin/technique" element={<AdminTechnique/>} />
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>

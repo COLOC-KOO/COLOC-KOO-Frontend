@@ -76,8 +76,8 @@ const navItems: NavSection[] = [
         description: 'Conversations signalées'
       },
       { 
-        to: '/admin/comptes', 
-        label: 'Comptes', 
+        to: '/admin/utilisateurs', 
+        label: 'Utilisateurs', 
         icon: Users, 
         minRole: 1,
         description: 'Gestion des utilisateurs'
@@ -159,7 +159,7 @@ const navItems: NavSection[] = [
         description: 'Paramètres globaux'
       },
       { 
-        to: '/admin/performance', 
+        to: '/admin/performances', 
         label: 'Performance', 
         icon: Activity, 
         minRole: 3,
