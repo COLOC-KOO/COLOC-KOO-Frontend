@@ -214,8 +214,21 @@ export const api = {
   },
 }
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+
+function normalizePhotos(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value.split('||').map((item) => item.trim()).filter(Boolean)
+  }
+  return []
+}
+
 export function annonceToListing(a: ApiAnnonce): Listing {
-  const image = a.photos[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+  const photos = normalizePhotos(a.photos)
+  const image = photos[0] || FALLBACK_IMAGE
   const price = Number(a.chambre?.prix_loyer || 0)
   return {
     id: String(a.id),
@@ -231,7 +244,7 @@ export function annonceToListing(a: ApiAnnonce): Listing {
     available: String(a.chambre?.date_disponibilite || '').slice(0, 10),
     type: a.type_propriete === 'maison' ? 'maison' : a.type_propriete === 'appartement' ? 'appartement' : 'chambre',
     image,
-    gallery: a.photos.length ? a.photos : [image],
+    gallery: photos.length ? photos : [image],
     description: a.description || '',
     amenities: a.services,
     colocs: [],
