@@ -2,8 +2,6 @@ import React, { useState, useMemo } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import {
   Search,
-  Filter,
-  Calendar,
   ChevronDown,
   ChevronUp,
   Banknote,
@@ -12,23 +10,14 @@ import {
   AlertCircle,
   Clock,
   Eye,
-  Download,
   RefreshCw,
-  Users,
-  Building2,
   Wallet,
-  CreditCard,
   Smartphone,
   Landmark,
   ArrowUpDown,
-  FileText,
-  Printer,
-  Mail,
   TrendingUp,
   TrendingDown,
-  DollarSign,
-  PieChart,
-  BarChart3
+  DollarSign
 } from 'lucide-react'
 
 // Types
@@ -264,7 +253,7 @@ const VersementDetails = ({
 }: { 
   versement: Versement
   onClose: () => void
-  onValidate: (id: string, statut: 'conforme' | 'non-conforme', commentaire?: string) => void
+  onValidate: (id: string, statut: 'conforme' | 'non-conforme' | 'a-verifier', commentaire?: string) => void
 }) => {
   const [commentaire, setCommentaire] = useState(versement.commentaire || '')
 

@@ -2,10 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import {
   UserPlus,
-  UserMinus,
-  UserCog,
   Users,
-  Target,
   CheckCircle,
   XCircle,
   Clock,
@@ -18,19 +15,15 @@ import {
   TrendingDown,
   Calendar,
   Search,
-  Filter,
   ChevronDown,
   ChevronUp,
-  Mail,
-  Phone,
   Shield,
   Star,
-  BarChart3,
-  PieChart,
   UserCheck,
   UserX,
   Crown,
-  ArrowUpDown
+  ArrowUpDown,
+  Info
 } from 'lucide-react'
 
 // Types
@@ -50,11 +43,23 @@ interface Membre {
   dernierConnexion?: string
   performance: {
     tauxValidation: number
-    tempsMoyen: number // en minutes
+    tempsMoyen: number
     annoncesTraitees: number
     signalementsTraites: number
   }
   badges: string[]
+}
+
+// Type pour le formulaire d'ajout/modification
+type MembreFormData = {
+  nom: string
+  email: string
+  telephone: string
+  role: Membre['role']
+  objectifJournalier: number
+  objectifMensuel: number
+  dateArrivee: string
+  statut: Membre['statut']
 }
 
 // Données mockées
@@ -208,9 +213,9 @@ const MembreModal = ({
 }: { 
   membre?: Membre
   onClose: () => void
-  onSave: (membre: Omit<Membre, 'id' | 'performance' | 'badges'>) => void
+  onSave: (membre: MembreFormData) => void
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<MembreFormData>({
     nom: membre?.nom || '',
     email: membre?.email || '',
     telephone: membre?.telephone || '',
@@ -355,7 +360,6 @@ export default function AdminEquipeObjectifs() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterRole, setFilterRole] = useState<string>('tous')
   const [filterStatut, setFilterStatut] = useState<string>('tous')
-  const [selectedMembre, setSelectedMembre] = useState<Membre | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingMembre, setEditingMembre] = useState<Membre | null>(null)
   const [sortField, setSortField] = useState<keyof Membre>('nom')
@@ -379,7 +383,6 @@ export default function AdminEquipeObjectifs() {
   const filteredMembres = useMemo(() => {
     let filtered = membres
 
-    // Filtre par recherche
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(m =>
@@ -389,23 +392,19 @@ export default function AdminEquipeObjectifs() {
       )
     }
 
-    // Filtre par rôle
     if (filterRole !== 'tous') {
       filtered = filtered.filter(m => m.role === filterRole)
     }
 
-    // Filtre par statut
     if (filterStatut !== 'tous') {
       filtered = filtered.filter(m => m.statut === filterStatut)
     }
 
-    // Tri
     filtered = filtered.sort((a, b) => {
       let aVal: any = a[sortField]
       let bVal: any = b[sortField]
       
       if (sortField === 'performance') {
-        // Pour la performance, on trie par taux de validation
         aVal = a.performance.tauxValidation
         bVal = b.performance.tauxValidation
       }
@@ -464,20 +463,20 @@ export default function AdminEquipeObjectifs() {
   }
 
   // Ajouter un membre
-  const handleAddMembre = (data: Omit<Membre, 'id' | 'performance' | 'badges'>) => {
+  const handleAddMembre = (data: MembreFormData) => {
     const newMembre: Membre = {
       id: `M-${String(membres.length + 1).padStart(3, '0')}`,
       ...data,
+      realiseAujourdhui: 0,
+      realiseMois: 0,
+      dernierConnexion: new Date().toISOString(),
       performance: {
         tauxValidation: 0,
         tempsMoyen: 0,
         annoncesTraitees: 0,
         signalementsTraites: 0
       },
-      badges: [],
-      realiseAujourdhui: 0,
-      realiseMois: 0,
-      dernierConnexion: new Date().toISOString()
+      badges: []
     }
     setMembres([...membres, newMembre])
     setSuccessMessage(`${newMembre.nom} a été ajouté avec succès`)
@@ -485,7 +484,7 @@ export default function AdminEquipeObjectifs() {
   }
 
   // Modifier un membre
-  const handleEditMembre = (data: Omit<Membre, 'id' | 'performance' | 'badges'>) => {
+  const handleEditMembre = (data: MembreFormData) => {
     if (!editingMembre) return
     const index = membres.findIndex(m => m.id === editingMembre.id)
     if (index === -1) return
@@ -493,7 +492,14 @@ export default function AdminEquipeObjectifs() {
     const updatedMembres = [...membres]
     updatedMembres[index] = {
       ...updatedMembres[index],
-      ...data
+      nom: data.nom,
+      email: data.email,
+      telephone: data.telephone,
+      role: data.role,
+      objectifJournalier: data.objectifJournalier,
+      objectifMensuel: data.objectifMensuel,
+      dateArrivee: data.dateArrivee,
+      statut: data.statut
     }
     setMembres(updatedMembres)
     setEditingMembre(null)
@@ -603,7 +609,6 @@ export default function AdminEquipeObjectifs() {
         <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
           <div className="p-4 border-b border-white/10">
             <div className="flex flex-col sm:flex-row gap-3">
-              {/* Recherche */}
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
                 <Search className="w-4 h-4 text-white/40" />
                 <input
@@ -622,7 +627,6 @@ export default function AdminEquipeObjectifs() {
                 )}
               </div>
 
-              {/* Filtres */}
               <div className="flex gap-2 flex-wrap ml-auto">
                 <select
                   value={filterRole}
@@ -830,7 +834,6 @@ export default function AdminEquipeObjectifs() {
                   const progress = getObjectifProgress(m)
                   return (
                     <div key={m.id} className="bg-[oklch(0.24_0.005_260)] border border-white/10 rounded-xl p-4 hover:border-white/20 transition">
-                      {/* En-tête carte */}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-[oklch(0.15_0_0)] text-lg font-bold flex-shrink-0">
@@ -847,7 +850,6 @@ export default function AdminEquipeObjectifs() {
                         </div>
                       </div>
 
-                      {/* Objectif */}
                       <div className="bg-white/5 rounded-lg p-3 mb-3">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-white/60">Objectif aujourd'hui</span>
@@ -867,7 +869,6 @@ export default function AdminEquipeObjectifs() {
                         </div>
                       </div>
 
-                      {/* Performance */}
                       <div className="grid grid-cols-3 gap-2 text-center text-xs">
                         <div className="bg-white/5 rounded-lg p-2">
                           <div className="text-white/40">Validation</div>
@@ -889,7 +890,6 @@ export default function AdminEquipeObjectifs() {
                         </div>
                       </div>
 
-                      {/* Badges */}
                       {m.badges.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-3">
                           {m.badges.map((badge, i) => (
@@ -901,7 +901,6 @@ export default function AdminEquipeObjectifs() {
                         </div>
                       )}
 
-                      {/* Actions */}
                       <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
                         <button 
                           onClick={() => setEditingMembre(m)}
@@ -926,7 +925,6 @@ export default function AdminEquipeObjectifs() {
             </div>
           )}
 
-          {/* Pied de tableau */}
           <div className="p-4 border-t border-white/10 flex flex-wrap items-center gap-4 text-xs text-white/40">
             <span>Total: {filteredMembres.length} membres</span>
             <span>·</span>
@@ -940,7 +938,6 @@ export default function AdminEquipeObjectifs() {
         </div>
       </div>
 
-      {/* Modale d'ajout */}
       {showAddModal && (
         <MembreModal 
           onClose={() => setShowAddModal(false)}
@@ -948,7 +945,6 @@ export default function AdminEquipeObjectifs() {
         />
       )}
 
-      {/* Modale d'édition */}
       {editingMembre && (
         <MembreModal 
           membre={editingMembre}

@@ -5,62 +5,22 @@ import {
   Globe,
   Flag,
   Shield,
-  Lock,
-  Unlock,
-  Eye,
-  EyeOff,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Clock,
   Edit,
   Save,
   RefreshCw,
   Search,
-  Filter,
   ChevronDown,
   ChevronUp,
-  Plus,
-  Trash2,
-  Copy,
-  Download,
-  Upload,
   Database,
-  Server,
-  Cloud,
-  Wifi,
-  Smartphone,
-  Monitor,
-  Tablet,
   Languages,
   DollarSign,
-  Percent,
-  Calendar,
   Users,
   Building2,
-  Mail,
-  Bell,
-  Zap,
-  ShieldCheck,
-  Key,
-  Fingerprint,
-  QrCode,
-  Scan,
-  AlertTriangle,
   Info,
-  HelpCircle,
-  ChevronRight,
-  ToggleLeft,
-  ToggleRight,
-  Moon,
-  Sun,
-  Palette,
   Sliders,
-  Gauge,
-  Activity,
-  Cpu,
-  HardDrive,
-  Network,
   ArrowUpDown
 } from 'lucide-react'
 
@@ -70,7 +30,7 @@ interface FlagConfig {
   name: string
   description: string
   enabled: boolean
-  category: 'général' | 'paiement' | 'internationalisation' | 'modération'
+  category: 'général' | 'paiement' | 'internationalisation' | 'modération' | 'partenaire'
   lastModified?: string
 }
 
@@ -524,7 +484,7 @@ export default function AdminConfiguration() {
 
   // Obtenir l'icône de catégorie
   const getCategoryIcon = (category: string) => {
-    const icons = {
+    const icons: Record<string, React.ComponentType<{ className?: string }>> = {
       'général': Globe,
       'paiement': DollarSign,
       'internationalisation': Languages,
@@ -533,13 +493,13 @@ export default function AdminConfiguration() {
       'colocation': Users,
       'partenaire': Building2
     }
-    const Icon = icons[category as keyof typeof icons] || Info
+    const Icon = icons[category] || Info
     return <Icon className="w-3 h-3" />
   }
 
   // Obtenir la couleur de catégorie
   const getCategoryColor = (category: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       'général': 'text-blue-400',
       'paiement': 'text-green-400',
       'internationalisation': 'text-purple-400',
@@ -548,12 +508,12 @@ export default function AdminConfiguration() {
       'colocation': 'text-cyan-400',
       'partenaire': 'text-pink-400'
     }
-    return colors[category as keyof typeof colors] || 'text-white/40'
+    return colors[category] || 'text-white/40'
   }
 
   // Traduire les catégories
   const translateCategory = (category: string) => {
-    const translations = {
+    const translations: Record<string, string> = {
       'général': 'Général',
       'paiement': 'Paiement',
       'internationalisation': 'Internationalisation',
@@ -562,7 +522,7 @@ export default function AdminConfiguration() {
       'colocation': 'Colocation',
       'partenaire': 'Partenaire'
     }
-    return translations[category as keyof typeof translations] || category
+    return translations[category] || category
   }
 
   return (
