@@ -27,6 +27,9 @@ import AdminConfiguration from './pages/admin/AdminConfiguration'
 import AdminPerformance from './pages/admin/AdminPerformance'
 import AdminStatistiquesColocation from './pages/admin/AdminStatistiqueColoc'
 import AdminTechnique from './pages/admin/AdminTechnique'
+import AdminSuiviMissions from './pages/admin/AdminsuiviMission'
+import AdminServicesColockoo from './pages/admin/AdminServicecoloc'
+import AdminContratsEDL from './pages/admin/AdminContrat'
 
 export default function App() {
   return (
@@ -55,10 +58,13 @@ export default function App() {
       <Route path="/admin/journal-actions" element={<AdminJournalActions />} />
       <Route path="/admin/versements" element={<AdminVersements />} />
       <Route path="/admin/equipe-objectifs" element={<AdminEquipeObjectifs />} />
-        <Route path="/admin/configuration" element={<AdminConfiguration />} />
-         <Route path="/admin/performances" element={<AdminPerformance/>} />
-          <Route path="/admin/statistiques-colocation" element={<AdminStatistiquesColocation/>} />
-               <Route path="/admin/technique" element={<AdminTechnique/>} />
+      <Route path="/admin/configuration" element={<AdminConfiguration />} />
+      <Route path="/admin/performances" element={<AdminPerformance />} />
+      <Route path="/admin/statistiques-colocation" element={<AdminStatistiquesColocation />} />
+      <Route path="/admin/technique" element={<AdminTechnique />} />
+      <Route path="/admin/suivi-missions" element={<AdminSuiviMissions />} />
+      <Route path="/admin/services-colockoo" element={<AdminServicesColockoo />} />
+      <Route path="/admin/contrats-edl" element={<AdminContratsEDL />} />
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
