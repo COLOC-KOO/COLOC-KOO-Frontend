@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import Home from './pages/Home'
 import Annonces from './pages/Annonces'
 import AnnonceDetail from './pages/AnnonceDetail'
@@ -30,6 +30,14 @@ import AdminTechnique from './pages/admin/AdminTechnique'
 import AdminSuiviMissions from './pages/admin/AdminsuiviMission'
 import AdminServicesColockoo from './pages/admin/AdminServicecoloc'
 import AdminContratsEDL from './pages/admin/AdminContrat'
+import { useAuth } from './lib/auth'
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { loading, isAdmin } = useAuth()
+  if (loading) return <div className="min-h-screen grid place-items-center">Chargement...</div>
+  if (!isAdmin) return <Navigate to="/auth?mode=signin&redirect=/admin" replace />
+  return <>{children}</>
+}
 
 export default function App() {
   return (
@@ -46,25 +54,25 @@ export default function App() {
       <Route path="/candidatures" element={<Candidatures />} />
 
       {/* Back-office admin */}
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/admin/annonces" element={<AdminAnnonces />} />
-      <Route path="/admin/candidatures" element={<AdminCandidatures />} />
-      <Route path="/admin/utilisateurs" element={<AdminUtilisateurs />} />
-      <Route path="/admin/partenaires" element={<AdminPartenaires />} />
-      <Route path="/admin/paiements" element={<AdminPaiements />} />
-      <Route path="/admin/messages" element={<AdminMessages />} />
-      <Route path="/admin/parametres" element={<AdminParametres />} />
-      <Route path="/admin/signalements-conversations" element={<AdminSignalements />} />
-      <Route path="/admin/journal-actions" element={<AdminJournalActions />} />
-      <Route path="/admin/versements" element={<AdminVersements />} />
-      <Route path="/admin/equipe-objectifs" element={<AdminEquipeObjectifs />} />
-      <Route path="/admin/configuration" element={<AdminConfiguration />} />
-      <Route path="/admin/performances" element={<AdminPerformance />} />
-      <Route path="/admin/statistiques-colocation" element={<AdminStatistiquesColocation />} />
-      <Route path="/admin/technique" element={<AdminTechnique />} />
-      <Route path="/admin/suivi-missions" element={<AdminSuiviMissions />} />
-      <Route path="/admin/services-colockoo" element={<AdminServicesColockoo />} />
-      <Route path="/admin/contrats-edl" element={<AdminContratsEDL />} />
+      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/admin/annonces" element={<AdminRoute><AdminAnnonces /></AdminRoute>} />
+      <Route path="/admin/candidatures" element={<AdminRoute><AdminCandidatures /></AdminRoute>} />
+      <Route path="/admin/utilisateurs" element={<AdminRoute><AdminUtilisateurs /></AdminRoute>} />
+      <Route path="/admin/partenaires" element={<AdminRoute><AdminPartenaires /></AdminRoute>} />
+      <Route path="/admin/paiements" element={<AdminRoute><AdminPaiements /></AdminRoute>} />
+      <Route path="/admin/messages" element={<AdminRoute><AdminMessages /></AdminRoute>} />
+      <Route path="/admin/parametres" element={<AdminRoute><AdminParametres /></AdminRoute>} />
+      <Route path="/admin/signalements-conversations" element={<AdminRoute><AdminSignalements /></AdminRoute>} />
+      <Route path="/admin/journal-actions" element={<AdminRoute><AdminJournalActions /></AdminRoute>} />
+      <Route path="/admin/versements" element={<AdminRoute><AdminVersements /></AdminRoute>} />
+      <Route path="/admin/equipe-objectifs" element={<AdminRoute><AdminEquipeObjectifs /></AdminRoute>} />
+      <Route path="/admin/configuration" element={<AdminRoute><AdminConfiguration /></AdminRoute>} />
+      <Route path="/admin/performances" element={<AdminRoute><AdminPerformance /></AdminRoute>} />
+      <Route path="/admin/statistiques-colocation" element={<AdminRoute><AdminStatistiquesColocation /></AdminRoute>} />
+      <Route path="/admin/technique" element={<AdminRoute><AdminTechnique /></AdminRoute>} />
+      <Route path="/admin/suivi-missions" element={<AdminRoute><AdminSuiviMissions /></AdminRoute>} />
+      <Route path="/admin/services-colockoo" element={<AdminRoute><AdminServicesColockoo /></AdminRoute>} />
+      <Route path="/admin/contrats-edl" element={<AdminRoute><AdminContratsEDL /></AdminRoute>} />
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>

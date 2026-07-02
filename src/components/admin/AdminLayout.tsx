@@ -28,6 +28,7 @@ import {
   Code
 } from 'lucide-react'
 import { Logo } from '../Logo'
+import { roleLevel, useAuth } from '../../lib/auth'
 
 // Interface pour les éléments de navigation
 interface NavItem {
@@ -184,20 +185,14 @@ const navItems: NavSection[] = [
 ]
 
 // Données simulées pour le header
-const mockUser = {
-  name: 'Hanta R.',
-  role: 'Modérateur',
-  roleLevel: 1,
-  avatar: 'H'
-}
-
 interface AdminLayoutProps {
   children: React.ReactNode
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [viewRole, setViewRole] = useState(1) // 1: Modérateur, 2: Admin, 3: Super admin
+  const { user, logout } = useAuth()
+  const viewRole = roleLevel(user?.poste)
   const location = useLocation()
 
   // Filtrer les éléments de navigation selon le rôle
@@ -223,30 +218,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[oklch(0.18_0.005_260)] text-white/90">
-      {/* Barre de démonstration / rôle - comme dans la maquette */}
       <div className="bg-black border-b border-white/10 px-4 py-2 flex items-center gap-4 flex-wrap text-xs sticky top-0 z-50">
-        <span className="font-bold text-brand-olive tracking-wider">DÉMO — rôle :</span>
-        <div className="flex gap-1">
-          {[
-            { value: 1, label: 'Modérateur' },
-            { value: 2, label: 'Admin' },
-            { value: 3, label: 'Super admin' }
-          ].map((r) => (
-            <button
-              key={r.value}
-              onClick={() => setViewRole(r.value)}
-              className={`px-3 py-1 rounded border text-[11px] uppercase tracking-wider font-semibold transition ${
-                viewRole === r.value
-                  ? 'bg-brand-cyan border-brand-cyan text-[oklch(0.15_0_0)]'
-                  : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <span className="font-bold text-brand-olive tracking-wider">BACK-OFFICE</span>
+        <span className="px-3 py-1 rounded border text-[11px] uppercase tracking-wider font-semibold bg-brand-cyan border-brand-cyan text-[oklch(0.15_0_0)]">
+          {user?.poste || 'admin'}
+        </span>
         <span className="ml-auto text-white/50">
-          Connecté : <b className="text-white">{mockUser.name}</b> · <span>{mockUser.role}</span>
+          Connecte : <b className="text-white">{user?.name}</b>
         </span>
         <Link to="/" className="text-white/60 hover:text-white transition">
           ← Retour site public
@@ -315,10 +293,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {/* Footer sidebar - comme dans la maquette */}
           <div className="p-3 border-t border-white/10">
             <button 
-              onClick={() => console.log('Déconnexion')}
+              onClick={logout}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-white w-full transition"
             >
-              <LogOut className="w-4 h-4" /> Déconnexion
+              <LogOut className="w-4 h-4" /> Deconnexion
             </button>
           </div>
         </aside>
@@ -359,7 +337,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
             {/* Avatar - comme dans la maquette */}
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-[oklch(0.15_0_0)] text-sm font-bold flex-shrink-0">
-              {mockUser.avatar}
+              {user?.initials || 'A'}
             </div>
           </header>
 
