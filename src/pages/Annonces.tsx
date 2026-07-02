@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { MapPin, SlidersHorizontal } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { ListingCard } from '../components/site/ListingCard'
 import { api, annonceToListing, Ville } from '../lib/api'
@@ -8,13 +9,28 @@ import { Listing } from '../types'
 const typeOptions = ['', 'chambre', 'appartement', 'maison']
 
 export default function Annonces() {
+  const location = useLocation()
   const [city, setCity] = useState('')
   const [type, setType] = useState('')
   const [maxPrice, setMaxPrice] = useState(0)
+  const [query, setQuery] = useState('')
   const [listings, setListings] = useState<Listing[]>([])
   const [villes, setVilles] = useState<Ville[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const urlQuery = params.get('q') || ''
+    const urlType = params.get('type') || ''
+    const urlCity = params.get('ville') || params.get('city') || ''
+    const urlMaxPrice = Number(params.get('maxPrice') || 0)
+
+    setQuery(urlQuery)
+    setType(urlType)
+    setCity(urlCity)
+    setMaxPrice(urlMaxPrice)
+  }, [location.search])
 
   useEffect(() => {
     setLoading(true)
@@ -25,6 +41,7 @@ export default function Annonces() {
         ville: city,
         type,
         maxPrice: maxPrice || undefined,
+        q: query || undefined,
       }),
       api.villes().catch(() => []),
     ])
@@ -34,7 +51,7 @@ export default function Annonces() {
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Impossible de charger les annonces'))
       .finally(() => setLoading(false))
-  }, [city, type, maxPrice])
+  }, [city, type, maxPrice, query])
 
   const citiesList = useMemo(() => {
     const fromDb = villes.map((v) => v.nom_ville)
@@ -60,6 +77,17 @@ export default function Annonces() {
             <div className="font-semibold text-sm">Filtres</div>
           </div>
           <div className="space-y-5 text-sm">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Recherche
+              </label>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Ville, quartier, mot-clé"
+                className="input"
+              />
+            </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                 Ville
@@ -110,6 +138,7 @@ export default function Annonces() {
                 setCity('')
                 setType('')
                 setMaxPrice(0)
+                setQuery('')
               }}
               className="w-full text-xs text-brand-cyan-dark font-semibold hover:underline"
             >
