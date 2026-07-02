@@ -25,210 +25,29 @@ import {
   UserCog,
   Activity,
   BarChart,
-  Code,
-  User,
-  Building,
-  CalendarCheck,
-  FileCheck,
-  Handshake,
-  Percent,
-  Shield,
-  Smartphone,
-  Globe,
-  Clock,
-  Image,
-  DoorOpen,
-  CheckCircle,
-  AlertCircle,
-  Mail,
-  UserPlus,
-  UserMinus,
-  Eye,
-  EyeOff,
-  Award,
-  Briefcase,
-  Home,
-  MapPin,
-  Phone,
-  MailCheck,
-  UsersRound,
-  Settings2,
-  Database,
-  Server,
-  Network,
-  Cpu,
-  HardDrive,
-  Monitor,
-  Tablet,
-  Smartphone as SmartphoneIcon,
-  Wifi,
-  Battery,
-  Zap,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  CreditCard,
-  PiggyBank,
-  Receipt,
-  FileSignature,
-  Notebook,
-  Calendar,
-  Clock as ClockIcon,
-  Check,
-  X as XIcon,
-  AlertTriangle,
-  Info,
-  HelpCircle,
-  BookOpen,
-  GraduationCap,
-  Award as AwardIcon,
-  Target,
-  Flag,
-  Star,
-  Heart,
-  ThumbsUp,
-  ThumbsDown,
-  Share2,
-  Link as LinkIcon,
-  Copy,
-  Download,
-  Upload,
-  Cloud,
-  CloudOff,
-  RefreshCw,
-  RotateCw,
-  RotateCcw,
-  Lock,
-  Unlock,
-  Key,
-  Fingerprint,
-  Scan,
-  QrCode,
-  Barcode,
-  Ticket,
-  Gift,
-  Package,
-  Truck,
-  ShoppingBag,
-  ShoppingCart,
-  Store as StoreIcon,
-  Utensils,
-  Coffee,
-  Beer,
-  Wine,
-  Cake,
-  Pizza,
-  Hamburger,
-  IceCream,
-  Sun,
-  Moon,
-  CloudRain,
-  CloudSnow,
-  CloudLightning,
-  Wind,
-  Thermometer,
-  Droplets,
-  Umbrella,
-  Leaf,
-  Tree,
-  Flower,
-  Mountain,
-  Waves,
-  Flame,
-  Zap as ZapIcon,
-  BatteryCharging,
-  BatteryFull,
-  BatteryWarning,
-  BatteryMedium,
-  BatteryLow,
-  BatteryEmpty,
-  Power,
-  PowerOff,
-  PowerOn,
-  Speaker,
-  Volume,
-  Volume1,
-  Volume2,
-  VolumeX,
-  Mic,
-  MicOff,
-  Headphones,
-  Music,
-  Radio,
-  Tv,
-  Monitor as MonitorIcon,
-  Projector,
-  Film,
-  Video,
-  VideoOff,
-  Camera,
-  CameraOff,
-  Image as ImageIcon,
-  ImageOff,
-  Eye as EyeIcon,
-  EyeOff as EyeOffIcon,
-  Palette,
-  Brush,
-  Pencil,
-  Eraser,
-  Scissors,
-  Ruler,
-  Weight,
-  Scale,
-  Gavel,
-  Briefcase as BriefcaseIcon,
-  Building2 as BuildingIcon,
-  Home as HomeIcon,
-  MapPin as MapPinIcon,
-  Phone as PhoneIcon,
-  Mail as MailIcon,
-  Globe as GlobeIcon,
-  Clock as ClockIcon2,
-  Calendar as CalendarIcon,
-  Users as UsersIcon,
-  User as UserIcon,
-  UserPlus as UserPlusIcon,
-  UserMinus as UserMinusIcon,
-  UserCheck,
-  UserX,
-  UserCog as UserCogIcon,
-  Shield as ShieldIcon,
-  Award as AwardIcon2,
-  Medal,
-  Trophy,
-  Crown,
-  Star as StarIcon,
-  Heart as HeartIcon,
-  ThumbsUp as ThumbsUpIcon,
-  ThumbsDown as ThumbsDownIcon,
-  Share,
-  Link2,
-  Copy as CopyIcon,
-  Download as DownloadIcon,
-  Upload as UploadIcon,
-  Cloud as CloudIcon,
-  CloudOff as CloudOffIcon,
-  RefreshCw as RefreshCwIcon,
-  RotateCw as RotateCwIcon,
-  RotateCcw as RotateCcwIcon,
-  Lock as LockIcon,
-  Unlock as UnlockIcon,
-  Key as KeyIcon,
-  Fingerprint as FingerprintIcon,
-  Scan as ScanIcon,
-  QrCode as QrCodeIcon,
-  Barcode as BarcodeIcon,
-  Ticket as TicketIcon,
-  Gift as GiftIcon,
-  Package as PackageIcon,
-  Truck as TruckIcon,
-  ShoppingBag as ShoppingBagIcon,
-  ShoppingCart as ShoppingCartIcon
+  Code
 } from 'lucide-react'
 import { Logo } from '../Logo'
 
+// Interface pour les éléments de navigation
+interface NavItem {
+  to: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  badge?: number
+  minRole: number
+  description: string
+  exact?: boolean
+}
+
+interface NavSection {
+  section: string
+  minRole?: number
+  items: NavItem[]
+}
+
 // Tous les éléments de navigation de la maquette
-const navItems = [
+const navItems: NavSection[] = [
   {
     section: 'Modération',
     items: [
@@ -249,7 +68,7 @@ const navItems = [
         description: 'Annonces en attente de modération'
       },
       { 
-        to: '/admin/signalements', 
+        to: '/admin/signalements-conversations', 
         label: 'Signalements conversations', 
         icon: MessageCircleWarning, 
         badge: 2, 
@@ -257,7 +76,7 @@ const navItems = [
         description: 'Conversations signalées'
       },
       { 
-        to: '/admin/utilisateurs', 
+        to: '/admin/comptes', 
         label: 'Comptes', 
         icon: Users, 
         minRole: 1,
@@ -459,7 +278,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   {section.section}
                 </div>
                 {section.items.map((item) => {
-                  const active = item.exact 
+                  const isActive = item.exact 
                     ? location.pathname === item.to 
                     : location.pathname.startsWith(item.to)
                   
@@ -469,18 +288,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       to={item.to}
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition group ${
-                        active 
+                        isActive 
                           ? 'bg-brand-cyan/15 text-brand-cyan font-semibold' 
                           : 'text-white/70 hover:bg-white/5 hover:text-white'
                       }`}
                       title={item.description}
                     >
-                      <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-brand-cyan' : 'text-white/50'}`} />
+                      <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-brand-cyan' : 'text-white/50'}`} />
                       <span className="flex-1">{item.label}</span>
                       {item.badge && (
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                            active ? 'bg-brand-cyan/20 text-brand-cyan' : 'bg-brand-magenta text-white'
+                            isActive ? 'bg-brand-cyan/20 text-brand-cyan' : 'bg-brand-magenta text-white'
                           }`}
                         >
                           {item.badge}
