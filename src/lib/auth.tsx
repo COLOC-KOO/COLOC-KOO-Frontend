@@ -7,6 +7,7 @@ interface AuthContextValue {
   isAdmin: boolean
   login: (email: string, mot_de_passe: string) => Promise<AuthUser>
   register: (payload: Parameters<typeof api.register>[0]) => Promise<AuthUser>
+  updateProfile: (payload: Record<string, unknown>) => Promise<AuthUser>
   logout: () => void
 }
 
@@ -51,6 +52,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         saveSession(session.user, session.token)
         setUser(session.user)
         return session.user
+      },
+      async updateProfile(payload) {
+        const updated = await api.updateMe(payload)
+        const mergedUser: AuthUser = {
+          ...updated,
+          bio: typeof payload.bio === 'string' ? payload.bio : updated.bio ?? null,
+          profilePicture: typeof payload.profile_picture === 'string' ? payload.profile_picture : updated.profilePicture ?? null,
+          dateNaissance: typeof payload.date_naissance === 'string' ? payload.date_naissance : updated.dateNaissance ?? null,
+        }
+        saveSession(mergedUser, getToken() || '')
+        setUser(mergedUser)
+        return mergedUser
       },
       logout() {
         clearSession()

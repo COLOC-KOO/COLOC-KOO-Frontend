@@ -41,7 +41,7 @@ export interface CityInfo {
   image: string
 }
 
-export type CandidatureStatus = 'envoyee' | 'recue' | 'dossier' | 'signature' | 'conv'
+export type CandidatureStatus = 'envoyee' | 'recue' | 'dossier' | 'signature' | 'conv' | 'en_attente' | 'acceptee' | 'refusee' | 'constituee'
 
 export interface Candidature {
   id: string
