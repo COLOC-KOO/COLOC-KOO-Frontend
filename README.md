@@ -14,7 +14,7 @@ routing via `react-router-dom` (`App.tsx`, `components/`, `pages/`).
 ## Structure du code
 ```gg
 src/
-  App.tsx                 # Routing principal (react-router-dom)
+  App.tsx                 # Routing principal (react-router-dom)d
   main.tsx                # Point d'entrée React
   index.css               # Thème Tailwind + variables de couleur (oklch)
   types/                  # Types TypeScript (Listing, Candidature, AdminUser, ...)
