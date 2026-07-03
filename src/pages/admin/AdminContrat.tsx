@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
+import { api } from '../../lib/api'
 import {
   FileText,
   Search,
@@ -48,9 +49,10 @@ interface DocumentDemande {
   bien: string
   dateCreation: string
   dateDemande: string
-  statut: 'a-emettre' | 'a-planifier' | 'emis' | 'signe' | 'en-attente'
+  statut: 'a-emettre' | 'a-planifier' | 'brouillon' | 'emis' | 'envoye' | 'signe' | 'en-attente' | 'annule'
   montant: number
   parties: Partie[]
+  partiesCount?: number
   note?: string
   dateEmission?: string
   dateSignature?: string
@@ -63,6 +65,69 @@ interface Partie {
   telephone?: string
   email?: string
   comment?: string
+}
+
+interface ApiBackofficeContratRow {
+  id_contrat: number
+  reference?: string | null
+  type: 'contrat' | 'edl'
+  statut: 'a-emettre' | 'a-planifier' | 'brouillon' | 'emis' | 'envoye' | 'signe' | 'annule'
+  montant_total: number | null
+  date_creation: string
+  date_emission?: string | null
+  date_signature?: string | null
+  titre?: string | null
+  quartier?: string | null
+  nom_ville?: string | null
+  parties_count?: number
+}
+
+interface ApiBackofficeContratDetails extends ApiBackofficeContratRow {
+  parties: Array<{
+    id: number
+    id_utilisateur?: number | null
+    nom_complet?: string | null
+    role?: string | null
+    cin?: string | null
+    telephone?: string | null
+    email?: string | null
+    commentaire?: string | null
+  }>
+}
+
+function mapApiContratRow(row: ApiBackofficeContratRow): DocumentDemande {
+  const bien = [row.titre, row.quartier, row.nom_ville].filter(Boolean).join(' — ')
+  return {
+    id: String(row.id_contrat),
+    type: row.type,
+    sousType: row.type === 'contrat' ? 'Contrat de colocation' : "État des lieux",
+    bien: bien || `Contrat #${row.id_contrat}`,
+    dateCreation: row.date_creation ? new Date(row.date_creation).toLocaleDateString('fr-FR') : '',
+    dateDemande: row.date_creation ? new Date(row.date_creation).toLocaleDateString('fr-FR') : '',
+    statut: row.statut,
+    montant: Number(row.montant_total || 0),
+    parties: [],
+    partiesCount: row.parties_count || 0,
+    note: '',
+  }
+}
+
+function mapApiContratDetails(row: ApiBackofficeContratDetails): DocumentDemande {
+  const base = mapApiContratRow(row)
+  return {
+    ...base,
+    parties: row.parties.map((p) => ({
+      nom: p.nom_complet || 'Inconnu',
+      role: p.role || 'Participant',
+      cin: p.cin || '',
+      telephone: p.telephone || '',
+      email: p.email || '',
+      comment: p.commentaire || undefined,
+    })),
+    note: '',
+    dateEmission: row.date_emission ? new Date(row.date_emission).toLocaleDateString('fr-FR') : undefined,
+    dateSignature: row.date_signature ? new Date(row.date_signature).toLocaleDateString('fr-FR') : undefined,
+  }
 }
 
 // Données mockées
@@ -207,12 +272,15 @@ const MOCK_DOCUMENTS: DocumentDemande[] = [
 
 // Composant de badge de statut
 const StatusBadge = ({ statut }: { statut: DocumentDemande['statut'] }) => {
-  const config = {
+  const config: Record<DocumentDemande['statut'], { label: string; className: string; icon: typeof FileX }> = {
     'a-emettre': { label: 'À émettre', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: FileX },
     'a-planifier': { label: 'À planifier', className: 'bg-blue-500/15 text-blue-400 border-blue-500/30', icon: CalendarIcon },
     'emis': { label: 'Émis', className: 'bg-purple-500/15 text-purple-400 border-purple-500/30', icon: FileCheck },
     'signe': { label: 'Signé', className: 'bg-green-500/15 text-green-400 border-green-500/30', icon: UserCheck },
-    'en-attente': { label: 'En attente', className: 'bg-red-500/15 text-red-400 border-red-500/30', icon: Clock }
+    'en-attente': { label: 'En attente', className: 'bg-red-500/15 text-red-400 border-red-500/30', icon: Clock },
+    'brouillon': { label: 'Brouillon', className: 'bg-white/10 text-white/80 border-white/20', icon: FileText },
+    'envoye': { label: 'Envoyé', className: 'bg-sky-500/15 text-sky-300 border-sky-500/30', icon: Mail },
+    'annule': { label: 'Annulé', className: 'bg-red-500/15 text-red-300 border-red-500/30', icon: XCircle },
   }
   const { label, className, icon: Icon } = config[statut]
   
@@ -248,7 +316,7 @@ const DocumentDetailsModal = ({
 }: {
   document: DocumentDemande
   onClose: () => void
-  onUpdate: (id: string, updates: Partial<DocumentDemande>) => void
+  onUpdate: (id: string, updates: Partial<DocumentDemande>) => Promise<void>
 }) => {
   const [note, setNote] = useState(document.note || '')
 
@@ -266,8 +334,8 @@ const DocumentDetailsModal = ({
   const manquantes = getCoordonneesManquantes()
   const estComplet = manquantes.length === 0
 
-  const handleSave = () => {
-    onUpdate(document.id, { note })
+  const handleSave = async () => {
+    await onUpdate(document.id, { note })
     onClose()
   }
 
@@ -452,12 +520,14 @@ const DocumentDetailsModal = ({
 
 // Composant principal
 export default function AdminContratsEDL() {
-  const [documents, setDocuments] = useState(MOCK_DOCUMENTS)
+  const [documents, setDocuments] = useState<DocumentDemande[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<string>('tous')
   const [filterStatut, setFilterStatut] = useState<string>('tous')
   const [selectedDocument, setSelectedDocument] = useState<DocumentDemande | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
   const [sortField, setSortField] = useState<'dateCreation' | 'id' | 'montant'>('dateCreation')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
@@ -513,6 +583,10 @@ export default function AdminContratsEDL() {
     return filtered
   }, [documents, searchQuery, filterType, filterStatut, sortField, sortOrder])
 
+  useEffect(() => {
+    loadDocuments()
+  }, [])
+
   // Statistiques
   const stats = useMemo(() => {
     const total = documents.length
@@ -539,6 +613,34 @@ export default function AdminContratsEDL() {
     }
   }, [documents])
 
+  const loadDocuments = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const rows = await api.backofficeContrats()
+      setDocuments(rows.map(mapApiContratRow))
+      setSuccessMessage('Données de contrats chargées')
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de charger les contrats')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const openDocumentDetails = async (id: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const detail = await api.backofficeContratDetails(id)
+      setSelectedDocument(mapApiContratDetails(detail))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de charger le document')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Toggle de tri
   const handleSort = (field: 'dateCreation' | 'id' | 'montant') => {
     if (sortField === field) {
@@ -556,38 +658,61 @@ export default function AdminContratsEDL() {
   }
 
   // Mettre à jour un document
-  const handleUpdateDocument = (id: string, updates: Partial<DocumentDemande>) => {
+  const handleUpdateDocument = async (id: string, updates: Partial<DocumentDemande>) => {
     const index = documents.findIndex(d => d.id === id)
     if (index === -1) return
-    
+
+    const action =
+      updates.statut === 'emis' ? 'emettre' :
+      updates.statut === 'signe' ? 'signer' :
+      updates.statut === 'envoye' ? 'envoyer' :
+      undefined
+
+    if (action) {
+      try {
+        setLoading(true)
+        setError(null)
+        await api.contratAction(id, action)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Impossible de mettre à jour le statut')
+        setLoading(false)
+        return
+      }
+    }
+
     const updatedDocuments = [...documents]
-    updatedDocuments[index] = {
+    const updatedDocument = {
       ...updatedDocuments[index],
       ...updates
     }
+    updatedDocuments[index] = updatedDocument
     setDocuments(updatedDocuments)
-    
+    if (selectedDocument?.id === id) {
+      setSelectedDocument(updatedDocument)
+    }
+
     const statutLabels = {
       'a-emettre': 'À émettre',
       'a-planifier': 'À planifier',
+      'brouillon': 'Brouillon',
       'emis': 'Émis',
+      'envoye': 'Envoyé',
       'signe': 'Signé',
       'en-attente': 'En attente'
     }
-    
+
     if (updates.statut) {
       setSuccessMessage(`Document ${id} mis à jour : ${statutLabels[updates.statut as keyof typeof statutLabels]}`)
     } else {
       setSuccessMessage(`Document ${id} mis à jour avec succès`)
     }
     setTimeout(() => setSuccessMessage(null), 3000)
+    setLoading(false)
   }
 
   // Actualiser les données
   const handleRefresh = () => {
-    setDocuments(MOCK_DOCUMENTS)
-    setSuccessMessage('Données actualisées')
-    setTimeout(() => setSuccessMessage(null), 3000)
+    loadDocuments()
   }
 
   // Traduire le type
@@ -723,7 +848,7 @@ export default function AdminContratsEDL() {
                 <div 
                   key={doc.id}
                   className="p-4 hover:bg-white/5 transition cursor-pointer"
-                  onClick={() => setSelectedDocument(doc)}
+                  onClick={() => openDocumentDetails(doc.id)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                     {/* Icône */}
@@ -756,7 +881,7 @@ export default function AdminContratsEDL() {
                         </span>
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
-                          {doc.parties.length} partie(s)
+                          {doc.partiesCount ?? doc.parties?.length ?? 0} partie(s)
                         </span>
                         <span className="flex items-center gap-1 text-brand-cyan">
                           <DollarSign className="w-3 h-3" />

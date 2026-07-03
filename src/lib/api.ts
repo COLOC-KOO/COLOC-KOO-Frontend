@@ -131,6 +131,18 @@ export interface ApiServiceCkoo {
   est_actif: 0 | 1
 }
 
+export interface ApiPartenaire {
+  id_partenaire: number
+  nom: string
+  secteur: string | null
+  niveau: string | null
+  remise: string | null
+  engagement: string | null
+  logo: string | null
+  actif: 0 | 1
+  date_creation: string
+}
+
 export interface ApiBackofficeSuiviMissions {
   servicesEnCours: number
   contratsEmisMois: number
@@ -150,6 +162,35 @@ export interface ApiBackofficeSuiviMissions {
     nom: string | null
     prenom: string | null
   }>
+}
+
+export interface ApiBackofficeContratParty {
+  id: number
+  id_utilisateur?: number | null
+  nom_complet?: string | null
+  role?: string | null
+  cin?: string | null
+  telephone?: string | null
+  email?: string | null
+  commentaire?: string | null
+}
+
+export interface ApiBackofficeContrat {
+  id_contrat: number
+  reference?: string | null
+  type: 'contrat' | 'edl'
+  statut: 'a-emettre' | 'a-planifier' | 'brouillon' | 'emis' | 'envoye' | 'signe' | 'annule'
+  montant_total: number | null
+  date_creation: string
+  date_emission?: string | null
+  date_signature?: string | null
+  titre?: string | null
+  quartier?: string | null
+  nom_ville?: string | null
+}
+
+export interface ApiBackofficeContratDetails extends ApiBackofficeContrat {
+  parties: ApiBackofficeContratParty[]
 }
 
 export interface BackofficeMember extends AuthUser {
@@ -375,6 +416,37 @@ export const api = {
   deleteServiceCkoo(id: string | number) {
     return request<{ message: string }>(`/backoffice/services-ckoo/${id}`, {
       method: 'DELETE',
+    })
+  },
+  backofficePartenaires() {
+    return request<ApiPartenaire[]>('/backoffice/partenaires')
+  },
+  createPartenaire(payload: { nom: string; secteur?: string; niveau?: string; remise?: string; engagement?: string; logo?: string; actif?: 0 | 1 }) {
+    return request<{ id_partenaire: number }>('/backoffice/partenaires', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  updatePartenaire(id: string | number, payload: Partial<{ nom: string; secteur: string; niveau: string; remise: string; engagement: string; logo: string; actif: 0 | 1 }>) {
+    return request<{ message: string }>(`/backoffice/partenaires/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
+  deletePartenaire(id: string | number) {
+    return request<{ message: string }>(`/backoffice/partenaires/${id}`, {
+      method: 'DELETE',
+    })
+  },
+  backofficeContrats() {
+    return request<ApiBackofficeContrat[]>('/backoffice/contrats')
+  },
+  backofficeContratDetails(id: string | number) {
+    return request<ApiBackofficeContratDetails>(`/backoffice/contrats/${id}`)
+  },
+  contratAction(id: string | number, action: 'emettre' | 'signer' | 'envoyer') {
+    return request<{ message: string }>(`/backoffice/contrats/${id}/${action}`, {
+      method: 'POST',
     })
   },
   updateMemberStatus(id: string | number, payload: { statut: string; raison?: string; date_suspension_fin?: string | null }) {
