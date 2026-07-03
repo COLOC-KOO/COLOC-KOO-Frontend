@@ -101,6 +101,19 @@ export interface BackofficeDashboard {
   progressObjectif: number
 }
 
+export interface ApiJournalEntry {
+  id_action: number
+  id_utilisateur: number | null
+  action: string
+  cible_type: string | null
+  cible_id: number | null
+  details: string | Record<string, unknown> | null
+  date_action: string
+  nom: string | null
+  prenom: string | null
+  email: string | null
+}
+
 export interface BackofficeMember extends AuthUser {
   annoncesCount: number
   candidaturesCount: number
@@ -296,6 +309,9 @@ export const api = {
     })
     const query = search.toString()
     return request<BackofficeMember[]>(`/backoffice/membres${query ? `?${query}` : ''}`)
+  },
+  backofficeJournal() {
+    return request<ApiJournalEntry[]>('/backoffice/journal')
   },
   updateMemberStatus(id: string | number, payload: { statut: string; raison?: string; date_suspension_fin?: string | null }) {
     return request<{ message: string }>(`/backoffice/members/${id}/status`, {
