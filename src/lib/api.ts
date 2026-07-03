@@ -192,6 +192,41 @@ export const api = {
       method: 'PATCH',
     })
   },
+  messagesThreads() {
+    return request<Array<{
+      interlocuteur_id: number
+      interlocuteur_nom: string
+      interlocuteur_prenom: string
+      dernier_message: string
+      total_messages: number
+      non_lus: number
+    }>>('/messages')
+  },
+  messagesThread(userId: number | string) {
+    return request<Array<{
+      id_message: number
+      id_expediteur: number
+      id_destinataire: number
+      id_annonce: number | null
+      sujet: string | null
+      contenu: string
+      date_envoi: string
+      est_lu: number
+      message_parent: number | null
+      signalement_abus: number
+      expediteur_nom: string
+      expediteur_prenom: string
+      destinataire_nom: string
+      destinataire_prenom: string
+      annonce_titre: string | null
+    }>>(`/messages/${userId}`)
+  },
+  sendMessage(payload: { id_destinataire: number | string; id_annonce?: number | string | null; sujet?: string; contenu: string; message_parent?: number | string | null }) {
+    return request<{ id_message: number }>('/messages', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
   villes() {
     return request<Ville[]>('/meta/villes')
   },
