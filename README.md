@@ -20,7 +20,7 @@ src/
   types/                  # Types TypeScript (Listing, Candidature, AdminUser, ...)
   data/mockData.ts        # Données mock (annonces, utilisateurs, paiements, messages...)
   lib/utils.ts            # Helpers (formatAr, unsplash, cn)
-  components/
+  components/vcv
     Logo.tsx
     ui/Button.tsx, ui/Badge.tsx
     site/SiteHeader.tsx, SiteFooter.tsx, SiteLayout.tsx, ListingCard.tsx
