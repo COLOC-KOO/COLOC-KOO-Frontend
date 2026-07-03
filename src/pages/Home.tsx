@@ -12,6 +12,9 @@ import { CityInfo, Listing } from '../types'
 const heroImage =
   'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80'
 
+const CITY_CARD_FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+
 const steps = [
   {
     n: '01',
@@ -56,8 +59,19 @@ export default function Home() {
         const mapped = annonces.map(annonceToListing)
         const grouped = mapped.reduce<Record<string, CityInfo>>((acc, listing) => {
           const key = listing.city || 'Autres'
+          const listingImage = listing.image || CITY_CARD_FALLBACK_IMAGE
           if (!acc[key]) {
-            acc[key] = { name: key, count: 0, image: listing.image }
+            acc[key] = {
+              name: key,
+              count: 0,
+              image: listingImage,
+            }
+          } else if (
+            acc[key].image === CITY_CARD_FALLBACK_IMAGE &&
+            listing.image &&
+            listing.image !== CITY_CARD_FALLBACK_IMAGE
+          ) {
+            acc[key].image = listing.image
           }
           acc[key].count += 1
           return acc
@@ -71,7 +85,11 @@ export default function Home() {
         setCityCards(
           dynamicCities.length > 0
             ? dynamicCities
-            : villes.slice(0, 6).map((v) => ({ name: v.nom_ville, count: 0, image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80' }))
+            : villes.slice(0, 6).map((v) => ({
+                name: v.nom_ville,
+                count: 0,
+                image: CITY_CARD_FALLBACK_IMAGE,
+              }))
         )
       })
       .catch((err) => {
@@ -242,7 +260,7 @@ export default function Home() {
                   <MapView 
                     listings={featuredListings} 
                     onListingClick={(listing) => {
-                      navigate(`/annonce/${listing.id}`);
+                      navigate(`/annonces/${listing.id}`);
                     }}
                   />
                 </div>
