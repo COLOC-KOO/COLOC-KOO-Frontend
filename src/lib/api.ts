@@ -80,6 +80,18 @@ export interface ApiCandidature {
   statut_original?: string
 }
 
+export interface ApiPartenaire {
+  id_partenaire: number
+  nom: string
+  secteur?: string | null
+  niveau: 'Bronze' | 'Argent' | 'Or' | 'Diamant'
+  remise?: string | null
+  engagement?: string | null
+  logo?: string | null
+  actif: 0 | 1
+  date_creation: string
+}
+
 export interface CreateCandidaturePayload {
   id_annonce: number | string
   message?: string
@@ -324,6 +336,9 @@ export const api = {
   },
   langues() {
     return request<Langue[]>('/meta/langues')
+  },
+  partenaires() {
+    return request<ApiPartenaire[]>('/partenaires')
   },
   annonces(params: Record<string, string | number | undefined> = {}) {
     const search = new URLSearchParams()
