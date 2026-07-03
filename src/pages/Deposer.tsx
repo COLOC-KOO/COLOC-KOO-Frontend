@@ -93,7 +93,7 @@ export default function Deposer() {
     setSuccess('')
     setSubmitting(true)
     try {
-      await api.createAnnonce({
+      const created = await api.createAnnonce({
         titre: form.titre,
         description: form.description,
         type_bailleur: form.type_bailleur,
@@ -116,7 +116,8 @@ export default function Deposer() {
         regles: form.regles.split(',').map((item) => item.trim()).filter(Boolean),
         photos: form.photos,
       })
-      setSuccess("Annonce envoyee. Elle sera visible apres validation par l'admin.")
+
+      navigate(`/annonces/${created.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossible d'envoyer l'annonce")
     } finally {
