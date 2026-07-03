@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, MapPin, Search, Shield, Sparkles, Star, Users } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { ListingCard } from '../components/site/ListingCard'
 import { Button } from '../components/ui/Button'
-import { cities, listings } from '../data/mockData'
+import { api, annonceToListing } from '../lib/api'
+import { CityInfo, Listing } from '../types'
 
 const heroImage =
   'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80'
@@ -31,6 +32,67 @@ const steps = [
 ]
 
 export default function Home() {
+  const [featuredListings, setFeaturedListings] = useState<Listing[]>([])
+  const [cityCards, setCityCards] = useState<CityInfo[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError('')
+
+    Promise.all([
+      api.annonces({ statut: 'active' }),
+      api.villes().catch(() => []),
+    ])
+      .then(([annonces, villes]) => {
+        if (cancelled) return
+
+        const mapped = annonces.map(annonceToListing)
+        const grouped = mapped.reduce<Record<string, CityInfo>>((acc, listing) => {
+          const key = listing.city || 'Autres'
+          if (!acc[key]) {
+            acc[key] = { name: key, count: 0, image: listing.image }
+          }
+          acc[key].count += 1
+          return acc
+        }, {})
+
+        const dynamicCities = Object.values(grouped)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 6)
+
+        setFeaturedListings(mapped.slice(0, 6))
+        setCityCards(
+          dynamicCities.length > 0
+            ? dynamicCities
+            : villes.slice(0, 6).map((v) => ({ name: v.nom_ville, count: 0, image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80' }))
+        )
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Impossible de charger les annonces validées')
+          setFeaturedListings([])
+          setCityCards([])
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const summaryText = useMemo(() => {
+    if (loading) return 'Chargement...'
+    const cityLabel = cityCards.length > 1 ? 'villes' : 'ville'
+    const annonceLabel = featuredListings.length > 1 ? 'annonces' : 'annonce'
+    return `${cityCards.length} ${cityLabel} couvertes, ${featuredListings.length} ${annonceLabel} validées`
+  }, [cityCards.length, featuredListings.length, loading])
+
   return (
     <SiteLayout>
       <section className="relative">
@@ -93,7 +155,7 @@ export default function Home() {
         <div className="flex items-end justify-between mb-8">
           <div>
             <h2 className="bebas text-4xl">Explore par ville</h2>
-            <p className="text-muted-foreground mt-1">6 villes couvertes, plus de 240 annonces</p>
+            <p className="text-muted-foreground mt-1">{summaryText}</p>
           </div>
           <Link
             to="/annonces"
@@ -102,8 +164,9 @@ export default function Home() {
             Toutes les annonces <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
+        {error ? <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {cities.map((c) => (
+          {cityCards.map((c) => (
             <Link
               key={c.name}
               to="/annonces"
@@ -117,7 +180,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/80 to-transparent" />
               <div className="absolute bottom-3 left-3 right-3 text-white">
                 <div className="bebas text-xl">{c.name}</div>
-                <div className="text-xs text-white/70">{c.count} annonces</div>
+                <div className="text-xs text-white/70">{c.count} annonce{c.count > 1 ? 's' : ''}</div>
               </div>
             </Link>
           ))}
@@ -132,11 +195,19 @@ export default function Home() {
               <p className="text-muted-foreground mt-1">Sélection de la semaine, vérifiée par notre équipe</p>
             </div>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {listings.slice(0, 6).map((l) => (
-              <ListingCard key={l.id} l={l} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center text-muted-foreground py-10">Chargement des annonces validées...</div>
+          ) : featuredListings.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredListings.map((l) => (
+                <ListingCard key={l.id} l={l} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
+              Aucune annonce validée n’est disponible pour le moment.
+            </div>
+          )}
         </div>
       </section>
 

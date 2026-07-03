@@ -51,7 +51,7 @@ export default function Deposer() {
     montant_garantie: '',
     services: 'Wi-Fi, Cuisine equipee',
     regles: 'Non fumeur',
-    photos: '',
+    photos: [] as string[],
   })
 
   useEffect(() => {
@@ -63,6 +63,25 @@ export default function Deposer() {
 
   function update(name: string, value: string | number) {
     setForm((current) => ({ ...current, [name]: value }))
+  }
+
+  async function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? [])
+    if (!files.length) return
+
+    const previews = await Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
+            reader.onerror = () => reject(new Error('Impossible de lire l’image'))
+            reader.readAsDataURL(file)
+          })
+      )
+    )
+
+    setForm((current) => ({ ...current, photos: [...current.photos, ...previews.filter(Boolean)] }))
   }
 
   async function submitAnnonce() {
@@ -95,7 +114,7 @@ export default function Deposer() {
         },
         services: form.services.split(',').map((item) => item.trim()).filter(Boolean),
         regles: form.regles.split(',').map((item) => item.trim()).filter(Boolean),
-        photos: form.photos.split('\n').map((item) => item.trim()).filter(Boolean),
+        photos: form.photos,
       })
       setSuccess("Annonce envoyee. Elle sera visible apres validation par l'admin.")
     } catch (err) {
@@ -242,11 +261,18 @@ export default function Deposer() {
           {step === 4 && (
             <div>
               <h2 className="bebas text-2xl">Photos</h2>
-              <p className="text-sm text-muted-foreground mt-1">Colle une URL d'image par ligne.</p>
+              <p className="text-sm text-muted-foreground mt-1">Ajoute une ou plusieurs photos depuis ton appareil.</p>
               <div className="mt-5">
-                <Field label="URLs photos">
-                  <textarea rows={5} className="input" value={form.photos} onChange={(e) => update('photos', e.target.value)} placeholder="https://..." />
+                <Field label="Photos du bien">
+                  <input type="file" accept="image/*" multiple className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm" onChange={handlePhotoUpload} />
                 </Field>
+                {form.photos.length > 0 ? (
+                  <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
+                    {form.photos.map((photo, index) => (
+                      <img key={`${photo.slice(0, 20)}-${index}`} src={photo} alt={`Photo ${index + 1}`} className="h-28 w-full rounded-lg object-cover border border-border" />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           )}

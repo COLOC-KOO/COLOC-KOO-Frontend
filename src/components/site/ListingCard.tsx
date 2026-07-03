@@ -4,7 +4,17 @@ import { BedDouble, Check, MapPin, Users } from 'lucide-react'
 import { Listing } from '../../types'
 import { formatAr } from '../../lib/utils'
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+
 export function ListingCard({ l }: { l: Listing }) {
+  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = event.currentTarget
+    if (target.getAttribute('data-fallback-used') !== 'true') {
+      target.setAttribute('data-fallback-used', 'true')
+      target.src = FALLBACK_IMAGE
+    }
+  }
+
   return (
     <Link
       to={`/annonces/${l.id}`}
@@ -12,8 +22,9 @@ export function ListingCard({ l }: { l: Listing }) {
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <img
-          src={l.image}
+          src={l.image || FALLBACK_IMAGE}
           alt={l.title}
+          onError={handleImageError}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute top-3 left-3 flex gap-1.5">
