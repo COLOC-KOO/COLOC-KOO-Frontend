@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
-import { api, ApiAnnonce } from '../lib/api'
+import { api, ApiAnnonce, Langue } from '../lib/api'
 import { useAuth } from '../lib/auth'
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80'
@@ -35,7 +35,9 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
     dateNaissance: user?.dateNaissance || '',
     profession: user?.profession || '',
     bio: user?.bio || '',
+    languePreferee: user?.languePreferee || '',
   })
+  const [langues, setLangues] = useState<Langue[]>([])
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -48,8 +50,15 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
       dateNaissance: user?.dateNaissance || '',
       profession: user?.profession || '',
       bio: user?.bio || '',
+      languePreferee: user?.languePreferee || '',
     })
   }, [user])
+
+  useEffect(() => {
+    api.langues()
+      .then(setLangues)
+      .catch(() => setLangues([]))
+  }, [])
 
   const handleSave = async () => {
     setSaving(true)
@@ -66,6 +75,7 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
         date_naissance: birthDate,
         age,
         profession: form.profession,
+        langue_preferee: form.languePreferee ? Number(form.languePreferee) : null,
       })
       setMessage('Profil mis à jour avec succès.')
     } catch {
@@ -102,6 +112,21 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Profession</label>
           <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.profession} onChange={(e) => setForm((prev) => ({ ...prev, profession: e.target.value }))} />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Langue préférée</label>
+          <select
+            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
+            value={form.languePreferee ?? ''}
+            onChange={(e) => setForm((prev) => ({ ...prev, languePreferee: e.target.value }))}
+          >
+            <option value="">-- Choisir une langue --</option>
+            {langues.map((langue) => (
+              <option key={langue.id_langue} value={langue.id_langue}>
+                {langue.nom_langue}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="md:col-span-2">
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Biographie</label>

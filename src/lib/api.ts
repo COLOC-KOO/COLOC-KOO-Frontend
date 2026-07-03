@@ -24,9 +24,16 @@ export interface AuthUser {
   age?: number | null
   villeActuelle?: string | null
   villeOrigine?: string | null
+  languePreferee?: number | null
   verification?: boolean
   statut?: string
   createdAt?: string
+}
+
+export interface Langue {
+  id_langue: number
+  code_langue: string
+  nom_langue: string
 }
 
 export interface ApiAnnonce {
@@ -242,6 +249,9 @@ export const api = {
   },
   villes() {
     return request<Ville[]>('/meta/villes')
+  },
+  langues() {
+    return request<Langue[]>('/meta/langues')
   },
   annonces(params: Record<string, string | number | undefined> = {}) {
     const search = new URLSearchParams()
