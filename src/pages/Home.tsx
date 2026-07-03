@@ -5,7 +5,7 @@ import { SiteLayout } from '../components/site/SiteLayout'
 import { ListingCard } from '../components/site/ListingCard'
 import { Button } from '../components/ui/Button'
 import { MapView } from '../components/MapView'
-import { api, annonceToListing } from '../lib/api'
+import { api, annonceToListing, ApiPartenaire } from '../lib/api'
 import { CityInfo, Listing } from '../types'
 
 
@@ -40,6 +40,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([])
   const [cityCards, setCityCards] = useState<CityInfo[]>([])
+  const [partners, setPartners] = useState<ApiPartenaire[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list') // Nouvel état
@@ -52,8 +53,9 @@ export default function Home() {
     Promise.all([
       api.annonces({ statut: 'active' }),
       api.villes().catch(() => []),
+      api.partenaires().catch(() => []),
     ])
-      .then(([annonces, villes]) => {
+      .then(([annonces, villes, partenaires]) => {
         if (cancelled) return
 
         const mapped = annonces.map(annonceToListing)
@@ -91,12 +93,14 @@ export default function Home() {
                 image: CITY_CARD_FALLBACK_IMAGE,
               }))
         )
+        setPartners(partenaires)
       })
       .catch((err) => {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Impossible de charger les annonces validées')
           setFeaturedListings([])
           setCityCards([])
+          setPartners([])
         }
       })
       .finally(() => {
@@ -293,6 +297,46 @@ export default function Home() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-6 py-20">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <h2 className="bebas text-4xl">Partenaires officiels</h2>
+            <p className="text-muted-foreground mt-1">Découvrez les partenaires venant directement de notre base de données.</p>
+          </div>
+          <Link
+            to="/partenaires"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
+          >
+            Voir tous les partenaires <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {partners.length === 0 ? (
+          <div className="rounded-3xl border border-border bg-card p-12 text-center text-muted-foreground">
+            {loading ? 'Chargement des partenaires...' : 'Aucun partenaire disponible pour le moment.'}
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {partners.map((partner) => (
+              <div key={partner.id_partenaire} className="rounded-3xl border border-border bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-cyan-light text-brand-cyan-dark flex items-center justify-center text-xl">
+                    {partner.logo || partner.nom.charAt(0)}
+                  </div>
+                  <span className="rounded-full border border-brand-cyan/20 bg-brand-cyan-light/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-brand-cyan-dark">
+                    {partner.niveau}
+                  </span>
+                </div>
+                <div className="text-lg font-semibold">{partner.nom}</div>
+                <div className="mt-2 text-sm text-muted-foreground">{partner.secteur || 'Secteur non précisé'}</div>
+                {partner.remise ? <p className="mt-4 text-sm text-foreground">{partner.remise}</p> : null}
+                {partner.engagement ? <p className="mt-3 text-xs text-muted-foreground">{partner.engagement}</p> : null}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="max-w-6xl mx-auto px-6 pb-24">
