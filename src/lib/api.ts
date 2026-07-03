@@ -114,6 +114,37 @@ export interface ApiJournalEntry {
   email: string | null
 }
 
+export interface ApiServiceCkoo {
+  id_service: number
+  cle_service?: string | null
+  nom: string
+  description?: string | null
+  prix: number
+  unite?: string | null
+  est_actif: 0 | 1
+}
+
+export interface ApiBackofficeSuiviMissions {
+  servicesEnCours: number
+  contratsEmisMois: number
+  rendezVousAvenir: number
+  chiffreAffairesMois: number
+  demandes: Array<{
+    id_demande: number
+    id_annonce: number
+    id_utilisateur: number
+    statut: 'a-contacter' | 'en-cours' | 'valide' | 'annule'
+    historique_contact: string | null
+    synthese: string | null
+    date_rendez_vous: string | null
+    note_rendez_vous: string | null
+    date_creation: string
+    titre: string | null
+    nom: string | null
+    prenom: string | null
+  }>
+}
+
 export interface BackofficeMember extends AuthUser {
   annoncesCount: number
   candidaturesCount: number
@@ -312,6 +343,29 @@ export const api = {
   },
   backofficeJournal() {
     return request<ApiJournalEntry[]>('/backoffice/journal')
+  },
+  backofficeSuiviMissions() {
+    return request<ApiBackofficeSuiviMissions>('/backoffice/suivi-missions')
+  },
+  backofficeServicesCkoo() {
+    return request<ApiServiceCkoo[]>('/backoffice/services-ckoo')
+  },
+  createServiceCkoo(payload: { cle_service?: string; nom: string; description?: string; prix?: number; unite?: string; est_actif?: 0 | 1 }) {
+    return request<{ id_service: number }>('/backoffice/services-ckoo', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  updateServiceCkoo(id: string | number, payload: Partial<{ cle_service: string; nom: string; description: string; prix: number; unite: string; est_actif: 0 | 1 }>) {
+    return request<{ message: string }>(`/backoffice/services-ckoo/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
+  deleteServiceCkoo(id: string | number) {
+    return request<{ message: string }>(`/backoffice/services-ckoo/${id}`, {
+      method: 'DELETE',
+    })
   },
   updateMemberStatus(id: string | number, payload: { statut: string; raison?: string; date_suspension_fin?: string | null }) {
     return request<{ message: string }>(`/backoffice/members/${id}/status`, {
