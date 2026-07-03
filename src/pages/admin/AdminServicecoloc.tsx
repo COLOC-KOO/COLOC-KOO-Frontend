@@ -87,6 +87,13 @@ interface ApiServiceCkooRow {
   est_actif: 0 | 1
 }
 
+interface OffreService {
+  id: string
+  nom: string
+  prixParJour: number
+  actif: boolean
+}
+
 function mapSuiviMissionDemande(demande: ApiBackofficeSuiviMissionDemande): ServiceDemande {
   const nom = [demande.prenom, demande.nom].filter(Boolean).join(' ') || `Client #${demande.id_utilisateur}`
   return {
