@@ -184,9 +184,11 @@ export const candidatures: Candidature[] = [
 export const candidatureStatusMeta: Record<CandidatureStatus, { label: string; className: string }> = {
   envoyee: { label: 'Envoyée', className: 'bg-brand-cyan-light text-brand-cyan-dark border-brand-cyan/30' },
   recue: { label: 'Reçue', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  recu: { label: 'Reçu', className: 'bg-amber-50 text-amber-700 border-amber-200' },
   dossier: { label: 'Dossier complet', className: 'bg-brand-green-light text-brand-green-dark border-brand-green/30' },
   signature: { label: 'Signature', className: 'bg-pink-50 text-pink-700 border-pink-200' },
   conv: { label: 'Convention', className: 'bg-brand-green text-white border-brand-green' },
+  convention: { label: 'Convention', className: 'bg-brand-green text-white border-brand-green' },
   en_attente: { label: 'En attente', className: 'bg-amber-50 text-amber-700 border-amber-200' },
   acceptee: { label: 'Acceptée', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   refusee: { label: 'Refusée', className: 'bg-red-50 text-red-700 border-red-200' },
