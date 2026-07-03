@@ -30,3 +30,7 @@ npm-debug.log*
 .idea/
 *.tar.gz
 *.zip
+
+# Aider Studio (auto-added)
+REPO_MAP.md
+.aider/
