@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
+import { api, ApiJournalEntry } from '../../lib/api'
 import {
   Search,
-  Filter,
   Clock,
   User,
   CheckCircle,
@@ -11,9 +11,6 @@ import {
   Mail,
   Ban,
   Edit,
-  Eye,
-  MessageCircle,
-  Shield,
   History,
   Calendar,
   ChevronDown,
@@ -33,130 +30,6 @@ interface LogEntry {
   detail: string
   type: 'validation' | 'rejet' | 'correction' | 'suspension' | 'message' | 'auto-validation' | 'autre'
 }
-
-// Données mockées
-const MOCK_LOG: LogEntry[] = [
-  {
-    id: 'L-001',
-    timestamp: '2026-06-15T09:41:00',
-    date: '15/06/2026',
-    time: '09:41',
-    acteur: 'Hanta R.',
-    role: 'Modérateur',
-    action: 'Validation',
-    cible: 'A-2052',
-    detail: 'Annonce conforme',
-    type: 'validation'
-  },
-  {
-    id: 'L-002',
-    timestamp: '2026-06-15T09:38:00',
-    date: '15/06/2026',
-    time: '09:38',
-    acteur: 'Hanta R.',
-    role: 'Modérateur',
-    action: 'Rejet',
-    cible: 'A-2050',
-    detail: 'Logement inexistant (arnaque)',
-    type: 'rejet'
-  },
-  {
-    id: 'L-003',
-    timestamp: '2026-06-15T09:30:00',
-    date: '15/06/2026',
-    time: '09:30',
-    acteur: 'Tovo M.',
-    role: 'Modérateur',
-    action: 'Suspension',
-    cible: 'Mamy C.',
-    detail: '3e signalement fondé',
-    type: 'suspension'
-  },
-  {
-    id: 'L-004',
-    timestamp: '2026-06-15T09:22:00',
-    date: '15/06/2026',
-    time: '09:22',
-    acteur: 'Hanta R.',
-    role: 'Modérateur',
-    action: 'Correction',
-    cible: 'A-2048',
-    detail: 'Charges non communiquées',
-    type: 'correction'
-  },
-  {
-    id: 'L-005',
-    timestamp: '2026-06-15T09:15:00',
-    date: '15/06/2026',
-    time: '09:15',
-    acteur: 'Hanta R.',
-    role: 'Modérateur',
-    action: 'Message',
-    cible: 'A-2048',
-    detail: 'Modèle "Renseignements manquants"',
-    type: 'message'
-  },
-  {
-    id: 'L-006',
-    timestamp: '2026-06-15T08:45:00',
-    date: '15/06/2026',
-    time: '08:45',
-    acteur: 'Système',
-    role: 'Automatique',
-    action: 'Validation auto.',
-    cible: 'A-2035',
-    detail: 'Délai 1h écoulé sans action',
-    type: 'auto-validation'
-  },
-  {
-    id: 'L-007',
-    timestamp: '2026-06-14T16:20:00',
-    date: '14/06/2026',
-    time: '16:20',
-    acteur: 'Sata L.',
-    role: 'Admin',
-    action: 'Suspension',
-    cible: 'Partenaire BTP Vato',
-    detail: 'Non-conformité des données',
-    type: 'suspension'
-  },
-  {
-    id: 'L-008',
-    timestamp: '2026-06-14T14:10:00',
-    date: '14/06/2026',
-    time: '14:10',
-    acteur: 'Hanta R.',
-    role: 'Modérateur',
-    action: 'Validation',
-    cible: 'A-2041',
-    detail: 'Annonce conforme après correction',
-    type: 'validation'
-  },
-  {
-    id: 'L-009',
-    timestamp: '2026-06-14T11:30:00',
-    date: '14/06/2026',
-    time: '11:30',
-    acteur: 'Tovo M.',
-    role: 'Modérateur',
-    action: 'Message',
-    cible: 'Naina B.',
-    detail: 'Avertissement pour comportement',
-    type: 'message'
-  },
-  {
-    id: 'L-010',
-    timestamp: '2026-06-14T10:00:00',
-    date: '14/06/2026',
-    time: '10:00',
-    acteur: 'Système',
-    role: 'Automatique',
-    action: 'Validation auto.',
-    cible: 'A-2031',
-    detail: 'Délai 1h écoulé sans action',
-    type: 'auto-validation'
-  }
-]
 
 // Composant de badge d'action
 const ActionBadge = ({ type }: { type: LogEntry['type'] }) => {
@@ -179,14 +52,90 @@ const ActionBadge = ({ type }: { type: LogEntry['type'] }) => {
   )
 }
 
+function normalizeJournalActionType(action: string): LogEntry['type'] {
+  const normalized = String(action).toLowerCase()
+  if (normalized.includes('auto') && normalized.includes('validat')) return 'auto-validation'
+  if (normalized.includes('validat')) return 'validation'
+  if (normalized.includes('rejet')) return 'rejet'
+  if (normalized.includes('suspens')) return 'suspension'
+  if (normalized.includes('correction')) return 'correction'
+  if (normalized.includes('message')) return 'message'
+  return 'autre'
+}
+
+function formatJournalDetail(details: unknown): string {
+  if (!details) return ''
+  if (typeof details === 'string') {
+    try {
+      return formatJournalDetail(JSON.parse(details))
+    } catch {
+      return details
+    }
+  }
+  if (Array.isArray(details)) {
+    return details.join(' · ')
+  }
+  if (typeof details === 'object') {
+    return Object.entries(details)
+      .filter(([, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+      .join(' · ')
+  }
+  return String(details)
+}
+
+function normalizeJournalRow(row: ApiJournalEntry): LogEntry {
+  const date = new Date(row.date_action)
+  const dateString = isNaN(date.getTime()) ? row.date_action : date.toLocaleDateString('fr-FR')
+  const timeString = isNaN(date.getTime()) ? '' : date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const actorName = [row.prenom, row.nom].filter(Boolean).join(' ') || 'Système'
+  const cible = row.cible_type
+    ? row.cible_id != null
+      ? `${row.cible_type} ${row.cible_id}`
+      : row.cible_type
+    : '-'
+
+  return {
+    id: String(row.id_action),
+    timestamp: row.date_action,
+    date: dateString,
+    time: timeString,
+    acteur: actorName,
+    role: row.id_utilisateur ? 'Utilisateur' : 'Automatique',
+    action: row.action || 'Action',
+    cible,
+    detail: formatJournalDetail(row.details),
+    type: normalizeJournalActionType(row.action),
+  }
+}
+
 // Composant principal
 export default function AdminJournalActions() {
-  const [logs, setLogs] = useState(MOCK_LOG)
+  const [logs, setLogs] = useState<LogEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<string>('tous')
   const [filterActeur, setFilterActeur] = useState<string>('tous')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [expandedLog, setExpandedLog] = useState<string | null>(null)
+
+  const loadLogs = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const rows = await api.backofficeJournal()
+      setLogs(rows.map(normalizeJournalRow))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de charger le journal')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadLogs()
+  }, [])
 
   // Récupérer les acteurs uniques pour le filtre
   const acteurs = useMemo(() => {
@@ -202,9 +151,7 @@ export default function AdminJournalActions() {
 
   // Filtrer et trier les logs
   const filteredLogs = useMemo(() => {
-    let filtered = logs
-
-    // Filtre par recherche
+      let filtered = [...logs]
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(log =>
@@ -263,6 +210,11 @@ export default function AdminJournalActions() {
             <p className="text-white/50 text-sm">
               {stats.total} actions au total · {stats.today} aujourd'hui · {stats.validation} validations · {stats.suspension} suspensions
             </p>
+            {error && (
+              <div className="mt-3 rounded-2xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-200">
+                {error}
+              </div>
+            )}
           </div>
         </div>
 
@@ -329,7 +281,12 @@ export default function AdminJournalActions() {
 
           {/* Liste des logs */}
           <div className="divide-y divide-white/5">
-            {filteredLogs.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12 text-white/40">
+                <History className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p>Chargement des actions...</p>
+              </div>
+            ) : filteredLogs.length === 0 ? (
               <div className="text-center py-12 text-white/40">
                 <History className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p>Aucune action trouvée</p>
