@@ -24,6 +24,8 @@ export interface AuthUser {
   age?: number | null
   villeActuelle?: string | null
   villeOrigine?: string | null
+  verification?: boolean
+  statut?: string
   createdAt?: string
 }
 
@@ -63,9 +65,12 @@ export interface ApiCandidature {
   message: string | null
   statut: string
   date_creation: string
+  date_modification?: string
   titre?: string
   quartier?: string
   prix_looyer?: number | null
+  prix_loyer?: number | null
+  statut_original?: string
 }
 
 export interface CreateCandidaturePayload {
@@ -80,6 +85,25 @@ export interface Ville {
   nom_ville: string
   id_region: number
   nom_region: string
+}
+
+export interface BackofficeDashboard {
+  annoncesFile: number
+  validationsAujourdhui: number
+  signalements: number
+  membresActifs: number
+  annoncesMois: number
+  tauxValidation: number
+  candidaturesMois: number
+  contratsMois: number
+  chiffreAffairesMois: number
+  objectifJour: number
+  progressObjectif: number
+}
+
+export interface BackofficeMember extends AuthUser {
+  annoncesCount: number
+  candidaturesCount: number
 }
 
 export function getToken() {
@@ -209,6 +233,38 @@ export const api = {
   createCandidature(payload: CreateCandidaturePayload) {
     return request<ApiCandidature>('/candidatures', {
       method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  adminCandidatures() {
+    return request<ApiCandidature[]>('/candidatures/admin/all')
+  },
+  updateCandidatureStatus(id: string | number, statut: string) {
+    return request<{ message: string }>(`/candidatures/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ statut }),
+    })
+  },
+  contact(payload: { nom: string; email: string; sujet: string; message: string }) {
+    return request<{ id_message: number }>('/contact', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  backofficeDashboard() {
+    return request<BackofficeDashboard>('/backoffice/dashboard')
+  },
+  backofficeMembers(params: Record<string, string | number | undefined> = {}) {
+    const search = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') search.set(key, String(value))
+    })
+    const query = search.toString()
+    return request<BackofficeMember[]>(`/backoffice/membres${query ? `?${query}` : ''}`)
+  },
+  updateMemberStatus(id: string | number, payload: { statut: string; raison?: string; date_suspension_fin?: string | null }) {
+    return request<{ message: string }>(`/backoffice/members/${id}/status`, {
+      method: 'PATCH',
       body: JSON.stringify(payload),
     })
   },
