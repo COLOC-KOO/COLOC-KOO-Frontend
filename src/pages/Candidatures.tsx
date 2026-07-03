@@ -6,19 +6,21 @@ import { api, ApiCandidature } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { Candidature, CandidatureStatus } from '../types'
 
-const order: CandidatureStatus[] = ['en_attente', 'acceptee', 'refusee', 'constituee']
-const labels = ['En attente', 'Acceptée', 'Refusée', 'Constituée']
+const order: CandidatureStatus[] = ['envoyee', 'recu', 'dossier', 'signature', 'convention']
+const labels = ['Envoyee', 'Recue', 'Dossier', 'Signature', 'Convention']
 
 const candidatureStatusMeta: Record<CandidatureStatus, { label: string; className: string }> = {
-  envoyee: { label: 'Envoyée', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  recue: { label: 'Reçue', className: 'bg-sky-50 text-sky-700 border-sky-200' },
+  envoyee: { label: 'Envoyee', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  recue: { label: 'Recue', className: 'bg-sky-50 text-sky-700 border-sky-200' },
+  recu: { label: 'Recue', className: 'bg-sky-50 text-sky-700 border-sky-200' },
   dossier: { label: 'Dossier', className: 'bg-violet-50 text-violet-700 border-violet-200' },
   signature: { label: 'Signature', className: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
   conv: { label: 'Convention', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  convention: { label: 'Convention', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   en_attente: { label: 'En attente', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  acceptee: { label: 'Acceptée', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  refusee: { label: 'Refusée', className: 'bg-red-50 text-red-700 border-red-200' },
-  constituee: { label: 'Constituée', className: 'bg-brand-cyan-light text-brand-cyan-dark border-brand-cyan/30' },
+  acceptee: { label: 'Acceptee', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  refusee: { label: 'Refusee', className: 'bg-red-50 text-red-700 border-red-200' },
+  constituee: { label: 'Constituee', className: 'bg-brand-cyan-light text-brand-cyan-dark border-brand-cyan/30' },
 }
 
 function mapCandidature(c: ApiCandidature, userName: string): Candidature {
@@ -26,7 +28,7 @@ function mapCandidature(c: ApiCandidature, userName: string): Candidature {
     id: String(c.id_candidature),
     listing: c.titre || `Annonce #${c.id_annonce}`,
     tenant: userName,
-    status: (c.statut as CandidatureStatus) || 'en_attente',
+    status: (c.statut as CandidatureStatus) || 'envoyee',
     date: new Date(c.date_creation).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: 'short',
@@ -62,13 +64,13 @@ export default function Candidatures() {
     <SiteLayout>
       <div className="max-w-6xl mx-auto px-6 py-10">
         <h1 className="bebas text-4xl">Mes candidatures</h1>
-        <p className="text-muted-foreground mt-1">Suivi en temps réel de tes demandes de coloc.</p>
+        <p className="text-muted-foreground mt-1">Suivi en temps reel de tes demandes de coloc.</p>
 
         {authLoading ? (
           <div className="mt-8 text-muted-foreground">Chargement de votre session...</div>
         ) : !user ? (
           <div className="mt-8 rounded-2xl border border-border bg-card p-6">
-            <p className="text-sm text-muted-foreground">Connecte-toi pour voir tes candidatures et suivre leur évolution.</p>
+            <p className="text-sm text-muted-foreground">Connecte-toi pour voir tes candidatures et suivre leur evolution.</p>
             <Link to="/auth?mode=signin&redirect=/candidatures" className="mt-4 inline-flex text-sm font-semibold text-brand-cyan-dark hover:underline">
               Se connecter
             </Link>
@@ -84,14 +86,14 @@ export default function Candidatures() {
               </div>
             ) : (
               items.map((c) => {
-                const idx = order.indexOf(c.status)
-                const meta = candidatureStatusMeta[c.status] || candidatureStatusMeta.en_attente
+                const idx = Math.max(order.indexOf(c.status), 0)
+                const meta = candidatureStatusMeta[c.status] || candidatureStatusMeta.envoyee
                 return (
                   <div key={c.id} className="bg-card border border-border rounded-2xl p-6">
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div>
                         <div className="text-xs text-muted-foreground">
-                          #{c.id} · Envoyé le {c.date}
+                          #{c.id} - Envoye le {c.date}
                         </div>
                         <h3 className="font-semibold text-lg mt-1">{c.listing}</h3>
                       </div>
