@@ -143,18 +143,6 @@ export interface ApiServiceCkoo {
   est_actif: 0 | 1
 }
 
-export interface ApiPartenaire {
-  id_partenaire: number
-  nom: string
-  secteur: string | null
-  niveau: string | null
-  remise: string | null
-  engagement: string | null
-  logo: string | null
-  actif: 0 | 1
-  date_creation: string
-}
-
 export interface ApiBackofficeSuiviMissions {
   servicesEnCours: number
   contratsEmisMois: number
