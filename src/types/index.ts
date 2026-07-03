@@ -27,6 +27,9 @@ export interface Listing {
   available: string
   type: ListingType
   image: string
+  address?: string
+  latitude?: number    // <-- Ajoutez cette ligne
+  longitude?: number    // <-- Ajoutez cette ligne
   gallery: string[]
   description: string
   amenities: string[]
