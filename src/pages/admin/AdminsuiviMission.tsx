@@ -1,39 +1,25 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
+import { api } from '../../lib/api'
 import {
-  BarChart3,
-  Calendar,
   CheckCircle,
   Clock,
   FileText,
-  Users,
   Building2,
-  Wallet,
-  TrendingUp,
-  TrendingDown,
   Search,
-  Filter,
   ChevronDown,
   ChevronUp,
-  Eye,
-  Phone,
-  Mail,
   MapPin,
   Calendar as CalendarIcon,
   RefreshCw,
   ArrowUpDown,
   Info,
   Target,
-  Award,
-  Star,
   AlertCircle,
   User,
   Briefcase,
   Home,
   DollarSign,
-  Percent,
-  PieChart,
-  LineChart,
   XCircle
 } from 'lucide-react'
 
@@ -63,132 +49,6 @@ interface SousTache {
   assigne: string
   dateEcheance?: string
 }
-
-// Données mockées
-const MOCK_MISSIONS: Mission[] = [
-  {
-    id: 'M-001',
-    type: 'service',
-    titre: 'Service Coloc\'KOO - Gestion Jirama',
-    description: 'Prise en charge des relevés Jirama pour la colocation 3 ch. Analakely',
-    statut: 'en-cours',
-    priorite: 'haute',
-    dateCreation: '2026-06-10',
-    dateEcheance: '2026-06-20',
-    responsable: 'Sata L.',
-    lieu: 'Analakely',
-    montant: 26400,
-    progression: 65,
-    sousTaches: [
-      { id: 'ST-001', titre: 'Contact avec le propriétaire', statut: 'termine', assigne: 'Sata L.', dateEcheance: '2026-06-12' },
-      { id: 'ST-002', titre: 'Récupération des factures', statut: 'termine', assigne: 'Sata L.', dateEcheance: '2026-06-14' },
-      { id: 'ST-003', titre: 'Saisie des relevés', statut: 'en-cours', assigne: 'Tovo M.', dateEcheance: '2026-06-18' },
-      { id: 'ST-004', titre: 'Validation finale', statut: 'a-faire', assigne: 'Hanta R.', dateEcheance: '2026-06-20' }
-    ],
-    commentaires: 'En attente des factures pour le mois de mai'
-  },
-  {
-    id: 'M-002',
-    type: 'contrat',
-    titre: 'Émission contrat - Coloc Ivandry',
-    description: 'Contrat de colocation pour le 2 ch. Ivandry',
-    statut: 'planifie',
-    priorite: 'moyenne',
-    dateCreation: '2026-06-12',
-    dateEcheance: '2026-06-25',
-    responsable: 'Hanta R.',
-    lieu: 'Ivandry',
-    montant: 120000,
-    progression: 20,
-    sousTaches: [
-      { id: 'ST-005', titre: 'Vérification des parties', statut: 'termine', assigne: 'Hanta R.', dateEcheance: '2026-06-13' },
-      { id: 'ST-006', titre: 'Rédaction du contrat', statut: 'en-cours', assigne: 'Tovo M.', dateEcheance: '2026-06-18' },
-      { id: 'ST-007', titre: 'Signature des parties', statut: 'a-faire', assigne: 'Hanta R.', dateEcheance: '2026-06-22' },
-      { id: 'ST-008', titre: 'Envoi du document', statut: 'a-faire', assigne: 'Sata L.', dateEcheance: '2026-06-25' }
-    ],
-    commentaires: 'En attente des coordonnées du colocataire'
-  },
-  {
-    id: 'M-003',
-    type: 'edl',
-    titre: 'État des lieux - Ankorondrano',
-    description: 'EDL d\'entrée pour la colocation 4 ch. Ankorondrano',
-    statut: 'en-attente',
-    priorite: 'haute',
-    dateCreation: '2026-06-14',
-    dateEcheance: '2026-06-30',
-    responsable: 'Tovo M.',
-    lieu: 'Ankorondrano',
-    montant: 80000,
-    progression: 10,
-    sousTaches: [
-      { id: 'ST-009', titre: 'Planification de la visite', statut: 'a-faire', assigne: 'Tovo M.', dateEcheance: '2026-06-18' },
-      { id: 'ST-010', titre: 'Visite sur site', statut: 'a-faire', assigne: 'Tovo M.', dateEcheance: '2026-06-22' },
-      { id: 'ST-011', titre: 'Rédaction de l\'EDL', statut: 'a-faire', assigne: 'Hanta R.', dateEcheance: '2026-06-25' }
-    ],
-    commentaires: 'En attente de la disponibilité du propriétaire'
-  },
-  {
-    id: 'M-004',
-    type: 'partenaire',
-    titre: 'Intégration partenaire - Telma',
-    description: 'Mise en place de la campagne publicitaire Telma Madagascar',
-    statut: 'en-cours',
-    priorite: 'moyenne',
-    dateCreation: '2026-06-01',
-    dateEcheance: '2026-07-15',
-    responsable: 'Sata L.',
-    montant: 900000,
-    progression: 45,
-    sousTaches: [
-      { id: 'ST-012', titre: 'Brief créatif', statut: 'termine', assigne: 'Sata L.', dateEcheance: '2026-06-05' },
-      { id: 'ST-013', titre: 'Création des visuels', statut: 'en-cours', assigne: 'Tovo M.', dateEcheance: '2026-06-20' },
-      { id: 'ST-014', titre: 'Validation des visuels', statut: 'a-faire', assigne: 'Koto R.', dateEcheance: '2026-06-25' },
-      { id: 'ST-015', titre: 'Lancement de la campagne', statut: 'a-faire', assigne: 'Sata L.', dateEcheance: '2026-07-15' }
-    ],
-    commentaires: 'En attente des visuels de la part du partenaire'
-  },
-  {
-    id: 'M-005',
-    type: 'service',
-    titre: 'Service Coloc\'KOO - Ménage',
-    description: 'Service de ménage pour la colocation 2 ch. Ivandry',
-    statut: 'termine',
-    priorite: 'basse',
-    dateCreation: '2026-06-05',
-    dateRealisation: '2026-06-15',
-    responsable: 'Hanta R.',
-    lieu: 'Ivandry',
-    montant: 17600,
-    progression: 100,
-    sousTaches: [
-      { id: 'ST-016', titre: 'Contact avec le client', statut: 'termine', assigne: 'Hanta R.', dateEcheance: '2026-06-06' },
-      { id: 'ST-017', titre: 'Envoi du devis', statut: 'termine', assigne: 'Hanta R.', dateEcheance: '2026-06-07' },
-      { id: 'ST-018', titre: 'Validation du client', statut: 'termine', assigne: 'Hanta R.', dateEcheance: '2026-06-08' },
-      { id: 'ST-019', titre: 'Exécution du service', statut: 'termine', assigne: 'Tovo M.', dateEcheance: '2026-06-15' }
-    ],
-    commentaires: 'Service réalisé avec succès - Client satisfait'
-  },
-  {
-    id: 'M-006',
-    type: 'partenaire',
-    titre: 'Intégration partenaire - BTP Vato',
-    description: 'Réactivation du compte partenaire BTP Vato SA',
-    statut: 'en-attente',
-    priorite: 'haute',
-    dateCreation: '2026-06-16',
-    dateEcheance: '2026-06-30',
-    responsable: 'Koto R.',
-    montant: 0,
-    progression: 0,
-    sousTaches: [
-      { id: 'ST-020', titre: 'Audit du compte', statut: 'a-faire', assigne: 'Koto R.', dateEcheance: '2026-06-18' },
-      { id: 'ST-021', titre: 'Mise à jour des documents', statut: 'a-faire', assigne: 'Sata L.', dateEcheance: '2026-06-22' },
-      { id: 'ST-022', titre: 'Réactivation du compte', statut: 'a-faire', assigne: 'Koto R.', dateEcheance: '2026-06-30' }
-    ],
-    commentaires: 'Compte suspendu - Nécessite une réactivation manuelle'
-  }
-]
 
 // Composant de badge de statut
 const StatusBadge = ({ statut }: { statut: Mission['statut'] }) => {
@@ -240,6 +100,50 @@ const TypeBadge = ({ type }: { type: Mission['type'] }) => {
       {label}
     </span>
   )
+}
+
+function mapDemandeToMission(demande: any): Mission {
+  const statutMap: Record<string, Mission['statut']> = {
+    'a-contacter': 'en-attente',
+    'en-cours': 'en-cours',
+    'valide': 'termine',
+    'annule': 'en-attente',
+  }
+
+  const prioriteMap: Record<string, Mission['priorite']> = {
+    'a-contacter': 'haute',
+    'en-cours': 'moyenne',
+    'valide': 'basse',
+    'annule': 'basse',
+  }
+
+  const progressionMap: Record<string, number> = {
+    'a-contacter': 10,
+    'en-cours': 50,
+    'valide': 100,
+    'annule': 0,
+  }
+
+  const responsable = [demande.prenom, demande.nom].filter(Boolean).join(' ') || 'Client'
+  const description = demande.synthese || demande.historique_contact || demande.note_rendez_vous || `Demande de service #${demande.id_demande}`
+  const commentaires = demande.note_rendez_vous || demande.historique_contact || ''
+
+  return {
+    id: `D-${demande.id_demande}`,
+    type: 'service',
+    titre: demande.titre || `Demande #${demande.id_demande}`,
+    description,
+    statut: statutMap[demande.statut] || 'en-attente',
+    priorite: prioriteMap[demande.statut] || 'moyenne',
+    dateCreation: demande.date_creation ? new Date(demande.date_creation).toLocaleDateString('fr-FR') : '',
+    dateEcheance: demande.date_rendez_vous ? new Date(demande.date_rendez_vous).toLocaleDateString('fr-FR') : undefined,
+    responsable,
+    lieu: demande.titre || undefined,
+    montant: undefined,
+    progression: progressionMap[demande.statut] ?? 0,
+    sousTaches: [],
+    commentaires,
+  }
 }
 
 // Composant de barre de progression
@@ -389,7 +293,9 @@ const MissionDetailsModal = ({
 
 // Composant principal
 export default function AdminSuiviMissions() {
-  const [missions, setMissions] = useState(MOCK_MISSIONS)
+  const [missions, setMissions] = useState<Mission[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<string>('tous')
   const [filterStatut, setFilterStatut] = useState<string>('tous')
@@ -503,12 +409,29 @@ export default function AdminSuiviMissions() {
     return sortOrder === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
   }
 
+  const loadMissions = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const data = await api.backofficeSuiviMissions()
+      setMissions(data.demandes.map(mapDemandeToMission))
+      setSuccessMessage('Données chargées depuis le backend')
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de charger les missions')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Actualiser les données
   const handleRefresh = () => {
-    setMissions(MOCK_MISSIONS)
-    setSuccessMessage('Données actualisées')
-    setTimeout(() => setSuccessMessage(null), 3000)
+    loadMissions()
   }
+
+  useEffect(() => {
+    loadMissions()
+  }, [])
 
   return (
     <AdminLayout>
@@ -631,7 +554,17 @@ export default function AdminSuiviMissions() {
 
           {/* Liste des missions */}
           <div className="divide-y divide-white/5">
-            {filteredMissions.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12 text-white/40">
+                <Target className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p>Chargement des missions...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12 text-white/40">
+                <Target className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p>{error}</p>
+              </div>
+            ) : filteredMissions.length === 0 ? (
               <div className="text-center py-12 text-white/40">
                 <Target className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p>Aucune mission trouvée</p>

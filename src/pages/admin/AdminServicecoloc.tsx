@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
+import { api } from '../../lib/api'
 import {
   Wrench,
   Search,
@@ -61,91 +62,65 @@ interface DevisItem {
   pu: number
 }
 
-interface OffreService {
-  id: string
-  nom: string
-  prixParJour: number
-  actif: boolean
+interface ApiBackofficeSuiviMissionDemande {
+  id_demande: number
+  id_annonce: number
+  id_utilisateur: number
+  statut: 'a-contacter' | 'en-cours' | 'valide' | 'annule'
+  historique_contact: string | null
+  synthese: string | null
+  date_rendez_vous: string | null
+  note_rendez_vous: string | null
+  date_creation: string
+  titre: string | null
+  nom: string | null
+  prenom: string | null
 }
 
-// Données mockées
-const MOCK_DEMANDES: ServiceDemande[] = [
-  {
-    id: 'SVC-217',
-    nom: 'Naina B.',
-    annonce: 'Coloc 3 ch. — Analakely',
-    telephone: '+261 34 12 345 67',
-    email: 'naina.b@email.mg',
-    dateCreation: '2026-06-14',
-    statut: 'a-contacter',
-    contact: 'Aucun contact',
-    relance: '—',
-    synth: '',
-    devis: [
-      { offre: 'Gestion Jirama & relevés', jours: 1, pu: 8800 },
-      { offre: 'Ménage', jours: 2, pu: 17600 }
-    ]
-  },
-  {
-    id: 'SVC-216',
-    nom: 'Rivo A.',
-    annonce: 'Coloc 2 ch. — Ivandry',
-    telephone: '+261 33 98 765 43',
-    email: 'rivo.a@email.mg',
-    dateCreation: '2026-06-11',
-    statut: 'en-cours',
-    contact: 'Appel le 12/06',
-    relance: 'Relance mail le 14/06',
-    synth: 'Intéressé, attend devis chiffré.',
-    devis: [
-      { offre: 'Renouvellement bouteilles de gaz', jours: 1, pu: 8800 }
-    ]
-  },
-  {
-    id: 'SVC-214',
-    nom: 'Faniry T.',
-    annonce: 'Coloc 4 ch. — Ankorondrano',
-    telephone: '+261 32 11 223 34',
-    email: 'faniry.t@email.mg',
-    dateCreation: '2026-06-09',
-    statut: 'valide',
-    contact: 'Appel le 10/06',
-    relance: '—',
-    synth: 'Devis accepté, services confirmés.',
-    rdv: {
-      date: '2026-06-18 09:30',
-      note: 'Confirmation des offres souscrites'
-    },
-    devis: [
-      { offre: 'Gestion Jirama', jours: 3, pu: 26300 },
-      { offre: 'Gardiennage', jours: 5, pu: 43900 }
-    ]
-  },
-  {
-    id: 'SVC-213',
-    nom: 'Tahiana R.',
-    annonce: 'Coloc 2 ch. — 67 Ha',
-    telephone: '+261 34 55 667 78',
-    email: 'tahiana.r@email.mg',
-    dateCreation: '2026-06-07',
-    statut: 'annule',
-    contact: 'Appel le 08/06',
-    relance: 'Relance le 10/06',
-    synth: 'Finalement pas intéressé.',
-    devis: [
-      { offre: 'Ménage', jours: 1, pu: 8800 },
-      { offre: 'Petites réparations', jours: 2, pu: 17600 }
-    ]
-  }
-]
+interface ApiServiceCkooRow {
+  id_service: number
+  cle_service?: string | null
+  nom: string
+  description?: string | null
+  prix: number
+  unite?: string | null
+  est_actif: 0 | 1
+}
 
-const MOCK_OFFRES: OffreService[] = [
-  { id: 'OFF-001', nom: 'Gestion Jirama & relevés', prixParJour: 8800, actif: true },
-  { id: 'OFF-002', nom: 'Ménage', prixParJour: 8800, actif: true },
-  { id: 'OFF-003', nom: 'Renouvellement bouteilles de gaz', prixParJour: 8800, actif: true },
-  { id: 'OFF-004', nom: 'Gardiennage', prixParJour: 8800, actif: true },
-  { id: 'OFF-005', nom: 'Petites réparations', prixParJour: 8800, actif: true }
-]
+function mapSuiviMissionDemande(demande: ApiBackofficeSuiviMissionDemande): ServiceDemande {
+  const nom = [demande.prenom, demande.nom].filter(Boolean).join(' ') || `Client #${demande.id_utilisateur}`
+  return {
+    id: String(demande.id_demande),
+    nom,
+    annonce: demande.titre || 'Annonce inconnue',
+    telephone: '-',
+    email: '-',
+    dateCreation: demande.date_creation ? new Date(demande.date_creation).toLocaleDateString('fr-FR') : '',
+    statut: demande.statut,
+    contact: demande.historique_contact || 'Aucun contact',
+    relance: demande.note_rendez_vous || '—',
+    synth: demande.synthese || '',
+    rdv: demande.date_rendez_vous
+      ? {
+          date: new Date(demande.date_rendez_vous).toLocaleString('fr-FR', {
+            dateStyle: 'short',
+            timeStyle: 'short',
+          }),
+          note: demande.note_rendez_vous || '',
+        }
+      : undefined,
+    devis: [],
+  }
+}
+
+function mapServiceCkooRow(service: ApiServiceCkooRow): OffreService {
+  return {
+    id: String(service.id_service),
+    nom: service.nom,
+    prixParJour: Number(service.prix || 0),
+    actif: Boolean(service.est_actif),
+  }
+}
 
 // Composant de badge de statut
 const StatusBadge = ({ statut }: { statut: ServiceDemande['statut'] }) => {
@@ -412,16 +387,42 @@ const OffreModal = ({
 
 // Composant principal
 export default function AdminServicesColockoo() {
-  const [demandes, setDemandes] = useState(MOCK_DEMANDES)
-  const [offres, setOffres] = useState(MOCK_OFFRES)
+  const [demandes, setDemandes] = useState<ServiceDemande[]>([])
+  const [offres, setOffres] = useState<OffreService[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatut, setFilterStatut] = useState<string>('tous')
   const [selectedDemande, setSelectedDemande] = useState<ServiceDemande | null>(null)
   const [showOffreModal, setShowOffreModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'demandes' | 'offres'>('demandes')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
   const [sortField, setSortField] = useState<'dateCreation' | 'nom' | 'statut'>('dateCreation')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
+  const loadAdminServiceData = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [missionsResponse, services] = await Promise.all([
+        api.backofficeSuiviMissions(),
+        api.backofficeServicesCkoo(),
+      ])
+
+      setDemandes(missionsResponse.demandes.map(mapSuiviMissionDemande))
+      setOffres(services.map(mapServiceCkooRow))
+      setSuccessMessage('Données chargées depuis le backend')
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de charger les données')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadAdminServiceData()
+  }, [])
 
   // Statuts uniques pour le filtre
   const statuts = useMemo(() => {
@@ -544,46 +545,66 @@ export default function AdminServicesColockoo() {
   }
 
   // Ajouter une offre
-  const handleAddOffre = (offre: Omit<OffreService, 'id'>) => {
-    const newOffre: OffreService = {
-      id: `OFF-${String(offres.length + 1).padStart(3, '0')}`,
-      ...offre
+  const handleAddOffre = async (offre: Omit<OffreService, 'id'>) => {
+    setLoading(true)
+    setError(null)
+    try {
+      await api.createServiceCkoo({
+        nom: offre.nom,
+        prix: offre.prixParJour,
+        unite: 'heure',
+        est_actif: offre.actif ? 1 : 0,
+      })
+      await loadAdminServiceData()
+      setSuccessMessage(`Offre "${offre.nom}" ajoutée avec succès`)
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible d’ajouter l’offre')
+    } finally {
+      setLoading(false)
     }
-    setOffres([...offres, newOffre])
-    setSuccessMessage(`Offre "${offre.nom}" ajoutée avec succès`)
-    setTimeout(() => setSuccessMessage(null), 3000)
   }
 
   // Supprimer une offre
-  const handleDeleteOffre = (id: string) => {
+  const handleDeleteOffre = async (id: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette offre ?')) return
-    const offre = offres.find(o => o.id === id)
-    setOffres(offres.filter(o => o.id !== id))
-    setSuccessMessage(`Offre "${offre?.nom}" supprimée`)
-    setTimeout(() => setSuccessMessage(null), 3000)
+    setLoading(true)
+    setError(null)
+    try {
+      await api.deleteServiceCkoo(id)
+      await loadAdminServiceData()
+      setSuccessMessage('Offre supprimée avec succès')
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de supprimer l’offre')
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Toggle actif/inactif
-  const handleToggleOffre = (id: string) => {
+  const handleToggleOffre = async (id: string) => {
     const index = offres.findIndex(o => o.id === id)
     if (index === -1) return
-    
-    const updatedOffres = [...offres]
-    updatedOffres[index] = {
-      ...updatedOffres[index],
-      actif: !updatedOffres[index].actif
+    const updatedOffre = { ...offres[index], actif: !offres[index].actif }
+
+    setLoading(true)
+    setError(null)
+    try {
+      await api.updateServiceCkoo(id, { est_actif: updatedOffre.actif ? 1 : 0 })
+      await loadAdminServiceData()
+      setSuccessMessage(`Offre ${updatedOffre.actif ? 'activée' : 'désactivée'}`)
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de changer le statut de l’offre')
+    } finally {
+      setLoading(false)
     }
-    setOffres(updatedOffres)
-    setSuccessMessage(`Offre ${updatedOffres[index].actif ? 'activée' : 'désactivée'}`)
-    setTimeout(() => setSuccessMessage(null), 3000)
   }
 
   // Actualiser les données
   const handleRefresh = () => {
-    setDemandes(MOCK_DEMANDES)
-    setOffres(MOCK_OFFRES)
-    setSuccessMessage('Données actualisées')
-    setTimeout(() => setSuccessMessage(null), 3000)
+    loadAdminServiceData()
   }
 
   return (
@@ -610,6 +631,16 @@ export default function AdminServicesColockoo() {
         {successMessage && (
           <div className="bg-brand-green/20 border border-brand-green/30 text-brand-green px-4 py-2 rounded-lg text-sm animate-in slide-in-from-top-2">
             {successMessage}
+          </div>
+        )}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-2 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+        {loading && (
+          <div className="bg-white/5 border border-white/10 text-white/70 px-4 py-2 rounded-lg text-sm">
+            Chargement des données...
           </div>
         )}
 
