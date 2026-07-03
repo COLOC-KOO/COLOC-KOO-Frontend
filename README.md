@@ -8,7 +8,7 @@ routing via `react-router-dom` (`App.tsx`, `components/`, `pages/`).
 - **Nom** : Sarintany'COLOC
 - **Objectif** : Plateforme de colocation à Madagascar (Antananarivo, Toamasina, Mahajanga,
   Fianarantsoa, Antsirabe, Nosy Be) — recherche d'annonces, dépôt d'annonce, candidature en ligne,xwxwx
-  espace compte locataire, et back-office admin complet.
+  espace compte locataire, et back-office adefrgthyjkmin complet.
 - **Stack** : React 18, Vite 5, TypeScript, Tailwind CSS, React Router v6, lucide-react (icônes).
 
 ## Structure du code
