@@ -8,7 +8,7 @@ routing via `react-router-dom` (`App.tsx`, `components/`, `pages/`).
 - **Nom** : Sarintany'COLOC
 - **Objectif** : Plateforme de colocation à Madagascar (Antananarivo, Toamasina, Mahajanga,
   Fianarantsoa, Antsirabe, Nosy Be) — recherche d'annonces, dépôt d'annonce, candidature en ligne,xwxwx
-  espace compte locataire, et back-office admin complet.
+  espace compte locataire, et back-office adefrgthyjkmin complet.
 - **Stack** : React 18, Vite 5, TypeScript, Tailwind CSS, React Router v6, lucide-react (icônes).
 
 ## Structure du codesdsdsd
@@ -20,7 +20,7 @@ src/
   types/                  # Types TypeScript (Listing, Candidature, AdminUser, ...)
   data/mockData.ts        # Données mock (annonces, utilisateurs, paiements, messages...)
   lib/utils.ts            # Helpers (formatAr, unsplash, cn)
-  components/
+  components/vcv
     Logo.tsx
     ui/Button.tsx, ui/Badge.tsx
     site/SiteHeader.tsx, SiteFooter.tsx, SiteLayout.tsx, ListingCard.tsx
