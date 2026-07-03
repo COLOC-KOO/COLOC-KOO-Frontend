@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowRight, MapPin, Search, Shield, Sparkles, Star, Users } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowRight, MapPin, Search, Shield, Sparkles, Star, Users, Map, List } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { ListingCard } from '../components/site/ListingCard'
 import { Button } from '../components/ui/Button'
+import { MapView } from '../components/MapView'
 import { api, annonceToListing } from '../lib/api'
 import { CityInfo, Listing } from '../types'
+
 
 const heroImage =
   'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80'
@@ -32,10 +34,12 @@ const steps = [
 ]
 
 export default function Home() {
+  const navigate = useNavigate();
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([])
   const [cityCards, setCityCards] = useState<CityInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list') // Nouvel état
 
   useEffect(() => {
     let cancelled = false
@@ -194,18 +198,64 @@ export default function Home() {
               <h2 className="bebas text-4xl">Annonces vedettes</h2>
               <p className="text-muted-foreground mt-1">Sélection de la semaine, vérifiée par notre équipe</p>
             </div>
+            
+            {/* Boutons de bascule */}
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'list' 
+                    ? 'bg-white shadow-sm text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <List className="w-4 h-4" />
+                Liste
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'map' 
+                    ? 'bg-white shadow-sm text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Map className="w-4 h-4" />
+                Carte
+              </button>
+            </div>
           </div>
+
           {loading ? (
             <div className="text-center text-muted-foreground py-10">Chargement des annonces validées...</div>
           ) : featuredListings.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredListings.map((l) => (
-                <ListingCard key={l.id} l={l} />
-              ))}
-            </div>
+            viewMode === 'list' ? (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {featuredListings.map((l) => (
+                  <ListingCard key={l.id} l={l} />
+                ))}
+              </div>
+            ) : (
+              // Mode Carte avec le composant MapView
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="h-[500px] lg:h-[600px] rounded-xl overflow-hidden bg-gray-50">
+                  <MapView 
+                    listings={featuredListings} 
+                    onListingClick={(listing) => {
+                      navigate(`/annonce/${listing.id}`);
+                    }}
+                  />
+                </div>
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                  {featuredListings.map((l) => (
+                    <ListingCard key={l.id} l={l} />
+                  ))}
+                </div>
+              </div>
+            )
           ) : (
             <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
-              Aucune annonce validée n’est disponible pour le moment.
+              Aucune annonce validée n'est disponible pour le moment.
             </div>
           )}
         </div>
