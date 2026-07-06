@@ -246,7 +246,7 @@ export default function Home() {
                   <MapView 
                     listings={featuredListings} 
                     onListingClick={(listing) => {
-                      navigate(`/annonce/${listing.id}`);
+                      navigate(`/annonces/${listing.id}`);
                     }}
                   />
                 </div>

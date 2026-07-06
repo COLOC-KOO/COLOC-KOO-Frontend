@@ -1,6 +1,7 @@
 import { Listing } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+const API_BASE_URL = API_URL.replace(/\/api\/?$/, '')
 const TOKEN_KEY = 'colockoo_token'
 const USER_KEY = 'colockoo_user'
 
@@ -224,13 +225,18 @@ export function clearSession() {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
+  const headers: Record<string, string> = {
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json'
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
+    headers,
   })
 
   const text = await response.text()
@@ -338,6 +344,12 @@ export const api = {
   },
   annonce(id: string | number) {
     return request<ApiAnnonce>(`/annonces/${id}`)
+  },
+  uploadAnnoncePhotos(formData: FormData) {
+    return request<{ photos: string[] }>('/annonces/upload', {
+      method: 'POST',
+      body: formData,
+    })
   },
   createAnnonce(payload: unknown) {
     return request<ApiAnnonce>('/annonces', {
@@ -474,7 +486,11 @@ function normalizePhotos(value: unknown): string[] {
 
 export function annonceToListing(a: ApiAnnonce): Listing {
   const photos = normalizePhotos(a.photos)
-  const image = photos[0] || FALLBACK_IMAGE
+  const normalizedPhotos = photos.map((photo) => {
+    if (photo.startsWith('http://') || photo.startsWith('https://')) return photo
+    return `${API_BASE_URL}${photo.startsWith('/') ? '' : '/'}${photo}`
+  })
+  const image = normalizedPhotos[0] || FALLBACK_IMAGE
   const price = Number(a.chambre?.prix_loyer || 0)
   return {
     id: String(a.id),
@@ -490,7 +506,7 @@ export function annonceToListing(a: ApiAnnonce): Listing {
     available: String(a.chambre?.date_disponibilite || '').slice(0, 10),
     type: a.type_propriete === 'maison' ? 'maison' : a.type_propriete === 'appartement' ? 'appartement' : 'chambre',
     image,
-    gallery: photos.length ? photos : [image],
+    gallery: normalizedPhotos.length ? normalizedPhotos : [image],
     description: a.description || '',
     amenities: a.services,
     colocs: [],

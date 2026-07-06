@@ -33,6 +33,7 @@ export default function Deposer() {
   const [submitting, setSubmitting] = useState(false)
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [uploadingPhotos, setUploadingPhotos] = useState(false)
   const [form, setForm] = useState({
     titre: '',
     description: '',
@@ -69,19 +70,22 @@ export default function Deposer() {
     const files = Array.from(event.target.files ?? [])
     if (!files.length) return
 
-    const previews = await Promise.all(
-      files.map(
-        (file) =>
-          new Promise<string>((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
-            reader.onerror = () => reject(new Error('Impossible de lire l’image'))
-            reader.readAsDataURL(file)
-          })
-      )
-    )
+    setError('')
+    setUploadingPhotos(true)
 
-    setForm((current) => ({ ...current, photos: [...current.photos, ...previews.filter(Boolean)] }))
+    try {
+      const formData = new FormData()
+      files.forEach((file) => formData.append('photos', file))
+      const result = await api.uploadAnnoncePhotos(formData)
+      if (!Array.isArray(result.photos)) {
+        throw new Error('Reponse photo invalide du serveur')
+      }
+      setForm((current) => ({ ...current, photos: [...current.photos, ...result.photos] }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de televerser les photos')
+    } finally {
+      setUploadingPhotos(false)
+    }
   }
 
   async function submitAnnonce() {
@@ -114,7 +118,7 @@ export default function Deposer() {
         },
         services: form.services.split(',').map((item) => item.trim()).filter(Boolean),
         regles: form.regles.split(',').map((item) => item.trim()).filter(Boolean),
-        photos: form.photos,
+        photos: form.photos.filter((photo) => Boolean(photo)),
       })
       setSuccess("Annonce envoyee. Elle sera visible apres validation par l'admin.")
     } catch (err) {
@@ -273,6 +277,7 @@ export default function Deposer() {
                     ))}
                   </div>
                 ) : null}
+                {uploadingPhotos && <div className="mt-3 text-sm text-muted-foreground">Upload des photos en cours...</div>}
               </div>
             </div>
           )}
