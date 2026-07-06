@@ -1,4 +1,3 @@
-// api.ts - Version complète et corrigée
 import { Listing } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
@@ -94,6 +93,26 @@ export interface ApiPartenaire {
   date_creation: string
 }
 
+export interface ApiPaiement {
+  id_paiement: number
+  reference: string
+  id_utilisateur: number
+  id_contrat?: number | null
+  id_annonce?: number | null
+  id_partenaire?: number | null
+  montant_du: number
+  montant_recu: number
+  moyen_paiement: 'MVOLA' | 'Orange Money' | 'Airtel Money' | 'CB' | 'Autre'
+  service_type: 'booster' | 'publicite' | 'contrat' | 'autre'
+  statut: 'a-verifier' | 'conforme' | 'non-conforme' | 'en-attente' | 'valide' | 'echoue'
+  date_paiement: string
+  reference_operateur?: string | null
+  date_creation: string
+  nom?: string | null
+  prenom?: string | null
+  annonce_titre?: string | null
+}
+
 export interface CreateCandidaturePayload {
   id_annonce: number | string
   message?: string
@@ -166,6 +185,22 @@ export interface ApiBackofficeSuiviMissions {
   }>
 }
 
+export interface BackofficeAdministration {
+  versements: ApiPaiement[]
+  objectifs: Array<{
+    id_objectif: number
+    libelle: string
+    objectif: number
+    realise: number
+    periode: string
+    statut: string
+    date_creation: string
+  }>
+  configuration: Array<Record<string, unknown>>
+  performance: Record<string, unknown>
+  statistiquesColocation: Array<Record<string, unknown>>
+}
+
 export interface ApiBackofficeContratParty {
   id: number
   id_utilisateur?: number | null
@@ -224,49 +259,16 @@ export function clearSession() {
   localStorage.removeItem(USER_KEY)
 }
 
-// async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-//   const token = getToken()
-//   const headers: Record<string, string> = {
-//     ...(options.headers || {}),
-//     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-//   }
-
-//   if (!(options.body instanceof FormData)) {
-//     headers['Content-Type'] = 'application/json'
-//   }
-
-//   const response = await fetch(`${API_URL}${path}`, {
-//     ...options,
-//     headers,
-//   })
-
-//   const text = await response.text()
-//   const data = text ? JSON.parse(text) : null
-//   if (!response.ok) {
-//     throw new Error(data?.message || 'Erreur API')
-//   }
-//   return data as T
-// }
-
-// api.ts - Fonction request corrigée
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
-  
-  // ✅ Correction du type des headers
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
-  }
+  const headers = new Headers(options.headers)
 
-  // Si un token existe, l'ajouter aux headers
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`
+    headers.set('Authorization', `Bearer ${token}`)
   }
 
-  // Si le body est un FormData, supprimer Content-Type pour que le navigateur le définisse automatiquement
-  if (options.body instanceof FormData) {
-    delete headers['Content-Type']
+  if (!(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json')
   }
 
   const response = await fetch(`${API_URL}${path}`, {
@@ -325,6 +327,17 @@ export const api = {
       method: 'PATCH',
     })
   },
+  markNotificationRead(id: string | number) {
+    return request<{ message: string }>(`/notifications/${id}/read`, {
+      method: 'PATCH',
+    })
+  },
+  deleteNotification(id: string | number) {
+    return request<{ message: string }>(`/notifications/${id}`, { method: 'DELETE' })
+  },
+  deleteThread(userId: string | number) {
+    return request<{ message: string }>(`/messages/thread/${userId}`, { method: 'DELETE' })
+  },
   messagesThreads() {
     return request<Array<{
       interlocuteur_id: number
@@ -354,11 +367,32 @@ export const api = {
       annonce_titre: string | null
     }>>(`/messages/${userId}`)
   },
+  superadmin() {
+    return request<{
+      id: number
+      email: string
+      nom: string
+      prenom: string
+      role: string
+      poste: string
+      name: string
+      initials: string
+    }>('/users/superadmin')
+  },
   sendMessage(payload: { id_destinataire: number | string; id_annonce?: number | string | null; sujet?: string; contenu: string; message_parent?: number | string | null }) {
     return request<{ id_message: number }>('/messages', {
       method: 'POST',
       body: JSON.stringify(payload),
     })
+  },
+  reportMessage(id: string | number, payload: { raison?: string; description?: string } = {}) {
+    return request<{ id_signalement: number }>(`/messages/${id}/report`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  deleteMessage(id: string | number) {
+    return request<{ message: string }>(`/messages/${id}`, { method: 'DELETE' })
   },
   villes() {
     return request<Ville[]>('/meta/villes')
@@ -434,6 +468,15 @@ export const api = {
   backofficeDashboard() {
     return request<BackofficeDashboard>('/backoffice/dashboard')
   },
+  backofficePaiements() {
+    return request<ApiPaiement[]>('/backoffice/paiements')
+  },
+  updatePaiementStatus(id: string | number, payload: { statut: string }) {
+    return request<{ message: string }>(`/backoffice/paiements/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
   backofficeMembers(params: Record<string, string | number | undefined> = {}) {
     const search = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => {
@@ -442,8 +485,51 @@ export const api = {
     const query = search.toString()
     return request<BackofficeMember[]>(`/backoffice/membres${query ? `?${query}` : ''}`)
   },
+  createBackofficeMember(payload: { nom: string; email: string; telephone?: string; mot_de_passe?: string; role?: string; statut?: string }) {
+    return request<BackofficeMember & { mot_de_passe: string }>('/backoffice/membres', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  updateBackofficeMember(id: string | number, payload: { nom?: string; email?: string; telephone?: string; mot_de_passe?: string; role?: string; statut?: string }) {
+    return request<BackofficeMember>(`/backoffice/membres/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
+  deleteBackofficeMember(id: string | number) {
+    return request<{ message: string }>(`/backoffice/membres/${id}`, {
+      method: 'DELETE',
+    })
+  },
   backofficeJournal() {
     return request<ApiJournalEntry[]>('/backoffice/journal')
+  },
+  backofficeAdministration() {
+    return request<BackofficeAdministration>('/backoffice/administration')
+  },
+  backofficePerformance() {
+    return request<Record<string, number>>('/backoffice/performance')
+  },
+  saveBackofficeConfiguration(payload: { cle: string; valeur: unknown }) {
+    return request<{ message: string }>('/backoffice/administration/configuration', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  saveBackofficeObjectif(payload: { id?: number | string; libelle: string; objectif: number; realise?: number; periode?: string; statut?: string }) {
+    const method = payload.id ? 'PATCH' : 'POST'
+    const path = payload.id ? `/backoffice/administration/objectifs/${payload.id}` : '/backoffice/administration/objectifs'
+    return request<{ id_objectif: number; message: string }>(path, {
+      method,
+      body: JSON.stringify({
+        libelle: payload.libelle,
+        objectif: payload.objectif,
+        realise: payload.realise ?? 0,
+        periode: payload.periode ?? 'mois',
+        statut: payload.statut ?? 'actif'
+      })
+    })
   },
   backofficeSuiviMissions() {
     return request<ApiBackofficeSuiviMissions>('/backoffice/suivi-missions')
@@ -514,7 +600,6 @@ function normalizePhotos(value: unknown): string[] {
     return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
   }
   if (typeof value === 'string' && value.trim()) {
-    // Si c'est une chaîne avec des séparateurs || (pipe)
     return value.split('||').map((item) => item.trim()).filter(Boolean)
   }
   return []
@@ -522,36 +607,12 @@ function normalizePhotos(value: unknown): string[] {
 
 export function annonceToListing(a: ApiAnnonce): Listing {
   const photos = normalizePhotos(a.photos)
-  
   const normalizedPhotos = photos.map((photo) => {
-    // Si l'URL est déjà complète
-    if (photo.startsWith('http://') || photo.startsWith('https://')) {
-      // ✅ Si l'URL contient '/public/uploads/', la corriger
-      if (photo.includes('/public/uploads/')) {
-        return photo.replace('/public/uploads/', '/uploads/')
-      }
-      return photo
-    }
-    
-    // ✅ Nettoyer le chemin
-    let cleanPhoto = photo
-    // Supprimer '/public/' du chemin
-    if (cleanPhoto.startsWith('/public/')) {
-      cleanPhoto = cleanPhoto.replace('/public/', '/')
-    }
-    if (cleanPhoto.startsWith('public/')) {
-      cleanPhoto = cleanPhoto.replace('public/', '')
-    }
-    
-    // ✅ Construire l'URL complète avec le bon chemin
-    return `${API_BASE_URL}${cleanPhoto.startsWith('/') ? '' : '/'}${cleanPhoto}`
+    if (photo.startsWith('http://') || photo.startsWith('https://')) return photo
+    return `${API_BASE_URL}${photo.startsWith('/') ? '' : '/'}${photo}`
   })
-  
-  // ✅ Image principale (la première photo)
-  const image = normalizedPhotos.length > 0 ? normalizedPhotos[0] : FALLBACK_IMAGE
-  
+  const image = normalizedPhotos[0] || FALLBACK_IMAGE
   const price = Number(a.chambre?.prix_loyer || 0)
-  
   return {
     id: String(a.id),
     title: a.titre,
@@ -566,16 +627,11 @@ export function annonceToListing(a: ApiAnnonce): Listing {
     available: String(a.chambre?.date_disponibilite || '').slice(0, 10),
     type: a.type_propriete === 'maison' ? 'maison' : a.type_propriete === 'appartement' ? 'appartement' : 'chambre',
     image,
-    gallery: normalizedPhotos.length > 0 ? normalizedPhotos : [image],
+    gallery: normalizedPhotos.length ? normalizedPhotos : [image],
     description: a.description || '',
-    amenities: a.services || [],
-    rules: a.regles || [], // ✅ Ajout des règles
+    amenities: a.services,
     colocs: [],
-    owner: { 
-      name: a.auteur || 'Proprietaire', 
-      verified: a.statut === 'active', 
-      since: '2026' 
-    },
+    owner: { name: a.auteur || 'Proprietaire', verified: a.statut === 'active', since: '2026' },
     tags: a.statut === 'active' ? ['verifie'] : [],
   }
 }

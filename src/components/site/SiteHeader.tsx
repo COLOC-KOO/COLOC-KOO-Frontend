@@ -4,6 +4,7 @@ import { Globe, Menu, User, X } from 'lucide-react'
 import { Logo } from '../Logo'
 import { Button } from '../ui/Button'
 import { useAuth } from '../../lib/auth'
+import { useConfig } from '../../lib/config'
 import { cn } from '../../lib/utils'
 
 const navItems = [
@@ -17,13 +18,23 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false)
   const location = useLocation()
   const { user, logout } = useAuth()
+  const { config } = useConfig()
+
+  const partnerEnabled = config.PARTENAIRE_VISIBILITY !== false
+  const availableLanguages = [
+    config.I18N_MG === true ? 'MG' : null,
+    config.I18N_EN === true ? 'EN' : null
+  ].filter(Boolean)
+  const languageLabel = availableLanguages.length > 0 ? availableLanguages.join(' / ') : 'FR'
+
+  const visibleNavItems = navItems.filter((item) => item.to !== '/partenaires' || partnerEnabled)
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-border">
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center gap-4">
         <Logo />
         <nav className="hidden md:flex items-center gap-1 ml-4">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <Link
               key={item.to}
               to={item.to}
@@ -41,7 +52,7 @@ export function SiteHeader() {
         <div className="flex-1" />
         <div className="hidden md:flex items-center gap-2">
           <button className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md border border-border hover:bg-muted">
-            <Globe className="w-3.5 h-3.5" /> FR
+            <Globe className="w-3.5 h-3.5" /> {languageLabel}
           </button>
           {user ? (
             <>
@@ -75,7 +86,7 @@ export function SiteHeader() {
       </div>
       {open && (
         <div className="md:hidden border-t border-border bg-white px-4 py-3 flex flex-col gap-1">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <Link
               key={item.to}
               to={item.to}
