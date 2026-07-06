@@ -36,6 +36,7 @@ export interface Listing {
   colocs: Coloc[]
   owner: Owner
   tags: ListingTag[]
+  rules?: string[]
 }
 
 export interface CityInfo {
