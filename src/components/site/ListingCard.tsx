@@ -20,9 +20,11 @@ export function ListingCard({ l }: { l: Listing }) {
       to={`/annonces/${l.id}`}
       className="group bg-card rounded-2xl overflow-hidden border border-border hover:shadow-xl hover:-translate-y-0.5 transition-all"
     >
+      {/* console.log('Image source:', l.image || FALLBACK_IMAGE) */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <img
           src={l.image || FALLBACK_IMAGE}
+           // Debugging line
           alt={l.title}
           onError={handleImageError}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

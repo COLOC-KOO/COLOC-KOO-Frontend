@@ -1,3 +1,4 @@
+// api.ts - Version complète et corrigée
 import { Listing } from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
@@ -223,15 +224,49 @@ export function clearSession() {
   localStorage.removeItem(USER_KEY)
 }
 
+// async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+//   const token = getToken()
+//   const headers: Record<string, string> = {
+//     ...(options.headers || {}),
+//     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+//   }
+
+//   if (!(options.body instanceof FormData)) {
+//     headers['Content-Type'] = 'application/json'
+//   }
+
+//   const response = await fetch(`${API_URL}${path}`, {
+//     ...options,
+//     headers,
+//   })
+
+//   const text = await response.text()
+//   const data = text ? JSON.parse(text) : null
+//   if (!response.ok) {
+//     throw new Error(data?.message || 'Erreur API')
+//   }
+//   return data as T
+// }
+
+// api.ts - Fonction request corrigée
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
+  
+  // ✅ Correction du type des headers
   const headers: Record<string, string> = {
-    ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> || {}),
   }
 
-  if (!(options.body instanceof FormData)) {
-    headers['Content-Type'] = 'application/json'
+  // Si un token existe, l'ajouter aux headers
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  // Si le body est un FormData, supprimer Content-Type pour que le navigateur le définisse automatiquement
+  if (options.body instanceof FormData) {
+    delete headers['Content-Type']
   }
 
   const response = await fetch(`${API_URL}${path}`, {
@@ -479,6 +514,7 @@ function normalizePhotos(value: unknown): string[] {
     return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
   }
   if (typeof value === 'string' && value.trim()) {
+    // Si c'est une chaîne avec des séparateurs || (pipe)
     return value.split('||').map((item) => item.trim()).filter(Boolean)
   }
   return []
@@ -486,12 +522,36 @@ function normalizePhotos(value: unknown): string[] {
 
 export function annonceToListing(a: ApiAnnonce): Listing {
   const photos = normalizePhotos(a.photos)
+  
   const normalizedPhotos = photos.map((photo) => {
-    if (photo.startsWith('http://') || photo.startsWith('https://')) return photo
-    return `${API_BASE_URL}${photo.startsWith('/') ? '' : '/'}${photo}`
+    // Si l'URL est déjà complète
+    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+      // ✅ Si l'URL contient '/public/uploads/', la corriger
+      if (photo.includes('/public/uploads/')) {
+        return photo.replace('/public/uploads/', '/uploads/')
+      }
+      return photo
+    }
+    
+    // ✅ Nettoyer le chemin
+    let cleanPhoto = photo
+    // Supprimer '/public/' du chemin
+    if (cleanPhoto.startsWith('/public/')) {
+      cleanPhoto = cleanPhoto.replace('/public/', '/')
+    }
+    if (cleanPhoto.startsWith('public/')) {
+      cleanPhoto = cleanPhoto.replace('public/', '')
+    }
+    
+    // ✅ Construire l'URL complète avec le bon chemin
+    return `${API_BASE_URL}${cleanPhoto.startsWith('/') ? '' : '/'}${cleanPhoto}`
   })
-  const image = normalizedPhotos[0] || FALLBACK_IMAGE
+  
+  // ✅ Image principale (la première photo)
+  const image = normalizedPhotos.length > 0 ? normalizedPhotos[0] : FALLBACK_IMAGE
+  
   const price = Number(a.chambre?.prix_loyer || 0)
+  
   return {
     id: String(a.id),
     title: a.titre,
@@ -506,11 +566,16 @@ export function annonceToListing(a: ApiAnnonce): Listing {
     available: String(a.chambre?.date_disponibilite || '').slice(0, 10),
     type: a.type_propriete === 'maison' ? 'maison' : a.type_propriete === 'appartement' ? 'appartement' : 'chambre',
     image,
-    gallery: normalizedPhotos.length ? normalizedPhotos : [image],
+    gallery: normalizedPhotos.length > 0 ? normalizedPhotos : [image],
     description: a.description || '',
-    amenities: a.services,
+    amenities: a.services || [],
+    rules: a.regles || [], // ✅ Ajout des règles
     colocs: [],
-    owner: { name: a.auteur || 'Proprietaire', verified: a.statut === 'active', since: '2026' },
+    owner: { 
+      name: a.auteur || 'Proprietaire', 
+      verified: a.statut === 'active', 
+      since: '2026' 
+    },
     tags: a.statut === 'active' ? ['verifie'] : [],
   }
 }
