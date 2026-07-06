@@ -587,6 +587,16 @@ export default function AdminConfiguration() {
     }
   }
 
+  // Fonction refreshConfig ajoutée pour corriger l'erreur
+  const refreshConfig = async () => {
+    try {
+      await loadAdministration()
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement de la configuration:', error)
+      setBackendError('Erreur lors du rafraîchissement de la configuration')
+    }
+  }
+
   const saveConfiguration = async (key: string, valeur: unknown) => {
     setBackendError(null)
     try {
@@ -648,6 +658,20 @@ export default function AdminConfiguration() {
         {successMessage && (
           <div className="bg-brand-green/20 border border-brand-green/30 text-brand-green px-4 py-2 rounded-lg text-sm animate-in slide-in-from-top-2">
             {successMessage}
+          </div>
+        )}
+
+        {/* Message d'erreur backend */}
+        {backendError && (
+          <div className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-2 rounded-lg text-sm animate-in slide-in-from-top-2">
+            {backendError}
+          </div>
+        )}
+
+        {/* Indicateur de chargement */}
+        {configLoading && (
+          <div className="flex items-center justify-center py-4">
+            <RefreshCw className="w-6 h-6 animate-spin text-brand-cyan" />
           </div>
         )}
 
