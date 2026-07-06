@@ -9,8 +9,6 @@ import { Listing } from '../types'
 import { formatAr } from '../lib/utils'
 import NotFound from './NotFound'
 
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
-
 function StatItem({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
     <div className="flex items-center gap-3">
@@ -41,6 +39,10 @@ export default function AnnonceDetail() {
     api
       .annonce(id)
       .then((annonce) => {
+        if (annonce.statut !== 'active') {
+          setNotFound(true)
+          return
+        }
         setListing(annonceToListing(annonce))
       })
       .catch(() => setNotFound(true))
@@ -81,10 +83,6 @@ export default function AnnonceDetail() {
 
   if (notFound || !listing) return <NotFound />
 
-  const gallery = (listing.gallery?.length ? listing.gallery : [listing.image || FALLBACK_IMAGE]).slice(0, 3)
-  const mainImage = gallery[0] || FALLBACK_IMAGE
-  const sideImages = gallery.slice(1)
-
   return (
     <SiteLayout>
       <div className="max-w-7xl mx-auto px-6 py-6">
@@ -95,16 +93,12 @@ export default function AnnonceDetail() {
 
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-[2fr_1fr] gap-3 aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden">
-          <img src={mainImage} alt={listing.title} className="w-full h-full object-cover" />
+          <img src={listing.gallery[0]} alt={listing.title} className="w-full h-full object-cover" />
           <div className="hidden md:grid grid-rows-2 gap-3">
-            {sideImages.length > 0 ? (
-              sideImages.map((g, i) => (
-                <img key={i} src={g} alt="" className="w-full h-full object-cover" />
-              ))
-            ) : (
-              <div className="bg-muted" />
-            )}
-            {gallery.length < 3 && <div className="bg-muted" />}
+            {listing.gallery.slice(1, 3).map((g, i) => (
+              <img key={i} src={g} alt="" className="w-full h-full object-cover" />
+            ))}
+            {listing.gallery.length < 3 && <div className="bg-muted" />}
           </div>
         </div>
       </div>
