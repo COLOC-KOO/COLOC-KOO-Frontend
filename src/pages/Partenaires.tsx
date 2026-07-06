@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Building2, Check } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
+import { useConfig } from '../lib/config'
 
 const stats = [
   { t: '1 400+ colocataires actifs', d: 'Une communauté qualifiée à travers Madagascar.' },
@@ -31,6 +32,25 @@ const plans = [
 ]
 
 export default function Partenaires() {
+  const { config } = useConfig()
+  const partnerVisibility = config.PARTENAIRE_VISIBILITY !== false
+
+  if (!partnerVisibility) {
+    return (
+      <SiteLayout>
+        <div className="max-w-4xl mx-auto px-6 py-24 text-center">
+          <h1 className="bebas text-4xl">Page partenaires indisponible</h1>
+          <p className="mt-4 text-muted-foreground">
+            Cette fonctionnalité est actuellement désactivée par la configuration globale. Revenez plus tard.
+          </p>
+          <Link to="/">
+            <Button className="mt-8 bg-brand-cyan hover:bg-brand-cyan-dark text-white">Retour à l’accueil</Button>
+          </Link>
+        </div>
+      </SiteLayout>
+    )
+  }
+
   return (
     <SiteLayout>
       <div className="max-w-6xl mx-auto px-6 py-16">

@@ -8,6 +8,7 @@ import { MapView } from '../components/MapView'
 import { api, annonceToListing, ApiPartenaire } from '../lib/api'
 import { CityInfo, Listing } from '../types'
 
+
 const heroImage =
   'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80'
 
@@ -39,7 +40,7 @@ export default function Home() {
   const [partners, setPartners] = useState<ApiPartenaire[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list') // Nouvel état
 
   useEffect(() => {
     let cancelled = false
@@ -54,16 +55,7 @@ export default function Home() {
       .then(([annonces, villes, partenaires]) => {
         if (cancelled) return
 
-        // Log pour déboguer
-        console.log('Annonces reçues:', annonces)
-        console.log('Nombre d\'annonces:', annonces.length)
-
         const mapped = annonces.map(annonceToListing)
-        
-        // Log pour vérifier les IDs
-        console.log('Annonces mappées:', mapped)
-        console.log('IDs des annonces:', mapped.map(l => l.id))
-
         const grouped = mapped.reduce<Record<string, CityInfo>>((acc, listing) => {
           const key = listing.city || 'Autres'
           if (!acc[key]) {
@@ -87,7 +79,6 @@ export default function Home() {
       })
       .catch((err) => {
         if (!cancelled) {
-          console.error('Erreur de chargement:', err)
           setError(err instanceof Error ? err.message : 'Impossible de charger les annonces validées')
           setFeaturedListings([])
           setCityCards([])
@@ -110,21 +101,8 @@ export default function Home() {
     return `${cityCards.length} ${cityLabel} couvertes, ${featuredListings.length} ${annonceLabel} validées`
   }, [cityCards.length, featuredListings.length, loading])
 
-  // Fonction pour gérer le clic sur une annonce
-  const handleListingClick = (listing: Listing) => {
-    console.log('Clic sur l\'annonce:', listing)
-    console.log('ID de l\'annonce:', listing.id)
-    
-    if (listing.id && listing.id !== 'undefined' && listing.id !== 'null') {
-      navigate(`/annonces/${listing.id}`)
-    } else {
-      console.error('ID d\'annonce invalide:', listing)
-    }
-  }
-
   return (
     <SiteLayout>
-      {/* Hero Section */}
       <section className="relative">
         <div className="absolute inset-0">
           <img src={heroImage} alt="" className="w-full h-full object-cover" />
@@ -181,7 +159,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Explore par ville */}
       <section className="max-w-7xl mx-auto px-6 py-20">
         <div className="flex items-end justify-between mb-8">
           <div>
@@ -218,7 +195,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Annonces vedettes */}
       <section className="bg-white/60 border-y border-border py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-8">
@@ -260,49 +236,23 @@ export default function Home() {
             viewMode === 'list' ? (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {featuredListings.map((l) => (
-                  <div 
-                    key={l.id} 
-                    onClick={() => handleListingClick(l)}
-                    className="cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-lg rounded-xl"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        handleListingClick(l)
-                      }
-                    }}
-                  >
-                    <ListingCard l={l} />
-                  </div>
+                  <ListingCard key={l.id} l={l} />
                 ))}
               </div>
             ) : (
-              // Mode Carte
+              // Mode Carte avec le composant MapView
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="h-[500px] lg:h-[600px] rounded-xl overflow-hidden bg-gray-50">
                   <MapView 
                     listings={featuredListings} 
-                    onListingClick={handleListingClick}
+                    onListingClick={(listing) => {
+                      navigate(`/annonces/${listing.id}`);
+                    }}
                   />
                 </div>
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                   {featuredListings.map((l) => (
-                    <div 
-                      key={l.id}
-                      onClick={() => handleListingClick(l)}
-                      className="cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-lg rounded-xl"
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          handleListingClick(l)
-                        }
-                      }}
-                    >
-                      <ListingCard l={l} />
-                    </div>
+                    <ListingCard key={l.id} l={l} />
                   ))}
                 </div>
               </div>
@@ -315,7 +265,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Comment ça marche */}
       <section className="max-w-6xl mx-auto px-6 py-24">
         <div className="text-center mb-12">
           <h2 className="bebas text-4xl">Comment ça marche</h2>
@@ -332,7 +281,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Partenaires officiels */}
       <section className="max-w-7xl mx-auto px-6 py-20">
         <div className="flex items-end justify-between mb-8">
           <div>
@@ -373,7 +321,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* CTA Propriétaire */}
       <section className="max-w-6xl mx-auto px-6 pb-24">
         <div className="rounded-3xl bg-brand-dark text-white p-10 md:p-16 grid md:grid-cols-2 gap-10 items-center overflow-hidden relative">
           <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-brand-cyan/20 blur-3xl" />

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User } from 'lucide-react'
+import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, Edit, Trash, AlertTriangle } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api, ApiAnnonce, Langue } from '../lib/api'
@@ -153,6 +153,27 @@ function TabMesAnnonces() {
       .finally(() => setLoading(false))
   }, [])
 
+  const handleEditAnnonce = async (annonce: ApiAnnonce) => {
+    const newTitle = window.prompt('Nouveau titre pour l\'annonce', annonce.titre || '')
+    if (newTitle === null) return
+    try {
+      const updated = await api.updateAnnonce(annonce.id, { titre: newTitle })
+      setAnnonces((current) => current.map((a) => (a.id === updated.id ? updated : a)))
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Impossible de modifier l\'annonce')
+    }
+  }
+
+  const handleDeleteAnnonce = async (annonce: ApiAnnonce) => {
+    if (!window.confirm('Supprimer cette annonce ? Cette action est irreversible.')) return
+    try {
+      await api.deleteAnnonce(annonce.id)
+      setAnnonces((current) => current.filter((a) => a.id !== annonce.id))
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Impossible de supprimer l\'annonce')
+    }
+  }
+
   const statutStyles: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-700',
     active: 'bg-brand-green-light text-brand-green-dark',
@@ -200,9 +221,17 @@ function TabMesAnnonces() {
                   <div className="flex-1 p-5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <Link to={`/annonces/${annonce.id}`} className="text-lg font-semibold text-foreground hover:text-brand-cyan-dark">
-                          {annonce.titre}
-                        </Link>
+                        <div className="flex items-center gap-3">
+                          <Link to={`/annonces/${annonce.id}`} className="text-lg font-semibold text-foreground hover:text-brand-cyan-dark">
+                            {annonce.titre}
+                          </Link>
+                          <button title="Modifier" onClick={() => handleEditAnnonce(annonce)} className="p-1.5 hover:bg-muted rounded text-muted-foreground">
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button title="Supprimer" onClick={() => handleDeleteAnnonce(annonce)} className="p-1.5 hover:bg-red-50 rounded text-red-500">
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        </div>
                         <div className="mt-1 text-sm text-muted-foreground">
                           {annonce.quartier ? `${annonce.quartier}, ` : ''}{annonce.ville}
                         </div>
@@ -254,6 +283,25 @@ function TabNotif() {
       .finally(() => setLoading(false))
   }, [])
 
+  const handleMarkOne = async (id: number) => {
+    try {
+      await api.markNotificationRead(id)
+      setNotifications((prev) => prev.map((n) => (n.id_notification === id ? { ...n, est_lue: 1 } : n)))
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleDeleteNotification = async (id: number) => {
+    if (!window.confirm('Supprimer cette notification ?')) return
+    try {
+      await api.deleteNotification(id)
+      setNotifications((prev) => prev.filter((n) => n.id_notification !== id))
+    } catch {
+      // ignore
+    }
+  }
+
   const handleReadAll = async () => {
     setSaving(true)
     try {
@@ -268,18 +316,32 @@ function TabNotif() {
     <div>
       <h2 className="bebas text-2xl">Notifications</h2>
       <div className="mt-5 space-y-3">
-        {loading ? <p className="text-sm text-muted-foreground">Chargement…</p> : notifications.length === 0 ? <p className="text-sm text-muted-foreground">Aucune notification pour le moment.</p> : notifications.map((item) => (
-          <div key={item.id_notification} className="flex items-start justify-between gap-3 rounded-xl border border-border p-4">
-            <div>
-              <div className="text-sm font-medium">{item.titre}</div>
-              <div className="text-sm text-muted-foreground">{item.texte}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{new Date(item.date_creation).toLocaleString('fr-FR')}</div>
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Chargement…</p>
+        ) : notifications.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aucune notification pour le moment.</p>
+        ) : (
+          notifications.map((item) => (
+            <div key={item.id_notification} className="flex items-start justify-between gap-3 rounded-xl border border-border p-4">
+              <div>
+                <div className="text-sm font-medium">{item.titre}</div>
+                <div className="text-sm text-muted-foreground">{item.texte}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{new Date(item.date_creation).toLocaleString('fr-FR')}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => handleMarkOne(item.id_notification)} title="Marquer comme lu" className="p-1.5 hover:bg-white/5 rounded text-sm text-muted-foreground">
+                  <Check className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleDeleteNotification(item.id_notification)} title="Supprimer" className="p-1.5 hover:bg-white/5 rounded text-red-500">
+                  <Trash className="w-4 h-4" />
+                </button>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.est_lue ? 'bg-muted text-muted-foreground' : 'bg-brand-cyan-light text-brand-cyan-dark'}`}>
+                  {item.est_lue ? 'Lue' : 'Nouvelle'}
+                </span>
+              </div>
             </div>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.est_lue ? 'bg-muted text-muted-foreground' : 'bg-brand-cyan-light text-brand-cyan-dark'}`}>
-              {item.est_lue ? 'Lue' : 'Nouvelle'}
-            </span>
-          </div>
-        ))}
+          ))
+        )}
       </div>
       <Button className="mt-6 bg-brand-cyan text-white hover:bg-brand-cyan-dark" onClick={handleReadAll} disabled={saving}>
         {saving ? 'Mise à jour…' : 'Tout marquer comme lu'}
@@ -306,8 +368,20 @@ interface ChatMessage {
   annonce_titre: string | null
 }
 
+interface SuperadminUser {
+  id: number
+  email: string
+  nom: string
+  prenom: string
+  role: string
+  poste: string
+  name: string
+  initials: string
+}
+
 function TabMessages() {
   const { user } = useAuth()
+  const [superadmin, setSuperadmin] = useState<SuperadminUser | null>(null)
   const [threads, setThreads] = useState<Array<{
     interlocuteur_id: number
     interlocuteur_nom: string
@@ -327,10 +401,15 @@ function TabMessages() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    setLoading(true)
     api.messagesThreads()
       .then((data) => setThreads(data))
       .catch((err) => setError(err instanceof Error ? err.message : 'Impossible de charger les messages.'))
       .finally(() => setLoading(false))
+
+    api.superadmin()
+      .then((data) => setSuperadmin(data))
+      .catch(() => setSuperadmin(null))
   }, [])
 
   useEffect(() => {
@@ -342,6 +421,12 @@ function TabMessages() {
       .catch(() => setMessages([]))
       .finally(() => setMsgLoading(false))
   }, [activeThread])
+
+  const openSuperadminThread = () => {
+    if (superadmin) {
+      setActiveThread(superadmin.id)
+    }
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -366,7 +451,38 @@ function TabMessages() {
     }
   }
 
+  const handleReportMessage = async (id_message: number) => {
+    const raison = window.prompt('Raison du signalement (optionnel)')
+    try {
+      await api.reportMessage(id_message, { raison: raison || 'Signalement utilisateur' })
+      // refresh thread
+      if (activeThread !== null) {
+        const data = await api.messagesThread(activeThread)
+        setMessages(data)
+      }
+      alert('Signalement envoyé.')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Impossible d'envoyer le signalement.")
+    }
+  }
+
+  const handleDeleteConversation = async (interlocutorId: number) => {
+    if (!window.confirm('Supprimer cette conversation ?')) return
+    try {
+      await api.deleteThread(interlocutorId)
+      setThreads((prev) => prev.filter((t) => t.interlocuteur_id !== interlocutorId))
+      if (activeThread === interlocutorId) setActiveThread(null)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Impossible de supprimer la conversation.")
+    }
+  }
+
   const activeThreadInfo = threads.find((t) => t.interlocuteur_id === activeThread)
+  const currentThreadName = activeThreadInfo
+    ? `${activeThreadInfo.interlocuteur_prenom} ${activeThreadInfo.interlocuteur_nom}`
+    : superadmin && activeThread === superadmin.id
+      ? `${superadmin.prenom} ${superadmin.nom}`
+      : 'Conversation'
 
   // Chat view: conversation with a specific interlocutor
   if (activeThread !== null) {
@@ -380,14 +496,14 @@ function TabMessages() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm">
-            {(activeThreadInfo?.interlocuteur_prenom?.[0] || activeThreadInfo?.interlocuteur_nom?.[0] || '?').toUpperCase()}
+            {((activeThreadInfo?.interlocuteur_prenom?.[0] || activeThreadInfo?.interlocuteur_nom?.[0]) || (superadmin && activeThread === superadmin.id ? superadmin.prenom?.[0] || superadmin.nom?.[0] : '?'))?.toUpperCase()}
           </div>
           <div>
             <div className="text-sm font-semibold">
-              {activeThreadInfo?.interlocuteur_prenom} {activeThreadInfo?.interlocuteur_nom}
+              {currentThreadName}
             </div>
             <div className="text-xs text-muted-foreground">
-              {activeThreadInfo?.total_messages} message{activeThreadInfo && activeThreadInfo.total_messages > 1 ? 's' : ''}
+              {activeThreadInfo ? `${activeThreadInfo.total_messages} message${activeThreadInfo.total_messages > 1 ? 's' : ''}` : 'Conversation avec le superadmin'}
             </div>
           </div>
         </div>
@@ -414,9 +530,16 @@ function TabMessages() {
                         : 'bg-muted text-foreground rounded-bl-sm'
                   }`}>
                     {!isMe && (
-                      <div className="text-xs font-semibold mb-0.5 opacity-80">
-                        {senderName}
-                        {isAdmin && <span className="ml-1.5 inline-flex items-center gap-0.5 text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full">Admin</span>}
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-semibold mb-0.5 opacity-80">
+                          {senderName}
+                          {isAdmin && <span className="ml-1.5 inline-flex items-center gap-0.5 text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full">Admin</span>}
+                        </div>
+                          <div className="ml-3">
+                            <button title="Signaler" onClick={() => handleReportMessage(msg.id_message)} className="p-1.5 hover:bg-white/5 rounded text-muted-foreground">
+                              <AlertTriangle className="w-4 h-4" />
+                            </button>
+                          </div>
                       </div>
                     )}
                     {msg.sujet && (
@@ -466,23 +589,38 @@ function TabMessages() {
         Retrouve tes conversations avec l'administration et le support.
       </p>
 
+      <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <p className="text-sm text-muted-foreground">Démarre une conversation avec le superadmin ou choisis un fil existant.</p>
+        </div>
+        <button
+          type="button"
+          onClick={openSuperadminThread}
+          disabled={!superadmin}
+          className="inline-flex items-center justify-center rounded-full bg-brand-cyan px-4 py-2 text-sm font-semibold text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {superadmin ? `Contacter ${superadmin.prenom}` : 'Superadmin indisponible'}
+        </button>
+      </div>
+
       {loading ? (
         <p className="mt-5 text-sm text-muted-foreground">Chargement...</p>
       ) : error ? (
         <p className="mt-5 text-sm text-red-600">{error}</p>
       ) : threads.length === 0 ? (
         <div className="mt-5 rounded-3xl border border-border bg-white p-5">
-          <p className="text-sm text-muted-foreground">Tu n'as pas encore de conversation. Utilise la page Contact pour écrire à l'administrateur ou superadmin.</p>
+          <p className="text-sm text-muted-foreground">Tu n'as pas encore de conversation. Clique sur "Contacter {superadmin ? superadmin.prenom : 'le superadmin'}" pour démarrer.</p>
         </div>
       ) : (
         <div className="mt-5 space-y-3">
           {threads.map((thread) => {
             const isAdmin = thread.interlocuteur_nom?.toLowerCase().includes('admin') || thread.interlocuteur_prenom?.toLowerCase().includes('admin') || thread.interlocuteur_nom?.toLowerCase().includes('super')
             return (
-              <button
+              <div
                 key={thread.interlocuteur_id}
                 onClick={() => setActiveThread(thread.interlocuteur_id)}
-                className="w-full text-left rounded-2xl border border-border p-4 bg-white shadow-sm hover:shadow-md hover:border-brand-cyan/30 transition-all"
+                role="button"
+                className="w-full text-left rounded-2xl border border-border p-4 bg-white shadow-sm hover:shadow-md hover:border-brand-cyan/30 transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm shrink-0">
@@ -506,8 +644,17 @@ function TabMessages() {
                       {thread.total_messages} message{thread.total_messages > 1 ? 's' : ''} · Dernière activité le {new Date(thread.dernier_message).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
+                  <div className="ml-4">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteConversation(thread.interlocuteur_id) }}
+                      title="Supprimer la conversation"
+                      className="p-1.5 hover:bg-white/5 rounded text-red-500"
+                    >
+                      <Trash className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </button>
+              </div>
             )
           })}
         </div>

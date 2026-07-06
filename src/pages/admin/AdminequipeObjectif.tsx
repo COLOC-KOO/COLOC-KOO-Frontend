@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { api, BackofficeMember } from '../../lib/api'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import {
   UserPlus,
@@ -32,7 +33,7 @@ interface Membre {
   nom: string
   email: string
   telephone?: string
-  role: 'moderateur' | 'admin' | 'super_admin'
+  role: 'moderateur' | 'admin' | 'super_admin' | 'proprietaire' | 'colocataire'
   avatar?: string
   dateArrivee: string
   objectifJournalier: number
@@ -50,11 +51,22 @@ interface Membre {
   badges: string[]
 }
 
+interface BackofficeObjectif {
+  id_objectif: number
+  libelle: string
+  objectif: number
+  realise: number
+  periode: string
+  statut: string
+  date_creation: string
+}
+
 // Type pour le formulaire d'ajout/modification
 type MembreFormData = {
   nom: string
   email: string
   telephone: string
+  mot_de_passe?: string
   role: Membre['role']
   objectifJournalier: number
   objectifMensuel: number
@@ -171,12 +183,49 @@ const MOCK_MEMBRES: Membre[] = [
   }
 ]
 
+function mapBackofficeMemberToMembre(user: BackofficeMember): Membre {
+  const role = ['moderateur', 'admin', 'super_admin', 'proprietaire', 'colocataire'].includes(user.role)
+    ? (user.role as Membre['role'])
+    : 'moderateur'
+
+  const statut = user.statut === 'suspended'
+    ? 'suspendu'
+    : user.statut === 'inactive' || user.statut === 'inactif'
+      ? 'inactif'
+      : 'actif'
+
+  return {
+    id: String(user.id),
+    nom: user.name || `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Utilisateur',
+    email: user.email,
+    telephone: user.telephone || undefined,
+    role,
+    avatar: user.profilePicture || undefined,
+    dateArrivee: user.createdAt ? user.createdAt.slice(0, 10) : '',
+    objectifJournalier: 0,
+    objectifMensuel: 0,
+    realiseAujourdhui: 0,
+    realiseMois: 0,
+    statut,
+    dernierConnexion: user.createdAt || undefined,
+    performance: {
+      tauxValidation: 0,
+      tempsMoyen: 0,
+      annoncesTraitees: user.annoncesCount || 0,
+      signalementsTraites: user.candidaturesCount || 0,
+    },
+    badges: [],
+  }
+}
+
 // Composant de badge de rôle
 const RoleBadge = ({ role }: { role: Membre['role'] }) => {
   const config = {
     'moderateur': { label: 'Modérateur', className: 'bg-blue-500/15 text-blue-400 border-blue-500/30', icon: UserCheck },
     'admin': { label: 'Admin', className: 'bg-purple-500/15 text-purple-400 border-purple-500/30', icon: Shield },
-    'super_admin': { label: 'Super Admin', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: Crown }
+    'super_admin': { label: 'Super Admin', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: Crown },
+    'proprietaire': { label: 'Propriétaire', className: 'bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/30', icon: UserCheck },
+    'colocataire': { label: 'Colocataire', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', icon: Users }
   }
   const { label, className, icon: Icon } = config[role]
   
@@ -219,6 +268,7 @@ const MembreModal = ({
     nom: membre?.nom || '',
     email: membre?.email || '',
     telephone: membre?.telephone || '',
+    mot_de_passe: '',
     role: membre?.role || 'moderateur',
     objectifJournalier: membre?.objectifJournalier || 20,
     objectifMensuel: membre?.objectifMensuel || 400,
@@ -276,6 +326,17 @@ const MembreModal = ({
               type="tel"
               value={formData.telephone}
               onChange={(e) => setFormData({...formData, telephone: e.target.value})}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-white/60 mb-1">Mot de passe</label>
+            <input
+              type="password"
+              value={formData.mot_de_passe || ''}
+              onChange={(e) => setFormData({...formData, mot_de_passe: e.target.value})}
+              placeholder={membre ? 'Laisser vide pour conserver le mot de passe' : '123456 par défaut'}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
             />
           </div>
@@ -365,7 +426,88 @@ export default function AdminEquipeObjectifs() {
   const [sortField, setSortField] = useState<keyof Membre>('nom')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [backendError, setBackendError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [objectifs, setObjectifs] = useState<BackofficeObjectif[]>([])
+  const [objectifsLoading, setObjectifsLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
+
+  const loadMembers = async () => {
+    setLoading(true)
+    setBackendError(null)
+
+    try {
+      const rows = await api.backofficeMembers()
+      if (!rows || rows.length === 0) {
+        setBackendError('Aucun membre trouvé dans le back-office.')
+      }
+      setMembres(rows.map(mapBackofficeMemberToMembre))
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible de charger les membres.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadMembers()
+    loadObjectifs()
+  }, [])
+
+  const loadObjectifs = async () => {
+    setObjectifsLoading(true)
+    setBackendError(null)
+
+    try {
+      const data = await api.backofficeAdministration()
+      setObjectifs(data.objectifs || [])
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible de charger les objectifs.')
+    } finally {
+      setObjectifsLoading(false)
+    }
+  }
+
+  const handleAddObjectif = async () => {
+    const libelle = prompt('Libellé de l’objectif')
+    if (!libelle) return
+
+    const objectifValue = parseInt(prompt('Valeur cible (nombre)') || '', 10)
+    if (Number.isNaN(objectifValue)) return
+
+    try {
+      await api.saveBackofficeObjectif({ libelle, objectif: objectifValue })
+      setSuccessMessage('Objectif ajouté avec succès')
+      setTimeout(() => setSuccessMessage(null), 3000)
+      loadObjectifs()
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible d’enregistrer l’objectif.')
+    }
+  }
+
+  const handleEditObjectif = async (objectif: BackofficeObjectif) => {
+    const libelle = prompt('Libellé', objectif.libelle)
+    if (!libelle) return
+
+    const objectifValue = parseInt(prompt('Objectif', String(objectif.objectif)) || '', 10)
+    if (Number.isNaN(objectifValue)) return
+
+    try {
+      await api.saveBackofficeObjectif({
+        id: objectif.id_objectif,
+        libelle,
+        objectif: objectifValue,
+        realise: objectif.realise,
+        periode: objectif.periode,
+        statut: objectif.statut,
+      })
+      setSuccessMessage('Objectif mis à jour avec succès')
+      setTimeout(() => setSuccessMessage(null), 3000)
+      loadObjectifs()
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible de mettre à jour l’objectif.')
+    }
+  }
 
   // Rôles uniques pour le filtre
   const roles = useMemo(() => {
@@ -373,7 +515,6 @@ export default function AdminEquipeObjectifs() {
     return ['tous', ...Array.from(unique)]
   }, [membres])
 
-  // Statuts uniques pour le filtre
   const statuts = useMemo(() => {
     const unique = new Set(membres.map(m => m.statut))
     return ['tous', ...Array.from(unique)]
@@ -463,57 +604,104 @@ export default function AdminEquipeObjectifs() {
   }
 
   // Ajouter un membre
-  const handleAddMembre = (data: MembreFormData) => {
-    const newMembre: Membre = {
-      id: `M-${String(membres.length + 1).padStart(3, '0')}`,
-      ...data,
-      realiseAujourdhui: 0,
-      realiseMois: 0,
-      dernierConnexion: new Date().toISOString(),
-      performance: {
-        tauxValidation: 0,
-        tempsMoyen: 0,
-        annoncesTraitees: 0,
-        signalementsTraites: 0
-      },
-      badges: []
+  const handleAddMembre = async (data: MembreFormData) => {
+    setLoading(true)
+    setBackendError(null)
+
+    try {
+      const response = await api.createBackofficeMember({
+        nom: data.nom,
+        email: data.email,
+        telephone: data.telephone,
+        mot_de_passe: data.mot_de_passe,
+        role: data.role,
+        statut: data.statut,
+      })
+
+      const mapped = mapBackofficeMemberToMembre(response as BackofficeMember)
+      const newMembre: Membre = {
+        ...mapped,
+        objectifJournalier: data.objectifJournalier,
+        objectifMensuel: data.objectifMensuel,
+        realiseAujourdhui: 0,
+        realiseMois: 0,
+        badges: [],
+        dateArrivee: data.dateArrivee || mapped.dateArrivee || new Date().toISOString().slice(0, 10),
+      }
+
+      setMembres((current) => [newMembre, ...current])
+      setSuccessMessage(`${newMembre.nom} a été ajouté avec succès`)
+      setShowAddModal(false)
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible d’ajouter le membre.')
+    } finally {
+      setLoading(false)
+      setTimeout(() => setSuccessMessage(null), 3000)
     }
-    setMembres([...membres, newMembre])
-    setSuccessMessage(`${newMembre.nom} a été ajouté avec succès`)
-    setTimeout(() => setSuccessMessage(null), 3000)
   }
 
   // Modifier un membre
-  const handleEditMembre = (data: MembreFormData) => {
+  const handleEditMembre = async (data: MembreFormData) => {
     if (!editingMembre) return
-    const index = membres.findIndex(m => m.id === editingMembre.id)
-    if (index === -1) return
-    
-    const updatedMembres = [...membres]
-    updatedMembres[index] = {
-      ...updatedMembres[index],
-      nom: data.nom,
-      email: data.email,
-      telephone: data.telephone,
-      role: data.role,
-      objectifJournalier: data.objectifJournalier,
-      objectifMensuel: data.objectifMensuel,
-      dateArrivee: data.dateArrivee,
-      statut: data.statut
+    setLoading(true)
+    setBackendError(null)
+
+    try {
+      const response = await api.updateBackofficeMember(editingMembre.id, {
+        nom: data.nom,
+        email: data.email,
+        telephone: data.telephone,
+        mot_de_passe: data.mot_de_passe,
+        role: data.role,
+        statut: data.statut,
+      })
+
+      const mapped = mapBackofficeMemberToMembre(response as BackofficeMember)
+      setMembres((current) => current.map((m) => m.id === editingMembre.id ? {
+        ...m,
+        ...mapped,
+        objectifJournalier: data.objectifJournalier,
+        objectifMensuel: data.objectifMensuel,
+        dateArrivee: data.dateArrivee,
+      } : m))
+      setSuccessMessage(`${data.nom} a été modifié avec succès`)
+      setEditingMembre(null)
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible de modifier le membre.')
+    } finally {
+      setLoading(false)
+      setTimeout(() => setSuccessMessage(null), 3000)
     }
-    setMembres(updatedMembres)
-    setEditingMembre(null)
-    setSuccessMessage(`${data.nom} a été modifié avec succès`)
-    setTimeout(() => setSuccessMessage(null), 3000)
+  }
+
+  const handleToggleStatus = async (id: string, currentStatut: Membre['statut']) => {
+    const nextStatut = currentStatut === 'actif' ? 'suspended' : 'active'
+    try {
+      await api.updateMemberStatus(id, { statut: nextStatut })
+      setMembres((current) => current.map((m) => m.id === id ? { ...m, statut: nextStatut === 'active' ? 'actif' : 'suspendu' } : m))
+      setSuccessMessage(nextStatut === 'active' ? 'Membre activé.' : 'Membre suspendu.')
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible de mettre à jour le statut.')
+    }
   }
 
   // Supprimer un membre
-  const handleDeleteMembre = (id: string) => {
+  const handleDeleteMembre = async (id: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) return
-    const membre = membres.find(m => m.id === id)
-    setMembres(membres.filter(m => m.id !== id))
-    setSuccessMessage(`${membre?.nom} a été supprimé`)
-    setTimeout(() => setSuccessMessage(null), 3000)
+    setLoading(true)
+    setBackendError(null)
+
+    try {
+      await api.deleteBackofficeMember(id)
+      setMembres((current) => current.filter((m) => m.id !== id))
+      setSuccessMessage('Membre supprimé avec succès')
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible de supprimer le membre.')
+    } finally {
+      setLoading(false)
+      setTimeout(() => setSuccessMessage(null), 3000)
+    }
   }
 
   // Mettre à jour l'objectif
@@ -557,6 +745,13 @@ export default function AdminEquipeObjectifs() {
           </div>
           <div className="flex flex-wrap gap-2">
             <button 
+              onClick={() => loadMembers()}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm hover:bg-white/10 transition text-white/60"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Actualiser
+            </button>
+            <button 
               onClick={() => setViewMode(viewMode === 'list' ? 'cards' : 'list')}
               className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm hover:bg-white/10 transition text-white/60"
             >
@@ -576,6 +771,11 @@ export default function AdminEquipeObjectifs() {
         {successMessage && (
           <div className="bg-brand-green/20 border border-brand-green/30 text-brand-green px-4 py-2 rounded-lg text-sm animate-in slide-in-from-top-2">
             {successMessage}
+          </div>
+        )}
+        {backendError && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-200 px-4 py-2 rounded-lg text-sm">
+            {backendError}
           </div>
         )}
 
@@ -602,6 +802,74 @@ export default function AdminEquipeObjectifs() {
               {stats.moyenneRealise}/{stats.moyenneObjectif}
             </div>
             <div className="text-xs text-white/40">Moyenne objectif/jour</div>
+          </div>
+        </div>
+
+        {/* Objectifs équipe */}
+        <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
+          <div className="p-4 border-b border-white/10 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Objectifs de l'équipe</h2>
+              <p className="text-white/50 text-sm">Charge les objectifs depuis le back-office et édite les cibles.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={loadObjectifs}
+                className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm hover:bg-white/10 transition text-white/60"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Rafraîchir
+              </button>
+              <button
+                onClick={handleAddObjectif}
+                className="px-3 py-2 bg-brand-cyan text-[oklch(0.15_0_0)] rounded-lg text-sm font-semibold hover:opacity-80 transition"
+              >
+                Ajouter un objectif
+              </button>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-white/5">
+                <tr>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Libellé</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Cible</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Réalisé</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Période</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-white/40">Statut</th>
+                  <th className="text-right p-4 text-xs uppercase tracking-wider text-white/40">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {objectifsLoading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-white/40">Chargement des objectifs...</td>
+                  </tr>
+                ) : objectifs.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-white/40">Aucun objectif disponible.</td>
+                  </tr>
+                ) : (
+                  objectifs.map((objectif) => (
+                    <tr key={objectif.id_objectif} className="hover:bg-white/5 transition">
+                      <td className="p-4">{objectif.libelle}</td>
+                      <td className="p-4">{objectif.objectif}</td>
+                      <td className="p-4">{objectif.realise}</td>
+                      <td className="p-4">{objectif.periode}</td>
+                      <td className="p-4">{objectif.statut}</td>
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={() => handleEditObjectif(objectif)}
+                          className="px-3 py-1 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition text-white/70"
+                        >
+                          Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -800,6 +1068,17 @@ export default function AdminEquipeObjectifs() {
                                 title="Modifier"
                               >
                                 <Edit className="w-4 h-4 text-white/40" />
+                              </button>
+                              <button
+                                onClick={() => handleToggleStatus(m.id, m.statut)}
+                                className={`p-1.5 rounded-lg transition ${m.statut === 'actif' ? 'hover:bg-red-500/20' : 'hover:bg-brand-green/20'}`}
+                                title={m.statut === 'actif' ? 'Suspendre' : 'Activer'}
+                              >
+                                {m.statut === 'actif' ? (
+                                  <UserX className="w-4 h-4 text-red-400/60" />
+                                ) : (
+                                  <UserCheck className="w-4 h-4 text-brand-green" />
+                                )}
                               </button>
                               {m.role !== 'super_admin' && (
                                 <button 

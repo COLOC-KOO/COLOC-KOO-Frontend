@@ -140,7 +140,7 @@ export default function AdminPartenaires() {
     setError(null)
     try {
       const rows = await api.backofficePartenaires()
-      
+      setPartenaires(rows.map(mapPartenaire))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger les partenaires')
     } finally {

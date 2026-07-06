@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
+import { api, ApiPaiement } from '../../lib/api'
 import {
   Search,
   ChevronDown,
@@ -27,11 +28,11 @@ interface Versement {
   typeEmetteur: 'particulier' | 'partenaire' | 'agence'
   associeA: string
   reference: string
-  canal: 'MVOLA' | 'Orange Money' | 'Airtel Money' | 'Virement bancaire' | 'Especes'
+  canal: 'MVOLA' | 'Orange Money' | 'Airtel Money' | 'Virement bancaire' | 'Especes' | 'CB' | 'Autre'
   date: string
   montantDu: number
   montantRecu: number
-  statut: 'a-verifier' | 'conforme' | 'non-conforme' | 'en-attente'
+  statut: 'a-verifier' | 'conforme' | 'non-conforme' | 'en-attente' | 'valide' | 'echoue'
   commentaire?: string
   dateVerification?: string
   verifiePar?: string
@@ -204,13 +205,35 @@ const MOCK_VERSEMENTS: Versement[] = [
   }
 ]
 
+function mapPaiementToVersement(payment: ApiPaiement): Versement {
+  const emetteur = [payment.nom, payment.prenom].filter(Boolean).join(' ').trim() || 'Utilisateur'
+  const typeEmetteur = payment.id_partenaire ? 'partenaire' : payment.id_contrat ? 'agence' : 'particulier'
+  const serviceLabel = payment.service_type === 'contrat' ? 'Contrat' : payment.service_type === 'booster' ? 'Booster' : payment.service_type === 'publicite' ? 'Publicité' : 'Service'
+  const associeA = payment.annonce_titre ? `${serviceLabel} · ${payment.annonce_titre}` : `${serviceLabel} · ${payment.reference}`
+  return {
+    id: String(payment.id_paiement),
+    emetteur,
+    typeEmetteur,
+    associeA,
+    reference: payment.reference || '',
+    canal: payment.moyen_paiement,
+    date: payment.date_paiement,
+    montantDu: payment.montant_du,
+    montantRecu: payment.montant_recu,
+    statut: payment.statut,
+    commentaire: payment.reference_operateur || undefined,
+  }
+}
+
 // Composant de badge de statut
 const StatusBadge = ({ statut }: { statut: Versement['statut'] }) => {
   const config = {
     'a-verifier': { label: 'À vérifier', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: Clock },
     'conforme': { label: 'Conforme', className: 'bg-green-500/15 text-green-400 border-green-500/30', icon: CheckCircle },
     'non-conforme': { label: 'Non conforme', className: 'bg-red-500/15 text-red-400 border-red-500/30', icon: XCircle },
-    'en-attente': { label: 'En attente', className: 'bg-gray-500/15 text-gray-400 border-gray-500/30', icon: AlertCircle }
+    'en-attente': { label: 'En attente', className: 'bg-gray-500/15 text-gray-400 border-gray-500/30', icon: AlertCircle },
+    'valide': { label: 'Validé', className: 'bg-brand-green/15 text-brand-green border-brand-green/30', icon: CheckCircle },
+    'echoue': { label: 'Échoué', className: 'bg-red-500/15 text-red-400 border-red-500/30', icon: XCircle }
   }
   const { label, className, icon: Icon } = config[statut]
   
@@ -229,7 +252,9 @@ const CanalBadge = ({ canal }: { canal: Versement['canal'] }) => {
     'Orange Money': { label: 'Orange Money', className: 'bg-orange-500/15 text-orange-400 border-orange-500/30' },
     'Airtel Money': { label: 'Airtel Money', className: 'bg-red-500/15 text-red-400 border-red-500/30' },
     'Virement bancaire': { label: 'Virement bancaire', className: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
-    'Especes': { label: 'Espèces', className: 'bg-green-500/15 text-green-400 border-green-500/30' }
+    'Especes': { label: 'Espèces', className: 'bg-green-500/15 text-green-400 border-green-500/30' },
+    'CB': { label: 'CB', className: 'bg-violet-500/15 text-violet-400 border-violet-500/30' },
+    'Autre': { label: 'Autre', className: 'bg-gray-500/15 text-gray-400 border-gray-500/30' }
   }
   const { label, className } = config[canal]
   
@@ -388,7 +413,7 @@ const VersementDetails = ({
 
 // Composant principal
 export default function AdminVersements() {
-  const [versements, setVersements] = useState(MOCK_VERSEMENTS)
+  const [versements, setVersements] = useState<Versement[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatut, setFilterStatut] = useState<string>('tous')
   const [filterCanal, setFilterCanal] = useState<string>('tous')
@@ -397,6 +422,8 @@ export default function AdminVersements() {
   const [sortField, setSortField] = useState<keyof Versement>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Canaux uniques pour le filtre
   const canaux = useMemo(() => {
@@ -409,6 +436,24 @@ export default function AdminVersements() {
     const unique = new Set(versements.map(v => v.typeEmetteur))
     return ['tous', ...Array.from(unique)]
   }, [versements])
+
+  const loadVersements = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await api.backofficePaiements()
+      setVersements(result.map(mapPaiementToVersement))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de charger les paiements')
+      setVersements(MOCK_VERSEMENTS)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadVersements()
+  }, [])
 
   // Filtrer et trier les versements
   const filteredVersements = useMemo(() => {
@@ -490,7 +535,7 @@ export default function AdminVersements() {
   }
 
   // Validation d'un versement
-  const handleValidate = (id: string, statut: 'conforme' | 'non-conforme' | 'a-verifier', commentaire?: string) => {
+  const handleValidate = async (id: string, statut: 'conforme' | 'non-conforme' | 'a-verifier', commentaire?: string) => {
     const index = versements.findIndex(v => v.id === id)
     if (index === -1) return
 
@@ -509,17 +554,22 @@ export default function AdminVersements() {
       versement.verifiePar = undefined
     }
 
-    updatedVersements[index] = versement
-    setVersements(updatedVersements)
-    setSelectedVersement(null)
+    try {
+      await api.updatePaiementStatus(id, { statut })
+      updatedVersements[index] = versement
+      setVersements(updatedVersements)
+      setSelectedVersement(null)
 
-    const message = statut === 'conforme' 
-      ? 'Versement marqué comme conforme' 
-      : statut === 'non-conforme' 
-        ? 'Versement marqué comme non conforme'
-        : 'Versement remis en vérification'
-    setSuccessMessage(message)
-    setTimeout(() => setSuccessMessage(null), 3000)
+      const message = statut === 'conforme' 
+        ? 'Versement marqué comme conforme' 
+        : statut === 'non-conforme' 
+          ? 'Versement marqué comme non conforme'
+          : 'Versement remis en vérification'
+      setSuccessMessage(message)
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de mettre à jour le statut du paiement')
+    }
   }
 
   // Toggle de tri
@@ -550,19 +600,21 @@ export default function AdminVersements() {
             </p>
           </div>
           <button 
-            onClick={() => {
-              setVersements(MOCK_VERSEMENTS)
-              setSuccessMessage('Données actualisées')
-              setTimeout(() => setSuccessMessage(null), 3000)
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-cyan/15 text-brand-cyan border border-brand-cyan/30 rounded-lg hover:bg-brand-cyan/25 transition text-sm font-medium"
+            onClick={() => loadVersements()}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-cyan/15 text-brand-cyan border border-brand-cyan/30 rounded-lg hover:bg-brand-cyan/25 transition text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <RefreshCw className="w-4 h-4" />
-            Actualiser
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Chargement...' : 'Actualiser'}
           </button>
         </div>
 
-        {/* Message de succès */}
+        {/* Message d'erreur et succès */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-2 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
         {successMessage && (
           <div className="bg-brand-green/20 border border-brand-green/30 text-brand-green px-4 py-2 rounded-lg text-sm animate-in slide-in-from-top-2">
             {successMessage}
@@ -633,6 +685,8 @@ export default function AdminVersements() {
                   <option value="conforme" className="bg-[oklch(0.22_0.005_260)]">Conforme</option>
                   <option value="non-conforme" className="bg-[oklch(0.22_0.005_260)]">Non conforme</option>
                   <option value="en-attente" className="bg-[oklch(0.22_0.005_260)]">En attente</option>
+                  <option value="valide" className="bg-[oklch(0.22_0.005_260)]">Validé</option>
+                  <option value="echoue" className="bg-[oklch(0.22_0.005_260)]">Échoué</option>
                 </select>
 
                 <select

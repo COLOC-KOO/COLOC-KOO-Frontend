@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
+import { api } from '../../lib/api'
 import { AdminLayout } from '../../components/admin/AdminLayout'
+import { useConfig } from '../../lib/config'
 import {
   Settings,
   Globe,
@@ -371,6 +373,8 @@ export default function AdminConfiguration() {
   const [activeTab, setActiveTab] = useState<'flags' | 'constantes' | 'langues'>('flags')
   const [editingConstante, setEditingConstante] = useState<Constante | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [backendError, setBackendError] = useState<string | null>(null)
+  const [configLoading, setConfigLoading] = useState(false)
   const [sortField, setSortField] = useState<'name' | 'category' | 'enabled'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
@@ -451,7 +455,7 @@ export default function AdminConfiguration() {
   }
 
   // Toggle flag
-  const toggleFlag = (id: string) => {
+  const toggleFlag = async (id: string) => {
     const index = flags.findIndex(f => f.id === id)
     if (index === -1) return
     
@@ -461,25 +465,37 @@ export default function AdminConfiguration() {
       enabled: !updatedFlags[index].enabled,
       lastModified: new Date().toISOString().split('T')[0]
     }
-    setFlags(updatedFlags)
-    setSuccessMessage(`Flag ${updatedFlags[index].name} ${updatedFlags[index].enabled ? 'activé' : 'désactivé'}`)
-    setTimeout(() => setSuccessMessage(null), 3000)
+
+    try {
+      await saveConfiguration(updatedFlags[index].name, updatedFlags[index].enabled)
+      setFlags(updatedFlags)
+      setSuccessMessage(`Flag ${updatedFlags[index].name} ${updatedFlags[index].enabled ? 'activé' : 'désactivé'}`)
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch {
+      // error handled in saveConfiguration
+    }
   }
 
   // Modifier une constante
-  const handleEditConstante = (id: string, value: string | number) => {
+  const handleEditConstante = async (id: string, value: string | number) => {
     const index = constantes.findIndex(c => c.id === id)
     if (index === -1) return
-    
+
     const updatedConstantes = [...constantes]
     updatedConstantes[index] = {
       ...updatedConstantes[index],
       value
     }
-    setConstantes(updatedConstantes)
-    setEditingConstante(null)
-    setSuccessMessage(`Constante ${updatedConstantes[index].key} mise à jour`)
-    setTimeout(() => setSuccessMessage(null), 3000)
+
+    try {
+      await saveConfiguration(updatedConstantes[index].key, value)
+      setConstantes(updatedConstantes)
+      setEditingConstante(null)
+      setSuccessMessage(`Constante ${updatedConstantes[index].key} mise à jour`)
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch {
+      // error handled in saveConfiguration
+    }
   }
 
   // Obtenir l'icône de catégorie
@@ -510,6 +526,83 @@ export default function AdminConfiguration() {
     }
     return colors[category] || 'text-white/40'
   }
+
+  const parseConfigValue = (value: unknown) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value)
+      } catch {
+        return value
+      }
+    }
+    return value
+  }
+
+  const getDescriptionForKey = (key: string) => {
+    const map: Record<string, string> = {
+      LAUNCH_FREE: 'Gratuité colocataires au lancement',
+      LITE_MODE: 'Mode basse connexion (public)',
+      PAIEMENT_OM_MVOLA: 'Orange Money / MVOLA - "Bientôt disponible"',
+      MODERATION_AUTO: 'Validation automatique après 1h sans action',
+      PARTENAIRE_VISIBILITY: 'Visibilité cumulative des partenaires',
+      MOBILE_FIRST: 'Priorité au design mobile',
+      I18N_MG: 'Internationalisation Malagasy',
+      I18N_EN: 'Internationalisation Anglais'
+    }
+    return map[key] || 'Paramètre de configuration'
+  }
+
+  const loadAdministration = async () => {
+    setConfigLoading(true)
+    setBackendError(null)
+
+    try {
+      const data = await api.backofficeAdministration()
+      const configuration = Array.isArray(data.configuration) ? data.configuration : []
+      const configMap = new Map(configuration.map((item: any) => [item.cle, { ...item, valeur: parseConfigValue(item.valeur) }]))
+
+      setFlags((current) => current.map((flag) => {
+        if (!configMap.has(flag.name)) return flag
+        const item = configMap.get(flag.name)
+        return {
+          ...flag,
+          enabled: Boolean(item?.valeur),
+          lastModified: item?.date_modification ? String(item.date_modification).slice(0, 10) : flag.lastModified
+        }
+      }))
+
+      setConstantes((current) => current.map((constante) => {
+        if (!configMap.has(constante.key)) return constante
+        const item = configMap.get(constante.key)
+        const value = item?.valeur
+        return {
+          ...constante,
+          value: typeof constante.value === 'number' ? Number(value) : value ?? '',
+        }
+      }))
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible de charger la configuration.')
+    } finally {
+      setConfigLoading(false)
+    }
+  }
+
+  const saveConfiguration = async (key: string, valeur: unknown) => {
+    setBackendError(null)
+    try {
+      await api.saveBackofficeConfiguration({ cle: key, valeur })
+      setSuccessMessage('Configuration enregistrée.')
+      await refreshConfig()
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setBackendError(err instanceof Error ? err.message : 'Impossible d’enregistrer la configuration.')
+      throw err
+    }
+  }
+
+  useEffect(() => {
+    loadAdministration()
+  }, [])
 
   // Traduire les catégories
   const translateCategory = (category: string) => {

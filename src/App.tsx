@@ -31,6 +31,7 @@ import AdminSuiviMissions from './pages/admin/AdminsuiviMission'
 import AdminServicesColockoo from './pages/admin/AdminServicecoloc'
 import AdminContratsEDL from './pages/admin/AdminContrat'
 import { useAuth } from './lib/auth'
+import { ConfigProvider } from './lib/config'
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { loading, isAdmin } = useAuth()
@@ -41,8 +42,9 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      {/* Site public */}
+    <ConfigProvider>
+      <Routes>
+        {/* Site public */}
       <Route path="/" element={<Home />} />
       <Route path="/annonces" element={<Annonces />} />
       <Route path="/annonces/:id" element={<AnnonceDetail />} />
@@ -76,5 +78,6 @@ export default function App() {
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
-  )
+  </ConfigProvider>
+)
 }
