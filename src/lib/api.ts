@@ -447,6 +447,9 @@ export const api = {
   langues() {
     return request<Langue[]>('/meta/langues')
   },
+  services() {
+    return request<ApiServiceCkoo[]>('/meta/services')
+  },
   partenaires() {
     return request<ApiPartenaire[]>('/partenaires')
   },

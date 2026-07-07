@@ -3,7 +3,7 @@ import { MapPin, SlidersHorizontal } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { ListingCard } from '../components/site/ListingCard'
-import { api, annonceToListing, Ville } from '../lib/api'
+import { api, annonceToListing, ApiServiceCkoo, Ville } from '../lib/api'
 import { Listing } from '../types'
 
 const typeOptions = ['', 'chambre', 'appartement', 'maison']
@@ -12,10 +12,12 @@ export default function Annonces() {
   const location = useLocation()
   const [city, setCity] = useState('')
   const [type, setType] = useState('')
+  const [serviceId, setServiceId] = useState('')
   const [maxPrice, setMaxPrice] = useState(0)
   const [query, setQuery] = useState('')
   const [listings, setListings] = useState<Listing[]>([])
   const [villes, setVilles] = useState<Ville[]>([])
+  const [services, setServices] = useState<ApiServiceCkoo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -24,11 +26,13 @@ export default function Annonces() {
     const urlQuery = params.get('q') || ''
     const urlType = params.get('type') || ''
     const urlCity = params.get('ville') || params.get('city') || ''
+    const urlService = params.get('service') || ''
     const urlMaxPrice = Number(params.get('maxPrice') || 0)
 
     setQuery(urlQuery)
     setType(urlType)
     setCity(urlCity)
+    setServiceId(urlService)
     setMaxPrice(urlMaxPrice)
   }, [location.search])
 
@@ -40,18 +44,21 @@ export default function Annonces() {
         statut: 'active',
         ville: city,
         type,
+        service: serviceId || undefined,
         maxPrice: maxPrice || undefined,
         q: query || undefined,
       }),
       api.villes().catch(() => []),
+      api.services().catch(() => []),
     ])
-      .then(([annonces, villesList]) => {
+      .then(([annonces, villesList, servicesList]) => {
         setListings(annonces.map(annonceToListing))
         setVilles(villesList)
+        setServices(Array.isArray(servicesList) ? servicesList : [])
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Impossible de charger les annonces'))
       .finally(() => setLoading(false))
-  }, [city, type, maxPrice, query])
+  }, [city, type, serviceId, maxPrice, query])
 
   const citiesList = useMemo(() => {
     const fromDb = villes.map((v) => v.nom_ville)
@@ -120,6 +127,25 @@ export default function Annonces() {
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Service
+              </label>
+              <select
+                value={serviceId}
+                onChange={(e) => setServiceId(e.target.value)}
+                className="input"
+              >
+                <option value="">Tous</option>
+                {services
+                  .filter((service) => service.est_actif === 1)
+                  .map((service) => (
+                    <option key={service.id_service} value={String(service.id_service)}>
+                      {service.nom}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                 Prix max : {maxPrice ? `${maxPrice.toLocaleString('fr-FR')} Ar` : '-'}
               </label>
               <input
@@ -137,6 +163,7 @@ export default function Annonces() {
               onClick={() => {
                 setCity('')
                 setType('')
+                setServiceId('')
                 setMaxPrice(0)
                 setQuery('')
               }}
