@@ -8,7 +8,9 @@ import { roleLevel, useAuth } from '../lib/auth'
 const postes: { value: Poste; label: string }[] = [
   { value: 'colocataire', label: 'Colocataire' },
   { value: 'proprietaire', label: 'Proprietaire' },
-
+  /*{ value: 'moderateur', label: 'Moderateur' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'superadmin', label: 'Superadmin' },*/
 ]
 
 export default function Auth() {
