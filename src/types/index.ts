@@ -5,6 +5,7 @@ export interface Coloc {
 }
 
 export interface Owner {
+  id?: number
   name: string
   verified: boolean
   since: string

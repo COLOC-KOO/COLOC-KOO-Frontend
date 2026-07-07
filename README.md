@@ -16,11 +16,11 @@ routing via `react-router-dom` (`App.tsx`, `components/`, `pages/`).
 src/
   App.tsx                 # Routing principal (react-router-dom)d
   main.tsx                # Point d'entrée React
-  index.css               # Thème Tailwind + variables de couleur (oklch)
+  index.css            p^p^^pp^p^p^p^p   # Thème Tailwind + variables de couleur (oklch)
   types/                  # Types TypeScript (Listing, Candidature, AdminUser, ...)
   data/mockData.ts        # Données mock (annonces, utilisateurs, paiements, messages...)
   lib/utils.ts            # Helpers (formatAr, unsplash, cn)
-  components/
+  components/lmlmlml
     Logo.tsx
     ui/Button.tsx, ui/Badge.tsx
     site/SiteHeader.tsx, SiteFooter.tsx, SiteLayout.tsx, ListingCard.tsx
