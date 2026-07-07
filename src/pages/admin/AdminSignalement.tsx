@@ -72,10 +72,14 @@ const ConversationView = ({
   onClose,
 }: {
   signalement: ConversationSignalement
-  onAction: (id: string, action: string, membre?: string) => void
+  onAction: (id: string, action: string, membre?: string, payload?: { raison?: string; contenu?: string }) => Promise<void>
   onClose: () => void
 }) => {
   const [showFull, setShowFull] = useState(false)
+  const [showWarnForm, setShowWarnForm] = useState(false)
+  const [warnRecipient, setWarnRecipient] = useState<'A' | 'B'>('A')
+  const [warnMessage, setWarnMessage] = useState('')
+  const [warnSending, setWarnSending] = useState(false)
   const visibleMessages = showFull ? signalement.messages : signalement.messages.slice(0, 5)
 
   return (
@@ -150,13 +154,61 @@ const ConversationView = ({
         </div>
 
         <div className="p-4 border-t border-white/10 flex flex-wrap gap-2">
-          <button
-            onClick={() => onAction(signalement.id, 'warn')}
-            className="px-3 py-1.5 bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-medium hover:bg-amber-500/25 transition"
-          >
-            <Mail className="w-3 h-3 inline mr-1" />
-            Envoyer un avertissement
-          </button>
+          {!showWarnForm ? (
+            <button
+              onClick={() => setShowWarnForm(true)}
+              className="px-3 py-1.5 bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-medium hover:bg-amber-500/25 transition"
+            >
+              <Mail className="w-3 h-3 inline mr-1" />
+              Envoyer un avertissement
+            </button>
+          ) : (
+            <div className="w-full max-w-2xl bg-white/5 p-3 rounded-lg">
+              <div className="mb-2 text-xs text-white/70">Envoyer un avertissement à</div>
+              <div className="flex gap-2 mb-2">
+                <button
+                  className={`px-3 py-1.5 text-xs rounded-lg ${warnRecipient === 'A' ? 'bg-white/10' : 'bg-transparent'}`}
+                  onClick={() => setWarnRecipient('A')}
+                >
+                  Membre A — {signalement.participants[0]?.name}
+                </button>
+                <button
+                  className={`px-3 py-1.5 text-xs rounded-lg ${warnRecipient === 'B' ? 'bg-white/10' : 'bg-transparent'}`}
+                  onClick={() => setWarnRecipient('B')}
+                >
+                  Membre B — {signalement.participants[1]?.name}
+                </button>
+              </div>
+              <textarea
+                rows={3}
+                value={warnMessage}
+                onChange={(e) => setWarnMessage(e.target.value)}
+                placeholder="Message d'avertissement (optionnel)"
+                className="w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm mb-2"
+              />
+              <div className="flex gap-2">
+                <button
+                    onClick={async () => {
+                      const memberId = warnRecipient === 'A' ? signalement.participants[0]?.id : signalement.participants[1]?.id
+                      if (!memberId) return
+                      try {
+                        setWarnSending(true)
+                        await onAction(signalement.id, 'warn', memberId as string, { contenu: warnMessage })
+                      } finally {
+                        setWarnSending(false)
+                        setShowWarnForm(false)
+                        setWarnMessage('')
+                      }
+                    }}
+                  disabled={warnSending}
+                  className="px-3 py-1.5 bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-medium hover:bg-amber-500/25 transition"
+                >
+                  {warnSending ? 'Envoi…' : 'Envoyer'}
+                </button>
+                <button onClick={() => { setShowWarnForm(false); setWarnMessage('') }} className="px-3 py-1.5 bg-white/5 text-white/60 border border-white/10 rounded-lg text-xs">Annuler</button>
+              </div>
+            </div>
+          )}
           <button
             onClick={() => onAction(signalement.id, 'resolve')}
             className="px-3 py-1.5 bg-green-500/15 text-green-400 border border-green-500/30 rounded-lg text-xs font-medium hover:bg-green-500/25 transition"
@@ -177,6 +229,42 @@ const ConversationView = ({
             <MessageCircle className="w-3 h-3 inline mr-1" />
             Ouvrir la conversation
           </button>
+
+          {/* Admin moderation actions per participant */}
+          {signalement.participants[0] && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onAction(signalement.id, 'suspend', signalement.participants[0].id)}
+                className="px-3 py-1.5 bg-red-600/10 text-red-400 border border-red-600/20 rounded-lg text-xs font-medium hover:bg-red-600/20 transition"
+              >
+                <Ban className="w-3 h-3 inline mr-1" />
+                Suspendre A
+              </button>
+              <button
+                onClick={() => onAction(signalement.id, 'deactivate', signalement.participants[0].id)}
+                className="px-3 py-1.5 bg-white/5 text-white/60 border border-white/10 rounded-lg text-xs font-medium hover:bg-white/10 transition"
+              >
+                Désactiver A
+              </button>
+            </div>
+          )}
+          {signalement.participants[1] && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onAction(signalement.id, 'suspend', signalement.participants[1].id)}
+                className="px-3 py-1.5 bg-red-600/10 text-red-400 border border-red-600/20 rounded-lg text-xs font-medium hover:bg-red-600/20 transition"
+              >
+                <Ban className="w-3 h-3 inline mr-1" />
+                Suspendre B
+              </button>
+              <button
+                onClick={() => onAction(signalement.id, 'deactivate', signalement.participants[1].id)}
+                className="px-3 py-1.5 bg-white/5 text-white/60 border border-white/10 rounded-lg text-xs font-medium hover:bg-white/10 transition"
+              >
+                Désactiver B
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -292,18 +380,29 @@ export default function AdminSignalements() {
     classe: signalements.filter((s) => s.status === 'dismissed').length,
   }), [signalements])
 
-  const handleAction = async (id: string, action: string) => {
+  const handleAction = async (id: string, action: string, membre?: string, payload?: { raison?: string; contenu?: string }) => {
     const selected = signalements.find((s) => s.id === id)
     if (!selected?.rawId) return
 
     try {
+      // Admin moderation: suspendre -> supprimer le membre; deactivate -> supprimer as well per request
+      if ((action === 'suspend' || action === 'deactivate') && membre) {
+        await api.deleteBackofficeMember(membre)
+        // Mark signalement as resolved after deletion
+        await api.updateBackofficeSignalement(selected.rawId, { statut: 'resolved', action, raison: `Membre ${membre} ${action}` })
+        setSignalements((current) => current.map((item) => (item.rawId === selected.rawId ? { ...item, status: 'resolved' } : item)))
+        setSuccessMessage(action === 'suspend' ? 'Membre supprime' : 'Membre supprime')
+        setTimeout(() => setSuccessMessage(null), 3000)
+        return
+      }
+
       if (action === 'warn') {
-        const cibleId = (selected.raw as any)?.id_utilisateur_cible
+        const cibleId = membre || (selected.raw as any)?.id_utilisateur_cible
         if (!cibleId) throw new Error('Aucune cible disponible pour cet avertissement')
         await api.sendBackofficeWarning({
           id_utilisateur: String(cibleId),
-          raison: (selected.raw as any)?.raison ? String((selected.raw as any).raison) : 'Signalement',
-          contenu: `Avertissement lié au signalement #${selected.rawId}`,
+          raison: payload?.raison || (selected.raw as any)?.raison ? String((selected.raw as any).raison) : 'Signalement',
+          contenu: payload?.contenu || `Avertissement lié au signalement #${selected.rawId}`,
         })
       }
 
