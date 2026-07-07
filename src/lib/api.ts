@@ -230,6 +230,47 @@ export interface ApiBackofficeContratDetails extends ApiBackofficeContrat {
   parties: ApiBackofficeContratParty[]
 }
 
+export interface ApiSignalement {
+  id_signalement: number
+  id_utilisateur_signalant: number | null
+  id_utilisateur_cible: number | null
+  id_annonce: number | null
+  id_message: number | null
+  raison: string | null
+  description: string | null
+  statut: string | null
+  date_signalement: string
+  date_resolution: string | null
+  signaleur_nom?: string | null
+  signaleur_prenom?: string | null
+  signaleur_email?: string | null
+  cible_nom?: string | null
+  cible_prenom?: string | null
+  cible_email?: string | null
+  annonce_titre?: string | null
+  message_contenu?: string | null
+}
+
+export interface ApiSignalementConversation {
+  signalement: ApiSignalement
+  membreA: number | null
+  membreB: number | null
+  messages: Array<{
+    id_message: number
+    id_expediteur: number
+    id_destinataire: number
+    sujet: string | null
+    contenu: string
+    date_envoi: string
+    est_lu: number
+    expediteur_nom: string | null
+    expediteur_prenom: string | null
+    destinataire_nom: string | null
+    destinataire_prenom: string | null
+    annonce_titre: string | null
+  }>
+}
+
 export interface BackofficeMember extends AuthUser {
   annoncesCount: number
   candidaturesCount: number
@@ -577,6 +618,27 @@ export const api = {
   deletePartenaire(id: string | number) {
     return request<{ message: string }>(`/backoffice/partenaires/${id}`, {
       method: 'DELETE',
+    })
+  },
+  backofficeSignalements() {
+    return request<ApiSignalement[]>('/backoffice/signalements')
+  },
+  backofficeSignalementConversation(id: string | number) {
+    return request<ApiSignalementConversation>(`/backoffice/signalements/${id}/conversation`)
+  },
+  updateBackofficeSignalement(id: string | number, payload: { statut?: string; action?: string; raison?: string }) {
+    return request<{ message: string }>(`/backoffice/signalements/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
+  backofficeWarningReasons() {
+    return request<string[]>('/backoffice/warning-reasons')
+  },
+  sendBackofficeWarning(payload: { id_utilisateur: string | number; raison?: string; contenu?: string }) {
+    return request<{ id_message: number; redirect: string }>('/backoffice/warnings', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     })
   },
   backofficeContrats() {
