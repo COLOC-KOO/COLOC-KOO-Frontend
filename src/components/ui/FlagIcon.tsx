@@ -18,7 +18,7 @@ const flagSizes = {
 export function FlagIcon({ code, className, size = 'md' }: FlagIconProps) {
   const sizeClass = flagSizes[size]
   
-  const flags = {
+  const flags: Record<'FR' | 'MG' | 'EN', React.ReactElement> = {
     FR: (
       <svg viewBox="0 0 640 480" className={cn(sizeClass, className)}>
         <g fillRule="evenodd" strokeWidth="1pt">
@@ -41,27 +41,47 @@ export function FlagIcon({ code, className, size = 'md' }: FlagIconProps) {
     EN: (
       <svg viewBox="0 0 640 480" className={cn(sizeClass, className)}>
         <defs>
-          <clipPath id="en-clip">
-            <path d="M-85.3 0h682.6v512H-85.3z"/>
+          <clipPath id="us-clip">
+            <path d="M0 0h640v480H0z"/>
           </clipPath>
-          <g id="en-stripe">
-            <path fill="#fff" stroke="#012169" strokeWidth="20" d="M-20 0v40H-60v80H-20v40h40v-40h40V40H-20V0z"/>
+          <g id="us-stripe">
+            <rect width="640" height="480" fill="#b22234"/>
+            <rect width="640" height="36.92" y="36.92" fill="#fff"/>
+            <rect width="640" height="36.92" y="110.77" fill="#fff"/>
+            <rect width="640" height="36.92" y="184.62" fill="#fff"/>
+            <rect width="640" height="36.92" y="258.46" fill="#fff"/>
+            <rect width="640" height="36.92" y="332.31" fill="#fff"/>
+            <rect width="640" height="36.92" y="406.15" fill="#fff"/>
           </g>
-          <g id="en-cross">
-            <path fill="#c8102e" d="M-20 0h40v160h-40z"/>
-            <path fill="#c8102e" d="M-60 40h160v40H-60z"/>
-          </g>
-          <g id="en-union">
-            <rect x="-85.3" y="-40" fill="#012169" width="682.6" height="512"/>
-            <use href="#en-cross"/>
-            <use href="#en-stripe"/>
+          <g id="us-union">
+            <rect width="266.67" height="200" fill="#3c3b6e"/>
+            <g fill="#fff">
+              <rect x="0" y="0" width="106.67" height="20"/>
+              <rect x="0" y="40" width="106.67" height="20"/>
+              <rect x="0" y="80" width="106.67" height="20"/>
+              <rect x="0" y="120" width="106.67" height="20"/>
+              <rect x="0" y="160" width="106.67" height="20"/>
+              <rect x="53.33" y="0" width="106.67" height="20"/>
+              <rect x="53.33" y="40" width="106.67" height="20"/>
+              <rect x="53.33" y="80" width="106.67" height="20"/>
+              <rect x="53.33" y="120" width="106.67" height="20"/>
+              <rect x="53.33" y="160" width="106.67" height="20"/>
+              <rect x="26.67" y="20" width="106.67" height="20"/>
+              <rect x="26.67" y="60" width="106.67" height="20"/>
+              <rect x="26.67" y="100" width="106.67" height="20"/>
+              <rect x="26.67" y="140" width="106.67" height="20"/>
+              <rect x="26.67" y="180" width="106.67" height="20"/>
+              <rect x="80" y="20" width="106.67" height="20"/>
+              <rect x="80" y="60" width="106.67" height="20"/>
+              <rect x="80" y="100" width="106.67" height="20"/>
+              <rect x="80" y="140" width="106.67" height="20"/>
+              <rect x="80" y="180" width="106.67" height="20"/>
+            </g>
           </g>
         </defs>
-        <clipPath id="en-outline">
-          <path d="M-85.3 0h682.6v512H-85.3z"/>
-        </clipPath>
-        <g clipPath="url(#en-outline)">
-          <use href="#en-union"/>
+        <g clipPath="url(#us-clip)">
+          <use href="#us-stripe"/>
+          <use href="#us-union"/>
         </g>
       </svg>
     )

@@ -1,3 +1,4 @@
+// components/SiteHeader.tsx
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Globe, Menu, User, X, ChevronDown } from 'lucide-react'
@@ -35,10 +36,14 @@ export function SiteHeader() {
 
   const availableLanguages = useMemo(
     () =>
-      languageOptions.map((item) => ({
-        ...item,
-        visible: item.code === 'FR' || (item.code === 'MG' ? config.I18N_MG === true : item.code === 'EN' ? config.I18N_EN === true : false)
-      }))
+      languageOptions
+        .map((item) => ({
+          ...item,
+          visible: 
+            item.code === 'FR' || 
+            (item.code === 'MG' ? config.I18N_MG === true : 
+            item.code === 'EN' ? config.I18N_EN === true : false)
+        }))
         .filter((item) => item.visible),
     [config.I18N_EN, config.I18N_MG]
   )
@@ -61,14 +66,19 @@ export function SiteHeader() {
     setLanguageMenuOpen(false)
   }
 
-  const selectedLanguageOption = availableLanguages.find((item) => item.code === selectedLanguage) ?? availableLanguages[0]
+  const selectedLanguageOption = availableLanguages.find(
+    (item) => item.code === selectedLanguage
+  ) ?? availableLanguages[0]
 
-  const visibleNavItems = navItems.filter((item) => item.to !== '/partenaires' || partnerEnabled)
+  const visibleNavItems = navItems.filter(
+    (item) => item.to !== '/partenaires' || partnerEnabled
+  )
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-border">
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center gap-4">
         <Logo />
+        
         <nav className="hidden md:flex items-center gap-1 ml-4">
           {visibleNavItems.map((item) => (
             <Link
@@ -85,7 +95,9 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
+
         <div className="flex-1" />
+
         <div className="hidden md:flex items-center gap-2 relative">
           {/* Language Selector */}
           <button
@@ -138,11 +150,12 @@ export function SiteHeader() {
             </>
           )}
 
+          {/* User Actions */}
           {user ? (
             <>
               <Link to="/compte">
                 <Button size="sm" className="bg-brand-cyan hover:bg-brand-cyan-dark text-white">
-                  <User className="w-4 h-4" /> {user.prenom || user.name || 'Mon compte'}
+                  <User className="w-4 h-4 mr-1" /> {user.prenom || user.name || 'Mon compte'}
                 </Button>
               </Link>
               <Button size="sm" variant="outline" onClick={logout}>
@@ -158,12 +171,14 @@ export function SiteHeader() {
               </Link>
               <Link to="/compte">
                 <Button size="sm" className="bg-brand-cyan hover:bg-brand-cyan-dark text-white">
-                  <User className="w-4 h-4" /> Mon compte
+                  <User className="w-4 h-4 mr-1" /> Mon compte
                 </Button>
               </Link>
             </>
           )}
         </div>
+
+        {/* Mobile Menu Button */}
         <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -182,6 +197,7 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
+          
           <div className="border-t border-border mt-3 pt-3 flex flex-col gap-3">
             {/* Mobile Language Selector */}
             <div className="grid grid-cols-3 gap-2">
@@ -201,19 +217,30 @@ export function SiteHeader() {
                   )}
                 >
                   <FlagIcon code={language.code} size="lg" />
-                  <span className="text-[10px] uppercase tracking-wider font-semibold">{language.code}</span>
+                  <span className="text-[10px] uppercase tracking-wider font-semibold">
+                    {language.code}
+                  </span>
                 </button>
               ))}
             </div>
 
+            {/* Mobile User Actions */}
             {user ? (
               <>
                 <Link to="/compte" className="flex-1" onClick={() => setOpen(false)}>
                   <Button className="w-full bg-brand-cyan text-white" size="sm">
-                    <User className="w-4 h-4" /> {user.prenom || user.name || 'Mon compte'}
+                    <User className="w-4 h-4 mr-1" /> {user.prenom || user.name || 'Mon compte'}
                   </Button>
                 </Link>
-                <Button className="flex-1" variant="outline" size="sm" onClick={() => { logout(); setOpen(false) }}>
+                <Button 
+                  className="flex-1" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => { 
+                    logout(); 
+                    setOpen(false); 
+                  }}
+                >
                   Déconnexion
                 </Button>
               </>
@@ -226,7 +253,7 @@ export function SiteHeader() {
                 </Link>
                 <Link to="/compte" className="flex-1" onClick={() => setOpen(false)}>
                   <Button className="w-full bg-brand-cyan text-white" size="sm">
-                    Mon compte
+                    <User className="w-4 h-4 mr-1" /> Mon compte
                   </Button>
                 </Link>
               </>
