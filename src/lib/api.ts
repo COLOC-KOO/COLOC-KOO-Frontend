@@ -53,6 +53,7 @@ export interface ApiAnnonce {
   ville: string
   region?: string
   id_ville: number
+  id_utilisateur?: number
   auteur?: string
   chambre: {
     surface: number | null
@@ -698,7 +699,12 @@ export function annonceToListing(a: ApiAnnonce): Listing {
     description: a.description || '',
     amenities: a.services,
     colocs: [],
-    owner: { name: a.auteur || 'Proprietaire', verified: a.statut === 'active', since: '2026' },
+    owner: {
+      id: a.id_utilisateur,
+      name: a.auteur || 'Proprietaire',
+      verified: a.statut === 'active',
+      since: '2026',
+    },
     tags: a.statut === 'active' ? ['verifie'] : [],
   }
 }

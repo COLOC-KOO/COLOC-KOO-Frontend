@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, BedDouble, Calendar, Check, Heart, MapPin, Share2, Shield, Users } from 'lucide-react'
+import { ArrowLeft, BedDouble, Calendar, Check, Heart, MapPin, Send, Share2, Shield, Users } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { annonceToListing, api } from '../lib/api'
@@ -33,6 +33,11 @@ export default function AnnonceDetail() {
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [contactSubject, setContactSubject] = useState('Demande a propos de votre annonce')
+  const [contactMessage, setContactMessage] = useState('')
+  const [contactSubmitting, setContactSubmitting] = useState(false)
+  const [contactError, setContactError] = useState('')
+  const [contactSuccess, setContactSuccess] = useState('')
 
   useEffect(() => {
     if (!id) return
@@ -70,6 +75,40 @@ export default function AnnonceDetail() {
       setSubmitError(error instanceof Error ? error.message : 'Impossible d’envoyer la candidature.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleContactOwner = async () => {
+    if (!id || !listing?.owner?.id) return
+    if (!user) {
+      navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
+      return
+    }
+    if (user.id === listing.owner.id) {
+      setContactError('Vous ne pouvez pas vous envoyer un message à vous-même.')
+      return
+    }
+    if (!contactMessage.trim()) {
+      setContactError('Le message est requis.')
+      return
+    }
+
+    setContactSubmitting(true)
+    setContactError('')
+    setContactSuccess('')
+    try {
+      await api.sendMessage({
+        id_destinataire: listing.owner.id,
+        id_annonce: Number(id),
+        sujet: contactSubject.trim(),
+        contenu: contactMessage.trim(),
+      })
+      setContactSuccess('Message envoyé au propriétaire.')
+      setContactMessage('')
+    } catch (error) {
+      setContactError(error instanceof Error ? error.message : "Impossible d'envoyer le message.")
+    } finally {
+      setContactSubmitting(false)
     }
   }
 
@@ -187,7 +226,7 @@ export default function AnnonceDetail() {
             </div>
             <div className="mt-6 pt-5 border-t border-border">
               <div className="text-xs text-muted-foreground mb-2">Proprietaire</div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-brand-green-light flex items-center justify-center font-bold text-brand-green-dark">
                   {listing.owner.name[0]}
                 </div>
@@ -199,6 +238,58 @@ export default function AnnonceDetail() {
                   <div className="text-xs text-muted-foreground">Annonce verifiee par moderation</div>
                 </div>
               </div>
+
+              {user ? (
+                listing.owner.id ? (
+                  user.id === listing.owner.id ? (
+                    <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
+                      Vous êtes le propriétaire de cette annonce.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Sujet
+                      </label>
+                      <input
+                        value={contactSubject}
+                        onChange={(event) => setContactSubject(event.target.value)}
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
+                        placeholder="Sujet du message"
+                      />
+                      <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Message
+                      </label>
+                      <textarea
+                        value={contactMessage}
+                        onChange={(event) => setContactMessage(event.target.value)}
+                        rows={4}
+                        placeholder="Ecris ton message pour le propriétaire..."
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
+                      />
+                      {contactError ? <p className="text-sm text-red-600">{contactError}</p> : null}
+                      {contactSuccess ? <p className="text-sm text-green-600">{contactSuccess}</p> : null}
+                      <Button
+                        type="button"
+                        className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11"
+                        disabled={contactSubmitting}
+                        onClick={handleContactOwner}
+                      >
+                        {contactSubmitting ? 'Envoi en cours...' : 'Contacter le propriétaire'}
+                      </Button>
+                    </div>
+                  )
+                ) : (
+                  <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
+                    Le propriétaire n'est pas disponible pour le moment.
+                  </div>
+                )
+              ) : (
+                <Link to={`/auth?mode=signin&redirect=/annonces/${id}`}>
+                  <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11">
+                    Se connecter pour envoyer un message
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </aside>
