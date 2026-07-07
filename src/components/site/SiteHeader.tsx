@@ -1,7 +1,7 @@
 // components/SiteHeader.tsx
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Globe, Menu, User, X, ChevronDown } from 'lucide-react'
+import { Menu, User, X, ChevronDown } from 'lucide-react'
 import { Logo } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
@@ -32,21 +32,23 @@ export function SiteHeader() {
   const { user, logout } = useAuth()
   const { config } = useConfig()
 
-  const partnerEnabled = config.PARTENAIRE_VISIBILITY !== false
+  const partnerEnabled = config?.PARTENAIRE_VISIBILITY !== false
 
-  const availableLanguages = useMemo(
-    () =>
-      languageOptions
-        .map((item) => ({
-          ...item,
-          visible: 
-            item.code === 'FR' || 
-            (item.code === 'MG' ? config.I18N_MG === true : 
-            item.code === 'EN' ? config.I18N_EN === true : false)
-        }))
-        .filter((item) => item.visible),
-    [config.I18N_EN, config.I18N_MG]
-  )
+  const availableLanguages = useMemo(() => {
+    return languageOptions
+      .map((item) => {
+        let visible = false
+        if (item.code === 'FR') {
+          visible = true
+        } else if (item.code === 'MG') {
+          visible = config?.I18N_MG === true
+        } else if (item.code === 'EN') {
+          visible = config?.I18N_EN === true
+        }
+        return { ...item, visible }
+      })
+      .filter((item) => item.visible)
+  }, [config])
 
   useEffect(() => {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as 'FR' | 'MG' | 'EN' | null
@@ -55,7 +57,7 @@ export function SiteHeader() {
       return
     }
 
-    if (!availableLanguages.some((item) => item.code === selectedLanguage)) {
+    if (availableLanguages.length > 0 && !availableLanguages.some((item) => item.code === selectedLanguage)) {
       setSelectedLanguage(availableLanguages[0]?.code ?? 'FR')
     }
   }, [availableLanguages, selectedLanguage])
@@ -73,6 +75,10 @@ export function SiteHeader() {
   const visibleNavItems = navItems.filter(
     (item) => item.to !== '/partenaires' || partnerEnabled
   )
+
+  const handleLanguageMenuClose = () => {
+    setLanguageMenuOpen(false)
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-border">
@@ -104,6 +110,8 @@ export function SiteHeader() {
             type="button"
             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border border-border hover:bg-muted/80 hover:border-brand-cyan/30 transition-all duration-200 group"
             onClick={() => setLanguageMenuOpen((prev) => !prev)}
+            aria-expanded={languageMenuOpen}
+            aria-haspopup="true"
           >
             <FlagIcon code={selectedLanguageOption?.code || 'FR'} size="md" />
             <span className="font-semibold">{selectedLanguageOption?.code || 'FR'}</span>
@@ -113,11 +121,11 @@ export function SiteHeader() {
             )} />
           </button>
 
-          {languageMenuOpen && (
+          {languageMenuOpen && availableLanguages.length > 0 && (
             <>
               <div 
                 className="fixed inset-0 z-10" 
-                onClick={() => setLanguageMenuOpen(false)}
+                onClick={handleLanguageMenuClose}
               />
               <div className="absolute right-0 top-full mt-2 min-w-[200px] rounded-xl border border-border bg-white shadow-lg overflow-hidden z-20 animate-in fade-in-0 zoom-in-95 duration-100">
                 {availableLanguages.map((language) => (
@@ -126,10 +134,10 @@ export function SiteHeader() {
                     type="button"
                     onClick={() => handleLanguageChange(language.code)}
                     className={cn(
-                      'w-full text-left px-4 py-2.5 text-sm transition-all duration-150 flex items-center gap-3 group',
+                      'w-full text-left px-4 py-2.5 text-sm transition-all duration-150 flex items-center gap-3 group hover:bg-muted',
                       language.code === selectedLanguage
                         ? 'bg-brand-cyan/10 text-brand-cyan-dark font-semibold'
-                        : 'text-foreground/80 hover:bg-muted hover:text-foreground'
+                        : 'text-foreground/80 hover:text-foreground'
                     )}
                   >
                     <FlagIcon 
@@ -179,7 +187,11 @@ export function SiteHeader() {
         </div>
 
         {/* Mobile Menu Button */}
-        <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
+        <button 
+          className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors" 
+          onClick={() => setOpen(!open)}
+          aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+        >
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
@@ -227,13 +239,13 @@ export function SiteHeader() {
             {/* Mobile User Actions */}
             {user ? (
               <>
-                <Link to="/compte" className="flex-1" onClick={() => setOpen(false)}>
-                  <Button className="w-full bg-brand-cyan text-white" size="sm">
+                <Link to="/compte" className="w-full" onClick={() => setOpen(false)}>
+                  <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white" size="sm">
                     <User className="w-4 h-4 mr-1" /> {user.prenom || user.name || 'Mon compte'}
                   </Button>
                 </Link>
                 <Button 
-                  className="flex-1" 
+                  className="w-full" 
                   variant="outline" 
                   size="sm" 
                   onClick={() => { 
@@ -246,13 +258,13 @@ export function SiteHeader() {
               </>
             ) : (
               <>
-                <Link to="/auth" className="flex-1" onClick={() => setOpen(false)}>
+                <Link to="/auth" className="w-full" onClick={() => setOpen(false)}>
                   <Button variant="outline" className="w-full" size="sm">
                     Se connecter
                   </Button>
                 </Link>
-                <Link to="/compte" className="flex-1" onClick={() => setOpen(false)}>
-                  <Button className="w-full bg-brand-cyan text-white" size="sm">
+                <Link to="/compte" className="w-full" onClick={() => setOpen(false)}>
+                  <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white" size="sm">
                     <User className="w-4 h-4 mr-1" /> Mon compte
                   </Button>
                 </Link>

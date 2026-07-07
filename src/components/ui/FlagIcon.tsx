@@ -40,48 +40,27 @@ export function FlagIcon({ code, className, size = 'md' }: FlagIconProps) {
     ),
     EN: (
       <svg viewBox="0 0 640 480" className={cn(sizeClass, className)}>
-        <defs>
-          <clipPath id="us-clip">
-            <path d="M0 0h640v480H0z"/>
-          </clipPath>
-          <g id="us-stripe">
-            <rect width="640" height="480" fill="#b22234"/>
-            <rect width="640" height="36.92" y="36.92" fill="#fff"/>
-            <rect width="640" height="36.92" y="110.77" fill="#fff"/>
-            <rect width="640" height="36.92" y="184.62" fill="#fff"/>
-            <rect width="640" height="36.92" y="258.46" fill="#fff"/>
-            <rect width="640" height="36.92" y="332.31" fill="#fff"/>
-            <rect width="640" height="36.92" y="406.15" fill="#fff"/>
-          </g>
-          <g id="us-union">
-            <rect width="266.67" height="200" fill="#3c3b6e"/>
-            <g fill="#fff">
-              <rect x="0" y="0" width="106.67" height="20"/>
-              <rect x="0" y="40" width="106.67" height="20"/>
-              <rect x="0" y="80" width="106.67" height="20"/>
-              <rect x="0" y="120" width="106.67" height="20"/>
-              <rect x="0" y="160" width="106.67" height="20"/>
-              <rect x="53.33" y="0" width="106.67" height="20"/>
-              <rect x="53.33" y="40" width="106.67" height="20"/>
-              <rect x="53.33" y="80" width="106.67" height="20"/>
-              <rect x="53.33" y="120" width="106.67" height="20"/>
-              <rect x="53.33" y="160" width="106.67" height="20"/>
-              <rect x="26.67" y="20" width="106.67" height="20"/>
-              <rect x="26.67" y="60" width="106.67" height="20"/>
-              <rect x="26.67" y="100" width="106.67" height="20"/>
-              <rect x="26.67" y="140" width="106.67" height="20"/>
-              <rect x="26.67" y="180" width="106.67" height="20"/>
-              <rect x="80" y="20" width="106.67" height="20"/>
-              <rect x="80" y="60" width="106.67" height="20"/>
-              <rect x="80" y="100" width="106.67" height="20"/>
-              <rect x="80" y="140" width="106.67" height="20"/>
-              <rect x="80" y="180" width="106.67" height="20"/>
-            </g>
-          </g>
-        </defs>
-        <g clipPath="url(#us-clip)">
-          <use href="#us-stripe"/>
-          <use href="#us-union"/>
+        {/* Drapeau des États-Unis */}
+        <path fill="#b22234" d="M0 0h640v480H0z"/>
+        <g fill="#fff">
+          {[36.923, 110.769, 184.615, 258.462, 332.308, 406.154].map(y => (
+            <rect key={y} width="640" height="36.923" y={y}/>
+          ))}
+        </g>
+        <rect width="266.667" height="200" fill="#3c3b6e"/>
+        <g fill="#fff">
+          {[...Array(9)].map((_, row) => {
+            const stars = row % 2 === 0 ? 6 : 5
+            const y = 18.182 + row * 27.273
+            return [...Array(stars)].map((_, col) => (
+              <circle 
+                key={`${row}-${col}`}
+                cx={row % 2 === 0 ? 22.222 + col * 44.444 : 44.444 + col * 44.444}
+                cy={y}
+                r="9.091"
+              />
+            ))
+          })}
         </g>
       </svg>
     )
