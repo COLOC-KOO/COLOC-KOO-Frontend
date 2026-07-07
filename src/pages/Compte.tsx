@@ -483,7 +483,7 @@ function TabMessages() {
     : superadmin && activeThread === superadmin.id
       ? `${superadmin.prenom} ${superadmin.nom}`
       : 'Conversation'
-
+  
   // Chat view: conversation with a specific interlocutor
   if (activeThread !== null) {
     return (
