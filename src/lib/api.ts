@@ -94,6 +94,24 @@ export interface ApiPartenaire {
   date_creation: string
 }
 
+export interface CreatePartenaireRequestPayload {
+  nom?: string
+  nom_entreprise?: string
+  email: string
+  telephone?: string
+  phone?: string
+  phoneCC?: string
+  secteur?: string
+  niveau_souhaite?: string
+  niveau?: string
+  message?: string
+  activity?: string
+  wantCallback?: boolean
+  callbackDate?: string
+  callbackSlot?: string
+  wantBrochure?: boolean
+}
+
 export interface ApiPaiement {
   id_paiement: number
   reference: string
@@ -452,6 +470,12 @@ export const api = {
   },
   partenaires() {
     return request<ApiPartenaire[]>('/partenaires')
+  },
+  createPartenaireRequest(payload: CreatePartenaireRequestPayload) {
+    return request<{ id_demande: number; message: string }>('/partenaires/requests', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
   },
   annonces(params: Record<string, string | number | undefined> = {}) {
     const search = new URLSearchParams()
