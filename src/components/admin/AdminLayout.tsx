@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
   Building2,
@@ -25,10 +25,22 @@ import {
   UserCog,
   Activity,
   BarChart,
-  Code
+  Code,
+  Trash2
 } from 'lucide-react'
 import { Logo } from '../Logo'
 import { roleLevel, useAuth } from '../../lib/auth'
+import { api, type ApiPartenaireRequest, type BackofficeMember } from '../../lib/api'
+
+interface ContactMessageItem {
+  id_message: number
+  nom: string
+  email: string
+  sujet: string
+  message: string
+  statut: string
+  date_creation: string
+}
 
 // Interface pour les éléments de navigation
 interface NavItem {
@@ -191,9 +203,19 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [notificationOpen, setNotificationOpen] = useState(false)
+  const [showPartnerModal, setShowPartnerModal] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<BackofficeMember[]>([])
+  const [partnerRequests, setPartnerRequests] = useState<ApiPartenaireRequest[]>([])
+  const [contactMessages, setContactMessages] = useState<ContactMessageItem[]>([])
+  const [loadingSearch, setLoadingSearch] = useState(false)
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
   const { user, logout } = useAuth()
   const viewRole = roleLevel(user?.poste)
   const location = useLocation()
+  const navigate = useNavigate()
 
   // Filtrer les éléments de navigation selon le rôle
   const filteredNav = navItems
@@ -203,6 +225,113 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       items: section.items.filter(item => viewRole >= (item.minRole || 1))
     }))
     .filter(section => section.items.length > 0)
+
+  useEffect(() => {
+    let active = true
+    const loadNotifications = async () => {
+      setLoadingNotifications(true)
+      try {
+        const [requests, messages] = await Promise.all([
+          api.backofficePartenaireRequests(),
+          api.backofficeContactMessages(),
+        ])
+        if (active) {
+          setPartnerRequests(requests)
+          setContactMessages(messages)
+        }
+      } catch {
+        if (active) {
+          setPartnerRequests([])
+          setContactMessages([])
+        }
+      } finally {
+        if (active) setLoadingNotifications(false)
+      }
+    }
+
+    loadNotifications()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (notificationOpen) {
+      void refreshNotifications()
+    }
+  }, [notificationOpen])
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([])
+      setSearchOpen(false)
+      return
+    }
+
+    const timer = window.setTimeout(async () => {
+      setLoadingSearch(true)
+      try {
+        const results = await api.backofficeMembers({ q: searchQuery.trim() })
+        setSearchResults(results.slice(0, 5))
+        setSearchOpen(true)
+      } catch {
+        setSearchResults([])
+        setSearchOpen(true)
+      } finally {
+        setLoadingSearch(false)
+      }
+    }, 250)
+
+    return () => window.clearTimeout(timer)
+  }, [searchQuery])
+
+  const pendingPartnerRequests = partnerRequests.filter((item) => item.statut === 'en_attente')
+  const notificationCount = pendingPartnerRequests.length + contactMessages.filter((item) => item.statut === 'new').length
+
+  const openPartnerRequestsModal = () => {
+    setNotificationOpen(false)
+    setShowPartnerModal(true)
+  }
+
+  const handleSignalementNavigation = () => {
+    setNotificationOpen(false)
+    navigate('/admin/signalements-conversations')
+  }
+
+  const refreshNotifications = async () => {
+    setLoadingNotifications(true)
+    try {
+      const [requests, messages] = await Promise.all([
+        api.backofficePartenaireRequests(),
+        api.backofficeContactMessages(),
+      ])
+      setPartnerRequests(requests)
+      setContactMessages(messages)
+    } catch {
+      setPartnerRequests([])
+      setContactMessages([])
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }
+
+  const handleDeleteContactMessage = async (id: number) => {
+    try {
+      await api.deleteBackofficeContactMessage(id)
+      await refreshNotifications()
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleDeletePartnerRequest = async (id: number) => {
+    try {
+      await api.deleteBackofficePartenaireRequest(id)
+      await refreshNotifications()
+    } catch {
+      // ignore
+    }
+  }
 
   // Obtenir le titre de la page active
   const getPageTitle = () => {
@@ -318,22 +447,137 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </h1>
 
             {/* Barre de recherche - comme dans la maquette */}
-            <div className="flex-1 max-w-md flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 ml-auto">
-              <Search className="w-4 h-4 text-white/40 flex-shrink-0" />
-              <input
-                placeholder="Rechercher un utilisateur..."
-                className="flex-1 bg-transparent outline-none text-sm placeholder:text-white/40"
-              />
-              <button className="text-white/40 hover:text-white/70 text-xs p-1">
-                ✕
-              </button>
+            <div className="relative flex-1 max-w-md ml-auto">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
+                <Search className="w-4 h-4 text-white/40 flex-shrink-0" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchQuery.trim() && setSearchOpen(true)}
+                  onBlur={() => window.setTimeout(() => setSearchOpen(false), 150)}
+                  placeholder="Rechercher un utilisateur..."
+                  className="flex-1 bg-transparent outline-none text-sm placeholder:text-white/40"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setSearchQuery('')
+                      setSearchResults([])
+                      setSearchOpen(false)
+                    }}
+                    className="text-white/40 hover:text-white/70 text-xs p-1"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {searchOpen && (
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-white/10 bg-[oklch(0.20_0.005_260)] shadow-2xl z-40 overflow-hidden">
+                  {loadingSearch ? (
+                    <div className="px-3 py-3 text-sm text-white/60">Recherche en cours...</div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="max-h-72 overflow-y-auto">
+                      {searchResults.map((result) => {
+                        const fullName = [result.prenom, result.nom].filter(Boolean).join(' ').trim() || result.email
+                        return (
+                          <div key={result.id} className="px-3 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-0">
+                            <div className="text-sm font-medium text-white">{fullName}</div>
+                            <div className="text-xs text-white/50">{result.email}</div>
+                            <div className="text-[11px] uppercase tracking-wider text-brand-cyan mt-1">{result.role}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="px-3 py-3 text-sm text-white/60">Aucun résultat pour “{searchQuery}”.</div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Notifications - comme dans la maquette */}
-            <button className="relative p-2 rounded-lg hover:bg-white/5 transition">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand-magenta" />
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setNotificationOpen((value) => !value)}
+                className="relative p-2 rounded-lg hover:bg-white/5 transition"
+              >
+                <Bell className="w-4 h-4" />
+                {notificationCount > 0 && (
+                  <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-brand-magenta text-[9px] font-bold flex items-center justify-center text-white">
+                    {notificationCount}
+                  </span>
+                )}
+              </button>
+
+              {notificationOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-white/10 bg-[oklch(0.20_0.005_260)] shadow-2xl z-40 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-white">Notifications</div>
+                      <div className="text-xs text-white/50">{loadingNotifications ? 'Chargement...' : `${notificationCount} élément(s) à vérifier`}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={openPartnerRequestsModal} className="text-xs text-brand-cyan hover:text-brand-cyan/90">Demandes</button>
+                      <button type="button" onClick={handleSignalementNavigation} className="text-xs text-white/60 hover:text-white">Signalements</button>
+                    </div>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {loadingNotifications ? (
+                      <div className="px-4 py-4 text-sm text-white/60">Chargement des notifications...</div>
+                    ) : partnerRequests.length === 0 && contactMessages.length === 0 ? (
+                      <div className="px-4 py-4 text-sm text-white/60">Aucune notification pour le moment.</div>
+                    ) : (
+                      <>
+                        {partnerRequests.map((item) => (
+                          <div key={item.id_demande} className="w-full px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5">
+                            <button type="button" onClick={openPartnerRequestsModal} className="w-full text-left">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-medium text-white">{item.nom_entreprise || item.nom_contact}</div>
+                                  <div className="text-xs text-white/50 mt-1">{item.email}</div>
+                                </div>
+                                <span className="text-[10px] uppercase tracking-wider text-brand-cyan">{item.niveau_souhaite || 'À définir'}</span>
+                              </div>
+                              <p className="mt-2 text-xs text-white/60 line-clamp-2">{item.message || 'Nouvelle demande de partenariat reçue.'}</p>
+                              <div className="mt-2 text-[11px] text-white/40">{new Date(item.date_creation).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                            </button>
+                            <div className="mt-2 flex justify-end">
+                              <button type="button" onClick={() => handleDeletePartnerRequest(item.id_demande)} className="rounded p-1.5 text-white/50 hover:bg-white/10 hover:text-white" title="Supprimer la notification">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {contactMessages.map((item) => (
+                          <div key={item.id_message} className="w-full px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium text-white">{item.sujet}</div>
+                                <div className="text-xs text-white/50 mt-1">{item.nom} · {item.email}</div>
+                                <p className="mt-2 text-xs text-white/60 line-clamp-3">{item.message}</p>
+                              </div>
+                              <button type="button" onClick={() => handleDeleteContactMessage(item.id_message)} className="rounded p-1.5 text-white/50 hover:bg-white/10 hover:text-white" title="Supprimer la notification">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/40">
+                              <span>{new Date(item.date_creation).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                              <span className={`rounded-full px-2 py-0.5 ${item.statut === 'new' ? 'bg-brand-cyan/15 text-brand-cyan' : 'bg-white/10 text-white/70'}`}>
+                                {item.statut === 'new' ? 'Nouveau' : item.statut}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Avatar - comme dans la maquette */}
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-[oklch(0.15_0_0)] text-sm font-bold flex-shrink-0">
@@ -345,6 +589,51 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <main className="p-6">{children}</main>
         </div>
       </div>
+
+      {showPartnerModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-[oklch(0.20_0.005_260)] shadow-2xl overflow-hidden">
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Demandes de partenariat</h3>
+                <p className="text-sm text-white/60">Consultez toutes les demandes envoyées via le formulaire public.</p>
+              </div>
+              <button type="button" onClick={() => setShowPartnerModal(false)} className="rounded-lg p-2 hover:bg-white/5 text-white/70">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto p-4 space-y-3">
+              {partnerRequests.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-white/60">
+                  Aucune demande de partenariat pour le moment.
+                </div>
+              ) : (
+                partnerRequests.map((item) => (
+                  <div key={item.id_demande} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-white">{item.nom_entreprise || item.nom_contact}</div>
+                        <div className="text-xs text-white/50">{item.email}</div>
+                      </div>
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider ${item.statut === 'en_attente' ? 'bg-brand-cyan/15 text-brand-cyan' : 'bg-white/10 text-white/70'}`}>
+                        {item.statut === 'en_attente' ? 'En attente' : item.statut}
+                      </span>
+                    </div>
+                    <div className="mt-3 grid gap-2 text-sm text-white/70 sm:grid-cols-2">
+                      <div><span className="text-white/40">Téléphone :</span> {item.telephone ? `${item.telephone_code || '+261'} ${item.telephone}` : 'Non renseigné'}</div>
+                      <div><span className="text-white/40">Secteur :</span> {item.secteur || 'Non précisé'}</div>
+                      <div><span className="text-white/40">Niveau :</span> {item.niveau_souhaite || 'À définir'}</div>
+                      <div><span className="text-white/40">Rappel :</span> {item.souhaite_rappel ? 'Oui' : 'Non'}</div>
+                    </div>
+                    <p className="mt-3 text-sm text-white/70">{item.message || 'Aucun message détaillé.'}</p>
+                    <div className="mt-3 text-[11px] text-white/40">Reçue le {new Date(item.date_creation).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Overlay pour mobile */}
       {sidebarOpen && (
