@@ -653,6 +653,14 @@ export const api = {
   backofficePartenaires() {
     return request<ApiPartenaire[]>('/backoffice/partenaires')
   },
+  uploadPartenaireLogo(file: File) {
+    const formData = new FormData()
+    formData.append('logo', file)
+    return request<{ url: string; filename: string }>('/backoffice/partenaires/upload', {
+      method: 'POST',
+      body: formData,
+    })
+  },
   backofficePartenaireRequests() {
     return request<ApiPartenaireRequest[]>('/backoffice/partenaires/requests')
   },

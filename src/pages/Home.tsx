@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, MapPin, Search, Shield, Sparkles, Star, Users, Map, List, KeyRound, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, MapPin, Search, Shield, Sparkles, Star, Users, Map, List, KeyRound, ChevronLeft, ChevronRight, Building2, Award, Briefcase } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { ListingCard } from '../components/site/ListingCard'
 import { Button } from '../components/ui/Button'
@@ -43,16 +43,16 @@ export default function Home() {
   const [currentPartnerIndex, setCurrentPartnerIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const autoPlayInterval = useRef<NodeJS.Timeout | null>(null)
+  const autoPlayInterval = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Nombre de partenaires à afficher par slide (responsive)
   const getItemsPerSlide = () => {
     if (typeof window !== 'undefined') {
       if (window.innerWidth < 640) return 1
       if (window.innerWidth < 1024) return 2
-      return 3
+      return 4
     }
-    return 3
+    return 4
   }
 
   const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide())
@@ -134,6 +134,18 @@ export default function Home() {
     }
   }, [isAutoPlaying, partners.length, itemsPerSlide])
 
+  // Pause au survol
+  const handleMouseEnter = () => {
+    setIsAutoPlaying(false)
+    if (autoPlayInterval.current) {
+      clearInterval(autoPlayInterval.current)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    setIsAutoPlaying(true)
+  }
+
   // Gestion du carrousel
   const goToPrevious = () => {
     setIsAutoPlaying(false)
@@ -141,7 +153,6 @@ export default function Home() {
       const maxIndex = Math.max(0, partners.length - itemsPerSlide)
       return prev <= 0 ? maxIndex : prev - 1
     })
-    // Réactiver l'auto-play après 5 secondes d'inactivité
     setTimeout(() => setIsAutoPlaying(true), 5000)
   }
 
@@ -363,32 +374,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Section Partenaires en Carrousel */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <div className="flex items-end justify-between mb-8">
+      {/* Section Partenaires - Version moderne et compacte */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="bebas text-4xl">Partenaires officiels</h2>
-            <p className="text-muted-foreground mt-1">Découvrez les partenaires venant directement de notre base de données.</p>
+            <h2 className="bebas text-3xl">Nos Partenaires</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">Ils nous font confiance</p>
           </div>
           <Link
             to="/partenaires"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand-cyan-dark hover:gap-2 transition-all"
           >
-            Voir tous les partenaires <ArrowRight className="w-4 h-4" />
+            Voir tous <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {partners.length === 0 ? (
-          <div className="rounded-3xl border border-border bg-card p-12 text-center text-muted-foreground">
-            {loading ? 'Chargement des partenaires...' : 'Aucun partenaire disponible pour le moment.'}
+          <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">
+            {loading ? 'Chargement...' : 'Aucun partenaire disponible'}
           </div>
         ) : (
-          <div className="relative">
+          <div 
+            className="relative"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
             {/* Carrousel Container */}
             <div className="overflow-hidden rounded-2xl">
               <div
                 ref={carouselRef}
-                className="flex transition-transform duration-500 ease-in-out"
+                className="flex transition-transform duration-700 ease-in-out"
                 style={{
                   transform: `translateX(-${currentPartnerIndex * (100 / itemsPerSlide)}%)`,
                 }}
@@ -396,67 +411,90 @@ export default function Home() {
                 {partners.map((partner) => (
                   <div
                     key={partner.id_partenaire}
-                    className="flex-shrink-0 px-3"
+                    className="flex-shrink-0 px-2"
                     style={{ width: `${100 / itemsPerSlide}%` }}
                   >
-                    <div className="rounded-3xl border border-border bg-white p-6 shadow-sm hover:shadow-xl transition-all duration-300 h-full hover:scale-[1.02]">
-                      <div className="flex items-center justify-between gap-4 mb-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-cyan-light to-brand-cyan/20 text-brand-cyan-dark flex items-center justify-center text-2xl font-bold">
-                          {partner.logo || partner.nom.charAt(0)}
+                    <div className="group relative rounded-2xl border border-border/60 bg-white p-5 transition-all duration-300 hover:shadow-lg hover:border-brand-cyan/30 hover:-translate-y-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-cyan-light/40 to-brand-cyan/10 flex items-center justify-center overflow-hidden shrink-0">
+                          {partner.logo ? (
+                            <img
+                              src={partner.logo}
+                              alt={partner.nom}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement
+                                target.style.display = 'none'
+                                const fallback = target.nextElementSibling as HTMLElement | null
+                                if (fallback) fallback.style.display = 'flex'
+                              }}
+                            />
+                          ) : null}
+                          <div className="hidden h-full w-full items-center justify-center text-xl font-bold text-brand-cyan-dark" data-fallback>
+                            {partner.nom.charAt(0)}
+                          </div>
                         </div>
-                        <span className="rounded-full border border-brand-cyan/20 bg-brand-cyan-light/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-brand-cyan-dark">
-                          {partner.niveau}
-                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold truncate">{partner.nom}</div>
+                          <div className="text-xs text-muted-foreground truncate">{partner.secteur || 'Partenaire'}</div>
+                        </div>
                       </div>
-                      <div className="text-lg font-semibold text-foreground">{partner.nom}</div>
-                      <div className="mt-2 text-sm text-muted-foreground">{partner.secteur || 'Secteur non précisé'}</div>
-                      {partner.remise ? (
-                        <div className="mt-4 inline-flex items-center gap-1 rounded-full bg-brand-green-light/30 px-3 py-1 text-xs font-medium text-brand-green-dark">
-                          🎁 {partner.remise}
+                      
+                      {partner.remise && (
+                        <div className="inline-flex items-center gap-1 rounded-full bg-brand-green-light/30 px-2.5 py-0.5 text-xs font-medium text-brand-green-dark">
+                          <Award className="w-3 h-3" />
+                          {partner.remise}
                         </div>
-                      ) : null}
-                      {partner.engagement ? (
-                        <p className="mt-3 text-xs text-muted-foreground border-t border-border pt-3">
+                      )}
+                      
+                      {partner.engagement && (
+                        <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
                           {partner.engagement}
                         </p>
-                      ) : null}
+                      )}
+                      
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] font-medium text-brand-cyan-dark bg-brand-cyan-light/50 px-2 py-0.5 rounded-full">
+                          {partner.niveau || 'Partenaire'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Contrôles du carrousel */}
+            {/* Contrôles */}
             {partners.length > itemsPerSlide && (
               <>
                 <button
                   onClick={goToPrevious}
-                  className="absolute top-1/2 -left-4 -translate-y-1/2 bg-white shadow-xl rounded-full p-3 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border z-10"
+                  className="absolute top-1/2 -left-3 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border/50 z-10"
                   aria-label="Précédent"
                 >
-                  <ChevronLeft className="w-5 h-5 text-foreground" />
+                  <ChevronLeft className="w-4 h-4 text-foreground" />
                 </button>
                 <button
                   onClick={goToNext}
-                  className="absolute top-1/2 -right-4 -translate-y-1/2 bg-white shadow-xl rounded-full p-3 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border z-10"
+                  className="absolute top-1/2 -right-3 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border/50 z-10"
                   aria-label="Suivant"
                 >
-                  <ChevronRight className="w-5 h-5 text-foreground" />
+                  <ChevronRight className="w-4 h-4 text-foreground" />
                 </button>
               </>
             )}
 
-            {/* Indicateurs de progression */}
+            {/* Indicateurs */}
             {totalSlides > 1 && (
-              <div className="flex justify-center gap-2 mt-6">
+              <div className="flex justify-center gap-1.5 mt-4">
                 {Array.from({ length: totalSlides }).map((_, index) => (
                   <button
                     key={index}
                     onClick={() => goToSlide(index)}
                     className={`transition-all duration-300 rounded-full ${
                       index === currentPartnerIndex
-                        ? 'w-8 h-2 bg-brand-cyan'
-                        : 'w-2 h-2 bg-gray-300 hover:bg-gray-400'
+                        ? 'w-6 h-1.5 bg-brand-cyan'
+                        : 'w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400'
                     }`}
                     aria-label={`Aller à la slide ${index + 1}`}
                   />
@@ -464,10 +502,11 @@ export default function Home() {
               </div>
             )}
 
-            {/* Indicateur de statut auto-play */}
-            <div className="text-center mt-3">
-              <span className="text-xs text-muted-foreground">
-                {isAutoPlaying ? '' : '' }
+            {/* Auto-play status */}
+            <div className="text-center mt-2">
+              <span className="text-[10px] text-muted-foreground/60 flex items-center justify-center gap-1.5">
+                <span className={`inline-block w-1.5 h-1.5 rounded-full ${isAutoPlaying ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                {isAutoPlaying ? '' : ''}
               </span>
             </div>
           </div>
