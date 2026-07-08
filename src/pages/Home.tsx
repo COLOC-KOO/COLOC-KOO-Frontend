@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, MapPin, Search, Shield, Sparkles, Star, Users, Map, List } from 'lucide-react'
+import { ArrowRight, MapPin, Search, Shield, Sparkles, Star, Users, Map, List, KeyRound } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { ListingCard } from '../components/site/ListingCard'
 import { Button } from '../components/ui/Button'
 import { MapView } from '../components/MapView'
 import { api, annonceToListing, ApiPartenaire } from '../lib/api'
 import { CityInfo, Listing } from '../types'
-
 
 const heroImage =
   'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80'
@@ -40,7 +39,7 @@ export default function Home() {
   const [partners, setPartners] = useState<ApiPartenaire[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list') // Nouvel état
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
 
   useEffect(() => {
     let cancelled = false
@@ -123,7 +122,24 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-10 bg-white rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2 max-w-3xl">
+          {/* Boutons de sélection de rôle */}
+          <div className="mt-8 flex flex-wrap gap-3 max-w-3xl">
+            <Link to="/annonces">
+              <button className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:from-cyan-600 hover:to-blue-700 hover:shadow-xl">
+                <MapPin className="w-4 h-4" />
+                Je cherche un logement
+              </button>
+            </Link>
+            <Link to="/deposer">
+              <button className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:from-green-600 hover:to-emerald-700 hover:shadow-xl">
+                <KeyRound className="w-4 h-4" />
+                Je propose un logement
+              </button>
+            </Link>
+          </div>
+
+          {/* Barre de recherche */}
+          <div className="mt-6 bg-white rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2 max-w-3xl">
             <div className="flex-1 flex items-center gap-2 px-4 py-3">
               <MapPin className="w-5 h-5 text-brand-cyan" />
               <input
@@ -202,27 +218,24 @@ export default function Home() {
               <h2 className="bebas text-4xl">Annonces vedettes</h2>
               <p className="text-muted-foreground mt-1">Sélection de la semaine, vérifiée par notre équipe</p>
             </div>
-            
-            {/* Boutons de bascule */}
+
             <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setViewMode('list')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'list' 
-                    ? 'bg-white shadow-sm text-foreground' 
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'list'
+                    ? 'bg-white shadow-sm text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
-                }`}
+                  }`}
               >
                 <List className="w-4 h-4" />
                 Liste
               </button>
               <button
                 onClick={() => setViewMode('map')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'map' 
-                    ? 'bg-white shadow-sm text-foreground' 
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'map'
+                    ? 'bg-white shadow-sm text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
-                }`}
+                  }`}
               >
                 <Map className="w-4 h-4" />
                 Carte
@@ -240,11 +253,10 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              // Mode Carte avec le composant MapView
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="h-[500px] lg:h-[600px] rounded-xl overflow-hidden bg-gray-50">
-                  <MapView 
-                    listings={featuredListings} 
+                  <MapView
+                    listings={featuredListings}
                     onListingClick={(listing) => {
                       navigate(`/annonces/${listing.id}`);
                     }}
