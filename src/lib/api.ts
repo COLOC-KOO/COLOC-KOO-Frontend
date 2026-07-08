@@ -561,6 +561,9 @@ export const api = {
   backofficeDashboard() {
     return request<BackofficeDashboard>('/backoffice/dashboard')
   },
+  backofficeColocationStats() {
+    return request<{ items: Array<Record<string, unknown>>; generatedAt: string; total: number }>('/backoffice/statistiques-colocation')
+  },
   backofficePaiements() {
     return request<ApiPaiement[]>('/backoffice/paiements')
   },
