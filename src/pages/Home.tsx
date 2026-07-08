@@ -1,13 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, MapPin, Search, Shield, Sparkles, Star, Users, Map, List } from 'lucide-react'
+import { ArrowRight, MapPin, Search, Shield, Sparkles, Star, Users, Map, List, KeyRound, ChevronLeft, ChevronRight, Building2, Award, Briefcase } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { ListingCard } from '../components/site/ListingCard'
 import { Button } from '../components/ui/Button'
 import { MapView } from '../components/MapView'
 import { api, annonceToListing, ApiPartenaire } from '../lib/api'
 import { CityInfo, Listing } from '../types'
-
 
 const heroImage =
   'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80'
@@ -40,7 +39,31 @@ export default function Home() {
   const [partners, setPartners] = useState<ApiPartenaire[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list') // Nouvel état
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
+  const [currentPartnerIndex, setCurrentPartnerIndex] = useState(0)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const carouselRef = useRef<HTMLDivElement>(null)
+  const autoPlayInterval = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Nombre de partenaires à afficher par slide (responsive)
+  const getItemsPerSlide = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 640) return 1
+      if (window.innerWidth < 1024) return 2
+      return 4
+    }
+    return 4
+  }
+
+  const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide())
+
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerSlide(getItemsPerSlide())
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -94,6 +117,63 @@ export default function Home() {
     }
   }, [])
 
+  // Auto-play du carrousel
+  useEffect(() => {
+    if (isAutoPlaying && partners.length > 0) {
+      autoPlayInterval.current = setInterval(() => {
+        setCurrentPartnerIndex((prev) => {
+          const maxIndex = Math.max(0, partners.length - itemsPerSlide)
+          return prev >= maxIndex ? 0 : prev + 1
+        })
+      }, 4000)
+    }
+    return () => {
+      if (autoPlayInterval.current) {
+        clearInterval(autoPlayInterval.current)
+      }
+    }
+  }, [isAutoPlaying, partners.length, itemsPerSlide])
+
+  // Pause au survol
+  const handleMouseEnter = () => {
+    setIsAutoPlaying(false)
+    if (autoPlayInterval.current) {
+      clearInterval(autoPlayInterval.current)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    setIsAutoPlaying(true)
+  }
+
+  // Gestion du carrousel
+  const goToPrevious = () => {
+    setIsAutoPlaying(false)
+    setCurrentPartnerIndex((prev) => {
+      const maxIndex = Math.max(0, partners.length - itemsPerSlide)
+      return prev <= 0 ? maxIndex : prev - 1
+    })
+    setTimeout(() => setIsAutoPlaying(true), 5000)
+  }
+
+  const goToNext = () => {
+    setIsAutoPlaying(false)
+    setCurrentPartnerIndex((prev) => {
+      const maxIndex = Math.max(0, partners.length - itemsPerSlide)
+      return prev >= maxIndex ? 0 : prev + 1
+    })
+    setTimeout(() => setIsAutoPlaying(true), 5000)
+  }
+
+  const goToSlide = (index: number) => {
+    setIsAutoPlaying(false)
+    setCurrentPartnerIndex(index)
+    setTimeout(() => setIsAutoPlaying(true), 5000)
+  }
+
+  const totalSlides = Math.max(1, partners.length - itemsPerSlide + 1)
+  const maxIndex = Math.max(0, partners.length - itemsPerSlide)
+
   const summaryText = useMemo(() => {
     if (loading) return 'Chargement...'
     const cityLabel = cityCards.length > 1 ? 'villes' : 'ville'
@@ -123,7 +203,24 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-10 bg-white rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2 max-w-3xl">
+          {/* Boutons de sélection de rôle */}
+          <div className="mt-8 flex flex-wrap gap-3 max-w-3xl">
+            <Link to="/annonces">
+              <button className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:from-cyan-600 hover:to-blue-700 hover:shadow-xl">
+                <MapPin className="w-4 h-4" />
+                Je cherche un logement
+              </button>
+            </Link>
+            <Link to="/deposer">
+              <button className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:from-green-600 hover:to-emerald-700 hover:shadow-xl">
+                <KeyRound className="w-4 h-4" />
+                Je propose un logement
+              </button>
+            </Link>
+          </div>
+
+          {/* Barre de recherche */}
+          <div className="mt-6 bg-white rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2 max-w-3xl">
             <div className="flex-1 flex items-center gap-2 px-4 py-3">
               <MapPin className="w-5 h-5 text-brand-cyan" />
               <input
@@ -202,27 +299,24 @@ export default function Home() {
               <h2 className="bebas text-4xl">Annonces vedettes</h2>
               <p className="text-muted-foreground mt-1">Sélection de la semaine, vérifiée par notre équipe</p>
             </div>
-            
-            {/* Boutons de bascule */}
+
             <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setViewMode('list')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'list' 
-                    ? 'bg-white shadow-sm text-foreground' 
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'list'
+                    ? 'bg-white shadow-sm text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
-                }`}
+                  }`}
               >
                 <List className="w-4 h-4" />
                 Liste
               </button>
               <button
                 onClick={() => setViewMode('map')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'map' 
-                    ? 'bg-white shadow-sm text-foreground' 
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'map'
+                    ? 'bg-white shadow-sm text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
-                }`}
+                  }`}
               >
                 <Map className="w-4 h-4" />
                 Carte
@@ -240,11 +334,10 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              // Mode Carte avec le composant MapView
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="h-[500px] lg:h-[600px] rounded-xl overflow-hidden bg-gray-50">
-                  <MapView 
-                    listings={featuredListings} 
+                  <MapView
+                    listings={featuredListings}
                     onListingClick={(listing) => {
                       navigate(`/annonces/${listing.id}`);
                     }}
@@ -281,42 +374,141 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <div className="flex items-end justify-between mb-8">
+      {/* Section Partenaires - Version moderne et compacte */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="bebas text-4xl">Partenaires officiels</h2>
-            <p className="text-muted-foreground mt-1">Découvrez les partenaires venant directement de notre base de données.</p>
+            <h2 className="bebas text-3xl">Nos Partenaires</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">Ils nous font confiance</p>
           </div>
           <Link
             to="/partenaires"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand-cyan-dark hover:gap-2 transition-all"
           >
-            Voir tous les partenaires <ArrowRight className="w-4 h-4" />
+            Voir tous <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {partners.length === 0 ? (
-          <div className="rounded-3xl border border-border bg-card p-12 text-center text-muted-foreground">
-            {loading ? 'Chargement des partenaires...' : 'Aucun partenaire disponible pour le moment.'}
+          <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">
+            {loading ? 'Chargement...' : 'Aucun partenaire disponible'}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {partners.map((partner) => (
-              <div key={partner.id_partenaire} className="rounded-3xl border border-border bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-cyan-light text-brand-cyan-dark flex items-center justify-center text-xl">
-                    {partner.logo || partner.nom.charAt(0)}
+          <div 
+            className="relative"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            {/* Carrousel Container */}
+            <div className="overflow-hidden rounded-2xl">
+              <div
+                ref={carouselRef}
+                className="flex transition-transform duration-700 ease-in-out"
+                style={{
+                  transform: `translateX(-${currentPartnerIndex * (100 / itemsPerSlide)}%)`,
+                }}
+              >
+                {partners.map((partner) => (
+                  <div
+                    key={partner.id_partenaire}
+                    className="flex-shrink-0 px-2"
+                    style={{ width: `${100 / itemsPerSlide}%` }}
+                  >
+                    <div className="group relative rounded-2xl border border-border/60 bg-white p-5 transition-all duration-300 hover:shadow-lg hover:border-brand-cyan/30 hover:-translate-y-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-cyan-light/40 to-brand-cyan/10 flex items-center justify-center overflow-hidden shrink-0">
+                          {partner.logo ? (
+                            <img
+                              src={partner.logo}
+                              alt={partner.nom}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement
+                                target.style.display = 'none'
+                                const fallback = target.nextElementSibling as HTMLElement | null
+                                if (fallback) fallback.style.display = 'flex'
+                              }}
+                            />
+                          ) : null}
+                          <div className="hidden h-full w-full items-center justify-center text-xl font-bold text-brand-cyan-dark" data-fallback>
+                            {partner.nom.charAt(0)}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold truncate">{partner.nom}</div>
+                          <div className="text-xs text-muted-foreground truncate">{partner.secteur || 'Partenaire'}</div>
+                        </div>
+                      </div>
+                      
+                      {partner.remise && (
+                        <div className="inline-flex items-center gap-1 rounded-full bg-brand-green-light/30 px-2.5 py-0.5 text-xs font-medium text-brand-green-dark">
+                          <Award className="w-3 h-3" />
+                          {partner.remise}
+                        </div>
+                      )}
+                      
+                      {partner.engagement && (
+                        <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                          {partner.engagement}
+                        </p>
+                      )}
+                      
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] font-medium text-brand-cyan-dark bg-brand-cyan-light/50 px-2 py-0.5 rounded-full">
+                          {partner.niveau || 'Partenaire'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <span className="rounded-full border border-brand-cyan/20 bg-brand-cyan-light/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-brand-cyan-dark">
-                    {partner.niveau}
-                  </span>
-                </div>
-                <div className="text-lg font-semibold">{partner.nom}</div>
-                <div className="mt-2 text-sm text-muted-foreground">{partner.secteur || 'Secteur non précisé'}</div>
-                {partner.remise ? <p className="mt-4 text-sm text-foreground">{partner.remise}</p> : null}
-                {partner.engagement ? <p className="mt-3 text-xs text-muted-foreground">{partner.engagement}</p> : null}
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Contrôles */}
+            {partners.length > itemsPerSlide && (
+              <>
+                <button
+                  onClick={goToPrevious}
+                  className="absolute top-1/2 -left-3 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border/50 z-10"
+                  aria-label="Précédent"
+                >
+                  <ChevronLeft className="w-4 h-4 text-foreground" />
+                </button>
+                <button
+                  onClick={goToNext}
+                  className="absolute top-1/2 -right-3 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border/50 z-10"
+                  aria-label="Suivant"
+                >
+                  <ChevronRight className="w-4 h-4 text-foreground" />
+                </button>
+              </>
+            )}
+
+            {/* Indicateurs */}
+            {totalSlides > 1 && (
+              <div className="flex justify-center gap-1.5 mt-4">
+                {Array.from({ length: totalSlides }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`transition-all duration-300 rounded-full ${
+                      index === currentPartnerIndex
+                        ? 'w-6 h-1.5 bg-brand-cyan'
+                        : 'w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    aria-label={`Aller à la slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Auto-play status */}
+            <div className="text-center mt-2">
+              <span className="text-[10px] text-muted-foreground/60 flex items-center justify-center gap-1.5">
+                <span className={`inline-block w-1.5 h-1.5 rounded-full ${isAutoPlaying ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                {isAutoPlaying ? '' : ''}
+              </span>
+            </div>
           </div>
         )}
       </section>
