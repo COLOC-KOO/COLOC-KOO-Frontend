@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, Edit, Trash, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, Calendar, Bed, Building2, Image as ImageIcon } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api, ApiAnnonce, Langue } from '../lib/api'
@@ -141,10 +141,385 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
   )
 }
 
+// Composant Modal amélioré
+function EditAnnonceModal({ 
+  annonce, 
+  onClose, 
+  onSave 
+}: { 
+  annonce: ApiAnnonce | null
+  onClose: () => void
+  onSave: (updated: ApiAnnonce) => void
+}) {
+  const [form, setForm] = useState({
+    titre: '',
+    description: '',
+    quartier: '',
+    adresse_exacte: '',
+    type_propriete: 'appartement',
+    prix_loyer: '',
+    surface: '',
+    date_disponibilite: '',
+    est_meuble: false,
+  })
+  const [editFiles, setEditFiles] = useState<File[]>([])
+  const [editSaving, setEditSaving] = useState(false)
+  const [editMessage, setEditMessage] = useState('')
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (annonce) {
+      setForm({
+        titre: annonce.titre || '',
+        description: annonce.description || '',
+        quartier: annonce.quartier || '',
+        adresse_exacte: annonce.adresse_exacte || '',
+        type_propriete: annonce.type_propriete || 'appartement',
+        prix_loyer: annonce.chambre?.prix_loyer ? String(annonce.chambre.prix_loyer) : '',
+        surface: annonce.chambre?.surface ? String(annonce.chambre.surface) : '',
+        date_disponibilite: annonce.chambre?.date_disponibilite || '',
+        est_meuble: Boolean(annonce.chambre?.date_disponibilite && annonce.chambre.est_meuble === 1),
+      })
+      setPhotoPreviews(normalizePhotos(annonce.photos))
+    }
+  }, [annonce])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    setEditFiles(files)
+    // Créer des aperçus pour les nouveaux fichiers
+    const newPreviews = files.map(file => URL.createObjectURL(file))
+    setPhotoPreviews(prev => [...prev, ...newPreviews])
+  }
+
+  const removePhoto = (index: number) => {
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index))
+    // Si la photo est un nouveau fichier, le retirer aussi
+    if (editFiles.length > 0) {
+      setEditFiles(prev => prev.filter((_, i) => i !== index - (prev.length - editFiles.length)))
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!annonce) return
+
+    const prix = Number(form.prix_loyer)
+    if (!form.titre.trim() || Number.isNaN(prix) || prix < 0) {
+      setEditMessage('Le titre et un prix valide sont requis.')
+      return
+    }
+
+    setEditSaving(true)
+    setEditMessage('')
+    try {
+      let photoUrls = photoPreviews
+      if (editFiles.length > 0) {
+        const formData = new FormData()
+        editFiles.forEach((file) => formData.append('photos', file))
+        const uploadResult = await api.uploadAnnoncePhotos(formData)
+        photoUrls = uploadResult.photos
+      }
+
+      const updated = await api.updateAnnonce(annonce.id, {
+        titre: form.titre.trim(),
+        description: form.description.trim() || null,
+        quartier: form.quartier.trim() || null,
+        adresse_exacte: form.adresse_exacte.trim() || null,
+        type_propriete: form.type_propriete,
+        id_ville: annonce.id_ville,
+        chambres: {
+          surface: form.surface ? Number(form.surface) : null,
+          prix_loyer: prix,
+          date_disponibilite: form.date_disponibilite || null,
+          est_meuble: form.est_meuble ? 1 : 0,
+        },
+        photos: photoUrls,
+      })
+      onSave(updated)
+      onClose()
+    } catch (err) {
+      setEditMessage(err instanceof Error ? err.message : 'Impossible de modifier l\'annonce')
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  if (!annonce) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 py-6 animate-in fade-in duration-200">
+      <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+        {/* Header */}
+        <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-border/50 px-8 py-5 flex items-start justify-between gap-3 rounded-t-3xl">
+          <div>
+            <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Edit className="w-6 h-6 text-brand-cyan" />
+              Modifier l'annonce
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {annonce.titre} · {annonce.ville}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          {/* Photos */}
+          <div>
+            <label className="block text-sm font-semibold text-foreground mb-2">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-brand-cyan" />
+                Photos
+              </div>
+            </label>
+            <div className="rounded-2xl border-2 border-dashed border-border hover:border-brand-cyan/50 transition-colors p-4 bg-muted/30">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                {photoPreviews.map((photo, index) => (
+                  <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-border">
+                    <img
+                      src={photo}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(index)}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-brand-cyan/50 transition-colors flex flex-col items-center justify-center cursor-pointer bg-white/50 hover:bg-white"
+                >
+                  <Camera className="w-8 h-8 text-muted-foreground mb-2" />
+                  <span className="text-xs text-muted-foreground">Ajouter</span>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+              <p className="text-xs text-muted-foreground">
+                {editFiles.length > 0 
+                  ? `${editFiles.length} nouveau(x) fichier(s) sélectionné(s)` 
+                  : 'Cliquez sur une case pour ajouter des photos'}
+              </p>
+            </div>
+          </div>
+
+          {/* Grid des champs */}
+          <div className="grid gap-5 md:grid-cols-2">
+            {/* Titre */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                <div className="flex items-center gap-2">
+                  <Home className="w-4 h-4 text-brand-cyan" />
+                  Titre de l'annonce
+                </div>
+              </label>
+              <input
+                required
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
+                placeholder="Ex: Superbe appartement en centre-ville"
+                value={form.titre}
+                onChange={(e) => setForm((prev) => ({ ...prev, titre: e.target.value }))}
+              />
+            </div>
+
+            {/* Description */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                Description
+              </label>
+              <textarea
+                rows={3}
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
+                placeholder="Décrivez votre logement en détail..."
+                value={form.description}
+                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+              />
+            </div>
+
+            {/* Prix */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-brand-cyan" />
+                  Prix (Ar)
+                </div>
+              </label>
+              <input
+                required
+                type="number"
+                min="0"
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
+                placeholder="500 000"
+                value={form.prix_loyer}
+                onChange={(e) => setForm((prev) => ({ ...prev, prix_loyer: e.target.value }))}
+              />
+            </div>
+
+            {/* Type */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-brand-cyan" />
+                  Type de bien
+                </div>
+              </label>
+              <select
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
+                value={form.type_propriete}
+                onChange={(e) => setForm((prev) => ({ ...prev, type_propriete: e.target.value }))}
+              >
+                <option value="appartement">Appartement</option>
+                <option value="maison">Maison</option>
+                <option value="studio">Studio</option>
+                <option value="autre">Autre</option>
+              </select>
+            </div>
+
+            {/* Quartier */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-brand-cyan" />
+                  Quartier
+                </div>
+              </label>
+              <input
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
+                placeholder="Analakely, Isoraka..."
+                value={form.quartier}
+                onChange={(e) => setForm((prev) => ({ ...prev, quartier: e.target.value }))}
+              />
+            </div>
+
+            {/* Adresse */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                Adresse exacte
+              </label>
+              <input
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
+                placeholder="12 Rue de la Liberté"
+                value={form.adresse_exacte}
+                onChange={(e) => setForm((prev) => ({ ...prev, adresse_exacte: e.target.value }))}
+              />
+            </div>
+
+            {/* Surface */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                <div className="flex items-center gap-2">
+                  <Ruler className="w-4 h-4 text-brand-cyan" />
+                  Surface (m²)
+                </div>
+              </label>
+              <input
+                type="number"
+                min="0"
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
+                placeholder="45"
+                value={form.surface}
+                onChange={(e) => setForm((prev) => ({ ...prev, surface: e.target.value }))}
+              />
+            </div>
+
+            {/* Date disponibilité */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-brand-cyan" />
+                  Disponible à partir du
+                </div>
+              </label>
+              <input
+                type="date"
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
+                value={form.date_disponibilite}
+                onChange={(e) => setForm((prev) => ({ ...prev, date_disponibilite: e.target.value }))}
+              />
+            </div>
+
+            {/* Meublé */}
+            <div className="md:col-span-2">
+              <label className="flex items-center gap-3 text-sm font-medium text-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.est_meuble}
+                  onChange={(e) => setForm((prev) => ({ ...prev, est_meuble: e.target.checked }))}
+                  className="w-4 h-4 rounded border-border text-brand-cyan focus:ring-brand-cyan focus:ring-offset-0"
+                />
+                <div className="flex items-center gap-2">
+                  <Bed className="w-4 h-4 text-brand-cyan" />
+                  Logement meublé
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Message d'erreur */}
+          {editMessage && (
+            <div className="rounded-xl bg-red-50 border border-red-200 p-3 flex items-center gap-2 text-sm text-red-700">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              {editMessage}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end border-t border-border/50 pt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-border px-6 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={editSaving}
+              className="rounded-xl bg-brand-cyan hover:bg-brand-cyan-dark px-6 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {editSaving ? (
+                <>
+                  <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Enregistrement...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  Enregistrer les modifications
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 function TabMesAnnonces() {
   const [annonces, setAnnonces] = useState<ApiAnnonce[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [editingAnnonce, setEditingAnnonce] = useState<ApiAnnonce | null>(null)
 
   useEffect(() => {
     api.annonces({ mine: 'true', statut: 'all' })
@@ -153,19 +528,12 @@ function TabMesAnnonces() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleEditAnnonce = async (annonce: ApiAnnonce) => {
-    const newTitle = window.prompt('Nouveau titre pour l\'annonce', annonce.titre || '')
-    if (newTitle === null) return
-    try {
-      const updated = await api.updateAnnonce(annonce.id, { titre: newTitle })
-      setAnnonces((current) => current.map((a) => (a.id === updated.id ? updated : a)))
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Impossible de modifier l\'annonce')
-    }
+  const handleUpdateAnnonce = (updated: ApiAnnonce) => {
+    setAnnonces((current) => current.map((a) => (a.id === updated.id ? updated : a)))
   }
 
   const handleDeleteAnnonce = async (annonce: ApiAnnonce) => {
-    if (!window.confirm('Supprimer cette annonce ? Cette action est irreversible.')) return
+    if (!window.confirm('Supprimer cette annonce ? Cette action est irréversible.')) return
     try {
       await api.deleteAnnonce(annonce.id)
       setAnnonces((current) => current.filter((a) => a.id !== annonce.id))
@@ -225,7 +593,7 @@ function TabMesAnnonces() {
                           <Link to={`/annonces/${annonce.id}`} className="text-lg font-semibold text-foreground hover:text-brand-cyan-dark">
                             {annonce.titre}
                           </Link>
-                          <button title="Modifier" onClick={() => handleEditAnnonce(annonce)} className="p-1.5 hover:bg-muted rounded text-muted-foreground">
+                          <button title="Modifier" onClick={() => setEditingAnnonce(annonce)} className="p-1.5 hover:bg-muted rounded text-muted-foreground">
                             <Edit className="w-4 h-4" />
                           </button>
                           <button title="Supprimer" onClick={() => handleDeleteAnnonce(annonce)} className="p-1.5 hover:bg-red-50 rounded text-red-500">
@@ -261,6 +629,15 @@ function TabMesAnnonces() {
           })}
         </div>
       )}
+
+      {/* Modal d'édition améliorée */}
+      {editingAnnonce && (
+        <EditAnnonceModal
+          annonce={editingAnnonce}
+          onClose={() => setEditingAnnonce(null)}
+          onSave={handleUpdateAnnonce}
+        />
+      )}
     </div>
   )
 }
@@ -286,7 +663,8 @@ function TabNotif() {
   const handleMarkOne = async (id: number) => {
     try {
       await api.markNotificationRead(id)
-      setNotifications((prev) => prev.map((n) => (n.id_notification === id ? { ...n, est_lue: 1 } : n)))
+      await api.deleteNotification(id)
+      setNotifications((prev) => prev.filter((n) => n.id_notification !== id))
     } catch {
       // ignore
     }
@@ -306,7 +684,7 @@ function TabNotif() {
     setSaving(true)
     try {
       await api.markNotificationsRead()
-      setNotifications((prev) => prev.map((item) => ({ ...item, est_lue: 1 })))
+      setNotifications([])
     } finally {
       setSaving(false)
     }
@@ -323,13 +701,18 @@ function TabNotif() {
         ) : (
           notifications.map((item) => (
             <div key={item.id_notification} className="flex items-start justify-between gap-3 rounded-xl border border-border p-4">
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium">{item.titre}</div>
-                <div className="text-sm text-muted-foreground">{item.texte}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{new Date(item.date_creation).toLocaleString('fr-FR')}</div>
+                <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{item.texte}</div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="rounded-full bg-muted px-2.5 py-1 font-medium">
+                    {item.type_notification === 'message' ? 'Message de contact' : 'Notification'}
+                  </span>
+                  <span>{new Date(item.date_creation).toLocaleString('fr-FR')}</span>
+                </div>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => handleMarkOne(item.id_notification)} title="Marquer comme lu" className="p-1.5 hover:bg-white/5 rounded text-sm text-muted-foreground">
+                <button onClick={() => handleMarkOne(item.id_notification)} title="Marquer comme lu et supprimer" className="p-1.5 hover:bg-white/5 rounded text-sm text-muted-foreground">
                   <Check className="w-4 h-4" />
                 </button>
                 <button onClick={() => handleDeleteNotification(item.id_notification)} title="Supprimer" className="p-1.5 hover:bg-white/5 rounded text-red-500">
@@ -455,7 +838,6 @@ function TabMessages() {
     const raison = window.prompt('Raison du signalement (optionnel)')
     try {
       await api.reportMessage(id_message, { raison: raison || 'Signalement utilisateur' })
-      // refresh thread
       if (activeThread !== null) {
         const data = await api.messagesThread(activeThread)
         setMessages(data)
@@ -484,7 +866,6 @@ function TabMessages() {
       ? `${superadmin.prenom} ${superadmin.nom}`
       : 'Conversation'
   
-  // Chat view: conversation with a specific interlocutor
   if (activeThread !== null) {
     return (
       <div className="flex flex-col h-[600px]">
@@ -581,7 +962,6 @@ function TabMessages() {
     )
   }
 
-  // Thread list view
   return (
     <div>
       <h2 className="bebas text-2xl">Messages</h2>
