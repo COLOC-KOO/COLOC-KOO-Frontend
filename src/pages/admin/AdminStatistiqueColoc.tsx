@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
+import { api } from '../../lib/api'
 import {
   BarChart3,
   PieChart,
@@ -224,13 +225,14 @@ const VerticalBars = ({
 
 // Composant principal
 export default function AdminStatistiquesColocation() {
-  const [data, setData] = useState<Annonce[]>(generateMockData)
+  const [data, setData] = useState<Annonce[]>([])
   const [period, setPeriod] = useState<number>(12)
   const [month, setMonth] = useState<number>(6)
   const [year, setYear] = useState<number>(2026)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedView, setSelectedView] = useState<'overview' | 'details'>('overview')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Filtrer les données par période
   const filteredData = useMemo(() => {
@@ -412,6 +414,29 @@ export default function AdminStatistiquesColocation() {
     alert(`🔍 Détail - ${field}: ${value}\n\n${filtered.length} annonces trouvées\n\n${details.slice(0, 500)}${details.length > 500 ? '\n...' : ''}`)
   }
 
+  const loadData = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await api.backofficeColocationStats()
+      const items = Array.isArray(response?.items) ? response.items : []
+      setData((items as unknown as Annonce[]))
+      if (!items.length) {
+        setSuccessMessage('Aucune annonce disponible pour le moment')
+        window.setTimeout(() => setSuccessMessage(null), 2500)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de charger les statistiques')
+      setData([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadData()
+  }, [])
+
   // Export CSV
   const handleExport = () => {
     const headers = ['Date', 'Quartier', 'Type', 'Nb Colocs', 'Surface', 'Surface Chambre', 'Loyer', 'Charges', 'Internet', 'Meuble', 'Commodités', 'Services']
@@ -451,9 +476,9 @@ export default function AdminStatistiquesColocation() {
 
   // Rafraîchir les données
   const handleRefresh = () => {
-    setData(generateMockData())
-    setSuccessMessage('Données actualisées')
-    setTimeout(() => setSuccessMessage(null), 3000)
+    void loadData()
+    setSuccessMessage('Actualisation des données…')
+    setTimeout(() => setSuccessMessage(null), 2000)
   }
 
   // Formater le mois
@@ -492,6 +517,12 @@ export default function AdminStatistiquesColocation() {
         {successMessage && (
           <div className="bg-brand-green/20 border border-brand-green/30 text-brand-green px-4 py-2 rounded-lg text-sm animate-in slide-in-from-top-2">
             {successMessage}
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm">
+            {error}
           </div>
         )}
 
@@ -562,6 +593,10 @@ export default function AdminStatistiquesColocation() {
               </span>
             </div>
           </div>
+
+          {loading && (
+            <div className="p-4 text-sm text-white/50">Chargement des statistiques depuis le backend…</div>
+          )}
 
           {/* KPIs */}
           {stats && (
@@ -708,8 +743,8 @@ export default function AdminStatistiquesColocation() {
           <div className="flex items-start gap-3">
             <Info className="w-4 h-4 text-white/40 flex-shrink-0 mt-0.5" />
             <div className="text-xs text-white/40">
-              Données simulées pour la maquette (jeu déterministe d'annonces sur 24 mois). 
-              En production, ces graphiques seront alimentés par la base réelle des dépôts. 
+              Ces statistiques sont désormais alimentées par les données du backend. 
+              Les graphiques se basent sur les annonces réellement présentes dans la base et se mettent à jour automatiquement.
               Cliquez sur les barres pour filtrer les données.
             </div>
           </div>

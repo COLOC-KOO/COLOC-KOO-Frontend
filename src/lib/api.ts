@@ -59,6 +59,7 @@ export interface ApiAnnonce {
     surface: number | null
     prix_loyer: number
     date_disponibilite: string
+    est_meuble?: number | null
   } | null
   services: string[]
   regles: string[]
@@ -97,6 +98,24 @@ export interface ApiPartenaire {
   logo?: string | null
   actif: 0 | 1
   date_creation: string
+}
+
+export interface ApiPartenaireRequest {
+  id_demande: number
+  nom_entreprise: string
+  nom_contact: string
+  email: string
+  telephone?: string | null
+  telephone_code?: string | null
+  secteur?: string | null
+  niveau_souhaite?: string | null
+  message?: string | null
+  statut: string
+  date_creation: string
+  souhaite_rappel?: number
+  date_rappel?: string | null
+  creneau_rappel?: string | null
+  souhaite_plaquette?: number
 }
 
 export interface CreatePartenaireRequestPayload {
@@ -565,6 +584,9 @@ export const api = {
   backofficeDashboard() {
     return request<BackofficeDashboard>('/backoffice/dashboard')
   },
+  backofficeColocationStats() {
+    return request<{ items: Array<Record<string, unknown>>; generatedAt: string; total: number }>('/backoffice/statistiques-colocation')
+  },
   backofficePaiements() {
     return request<ApiPaiement[]>('/backoffice/paiements')
   },
@@ -653,6 +675,34 @@ export const api = {
   },
   backofficePartenaires() {
     return request<ApiPartenaire[]>('/backoffice/partenaires')
+  },
+  uploadPartenaireLogo(file: File) {
+    const formData = new FormData()
+    formData.append('logo', file)
+    return request<{ url: string; filename: string }>('/backoffice/partenaires/upload', {
+      method: 'POST',
+      body: formData,
+    })
+  },
+  backofficePartenaireRequests() {
+    return request<ApiPartenaireRequest[]>('/backoffice/partenaires/requests')
+  },
+  deleteBackofficePartenaireRequest(id: string | number) {
+    return request<{ message: string }>(`/backoffice/partenaires/requests/${id}`, { method: 'DELETE' })
+  },
+  backofficeContactMessages() {
+    return request<Array<{
+      id_message: number
+      nom: string
+      email: string
+      sujet: string
+      message: string
+      statut: string
+      date_creation: string
+    }>>('/backoffice/messages-contact')
+  },
+  deleteBackofficeContactMessage(id: string | number) {
+    return request<{ message: string }>(`/backoffice/messages-contact/${id}`, { method: 'DELETE' })
   },
   createPartenaire(payload: { nom: string; secteur?: string; niveau?: string; remise?: string; engagement?: string; logo?: string; actif?: 0 | 1 }) {
     return request<{ id_partenaire: number }>('/backoffice/partenaires', {
