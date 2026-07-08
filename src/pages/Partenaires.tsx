@@ -1,17 +1,29 @@
 // pages/Partenaires.tsx
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   Building2, Check, Send, Gift, Handshake, ListChecks, 
   Lightbulb, Users, HeartHandshake, MapPin, ChartNoAxesCombined, 
   Rocket, Award, Store, Home, Landmark, Flag, ArrowUpRight, 
   Feather, CircleCheck, Sparkles, TrendingUp, Shield, 
-  Zap, Crown, Briefcase, Target, Layers, Eye, BarChart3
+  Zap, Crown, Briefcase, Target, Layers, Eye, BarChart3,
+  ChevronRight, Star, UserCheck, Clock, Phone, Mail,
+  ExternalLink, ThumbsUp, Compass, Globe, Megaphone,
+  Play, PlayCircle, ArrowRightCircle, Quote, BriefcaseBusiness,
+  Building, LandPlot, HandCoins, BadgeCheck, ArrowRight
 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { useConfig } from '../lib/config'
+import { motion, AnimatePresence } from 'framer-motion'
+
+// Images d'arrière-plan (Unsplash)
+const heroBgImage = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1920&q=80'
+const cityBgImage = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1920&q=80'
+const teamBgImage = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=80'
+const officeBgImage = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80'
+const partnersBgImage = 'https://images.unsplash.com/photo-1541746972996-4e0b0f43e02a?auto=format&fit=crop&w=1920&q=80'
 
 // Types
 interface PartnerTier {
@@ -21,6 +33,9 @@ interface PartnerTier {
   benefits: string[]
   tierClass: string
   icon?: React.ReactNode
+  popular?: boolean
+  price?: string
+  amount?: string
 }
 
 interface PartnerSection {
@@ -32,37 +47,32 @@ interface PartnerSection {
   tiers: PartnerTier[]
   isAddon?: boolean
   addonNote?: string
+  bgImage?: string
 }
 
 interface WhyCard {
   icon: React.ReactNode
   title: string
   desc: string
-  color?: 'cyan' | 'green'
+  stat?: string
 }
 
 // Données i18n
 const t = {
-  heroBadge: "Offres offertes ou incluses au lancement 2026",
+  heroBadge: "Lancement 2026",
   heroTitle: "Devenez partenaire",
-  heroDesc: "Associez votre marque à une solution malgache d'accès au logement et touchez une audience jeune, urbaine et active. Du statut indépendant aux grandes entreprises et réseaux immobiliers, il existe un statut adapté à chaque structure.",
-  heroMission: "« Habiter autrement pour étudier, travailler et s'émanciper »",
-  heroCta: "Je veux devenir partenaire",
-  heroCta2: "Voir les statuts",
+  heroDesc: "Associez votre marque à une solution malgache d'accès au logement et touchez une audience jeune, urbaine et active.",
+  heroCta: "Devenir partenaire",
+  heroCta2: "Voir les offres",
   whyTitle: "Pourquoi devenir partenaire ?",
-  whySub: "Sarintany'COLOC est le site de référence de la colocation à Madagascar. Y figurer, c'est gagner en visibilité tout en affirmant un engagement concret pour le logement des jeunes et des moyens jeunes.",
-  whyReasons: "4 raisons de devenir partenaire",
-  launchTxt: "Lancement 2026 : de nombreux statuts sont offerts ou inclus pour les premiers partenaires. Les conditions tarifaires détaillées sont communiquées sur demande — contactez-nous.",
-  statutsTitle: "Les statuts partenaires",
-  statutsSub: "Quatre familles de partenaires, chacune avec ses niveaux et ses avantages cumulatifs. Choisissez le statut qui correspond à votre structure.",
-  secEnt: "Entreprise générale",
-  secImmo: "Immobilier",
-  secInst: "Institution publique — mécénat",
-  secAddon: "Option · Bandeau régional exclusif",
-  contactH: "Prêt à rejoindre Sarintany'COLOC ?",
-  contactP: "Dites-nous qui vous êtes : nous vous orientons vers le statut le plus adapté et vous communiquons les conditions de lancement.",
+  whySub: "Sarintany'COLOC est le site de référence de la colocation à Madagascar.",
+  statutsTitle: "Nos offres partenaires",
+  statutsSub: "Quatre familles de partenaires, chacune avec ses niveaux et ses avantages cumulatifs.",
+  contactH: "Prêt à rejoindre l'aventure ?",
+  contactP: "Dites-nous qui vous êtes : nous vous orientons vers le statut le plus adapté.",
   contactCta: "Nous contacter",
-  // Benefits
+  launchTxt: "Lancement 2026 : de nombreux statuts sont offerts ou inclus pour les premiers partenaires.",
+  // Benefits mapping...
   b1: "Logo + page « Partenaires »",
   b2: "Présence dans 1 newsletter / an",
   b3: "Signalétique « Partenaire engagé 2026 »",
@@ -70,12 +80,12 @@ const t = {
   b5: "Référencement prioritaire",
   b6: "Point d'intérêt sur la carte",
   b7: "Redirection vers vos liens web",
-  b8: "Stats annuelles globales (personas, villes attractives)",
+  b8: "Stats annuelles globales",
   b9: "Référencement prioritaire + présentation 3 lignes",
   b10: "Encarts natifs dans le fil d'annonces",
   b11: "Retour annuel d'audiences statistiques",
   b12: "Logo intégré aux campagnes de communication",
-  b13: "Partenaire mis en avant « ils participent le plus »",
+  b13: "Partenaire mis en avant",
   b14: "Présence sur la page d'accueil",
   b15: "Intégration nationale d'une chaîne",
   b16: "Mise en avant dans les campagnes",
@@ -111,7 +121,7 @@ const t = {
   slotEarlyAfternoon: "Début d'après-midi (12h–15h)",
   slotLateAfternoon: "Fin d'après-midi (15h–18h)",
   lightpopH: "Naviguer en mode allégé ?",
-  lightpopP: "Connexion lente ou data limitée ? Le mode allégé désactive les animations et allège l'affichage.",
+  lightpopP: "Connexion lente ou data limitée ?",
   lightpopYes: "Activer le mode allégé",
   lightpopNo: "Continuer normalement",
   lightpopRemind: "Ne plus me le rappeler",
@@ -122,118 +132,111 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
   onContactClick, onStatutsClick 
 }) => {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-[#1a365d] via-[#21436b] to-[#2a5298] border-b border-border">
-      <div className="absolute inset-0 bg-gradient-to-br from-[rgba(16,28,54,0.85)] via-[rgba(16,28,54,0.55)] to-[rgba(16,28,54,0.40)]"></div>
-      <div className="absolute inset-0 opacity-[0.08]" 
-        style={{
-          backgroundImage: `radial-gradient(circle at 20% 50%, #99CC33 1px, transparent 1px)`,
-          backgroundSize: '40px 40px'
+    <div 
+      className="relative overflow-hidden min-h-[80vh] flex items-center"
+    >
+      {/* Image de fond */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: `url(${heroBgImage})`,
+          backgroundPosition: 'center 30%'
         }}
       />
-      <div className="relative z-10 max-w-[1120px] mx-auto px-6 py-16 md:py-20 lg:py-24 text-white">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-[#99CC33]/40 text-[#99CC33] text-xs font-semibold px-4 py-1.5 rounded-full">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628]/90 via-[#1a2a4a]/80 to-[#2a4a7a]/70" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+      
+      <div className="relative z-10 max-w-[1120px] mx-auto px-6 py-20 text-white w-full">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 bg-[#99CC33]/20 backdrop-blur-sm border border-[#99CC33]/30 text-[#99CC33] text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
             <Gift className="w-3.5 h-3.5" />
             <span>{t.heroBadge}</span>
           </div>
-          <p className="font-['Bebas_Neue'] text-3xl md:text-4xl lg:text-5xl leading-[1.05] text-white/90 mt-4 max-w-3xl mx-auto">
-            {t.heroMission}
+          
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] text-white mb-4">
+            {t.heroTitle}
+          </h1>
+          
+          <p className="text-base md:text-lg text-white/80 leading-relaxed max-w-xl mb-8">
+            {t.heroDesc}
           </p>
-        </div>
-        <h1 className="font-['Bebas_Neue'] text-4xl md:text-5xl lg:text-6xl leading-[1.02] text-white text-center mb-4">
-          {t.heroTitle}
-        </h1>
-        <p className="text-base md:text-lg text-white/85 leading-relaxed max-w-2xl mx-auto text-center mb-8">
-          {t.heroDesc}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button 
-            onClick={onContactClick}
-            className="inline-flex items-center justify-center gap-2 px-6 md:px-8 py-3.5 md:py-4 rounded-xl bg-[#99CC33] text-white text-sm md:text-base font-semibold hover:bg-[#88bb2e] transition-all duration-200 hover:scale-[1.02] shadow-lg shadow-[#99CC33]/25"
-          >
-            <Handshake className="w-4 h-4 md:w-5 md:h-5" /> {t.heroCta}
-          </button>
-          <button 
-            onClick={onStatutsClick}
-            className="inline-flex items-center justify-center gap-2 px-6 md:px-8 py-3.5 md:py-4 rounded-xl border-2 border-[#46BDD6] bg-white/10 backdrop-blur-sm text-white text-sm md:text-base font-semibold hover:bg-[#46BDD6]/20 transition-all duration-200"
-          >
-            <ListChecks className="w-4 h-4 md:w-5 md:h-5" /> {t.heroCta2}
-          </button>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button 
+              onClick={onContactClick}
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-[#99CC33] text-white text-sm font-semibold hover:bg-[#88bb2e] transition-all duration-200 shadow-lg shadow-[#99CC33]/25"
+            >
+              {t.heroCta} <ArrowRight className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={onStatutsClick}
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-white/30 text-white text-sm font-semibold hover:bg-white/10 transition-all duration-200"
+            >
+              {t.heroCta2}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-// Composant Pourquoi
+// Composant Why Section
 const WhySection: React.FC = () => {
   const cards: WhyCard[] = [
     {
       icon: <Users className="w-5 h-5" />,
       title: 'Audience ciblée',
-      desc: 'Étudiants, jeunes actifs et familles : une audience jeune, urbaine et active, difficile à atteindre ailleurs.',
-      color: 'cyan'
+      desc: 'Étudiants, jeunes actifs et familles : une audience jeune, urbaine et active.',
+      stat: '15k+'
     },
     {
       icon: <HeartHandshake className="w-5 h-5" />,
       title: 'Engagement RSE',
-      desc: 'Affichez la signalétique « Partenaire engagé » et associez votre image au logement et à l\'émancipation.',
-      color: 'green'
+      desc: 'Affichez la signalétique « Partenaire engagé » et associez votre image au logement.',
+      stat: '100%'
     },
     {
-      icon: <MapPin className="w-5 h-5" />,
-      title: 'Visibilité sur la carte',
-      desc: 'Votre logo et votre page partenaire visibles par tous les visiteurs de Sarintany\'COLOC.',
-      color: 'green'
+      icon: <Compass className="w-5 h-5" />,
+      title: 'Visibilité maximale',
+      desc: 'Votre logo et votre page partenaire visibles par tous les visiteurs.',
+      stat: '50k+'
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
-      title: 'Données utiles',
-      desc: 'Selon le palier : stats de fréquentation, personas, villes attractives et zones de tension du marché.',
-      color: 'cyan'
+      title: 'Données exclusives',
+      desc: 'Stats de fréquentation, personas, villes attractives et zones de tension.',
+      stat: '365j'
     }
   ]
 
   return (
-    <section className="py-12 md:py-16 px-6">
+    <section className="py-20 md:py-28 px-6 bg-[#f8faf8]">
       <div className="max-w-[1120px] mx-auto">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#F4F8E8] flex items-center justify-center flex-shrink-0">
-            <Lightbulb className="w-5 h-5 text-[#99CC33]" />
-          </div>
-          <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-[#2C2C2C]">{t.whyTitle}</h2>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#2C2C2C]">{t.whyTitle}</h2>
+          <p className="text-[#666] mt-2 max-w-2xl mx-auto">{t.whySub}</p>
         </div>
-        <p className="text-sm md:text-base text-[#666] leading-relaxed max-w-3xl ml-0 md:ml-13 mb-6">
-          {t.whySub}
-        </p>
-        <p className="font-['Bebas_Neue'] text-2xl md:text-3xl text-[#99CC33] text-center my-2 mb-6">
-          {t.whyReasons}
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {cards.map((card, idx) => (
             <div 
               key={idx} 
-              className={`group bg-white border border-[#e8e8e8] rounded-2xl p-6 text-center transition-all duration-200 hover:shadow-xl hover:-translate-y-1 ${
-                card.color === 'cyan' ? 'hover:border-[#46BDD6]' : 'hover:border-[#99CC33]'
-              }`}
+              className="bg-white rounded-2xl p-6 text-center border border-[#e8e8e8] hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-all duration-200 group-hover:scale-110 ${
-                card.color === 'cyan' ? 'bg-[#E8F7FA]' : 'bg-[#F4F8E8]'
-              }`}>
-                <span className={card.color === 'cyan' ? 'text-[#46BDD6]' : 'text-[#99CC33]'}>
-                  {card.icon}
-                </span>
+              <div className="w-14 h-14 rounded-full bg-[#F4F8E8] flex items-center justify-center mx-auto mb-4">
+                <span className="text-[#99CC33]">{card.icon}</span>
               </div>
-              <h3 className="text-base font-semibold text-[#2C2C2C] mb-2">{card.title}</h3>
-              <p className="text-sm text-[#666] leading-relaxed">{card.desc}</p>
+              <div className="text-2xl font-bold text-[#2C2C2C]">{card.stat}</div>
+              <h3 className="text-sm font-semibold text-[#2C2C2C] mt-1">{card.title}</h3>
+              <p className="text-xs text-[#666] mt-1 leading-relaxed">{card.desc}</p>
             </div>
           ))}
         </div>
-        <div className="mt-6 bg-[#F4F8E8] border border-dashed border-[#99CC33]/60 rounded-2xl px-5 py-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#99CC33]/20 flex items-center justify-center flex-shrink-0">
-            <Rocket className="w-5 h-5 text-[#99CC33]" />
-          </div>
-          <p className="text-sm md:text-base text-[#4d6b1a] leading-relaxed">{t.launchTxt}</p>
+
+        <div className="mt-10 bg-[#F4F8E8] border border-[#99CC33]/30 rounded-2xl px-6 py-5 flex items-center gap-4">
+          <Rocket className="w-6 h-6 text-[#99CC33] flex-shrink-0" />
+          <p className="text-sm text-[#4d6b1a] leading-relaxed">{t.launchTxt}</p>
         </div>
       </div>
     </section>
@@ -241,7 +244,7 @@ const WhySection: React.FC = () => {
 }
 
 // Composant Tier Card
-const TierCard: React.FC<{ tier: PartnerTier }> = ({ tier }) => {
+const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index }) => {
   const keyMap: Record<string, string> = {
     'Logo + page « Partenaires »': t.b1,
     'Présence dans 1 newsletter / an de Sarintany\'COLOC': t.b2,
@@ -286,37 +289,56 @@ const TierCard: React.FC<{ tier: PartnerTier }> = ({ tier }) => {
     return { text: translated, isHead }
   })
 
-  // Couleur de bordure pour le badge
-  const getBadgeColor = (tierClass: string) => {
-    if (tierClass.includes('bronze')) return 'border-[#c8843c]'
-    if (tierClass.includes('argent')) return 'border-[#9aa3ad]'
-    if (tierClass.includes('or')) return 'border-[#d4af37]'
-    if (tierClass.includes('platine')) return 'border-[#5a8aa0]'
-    if (tierClass.includes('green')) return 'border-[#99CC33]'
-    if (tierClass.includes('cy')) return 'border-[#46BDD6]'
-    return 'border-[#e8e8e8]'
+  const getTierColor = (tierClass: string) => {
+    if (tierClass.includes('bronze')) return 'border-t-[#c8843c]'
+    if (tierClass.includes('argent')) return 'border-t-[#9aa3ad]'
+    if (tierClass.includes('or')) return 'border-t-[#d4af37]'
+    if (tierClass.includes('platine')) return 'border-t-[#5a8aa0]'
+    if (tierClass.includes('green')) return 'border-t-[#99CC33]'
+    if (tierClass.includes('cy')) return 'border-t-[#46BDD6]'
+    return 'border-t-[#e8e8e8]'
+  }
+
+  const getTierBadge = (tierClass: string) => {
+    if (tierClass.includes('bronze')) return '🥉'
+    if (tierClass.includes('argent')) return '🥈'
+    if (tierClass.includes('or')) return '🥇'
+    if (tierClass.includes('platine')) return '💎'
+    if (tierClass.includes('green')) return '🌿'
+    if (tierClass.includes('cy')) return '🔷'
+    return '⭐'
   }
 
   return (
-    <div className={`group bg-white border border-[#e8e8e8] rounded-2xl p-5 flex flex-col transition-all duration-200 hover:shadow-xl hover:-translate-y-1 border-t-[4px] ${tier.tierClass}`}>
-      <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
+    <div className={`group bg-white border border-[#e8e8e8] rounded-2xl p-6 flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-t-4 ${getTierColor(tier.tierClass)} relative`}>
+      {tier.popular && (
+        <div className="absolute top-3 right-3 bg-[#99CC33] text-white text-[10px] font-bold px-3 py-1 rounded-full">
+          <Star className="w-3 h-3 inline mr-1 fill-white" />
+          Populaire
+        </div>
+      )}
+      
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
         <div className="flex items-center gap-2.5">
-          {tier.icon && (
-            <span className="text-[#99CC33]">{tier.icon}</span>
-          )}
-          <span className="font-['Bebas_Neue'] text-xl md:text-2xl text-[#2C2C2C]">{tier.name}</span>
+          <span className="text-2xl">{getTierBadge(tier.tierClass)}</span>
+          <span className="text-xl font-bold text-[#2C2C2C]">{tier.name}</span>
         </div>
         {tier.launch && (
-          <span className={`text-[10px] font-bold text-[#5a7a1a] bg-[#F4F8E8] border ${getBadgeColor(tier.tierClass)} rounded-full px-3 py-1 whitespace-nowrap`}>
+          <span className="text-[10px] font-bold text-[#99CC33] bg-[#F4F8E8] border border-[#99CC33]/40 rounded-full px-3 py-1 whitespace-nowrap">
             {tier.launch}
           </span>
         )}
       </div>
-      <p className="text-sm text-[#46BDD6] italic leading-relaxed my-2 mb-3">{tier.arg}</p>
+      
+      <p className="text-sm text-[#46BDD6] leading-relaxed my-2 mb-4">{tier.arg}</p>
+      
       <ul className="list-none flex flex-col gap-2 p-0 m-0 flex-1">
         {benefits.map((b, idx) => (
-          <li key={idx} className={`text-sm leading-relaxed flex gap-2.5 items-start ${b.isHead ? 'font-semibold text-[#2C2C2C]' : 'text-[#555]'}`}>
-            <span className={`flex-shrink-0 mt-0.5 ${b.isHead ? 'text-[#999]' : 'text-[#99CC33]'}`}>
+          <li 
+            key={idx} 
+            className={`text-sm leading-relaxed flex gap-2.5 items-start ${b.isHead ? 'font-semibold text-[#2C2C2C]' : 'text-[#555]'}`}
+          >
+            <span className={`flex-shrink-0 mt-0.5 ${b.isHead ? 'text-[#46BDD6]' : 'text-[#99CC33]'}`}>
               {b.isHead ? <ArrowUpRight className="w-4 h-4" /> : <Check className="w-4 h-4" />}
             </span>
             <span>{b.text}</span>
@@ -329,20 +351,19 @@ const TierCard: React.FC<{ tier: PartnerTier }> = ({ tier }) => {
 
 // Composant Section Partenaire
 const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ section }) => {
-  const gridClass = section.tiers.length === 2 ? 'grid-cols-1 md:grid-cols-2' : ''
   const isCyan = section.iconClass === 'cy'
 
   if (section.isAddon) {
     return (
-      <div className="group bg-gradient-to-br from-white via-[#E8F7FA] to-[#E8F7FA]/50 border-2 border-[#46BDD6] rounded-2xl p-6 flex gap-5 items-start transition-all duration-200 hover:shadow-xl">
-        <div className="w-14 h-14 rounded-2xl bg-white border-2 border-[#46BDD6] flex items-center justify-center flex-shrink-0 text-2xl shadow-sm">
+      <div className="bg-white border-2 border-[#46BDD6] rounded-2xl p-6 flex gap-5 items-start transition-all duration-300 hover:shadow-lg">
+        <div className="w-14 h-14 rounded-full bg-[#E8F7FA] flex items-center justify-center flex-shrink-0">
           <span className="text-[#46BDD6]">{section.icon}</span>
         </div>
         <div>
-          <h3 className="font-['Bebas_Neue'] text-2xl md:text-3xl text-[#2C2C2C]">{section.title}</h3>
-          <p className="text-sm md:text-base text-[#555] leading-relaxed mt-1.5">{section.subtitle}</p>
+          <h3 className="text-xl font-bold text-[#2C2C2C]">{section.title}</h3>
+          <p className="text-sm text-[#555] leading-relaxed mt-1">{section.subtitle}</p>
           {section.addonNote && (
-            <p className="text-xs md:text-sm text-[#888] mt-2 border-t border-[#46BDD6]/30 pt-3">{section.addonNote}</p>
+            <p className="text-xs text-[#888] mt-3 pt-3 border-t border-[#46BDD6]/30">{section.addonNote}</p>
           )}
         </div>
       </div>
@@ -350,21 +371,21 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
   }
 
   return (
-    <div className="bg-white border border-[#e8e8e8] rounded-2xl p-5 md:p-6 mb-5 transition-all duration-200 hover:shadow-lg">
-      <div className="flex items-start gap-4 mb-5 pb-5 border-b border-[#e8e8e8]">
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${isCyan ? 'bg-[#E8F7FA]' : 'bg-[#F4F8E8]'}`}>
+    <div className="bg-white border border-[#e8e8e8] rounded-2xl p-6 md:p-8 mb-6 transition-all duration-300 hover:shadow-lg">
+      <div className="flex items-start gap-4 mb-6 pb-6 border-b border-[#e8e8e8]">
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isCyan ? 'bg-[#E8F7FA]' : 'bg-[#F4F8E8]'}`}>
           <span className={isCyan ? 'text-[#46BDD6]' : 'text-[#99CC33]'}>{section.icon}</span>
         </div>
         <div>
-          <h3 className={`font-['Bebas_Neue'] text-2xl md:text-3xl leading-tight ${isCyan ? 'text-[#46BDD6]' : 'text-[#99CC33]'}`}>
+          <h3 className={`text-2xl font-bold ${isCyan ? 'text-[#46BDD6]' : 'text-[#99CC33]'}`}>
             {section.title}
           </h3>
-          <p className="text-sm md:text-base text-[#666] leading-relaxed mt-0.5">{section.subtitle}</p>
+          <p className="text-sm text-[#666] leading-relaxed">{section.subtitle}</p>
         </div>
       </div>
-      <div className={`grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 ${gridClass}`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 relative">
         {section.tiers.map((tier, idx) => (
-          <TierCard key={idx} tier={tier} />
+          <TierCard key={idx} tier={tier} index={idx} />
         ))}
       </div>
     </div>
@@ -422,7 +443,7 @@ const ContactSection: React.FC = () => {
       })
       setShowOk(true)
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Impossible d’envoyer votre demande. Veuillez réessayer.')
+      setSubmitError(error instanceof Error ? error.message : 'Impossible d’envoyer votre demande.')
     } finally {
       setSubmitting(false)
     }
@@ -431,11 +452,9 @@ const ContactSection: React.FC = () => {
   const phoneOptions = [
     { value: '+261', label: '+261 (Madagascar)' },
     { value: '+33', label: '+33 (France)' },
-    { value: '+262', label: '+262 (Réunion / Mayotte)' },
+    { value: '+262', label: '+262 (Réunion)' },
     { value: '+230', label: '+230 (Maurice)' },
     { value: '+269', label: '+269 (Comores)' },
-    { value: '+32', label: '+32 (Belgique)' },
-    { value: '+41', label: '+41 (Suisse)' },
   ]
 
   const slotOptions = [
@@ -446,38 +465,51 @@ const ContactSection: React.FC = () => {
   ]
 
   return (
-    <section className="py-12 md:py-16 px-6">
-      <div className="max-w-[1120px] mx-auto">
-        <div className="bg-gradient-to-br from-[#2C2C2C] to-[#1a1a1a] rounded-3xl px-6 md:px-10 py-10 md:py-14 text-center text-white shadow-2xl">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-full px-4 py-1.5 text-xs font-semibold text-[#99CC33] mb-4">
-            <Sparkles className="w-3.5 h-3.5" /> Contact
-          </div>
-          <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl lg:text-5xl mb-3">{t.contactH}</h2>
-          <p className="text-sm md:text-base text-white/60 leading-relaxed max-w-lg mx-auto mb-6">{t.contactP}</p>
+    <section className="relative py-20 md:py-28 px-6 overflow-hidden" id="contact">
+      {/* Image de fond */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ 
+          backgroundImage: `url(${officeBgImage})`,
+          backgroundPosition: 'center center'
+        }}
+      />
+      <div className="absolute inset-0 bg-[#0a1628]/85" />
+      
+      <div className="relative z-10 max-w-[1120px] mx-auto">
+        <div className="text-center text-white mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold">{t.contactH}</h2>
+          <p className="text-white/70 mt-2">{t.contactP}</p>
+        </div>
+
+        <div className="max-w-lg mx-auto bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/10">
           {!showOk ? (
-            <form className="max-w-lg mx-auto flex flex-col gap-3 text-left" onSubmit={handleSubmit}>
-              <input
-                type="text"
-                name="name"
-                className="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#46BDD6] focus:shadow-[0_0_0_4px_rgba(70,189,214,0.15)] transition-all duration-200"
-                placeholder={t.namePlaceholder}
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                type="email"
-                name="email"
-                className="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#46BDD6] focus:shadow-[0_0_0_4px_rgba(70,189,214,0.15)] transition-all duration-200"
-                placeholder={t.emailPlaceholder}
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
+            <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  name="name"
+                  className="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#99CC33] transition-all"
+                  placeholder={t.namePlaceholder}
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                />
+                <input
+                  type="email"
+                  name="email"
+                  className="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#99CC33] transition-all"
+                  placeholder={t.emailPlaceholder}
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              
               <div className="flex gap-2.5">
                 <select
                   name="phoneCC"
-                  className="flex-shrink-0 min-w-[130px] px-3 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#46BDD6] focus:shadow-[0_0_0_4px_rgba(70,189,214,0.15)] transition-all duration-200 [&>option]:text-[#2C2C2C]"
+                  className="flex-shrink-0 min-w-[130px] px-3 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-[#99CC33] transition-all [&>option]:text-[#2C2C2C]"
                   value={formData.phoneCC}
                   onChange={handleInputChange}
                 >
@@ -488,41 +520,43 @@ const ContactSection: React.FC = () => {
                 <input
                   type="tel"
                   name="phone"
-                  inputMode="tel"
-                  className="flex-1 min-w-[120px] px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#46BDD6] focus:shadow-[0_0_0_4px_rgba(70,189,214,0.15)] transition-all duration-200"
+                  className="flex-1 min-w-[120px] px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#99CC33] transition-all"
                   placeholder={t.phonePlaceholder}
                   value={formData.phone}
                   onChange={handleInputChange}
                 />
               </div>
+
               <textarea
                 name="activity"
-                className="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#46BDD6] focus:shadow-[0_0_0_4px_rgba(70,189,214,0.15)] transition-all duration-200 resize-y min-h-[80px]"
+                className="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#99CC33] transition-all resize-y min-h-[80px]"
                 placeholder={t.activityPlaceholder}
                 value={formData.activity}
                 onChange={handleInputChange}
               />
-              <label className="flex items-center gap-2.5 text-sm text-white/80 cursor-pointer text-left">
+
+              <label className="flex items-center gap-2.5 text-sm text-white/80 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 flex-shrink-0 accent-[#99CC33] cursor-pointer"
+                  className="w-4 h-4 accent-[#99CC33] cursor-pointer"
                   checked={formData.wantCallback}
                   onChange={(e) => handleCallbackToggle(e.target.checked)}
                 />
                 {t.callMe}
               </label>
+
               {showCallback && (
                 <div className="flex gap-2.5 flex-wrap">
                   <input
                     type="date"
                     name="callbackDate"
-                    className="flex-1 min-w-[140px] px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#46BDD6] focus:shadow-[0_0_0_4px_rgba(70,189,214,0.15)] transition-all duration-200"
+                    className="flex-1 min-w-[140px] px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-[#99CC33] transition-all"
                     value={formData.callbackDate}
                     onChange={handleInputChange}
                   />
                   <select
                     name="callbackSlot"
-                    className="flex-1 min-w-[140px] px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#46BDD6] focus:shadow-[0_0_0_4px_rgba(70,189,214,0.15)] transition-all duration-200 [&>option]:text-[#2C2C2C]"
+                    className="flex-1 min-w-[140px] px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-[#99CC33] transition-all [&>option]:text-[#2C2C2C]"
                     value={formData.callbackSlot}
                     onChange={handleInputChange}
                   >
@@ -532,31 +566,34 @@ const ContactSection: React.FC = () => {
                   </select>
                 </div>
               )}
-              <label className="flex items-center gap-2.5 text-sm text-white/80 cursor-pointer text-left">
+
+              <label className="flex items-center gap-2.5 text-sm text-white/80 cursor-pointer">
                 <input
                   type="checkbox"
                   name="wantBrochure"
-                  className="w-4 h-4 flex-shrink-0 accent-[#99CC33] cursor-pointer"
+                  className="w-4 h-4 accent-[#99CC33] cursor-pointer"
                   checked={formData.wantBrochure}
                   onChange={handleInputChange}
                 />
                 {t.receiveBrochure}
               </label>
+
               {submitError && (
                 <p className="text-sm text-red-300">{submitError}</p>
               )}
+
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-[#99CC33] text-white text-sm md:text-base font-semibold hover:bg-[#88bb2e] transition-all duration-200 hover:scale-[1.02] shadow-lg shadow-[#99CC33]/25 mt-1 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-[#99CC33] text-white text-sm font-semibold hover:bg-[#88bb2e] transition-all duration-200 mt-1 disabled:opacity-70"
               >
-                <Send className="w-4 h-4" /> {submitting ? 'Envoi en cours...' : t.contactCta}
+                <Send className="w-4 h-4" /> {submitting ? 'Envoi...' : t.contactCta}
               </button>
             </form>
           ) : (
-            <div className="bg-[#F4F8E8] text-[#3d5614] rounded-xl p-4 text-sm md:text-base font-semibold text-center max-w-lg mx-auto">
-              <CircleCheck className="w-6 h-6 inline-block mr-2 text-[#99CC33]" />
-              Merci ! Votre demande est notée — l'équipe Coloc'KOO revient vers vous très vite.
+            <div className="bg-[#F4F8E8] text-[#3d5614] rounded-xl p-4 text-sm font-semibold text-center">
+              <CircleCheck className="w-5 h-5 inline mr-2 text-[#99CC33]" />
+              Merci ! L'équipe revient vers vous très vite.
             </div>
           )}
         </div>
@@ -572,57 +609,54 @@ const partnerSections: PartnerSection[] = [
     icon: <Store className="w-6 h-6" />,
     iconClass: 'cy',
     title: 'Entreprise générale',
-    subtitle: 'De la PME à la grande entreprise, une visibilité croissante et des données d\'audience à chaque niveau.',
+    subtitle: 'De la PME à la grande entreprise, une visibilité croissante.',
     tiers: [
       {
         name: 'PME · Bronze',
-        icon: <Shield className="w-5 h-5" />,
-        arg: 'Être référencé comme partenaire officiel du site et afficher son engagement RSE.',
+        arg: 'Être référencé comme partenaire officiel du site.',
         benefits: [
           'Logo + page « Partenaires »',
-          'Présence dans 1 newsletter / an de Sarintany\'COLOC',
-          'Signalétique « Partenaire engagé Sarintany\'COLOC 2026 »'
+          'Présence dans 1 newsletter / an',
+          'Signalétique « Partenaire engagé 2026 »'
         ],
         tierClass: 'border-t-[#c8843c]'
       },
       {
         name: 'Entreprise · Argent',
-        icon: <TrendingUp className="w-5 h-5" />,
-        arg: 'Passer devant les autres PME, avec un lien direct vers votre point de vente.',
+        arg: 'Visibilité renforcée avec référencement prioritaire.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Référencement prioritaire par rapport au statut précédent',
-          'Implantation de votre entreprise comme point d\'intérêt sur la carte',
-          'Intégration et redirection vers vos liens web'
+          'Référencement prioritaire',
+          'Point d\'intérêt sur la carte',
+          'Redirection vers vos liens web'
         ],
-        tierClass: 'border-t-[#9aa3ad]'
+        tierClass: 'border-t-[#9aa3ad]',
+        popular: true
       },
       {
         name: 'Grande entreprise · Or',
-        icon: <Crown className="w-5 h-5" />,
         arg: 'Le bon profil au bon endroit, prouvé par la donnée.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Stats annuelles globales (personas, villes attractives, zones de tension)',
+          'Stats annuelles globales',
           'Référencement prioritaire + présentation 3 lignes',
           'Encarts natifs dans le fil d\'annonces',
-          'Retour annuel d\'audiences statistiques et visibilité',
-          'Intégration du logo partenaires dans les campagnes de communication de Sarintany\'COLOC'
+          'Retour annuel d\'audiences statistiques',
+          'Logo intégré aux campagnes de communication'
         ],
         tierClass: 'border-t-[#d4af37]'
       },
       {
         name: 'Grande entreprise · Platine',
-        icon: <Layers className="w-5 h-5" />,
         arg: 'Notoriété maximale et exclusivité géographique.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Partenaire mis en avant en « ils participent le plus »',
-          'Présence sur la page d\'accueil du site',
-          'Intégration nationale d\'une chaîne (tous les points de vente)',
-          'Mise en avant dans les campagnes de communication',
+          'Partenaire mis en avant',
+          'Présence sur la page d\'accueil',
+          'Intégration nationale d\'une chaîne',
+          'Mise en avant dans les campagnes',
           'Reporting semestriel personnalisé',
-          '1 bandeau régional exclusif compris (hors Antananarivo, région d\'Analamanga)'
+          '1 bandeau régional exclusif compris'
         ],
         tierClass: 'border-t-[#5a8aa0]'
       }
@@ -633,42 +667,40 @@ const partnerSections: PartnerSection[] = [
     icon: <Home className="w-6 h-6" />,
     iconClass: '',
     title: 'Immobilier',
-    subtitle: 'De l\'agent indépendant au réseau national, un canal d\'acquisition rentable et des leads qualifiés.',
+    subtitle: 'De l\'agent indépendant au réseau national.',
     tiers: [
       {
         name: 'Indépendant',
-        launch: 'Gratuit au lancement',
-        icon: <Target className="w-5 h-5" />,
-        arg: 'Sans risque : 4 mois de visibilité, une seule colocation conclue rentabilise largement.',
+        launch: 'Gratuit',
+        arg: 'Sans risque : 4 mois de visibilité.',
         benefits: [
           '1 annonce à but commercial',
-          'Validité 4 mois (identique à l\'offre Propriétaire)',
+          'Validité 4 mois',
           'Les colocataires s\'inscrivent puis confirment'
         ],
         tierClass: 'border-t-[#99CC33]'
       },
       {
         name: 'Agence',
-        launch: 'Annonces offertes',
-        icon: <Briefcase className="w-5 h-5" />,
-        arg: 'Un canal d\'acquisition rentable, leads qualifiés et statut partenaire pour votre cabinet.',
+        launch: 'Offert',
+        arg: 'Un canal d\'acquisition rentable.',
         benefits: [
-          '1 compte agence + 12 annonces par an, puis tarif réduit',
+          '1 compte agence + 12 annonces/an',
           'Logo + page « Partenaires »',
-          '1 newsletter par an + signalétique d\'engagement'
+          '1 newsletter par an + signalétique'
         ],
-        tierClass: 'border-t-[#99CC33]'
+        tierClass: 'border-t-[#99CC33]',
+        popular: true
       },
       {
         name: 'Réseau d\'agences',
-        launch: 'Annonces offertes',
-        icon: <Layers className="w-5 h-5" />,
-        arg: 'L\'offre maximale réseau : couverture nationale et exclusivité régionale.',
+        launch: 'Offert',
+        arg: 'L\'offre maximale réseau.',
         benefits: [
-          'Intégration de tout le réseau (1 compte par agence)',
+          'Intégration de tout le réseau',
           'Publications illimitées',
-          'Visibilité maximale : mise en avant en page d\'accueil et dans les campagnes de communication',
-          '1 bandeau régional exclusif compris (hors Antananarivo, région d\'Analamanga)'
+          'Visibilité maximale en page d\'accueil',
+          '1 bandeau régional exclusif compris'
         ],
         tierClass: 'border-t-[#99CC33]'
       }
@@ -679,41 +711,39 @@ const partnerSections: PartnerSection[] = [
     icon: <Landmark className="w-6 h-6" />,
     iconClass: 'cy',
     title: 'Institution publique — mécénat',
-    subtitle: 'Soutenez une solution malgache d\'accès au logement, sans logique commerciale.',
+    subtitle: 'Soutenez une solution malgache d\'accès au logement.',
     tiers: [
       {
         name: 'Mécène Argent',
-        icon: <Shield className="w-5 h-5" />,
-        arg: 'Associez votre institution à l\'émancipation des jeunes par le logement.',
+        arg: 'Associez votre institution à l\'émancipation des jeunes.',
         benefits: [
-          'Logo + page « Partenaires » au titre de mécène',
-          'Présence dans 1 newsletter / an de Sarintany\'COLOC',
-          'Signalétique « Mécène engagé Sarintany\'COLOC 2026 »',
-          'Visibilité équivalente au niveau Argent, sans logique commerciale'
+          'Logo + page « Partenaires » mécène',
+          'Présence dans 1 newsletter / an',
+          'Signalétique « Mécène engagé 2026 »',
+          'Visibilité équivalente au niveau Argent'
         ],
         tierClass: 'border-t-[#46BDD6]'
       },
       {
         name: 'Mécène Or',
-        icon: <Crown className="w-5 h-5" />,
-        arg: 'Un mécénat valorisant, au plus près du développement du projet.',
+        arg: 'Un mécénat valorisant.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Référencement et présentation du mécène mis en avant',
-          'Logo du mécène dans les campagnes de communication de Sarintany\'COLOC',
+          'Référencement et présentation du mécène',
+          'Logo du mécène dans les campagnes',
           'Visibilité équivalente au niveau Or'
         ],
-        tierClass: 'border-t-[#46BDD6]'
+        tierClass: 'border-t-[#46BDD6]',
+        popular: true
       },
       {
         name: 'Mécène Platine',
-        icon: <Layers className="w-5 h-5" />,
-        arg: 'L\'engagement de mécénat le plus fort, sur mesure.',
+        arg: 'L\'engagement de mécénat le plus fort.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Mise en avant en page d\'accueil (« ils nous soutiennent »)',
-          'Visibilité maximale, équivalente au niveau Platine',
-          'Modalités définies ensemble (mécénat sur mesure)'
+          'Mise en avant en page d\'accueil',
+          'Visibilité maximale équivalente Platine',
+          'Modalités définies ensemble'
         ],
         tierClass: 'border-t-[#46BDD6]'
       }
@@ -723,9 +753,9 @@ const partnerSections: PartnerSection[] = [
     id: 'addon',
     icon: <Flag className="w-6 h-6" />,
     title: 'Option · Bandeau régional exclusif',
-    subtitle: 'Un bandeau exclusif pleine largeur en bas de carte, contextuel à la région affichée. Un seul partenaire par région (hors Antananarivo, région d\'Analamanga) — l\'exclusivité géographique pour sécuriser un marché entier.',
+    subtitle: 'Un bandeau exclusif pleine largeur en bas de carte, contextuel à la région affichée.',
     isAddon: true,
-    addonNote: '1er bandeau inclus aux niveaux Platine et Réseau Platine · jusqu\'à 5 régions au total · 22 régions réservables (hors Antananarivo, région d\'Analamanga).',
+    addonNote: '1er bandeau inclus aux niveaux Platine et Réseau Platine · jusqu\'à 5 régions au total.',
     tiers: []
   }
 ]
@@ -790,12 +820,12 @@ export default function Partenaires() {
     return (
       <SiteLayout>
         <div className="max-w-4xl mx-auto px-6 py-24 text-center">
-          <h1 className="font-['Bebas_Neue'] text-4xl">Page partenaires indisponible</h1>
+          <h1 className="text-4xl font-bold">Page partenaires indisponible</h1>
           <p className="mt-4 text-muted-foreground">
-            Cette fonctionnalité est actuellement désactivée par la configuration globale. Revenez plus tard.
+            Cette fonctionnalité est actuellement désactivée.
           </p>
           <Link to="/">
-            <Button className="mt-8 bg-[#46BDD6] hover:bg-[#3aadca] text-white">Retour à l'accueil</Button>
+            <Button className="mt-8 bg-[#46BDD6] text-white">Retour à l'accueil</Button>
           </Link>
         </div>
       </SiteLayout>
@@ -804,7 +834,7 @@ export default function Partenaires() {
 
   return (
     <SiteLayout>
-      <div className="partenaires-page bg-[#f5f7f2] min-h-screen font-sans text-[#2C2C2C]">
+      <div className="partenaires-page min-h-screen font-sans text-[#2C2C2C]">
         {/* Hero */}
         <Hero 
           onContactClick={scrollToContact}
@@ -815,17 +845,12 @@ export default function Partenaires() {
         <WhySection />
 
         {/* Statuts Section */}
-        <section className="py-4 px-6" id="statuts">
+        <section className="py-12 px-6 bg-[#f8faf8]" id="statuts">
           <div className="max-w-[1120px] mx-auto">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-[#F4F8E8] flex items-center justify-center flex-shrink-0">
-                <Award className="w-5 h-5 text-[#99CC33]" />
-              </div>
-              <h2 className="font-['Bebas_Neue'] text-3xl md:text-4xl text-[#2C2C2C]">{t.statutsTitle}</h2>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2C2C2C]">{t.statutsTitle}</h2>
+              <p className="text-[#666] mt-2 max-w-2xl mx-auto">{t.statutsSub}</p>
             </div>
-            <p className="text-sm md:text-base text-[#666] leading-relaxed max-w-3xl ml-0 md:ml-13 mb-6">
-              {t.statutsSub}
-            </p>
 
             {partnerSections.map((section, idx) => (
               <PartnerSectionComponent key={idx} section={section} />
@@ -838,22 +863,22 @@ export default function Partenaires() {
 
         {/* Light Mode Popup */}
         {showLightPopup && (
-          <div className="fixed inset-0 bg-black/45 z-[100000] flex items-center justify-center p-5 animate-in fade-in duration-300">
-            <div className="bg-white rounded-2xl max-w-[360px] w-full px-6 py-8 text-center shadow-2xl">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100000] flex items-center justify-center p-5">
+            <div className="bg-white rounded-2xl max-w-[380px] w-full px-6 py-8 text-center shadow-2xl">
               <div className="w-16 h-16 rounded-full bg-[#F4F8E8] flex items-center justify-center mx-auto mb-4">
                 <Feather className="w-7 h-7 text-[#99CC33]" />
               </div>
-              <h3 className="font-['Bebas_Neue'] text-2xl text-[#2C2C2C] mb-2">{t.lightpopH}</h3>
-              <p className="text-sm leading-relaxed text-[#666] mb-6">{t.lightpopP}</p>
+              <h3 className="text-2xl font-bold text-[#2C2C2C] mb-2">{t.lightpopH}</h3>
+              <p className="text-sm text-[#666] mb-6">{t.lightpopP}</p>
               <div className="flex flex-col gap-2.5">
                 <button 
-                  className="px-4 py-3 rounded-xl border-none bg-[#99CC33] text-white text-sm font-semibold hover:bg-[#88bb2e] transition-colors duration-200" 
+                  className="px-4 py-3 rounded-full bg-[#99CC33] text-white text-sm font-semibold hover:bg-[#88bb2e] transition-all" 
                   onClick={handleEnableLight}
                 >
                   {t.lightpopYes}
                 </button>
                 <button 
-                  className="px-4 py-3 rounded-xl border border-[#e8e8e8] bg-transparent text-[#666] text-sm font-semibold hover:bg-[#f5f5f5] transition-colors duration-200" 
+                  className="px-4 py-3 rounded-full border border-[#e8e8e8] text-[#666] text-sm font-semibold hover:bg-[#f5f5f5] transition-all" 
                   onClick={handleCloseLightPopup}
                 >
                   {t.lightpopNo}
