@@ -80,6 +80,11 @@ export interface ApiCandidature {
   prix_looyer?: number | null
   prix_loyer?: number | null
   statut_original?: string
+  nom?: string
+  prenom?: string
+  email?: string
+  telephone?: string
+  utilisateur_id?: number
 }
 
 export interface ApiPartenaire {
@@ -524,6 +529,23 @@ export const api = {
       body: JSON.stringify(payload),
     })
   },
+    // 🆕 NOUVELLES FONCTIONS À AJOUTER
+  
+  // Récupérer toutes les candidatures pour une annonce spécifique
+  getCandidaturesByAnnonce(annonceId: string | number) {
+    return request<ApiCandidature[]>(`/candidatures/annonce/${annonceId}`)
+  },
+  
+  // Vérifier si l'utilisateur a déjà postulé à une annonce
+  checkUserApplied(annonceId: string | number, userId: string | number) {
+    return request<{ hasApplied: boolean; count: number }>(
+      `/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`
+    )
+  },
+  
+  // Récupérer mes candidatures (déjà existante, mais on la garde)
+  // candidatures() existe déjà
+  
   adminCandidatures() {
     return request<ApiCandidature[]>('/candidatures/admin/all')
   },
@@ -533,6 +555,7 @@ export const api = {
       body: JSON.stringify({ statut }),
     })
   },
+
   contact(payload: { nom: string; email: string; sujet: string; message: string }) {
     return request<{ id_message: number }>('/contact', {
       method: 'POST',
