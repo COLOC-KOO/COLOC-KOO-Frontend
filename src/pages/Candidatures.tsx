@@ -8,6 +8,7 @@ import {
   MapPin,
   MessageCircle,
   Scale,
+  Trash2,
   Shield,
   Sparkles,
   Trophy,
@@ -98,6 +99,7 @@ export default function Candidatures() {
   const [isAnnonceOwner, setIsAnnonceOwner] = useState(false);
   const [candidateActionLoading, setCandidateActionLoading] = useState<number | null>(null);
   const [candidateActionFeedback, setCandidateActionFeedback] = useState("");
+  const [completedMembers, setCompletedMembers] = useState<Array<{ nom: string; initiales?: string; statut?: string }>>([]);
 
   // États UI existants
   const [activeView, setActiveView] = useState<
@@ -369,6 +371,44 @@ export default function Candidatures() {
     }
   };
 
+  const handleDeleteCandidature = async (candidateId: number) => {
+    if (!candidateId) return;
+    const confirmed = window.confirm("Supprimer cette candidature ?");
+    if (!confirmed) return;
+
+    setCandidateActionLoading(candidateId);
+    setCandidateActionFeedback("");
+    try {
+      await api.deleteCandidature(candidateId);
+      setRealCandidatures((prev) => prev.filter((candidate) => candidate.id_candidature !== candidateId));
+      setOwnerCandidates((prev) => prev.filter((candidate) => candidate.id_candidature !== candidateId));
+      setCandidateActionFeedback("Candidature supprimée.");
+    } catch (error: any) {
+      setCandidateActionFeedback(error?.message || "Impossible de supprimer cette candidature.");
+    } finally {
+      setCandidateActionLoading(null);
+    }
+  };
+
+  const handleLaunchColocationFromPage = async () => {
+    if (!annonceId) return;
+    try {
+      const result = await api.launchColocation(annonceId);
+      const members = Array.isArray((result as any).membres)
+        ? (result as any).membres.map((member: any) => ({
+            nom: member.nom || member.prenom || member.email || 'Membre',
+            initiales: member.initiales || [member.prenom, member.nom].filter(Boolean).map((value: string) => value.charAt(0)).join('').slice(0, 2).toUpperCase(),
+            statut: member.statut || 'active',
+          }))
+        : [];
+      setCompletedMembers(members);
+      setCandidateActionFeedback("Colocation lancée et membres enregistrés.");
+      await loadRealCandidatures();
+    } catch (error: any) {
+      setCandidateActionFeedback(error?.message || "Impossible de lancer la colocation.");
+    }
+  };
+
   // ===== VOIR MA CANDIDATURE =====
   const handleViewMyCandidature = () => {
     if (!user) {
@@ -501,6 +541,7 @@ export default function Candidatures() {
 
   function launchColoc() {
     if (ownerFilled < TARGET) return;
+    void handleLaunchColocationFromPage();
     setContractMode("contrat");
     setContractModalOpen(true);
   }
@@ -787,6 +828,18 @@ export default function Candidatures() {
 
         {realCandidatures.map((candidat) => {
           const isCurrentUser = candidat.id_utilisateur === user?.id;
+          const canManageCandidate = Boolean(
+            user &&
+            !isCurrentUser &&
+            (user.poste === "proprietaire" || user.poste === "superadmin" || user.poste === "admin" || user.poste === "moderateur") &&
+            isAnnonceOwner
+          );
+          const canDiscuss = Boolean(user);
+          const canDeleteCandidate = Boolean(
+            user &&
+            (user.poste === "proprietaire" || user.poste === "superadmin" || user.poste === "admin" || user.poste === "moderateur") &&
+            (isAnnonceOwner || isCurrentUser)
+          );
           return (
             <div
               key={candidat.id_candidature}
@@ -849,11 +902,11 @@ export default function Candidatures() {
                           : "⏳ En attente"}
                     </span>
                   </div>
-                  {isAnnonceOwner && !isCurrentUser ? (
+                  {canDiscuss || canManageCandidate ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handleCandidateDecision(candidat.id_candidature, "discuss")}
+                        onClick={() => openChat(candidat as OwnerCandidate)}
                         disabled={candidateActionLoading === candidat.id_candidature}
                         className="rounded-2xl border border-border bg-card px-3 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light disabled:opacity-60"
                       >
@@ -862,19 +915,30 @@ export default function Candidatures() {
                       <button
                         type="button"
                         onClick={() => handleCandidateDecision(candidat.id_candidature, "accept")}
-                        disabled={candidateActionLoading === candidat.id_candidature}
-                        className="rounded-2xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:opacity-60"
+                        disabled={!canManageCandidate || candidateActionLoading === candidat.id_candidature}
+                        className="rounded-2xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
                       >
                         Accepter
                       </button>
                       <button
                         type="button"
                         onClick={() => handleCandidateDecision(candidat.id_candidature, "refuse")}
-                        disabled={candidateActionLoading === candidat.id_candidature}
-                        className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                        disabled={!canManageCandidate || candidateActionLoading === candidat.id_candidature}
+                        className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                       >
                         Refuser
                       </button>
+                      {canDeleteCandidate ? (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCandidature(candidat.id_candidature)}
+                          disabled={candidateActionLoading === candidat.id_candidature}
+                          className="rounded-2xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          title="Supprimer la candidature"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -1254,6 +1318,37 @@ export default function Candidatures() {
                       complète ou attends encore un peu.
                     </p>
                   </div>
+
+                  {completedMembers.length > 0 ? (
+                    <div className="rounded-3xl border border-border bg-background p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-lg font-semibold text-brand-cyan-dark">
+                          Membres de la colocation validés
+                        </div>
+                        <span className="rounded-full bg-brand-cyan-light px-3 py-1 text-xs font-semibold text-brand-cyan-dark">
+                          {completedMembers.length}
+                        </span>
+                      </div>
+                      <div className="mt-4 space-y-3">
+                        {completedMembers.map((member, index) => (
+                          <div key={`${member.nom}-${index}`} className="flex items-center justify-between rounded-2xl border border-border px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-cyan text-sm font-semibold text-white">
+                                {member.initiales || member.nom.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="font-semibold text-foreground">{member.nom}</div>
+                                <div className="text-xs text-muted-foreground">{member.statut || 'active'}</div>
+                              </div>
+                            </div>
+                            <span className="rounded-full bg-brand-green-light px-2.5 py-1 text-[11px] font-semibold text-brand-green-dark">
+                              Membre
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
 
                   <button
                     type="button"
