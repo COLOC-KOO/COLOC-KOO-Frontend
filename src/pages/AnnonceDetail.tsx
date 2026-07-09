@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, BedDouble, Calendar, Check, Heart, MapPin, Send, Share2, Shield, Users } from 'lucide-react'
+import { ArrowLeft, BedDouble, Calendar, Check, Eye, Heart, MessageSquare, MapPin, Send, Share2, Shield, Users } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { annonceToListing, api } from '../lib/api'
@@ -38,21 +38,42 @@ export default function AnnonceDetail() {
   const [contactSubmitting, setContactSubmitting] = useState(false)
   const [contactError, setContactError] = useState('')
   const [contactSuccess, setContactSuccess] = useState('')
+  const [hasApplied, setHasApplied] = useState(false)
+  const [myCandidature, setMyCandidature] = useState<null | { id_candidature: number; statut: string; message: string | null }>(null)
+  const [ownerCandidates, setOwnerCandidates] = useState<Array<{ id_candidature: number; id_utilisateur: number; statut: string; message: string | null; nom?: string; prenom?: string; email?: string; telephone?: string }>>([])
+  const [candidateActionLoading, setCandidateActionLoading] = useState<number | null>(null)
+  const [launchLoading, setLaunchLoading] = useState(false)
+  const [launchMessage, setLaunchMessage] = useState('')
+  const [showMyCandidature, setShowMyCandidature] = useState(false)
 
   useEffect(() => {
     if (!id) return
-    api
-      .annonce(id)
-      .then((annonce) => {
+    const loadAnnonce = async () => {
+      try {
+        const annonce = await api.annonce(id)
         if (annonce.statut !== 'active') {
           setNotFound(true)
           return
         }
         setListing(annonceToListing(annonce))
-      })
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false))
-  }, [id])
+        if (user?.id) {
+          const [applied, candidates] = await Promise.all([
+            api.checkUserApplied(id, user.id),
+            api.getCandidaturesByAnnonce(id),
+          ])
+          setHasApplied(Boolean(applied?.hasApplied))
+          setMyCandidature(applied?.hasApplied ? (candidates.find((item) => Number(item.id_utilisateur) === Number(user.id)) || null) as any : null)
+          setOwnerCandidates(candidates)
+        }
+      } catch {
+        setNotFound(true)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadAnnonce()
+  }, [id, user?.id])
 
   const handleApply = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -70,12 +91,59 @@ export default function AnnonceDetail() {
         message: message.trim() || undefined,
         statut: 'en_attente',
       })
-      navigate('/candidatures')
+      setHasApplied(true)
+      setMyCandidature({ id_candidature: 0, statut: 'en_attente', message: message.trim() || null })
+      setShowMyCandidature(true)
+      const refreshed = await api.getCandidaturesByAnnonce(id)
+      setOwnerCandidates(refreshed)
+      setMessage('')
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Impossible d’envoyer la candidature.')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleCandidateAction = async (candidateId: number, action: 'accept' | 'refuse' | 'discuss') => {
+    if (!id) return
+    setCandidateActionLoading(candidateId)
+    try {
+      await api.decideCandidature(candidateId, action)
+      if (action === 'discuss') {
+        setContactSuccess('Conversation ouverte avec le candidat.')
+      } else {
+        setContactSuccess(action === 'accept' ? 'Candidature acceptée.' : 'Candidature refusée.')
+      }
+      const refreshed = await api.getCandidaturesByAnnonce(id)
+      setOwnerCandidates(refreshed)
+    } catch (error) {
+      setContactError(error instanceof Error ? error.message : 'Impossible de traiter la candidature.')
+    } finally {
+      setCandidateActionLoading(null)
+    }
+  }
+
+  const handleLaunchColocation = async () => {
+    if (!id) return
+    setLaunchLoading(true)
+    setLaunchMessage('')
+    try {
+      await api.launchColocation(id)
+      setLaunchMessage('La colocation a été lancée avec succès.')
+    } catch (error) {
+      setLaunchMessage(error instanceof Error ? error.message : 'Impossible de lancer la colocation.')
+    } finally {
+      setLaunchLoading(false)
+    }
+  }
+
+  const handleViewMyCandidature = () => {
+    if (!user) {
+      navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
+      return
+    }
+    if (!id) return
+    navigate(`/candidatures?annonceId=${id}`)
   }
 
   const handleContactOwner = async () => {
@@ -195,19 +263,96 @@ export default function AnnonceDetail() {
                 </div>
               ) : null}
               {user ? (
-                <form onSubmit={handleApply} className="space-y-2">
-                  <textarea
-                    value={message}
-                    onChange={(event) => setMessage(event.target.value)}
-                    rows={4}
-                    placeholder="Présentez-vous et ajoutez un message pour le propriétaire..."
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
-                  />
-                  <Button type="submit" className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11" disabled={submitting}>
-                    {submitting ? 'Envoi en cours...' : 'Postuler a cette coloc'}
-                  </Button>
-                  {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
-                </form>
+                Number(listing.owner.id) === Number(user.id) ? (
+                  <div className="space-y-3 rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
+                    <div className="font-semibold text-foreground">Gestion des candidatures</div>
+                    {ownerCandidates.length === 0 ? (
+                      <p>Aucune candidature reçue pour le moment.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {ownerCandidates.map((candidate) => (
+                          <div key={candidate.id_candidature} className="rounded-lg border border-border bg-background p-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <div>
+                                <div className="font-semibold text-foreground">{candidate.prenom || candidate.nom || 'Candidat'}</div>
+                                <div className="text-xs text-muted-foreground">{candidate.statut}</div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button type="button" size="sm" variant="outline" onClick={() => handleCandidateAction(candidate.id_candidature, 'discuss')} disabled={candidateActionLoading === candidate.id_candidature}>
+                                  <MessageSquare className="w-4 h-4" /> Discuter
+                                </Button>
+                                <Button type="button" size="sm" className="bg-brand-green text-white hover:bg-brand-green-dark" onClick={() => handleCandidateAction(candidate.id_candidature, 'accept')} disabled={candidateActionLoading === candidate.id_candidature}>
+                                  Accepter
+                                </Button>
+                                <Button type="button" size="sm" variant="outline" onClick={() => handleCandidateAction(candidate.id_candidature, 'refuse')} disabled={candidateActionLoading === candidate.id_candidature}>
+                                  Refuser
+                                </Button>
+                              </div>
+                            </div>
+                            {candidate.message ? <p className="mt-2 text-xs text-muted-foreground">{candidate.message}</p> : null}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="rounded-lg border border-dashed border-brand-cyan/40 bg-brand-cyan-light/40 p-3">
+                      <div className="font-semibold text-brand-cyan-dark">Lancer la colocation</div>
+                      <p className="text-xs text-muted-foreground mt-1">Disponible à partir de 3 candidats acceptés.</p>
+                      <Button type="button" className="mt-3 w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white" disabled={launchLoading} onClick={handleLaunchColocation}>
+                        {launchLoading ? 'Traitement...' : 'Lancer la colocation'}
+                      </Button>
+                      {launchMessage ? <p className="mt-2 text-sm text-brand-cyan-dark">{launchMessage}</p> : null}
+                    </div>
+                  </div>
+                ) : hasApplied ? (
+                  <div className="rounded-xl border border-brand-green/20 bg-brand-green-light/50 p-3 text-sm text-brand-green-dark">
+                    <div className="font-semibold">Votre candidature a bien été enregistrée.</div>
+                    <div className="mt-1 text-muted-foreground">Vous pouvez suivre l’avancement et voir les autres candidats de cette annonce.</div>
+                    <Button type="button" size="sm" className="mt-3 w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white" onClick={handleViewMyCandidature}>
+                      <Eye className="w-4 h-4" /> Voir ma candidature
+                    </Button>
+                    {showMyCandidature ? (
+                      <div className="mt-3 space-y-3 text-left">
+                        <div className="rounded-lg border border-brand-green/20 bg-background p-3">
+                          <div className="font-semibold text-foreground">Ma candidature</div>
+                          <div className="mt-2 text-xs text-muted-foreground">Statut actuel : {myCandidature?.statut || 'en_attente'}</div>
+                          {myCandidature?.message ? <div className="mt-2 text-sm text-foreground">{myCandidature.message}</div> : <div className="mt-2 text-sm text-muted-foreground">Aucun message ajouté.</div>}
+                        </div>
+                        <div className="rounded-lg border border-border bg-background p-3">
+                          <div className="font-semibold text-foreground">Autres candidats</div>
+                          <div className="mt-2 space-y-2">
+                            {ownerCandidates.filter((candidate) => Number(candidate.id_utilisateur) !== Number(user.id)).length === 0 ? (
+                              <div className="text-sm text-muted-foreground">Aucun autre candidat pour l’instant.</div>
+                            ) : ownerCandidates
+                              .filter((candidate) => Number(candidate.id_utilisateur) !== Number(user.id))
+                              .map((candidate) => (
+                                <div key={candidate.id_candidature} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                                  <div>
+                                    <div className="text-sm font-semibold text-foreground">{candidate.prenom || candidate.nom || 'Candidat'}</div>
+                                    <div className="text-xs text-muted-foreground">{candidate.statut || 'en_attente'}</div>
+                                  </div>
+                                  <span className="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">En attente</span>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <form onSubmit={handleApply} className="space-y-2">
+                    <textarea
+                      value={message}
+                      onChange={(event) => setMessage(event.target.value)}
+                      rows={4}
+                      placeholder="Présentez-vous et ajoutez un message pour le propriétaire..."
+                      className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
+                    />
+                    <Button type="submit" className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11" disabled={submitting}>
+                      {submitting ? 'Envoi en cours...' : 'Postuler a cette coloc'}
+                    </Button>
+                    {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
+                  </form>
+                )
               ) : (
                 <Link to={`/auth?mode=signin&redirect=/annonces/${id}`}>
                   <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11">
@@ -216,8 +361,13 @@ export default function AnnonceDetail() {
                 </Link>
               )}
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" size="sm">
-                  <Heart className="w-4 h-4" /> Sauver
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!user || !hasApplied}
+                  onClick={handleViewMyCandidature}
+                >
+                  <Eye className="w-4 h-4" /> Voir ma candidature
                 </Button>
                 <Button variant="outline" size="sm">
                   <Share2 className="w-4 h-4" /> Partager
