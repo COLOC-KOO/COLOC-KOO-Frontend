@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Calendar,
   Check,
@@ -26,7 +26,6 @@ type OwnerCandidate = {
   name: string;
   subtitle: string;
   status: "pending" | "retained" | "refused";
-  // Données brutes de l'API
   id_candidature?: number;
   id_utilisateur?: number;
   message?: string;
@@ -66,11 +65,27 @@ function formatCountdown(ms: number) {
 
 export default function Candidatures() {
   const { user, loading: authLoading } = useAuth();
-  const { annonceId } = useParams<{ annonceId: string }>();
+  const { annonceId: paramsAnnonceId } = useParams<{ annonceId: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
   const userName = useMemo(
     () => (user ? `${user.prenom || user.name || user.nom || "Toi"}` : "Toi"),
     [user],
   );
+
+  // 🔥 Extraire annonceId de l'URL si useParams ne fonctionne pas
+  const getAnnonceIdFromUrl = () => {
+    if (paramsAnnonceId) return paramsAnnonceId;
+
+    const pathParts = location.pathname.split("/");
+    const lastPart = pathParts[pathParts.length - 1];
+    if (!isNaN(Number(lastPart)) && lastPart !== "") {
+      return lastPart;
+    }
+    return undefined;
+  };
+
+  const annonceId = getAnnonceIdFromUrl();
 
   // États pour les données réelles
   const [realCandidatures, setRealCandidatures] = useState<any[]>([]);
@@ -78,6 +93,7 @@ export default function Candidatures() {
   const [loadingCandidatures, setLoadingCandidatures] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [myCandidature, setMyCandidature] = useState<any>(null);
+  const [showNotAppliedMessage, setShowNotAppliedMessage] = useState(false);
 
   // États UI existants
   const [activeView, setActiveView] = useState<
@@ -150,38 +166,56 @@ export default function Candidatures() {
     if (!annonceId) return;
     try {
       setLoadingCandidatures(true);
+      console.log("🔍 Chargement des candidatures pour l'annonce:", annonceId);
+
       const data = await api.getCandidaturesByAnnonce(parseInt(annonceId));
+      console.log("📊 Données reçues:", data.length, "candidatures");
       setRealCandidatures(data);
 
-      // Transformer les données réelles en format OwnerCandidate
-      const formattedCandidates = data.map((cand: any) => ({
-        id: String(cand.id_candidature),
-        initials: (cand.prenom?.[0] || "") + (cand.nom?.[0] || ""),
-        name: `${cand.prenom || ""} ${cand.nom || ""}`.trim() || "Candidat",
-        subtitle: cand.email || "Candidat",
-        status:
-          cand.statut === "acceptee" || cand.statut === "signature"
-            ? "retained"
-            : cand.statut === "refusee"
-              ? "refused"
-              : "pending",
-        id_candidature: cand.id_candidature,
-        id_utilisateur: cand.id_utilisateur,
-        message: cand.message,
-        date_creation: cand.date_creation,
-        email: cand.email,
-        telephone: cand.telephone,
-      }));
+      // 🔥 Transformer les données avec typage correct
+      const formattedCandidates: OwnerCandidate[] = data.map((cand: any) => {
+        let status: "pending" | "retained" | "refused" = "pending";
+
+        if (cand.statut === "acceptee" || cand.statut === "signature") {
+          status = "retained";
+        } else if (cand.statut === "refusee") {
+          status = "refused";
+        } else {
+          status = "pending";
+        }
+
+        return {
+          id: String(cand.id_candidature),
+          initials: (cand.prenom?.[0] || "") + (cand.nom?.[0] || ""),
+          name: `${cand.prenom || ""} ${cand.nom || ""}`.trim() || "Candidat",
+          subtitle: cand.email || "Candidat",
+          status: status,
+          id_candidature: cand.id_candidature,
+          id_utilisateur: cand.id_utilisateur,
+          message: cand.message,
+          date_creation: cand.date_creation,
+          email: cand.email,
+          telephone: cand.telephone,
+        };
+      });
+
       setOwnerCandidates(formattedCandidates);
 
-      // Vérifier si l'utilisateur actuel a postulé
       if (user?.id) {
         const myCand = data.find((c: any) => c.id_utilisateur === user.id);
-        setHasApplied(!!myCand);
+        const hasAppliedNow = !!myCand;
+        console.log(
+          "🔍 Ma candidature trouvée:",
+          hasAppliedNow ? "✅ OUI" : "❌ NON",
+        );
+        setHasApplied(hasAppliedNow);
         setMyCandidature(myCand || null);
+        if (hasAppliedNow) {
+          setShowNotAppliedMessage(false);
+        }
       }
     } catch (error) {
-      console.error("Erreur chargement candidatures:", error);
+      console.error("❌ Erreur chargement candidatures:", error);
     } finally {
       setLoadingCandidatures(false);
     }
@@ -189,12 +223,36 @@ export default function Candidatures() {
 
   // ===== VÉRIFIER SI L'UTILISATEUR A POSTULÉ =====
   const checkIfUserApplied = async () => {
-    if (!annonceId || !user?.id) return;
+    if (!annonceId || !user?.id) {
+      console.log("❌ checkIfUserApplied: annonceId ou user manquant");
+      return;
+    }
+
     try {
+      console.log("🔍 Vérification via API pour:", {
+        annonceId,
+        userId: user.id,
+      });
+
       const result = await api.checkUserApplied(parseInt(annonceId), user.id);
-      setHasApplied(result.hasApplied);
+      console.log("✅ Résultat checkUserApplied:", result);
+
+      const hasAppliedNow = result.hasApplied === true;
+      setHasApplied(hasAppliedNow);
+      console.log("🔍 hasApplied mis à jour:", hasAppliedNow);
+
+      if (hasAppliedNow) {
+        setShowNotAppliedMessage(false);
+      }
     } catch (error) {
-      console.error("Erreur vérification:", error);
+      console.error("❌ Erreur vérification:", error);
+      if (user?.id && realCandidatures.length > 0) {
+        const myCand = realCandidatures.find(
+          (c: any) => c.id_utilisateur === user.id,
+        );
+        setHasApplied(!!myCand);
+        console.log("🔍 hasApplied défini depuis realCandidatures:", !!myCand);
+      }
     }
   };
 
@@ -223,13 +281,13 @@ export default function Candidatures() {
       };
 
       console.log("📤 PAYLOAD COMPLET:", JSON.stringify(payload, null, 2));
-      console.log("📤 Type de id_annonce:", typeof payload.id_annonce);
-      console.log("📤 Valeur de id_annonce:", payload.id_annonce);
 
       const result = await api.createCandidature(payload);
       console.log("✅ SUCCÈS:", result);
 
+      // 🔥 Le bouton change immédiatement en "Voir ma candidature"
       setHasApplied(true);
+      setShowNotAppliedMessage(false);
       setShowPostulerModal(false);
       setCandidatureMessage("");
       alert("✅ Candidature envoyée avec succès !");
@@ -247,6 +305,25 @@ export default function Candidatures() {
       }
     }
     console.log("🔵 === FIN handlePostuler ===");
+  };
+
+  // ===== VOIR MA CANDIDATURE =====
+  const handleViewMyCandidature = () => {
+    if (!user) {
+      alert("Veuillez vous connecter pour voir votre candidature");
+      return;
+    }
+
+    if (hasApplied) {
+      // 🔥 Rediriger vers la page des candidatures
+      navigate(`/candidatures?annonceId=${annonceId}`);
+    } else {
+      // Afficher le message "Vous n'avez pas encore postulé"
+      setShowNotAppliedMessage(true);
+      setTimeout(() => {
+        setShowNotAppliedMessage(false);
+      }, 5000);
+    }
   };
 
   // ===== EFFETS =====
@@ -274,15 +351,57 @@ export default function Candidatures() {
     );
   }, [waitDeadline]);
 
-  // Charger les données au montage
+  // 🔥 CHARGER LES DONNÉES AU MONTAGE
   useEffect(() => {
+    console.log("🔄 [1] useEffect chargement - annonceId:", annonceId);
+    console.log("🔄 [1] URL actuelle:", location.pathname);
+
     if (annonceId) {
       loadRealCandidatures();
-      if (user) {
-        checkIfUserApplied();
-      }
     }
-  }, [annonceId, user]);
+  }, [annonceId]);
+
+  // 🔥 VÉRIFIER SI L'UTILISATEUR A POSTULÉ
+  useEffect(() => {
+    console.log(
+      "🔄 [2] useEffect vérification - user:",
+      user?.id,
+      "realCandidatures:",
+      realCandidatures.length,
+    );
+
+    if (user?.id && realCandidatures.length > 0) {
+      const myCand = realCandidatures.find(
+        (c: any) => c.id_utilisateur === user.id,
+      );
+      const hasAppliedNow = !!myCand;
+      console.log(
+        "🔍 Ma candidature trouvée:",
+        hasAppliedNow ? "✅ OUI" : "❌ NON",
+      );
+
+      if (hasApplied !== hasAppliedNow) {
+        setHasApplied(hasAppliedNow);
+        setMyCandidature(myCand || null);
+        if (hasAppliedNow) {
+          setShowNotAppliedMessage(false);
+        }
+      }
+    } else if (user?.id && realCandidatures.length === 0) {
+      console.log("🔍 Aucune candidature trouvée pour cette annonce");
+      setHasApplied(false);
+    }
+  }, [realCandidatures, user?.id]);
+
+  // 🔥 APPEL DE VÉRIFICATION AU CHARGEMENT INITIAL (pour les reconnexions)
+  useEffect(() => {
+    console.log("🔄 [3] useEffect vérification initiale - user:", user?.id);
+    console.log("🔄 [3] annonceId:", annonceId);
+
+    if (annonceId && user?.id) {
+      checkIfUserApplied();
+    }
+  }, []);
 
   // ===== FONCTIONS UI =====
   const ownerModeClass = "rounded-2xl border border-border bg-card";
@@ -598,7 +717,6 @@ export default function Candidatures() {
             👥 {realCandidatures.length} candidat
             {realCandidatures.length > 1 ? "s" : ""}
           </h3>
-          {/* Le bouton est géré dans la section parente */}
         </div>
 
         {realCandidatures.map((candidat) => {
@@ -740,32 +858,71 @@ export default function Candidatures() {
         ) : (
           <div className="mt-8 space-y-6">
             {/* ===== SECTION CANDIDATURES RÉELLES ===== */}
-            {annonceId && (
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-                  <h2 className="bebas text-2xl">📋 Candidatures reçues</h2>
-                  {!hasApplied && user && (
-                    <button
-                      onClick={() => setShowPostulerModal(true)}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-brand-cyan px-4 py-2 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors"
-                    >
-                      <UserPlus className="h-4 w-4" />
-                      Postuler à cette coloc
-                    </button>
-                  )}
-                  {hasApplied && user && (
-                    <Link
-                      to="/candidatures"
-                      className="inline-flex items-center gap-2 rounded-2xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light transition-colors"
-                    >
-                      <Eye className="h-4 w-4" />
-                      Voir ma candidature
-                    </Link>
-                  )}
-                </div>
-                {renderRealCandidatures()}
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+              <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+                <h2 className="bebas text-2xl">📋 Candidatures reçues</h2>
+
+                {/* 🔥 BOUTON POSTULER - S'AFFICHE SI L'UTILISATEUR N'A PAS POSTULÉ */}
+                {!hasApplied && user && annonceId && (
+                  <button
+                    onClick={() => setShowPostulerModal(true)}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-brand-cyan px-4 py-2 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Postuler à cette coloc
+                  </button>
+                )}
+
+                {/* 🔥 BOUTON VOIR MA CANDIDATURE - S'AFFICHE SI L'UTILISATEUR A POSTULÉ */}
+                {hasApplied && user && (
+                  <Link
+                    to={`/candidatures?annonceId=${annonceId}`}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light transition-colors"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Voir ma candidature
+                  </Link>
+                )}
               </div>
-            )}
+
+              {/* 🔥 BOUTON VOIR MA CANDIDATURE - TOUJOURS AFFICHÉ EN DESSOUS */}
+              <div className="mt-4 border-t border-border pt-4">
+                <button
+                  onClick={handleViewMyCandidature}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light transition-colors w-full sm:w-auto justify-center"
+                >
+                  <Eye className="h-4 w-4" />
+                  Voir ma candidature
+                </button>
+
+                {/* 🔥 MESSAGE SI NON POSTULÉ */}
+                {showNotAppliedMessage && (
+                  <div className="mt-3 p-3 rounded-2xl bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
+                    ⚠️ Vous n'avez pas encore postulé à cette annonce.
+                    <br />
+                    <span className="text-xs text-yellow-600">
+                      Postulez en cliquant sur le bouton "Postuler à cette
+                      coloc" ci-dessus.
+                    </span>
+                  </div>
+                )}
+
+                {/* 🔥 MESSAGE SI DÉJÀ POSTULÉ */}
+                {hasApplied && (
+                  <div className="mt-3 p-3 rounded-2xl bg-green-50 border border-green-200 text-green-800 text-sm flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-600" />✅ Vous avez
+                    déjà postulé à cette annonce.
+                    <span className="text-xs text-green-600 ml-2">
+                      Cliquez sur "Voir ma candidature" pour voir toutes les
+                      candidatures.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* AFFICHER LES CANDIDATURES SEULEMENT SI annonceId EXISTE */}
+              {annonceId && renderRealCandidatures()}
+            </div>
 
             {/* ===== VUE FLUX ===== */}
             {activeView === "flux" && (

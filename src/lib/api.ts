@@ -323,11 +323,6 @@ export function getToken() {
   return localStorage.getItem(TOKEN_KEY)
 }
 
-
-
-
-
-
 export function getStoredUser(): AuthUser | null {
   const raw = localStorage.getItem(USER_KEY)
   if (!raw) return null
@@ -556,11 +551,36 @@ export const api = {
   },
   
   // Vérifier si l'utilisateur a déjà postulé à une annonce
+  // checkUserApplied(annonceId: string | number, userId: string | number) {
+  //   return request<{ hasApplied: boolean; count: number }>(
+  //     `/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`
+  //   )
+  // },
+
   checkUserApplied(annonceId: string | number, userId: string | number) {
-    return request<{ hasApplied: boolean; count: number }>(
-      `/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`
-    )
-  },
+  // 🔥 Récupérer le token manuellement
+  const token = getToken();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  // Utiliser fetch directement au lieu de request()
+  return fetch(`${API_URL}/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`, {
+    method: 'GET',
+    headers,
+  }).then(async (response) => {
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : null;
+    if (!response.ok) {
+      throw new Error(data?.message || 'Erreur API');
+    }
+    return data as { hasApplied: boolean; count: number };
+  });
+},
   
   // Récupérer mes candidatures (déjà existante, mais on la garde)
   // candidatures() existe déjà
