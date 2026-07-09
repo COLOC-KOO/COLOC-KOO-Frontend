@@ -246,7 +246,7 @@ export function SiteHeader() {
                   </div>
                   <div className="p-1">
                     <Link
-                      to="/compte"
+                      to="/compte?tab=dossier"
                       onClick={() => setUserMenuOpen(false)}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
                     >
@@ -281,7 +281,7 @@ export function SiteHeader() {
                   Se connecter
                 </Button>
               </Link>
-              <Link to="/compte">
+              <Link to="/compte?tab=dossier">
                 <Button size="sm" className="rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200">
                   <User className="w-4 h-4 mr-1" /> S'inscrire
                 </Button>
@@ -362,7 +362,7 @@ export function SiteHeader() {
             {/* Mobile User Actions */}
             {user ? (
               <>
-                <Link to="/compte" className="w-full" onClick={() => setOpen(false)}>
+                <Link to="/compte?tab=dossier" className="w-full" onClick={() => setOpen(false)}>
                   <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white shadow-md hover:shadow-lg transition-all duration-200">
                     <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm">
                       {getUserInitials()}
@@ -393,7 +393,7 @@ export function SiteHeader() {
                     Se connecter
                   </Button>
                 </Link>
-                <Link to="/compte" className="w-full" onClick={() => setOpen(false)}>
+                <Link to="/compte?tab=dossier" className="w-full" onClick={() => setOpen(false)}>
                   <Button className="w-full rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200" size="sm">
                     <User className="w-4 h-4 mr-1" /> S'inscrire
                   </Button>

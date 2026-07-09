@@ -7,19 +7,12 @@ import {
   Rocket, Award, Store, Home, Landmark, Flag, ArrowUpRight, 
   Feather, CircleCheck, Sparkles, TrendingUp, Shield, 
   Zap, Crown, Briefcase, Target, Layers, Eye, BarChart3, ChevronLeft, ChevronRight,
+  Compass,
 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { useConfig } from '../lib/config'
-import { motion, AnimatePresence } from 'framer-motion'
-
-// Images d'arrière-plan (Unsplash)
-const heroBgImage = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1920&q=80'
-const cityBgImage = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1920&q=80'
-const teamBgImage = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=80'
-const officeBgImage = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80'
-const partnersBgImage = 'https://images.unsplash.com/photo-1541746972996-4e0b0f43e02a?auto=format&fit=crop&w=1920&q=80'
 
 // Types
 interface PartnerTier {
@@ -74,7 +67,6 @@ const t = {
   contactH: "Prêt à rejoindre Sarintany'COLOC ?",
   contactP: "Dites-nous qui vous êtes : nous vous orientons vers le statut le plus adapté .",
   contactCta: "Nous contacter",
-  launchTxt: "Lancement 2026 : de nombreux statuts sont offerts ou inclus pour les premiers partenaires.",
   // Benefits mapping...
   b1: "Logo + page « Partenaires »",
   b2: "Présence dans 1 newsletter / an",
@@ -314,13 +306,13 @@ const WhySection: React.FC = () => {
             <div 
               key={idx} 
               className={`group bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 text-center transition-all duration-200 hover:shadow-xl hover:-translate-y-1 ${
-                card.color === 'cyan' ? 'hover:border-[#46BDD6]' : 'hover:border-[#99CC33]'
+                idx % 2 === 1 ? 'hover:border-[#46BDD6]' : 'hover:border-[#99CC33]'
               }`}
             >
               <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 transition-all duration-200 group-hover:scale-110 ${
-                card.color === 'cyan' ? 'bg-[#E8F7FA]' : 'bg-[#F4F8E8]'
+                idx % 2 === 1 ? 'bg-[#E8F7FA]' : 'bg-[#F4F8E8]'
               }`}>
-                <span className={card.color === 'cyan' ? 'text-[#46BDD6]' : 'text-[#99CC33]'}>
+                <span className={idx % 2 === 1 ? 'text-[#46BDD6]' : 'text-[#99CC33]'}>
                   {card.icon}
                 </span>
               </div>
@@ -473,7 +465,7 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
         }`}
       >
         {section.tiers.map((tier, idx) => (
-          <TierCard key={idx} tier={tier} index={idx} />
+          <TierCard key={idx} tier={tier} />
         ))}
       </div>
     </div>
