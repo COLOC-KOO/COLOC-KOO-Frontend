@@ -623,6 +623,7 @@ export default function Candidatures() {
       ]);
       setChatModalOpen(false);
       setSelectedCandidate(null);
+      navigate("/compte?tab=paiements");
     } catch {
       setChatMessages((prev) => [
         ...prev,
