@@ -14,7 +14,8 @@ import {
   History,
   Calendar,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Trash2
 } from 'lucide-react'
 
 // Types
@@ -119,6 +120,7 @@ export default function AdminJournalActions() {
   const [filterActeur, setFilterActeur] = useState<string>('tous')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [expandedLog, setExpandedLog] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const loadLogs = async () => {
     setLoading(true)
@@ -198,6 +200,21 @@ export default function AdminJournalActions() {
   // Toggle expansion d'un log
   const toggleExpand = (id: string) => {
     setExpandedLog(expandedLog === id ? null : id)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Supprimer cette entrée du journal ?')) return
+
+    setDeletingId(id)
+    try {
+      await api.deleteBackofficeJournalEntry(id)
+      await loadLogs()
+      setExpandedLog(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de supprimer cette entrée')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   return (
@@ -373,13 +390,27 @@ export default function AdminJournalActions() {
                       )}
                     </div>
 
-                    {/* Indicateur d'expansion */}
-                    <button className="text-white/30 hover:text-white/60 transition">
-                      {expandedLog === log.id ? 
-                        <ChevronUp className="w-4 h-4" /> : 
-                        <ChevronDown className="w-4 h-4" />
-                      }
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(log.id)
+                        }}
+                        disabled={deletingId === log.id}
+                        className="rounded-full p-2 text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                        title="Supprimer cette entrée"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+
+                      <button className="text-white/30 hover:text-white/60 transition">
+                        {expandedLog === log.id ? 
+                          <ChevronUp className="w-4 h-4" /> : 
+                          <ChevronDown className="w-4 h-4" />
+                        }
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
