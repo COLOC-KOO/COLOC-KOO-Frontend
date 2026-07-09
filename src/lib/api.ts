@@ -81,6 +81,11 @@ export interface ApiCandidature {
   prix_looyer?: number | null
   prix_loyer?: number | null
   statut_original?: string
+  nom?: string
+  prenom?: string
+  email?: string
+  telephone?: string
+  utilisateur_id?: number
 }
 
 export interface ApiPartenaire {
@@ -318,11 +323,6 @@ export function getToken() {
   return localStorage.getItem(TOKEN_KEY)
 }
 
-
-
-
-
-
 export function getStoredUser(): AuthUser | null {
   const raw = localStorage.getItem(USER_KEY)
   if (!raw) return null
@@ -543,6 +543,48 @@ export const api = {
       body: JSON.stringify(payload),
     })
   },
+    // 🆕 NOUVELLES FONCTIONS À AJOUTER
+  
+  // Récupérer toutes les candidatures pour une annonce spécifique
+  getCandidaturesByAnnonce(annonceId: string | number) {
+    return request<ApiCandidature[]>(`/candidatures/annonce/${annonceId}`)
+  },
+  
+  // Vérifier si l'utilisateur a déjà postulé à une annonce
+  // checkUserApplied(annonceId: string | number, userId: string | number) {
+  //   return request<{ hasApplied: boolean; count: number }>(
+  //     `/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`
+  //   )
+  // },
+
+  checkUserApplied(annonceId: string | number, userId: string | number) {
+  // 🔥 Récupérer le token manuellement
+  const token = getToken();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  // Utiliser fetch directement au lieu de request()
+  return fetch(`${API_URL}/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`, {
+    method: 'GET',
+    headers,
+  }).then(async (response) => {
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : null;
+    if (!response.ok) {
+      throw new Error(data?.message || 'Erreur API');
+    }
+    return data as { hasApplied: boolean; count: number };
+  });
+},
+  
+  // Récupérer mes candidatures (déjà existante, mais on la garde)
+  // candidatures() existe déjà
+  
   adminCandidatures() {
     return request<ApiCandidature[]>('/candidatures/admin/all')
   },
@@ -552,6 +594,23 @@ export const api = {
       body: JSON.stringify({ statut }),
     })
   },
+  deleteCandidature(id: string | number) {
+    return request<{ message: string }>(`/candidatures/${id}`, {
+      method: 'DELETE',
+    })
+  },
+  decideCandidature(id: string | number, action: 'accept' | 'refuse' | 'discuss', message?: string) {
+    return request<{ message: string; conversationId?: number; equipeId?: number }>(`/candidatures/${id}/decision`, {
+      method: 'POST',
+      body: JSON.stringify({ action, message }),
+    })
+  },
+  launchColocation(annonceId: string | number) {
+    return request<{ message: string; equipeId?: number }>(`/candidatures/annonce/${annonceId}/launch`, {
+      method: 'POST',
+    })
+  },
+
   contact(payload: { nom: string; email: string; sujet: string; message: string }) {
     return request<{ id_message: number }>('/contact', {
       method: 'POST',
@@ -560,6 +619,9 @@ export const api = {
   },
   backofficeDashboard() {
     return request<BackofficeDashboard>('/backoffice/dashboard')
+  },
+  backofficeColocationStats() {
+    return request<{ items: Array<Record<string, unknown>>; generatedAt: string; total: number }>('/backoffice/statistiques-colocation')
   },
   backofficePaiements() {
     return request<ApiPaiement[]>('/backoffice/paiements')
@@ -649,6 +711,14 @@ export const api = {
   },
   backofficePartenaires() {
     return request<ApiPartenaire[]>('/backoffice/partenaires')
+  },
+  uploadPartenaireLogo(file: File) {
+    const formData = new FormData()
+    formData.append('logo', file)
+    return request<{ url: string; filename: string }>('/backoffice/partenaires/upload', {
+      method: 'POST',
+      body: formData,
+    })
   },
   backofficePartenaireRequests() {
     return request<ApiPartenaireRequest[]>('/backoffice/partenaires/requests')

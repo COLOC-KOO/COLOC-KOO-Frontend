@@ -12,6 +12,14 @@ import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { useConfig } from '../lib/config'
+import { motion, AnimatePresence } from 'framer-motion'
+
+// Images d'arrière-plan (Unsplash)
+const heroBgImage = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1920&q=80'
+const cityBgImage = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1920&q=80'
+const teamBgImage = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=80'
+const officeBgImage = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80'
+const partnersBgImage = 'https://images.unsplash.com/photo-1541746972996-4e0b0f43e02a?auto=format&fit=crop&w=1920&q=80'
 
 // Types
 interface PartnerTier {
@@ -21,6 +29,9 @@ interface PartnerTier {
   benefits: string[]
   tierClass: string
   icon?: React.ReactNode
+  popular?: boolean
+  price?: string
+  amount?: string
 }
 
 interface PartnerSection {
@@ -32,13 +43,14 @@ interface PartnerSection {
   tiers: PartnerTier[]
   isAddon?: boolean
   addonNote?: string
+  bgImage?: string
 }
 
 interface WhyCard {
   icon: React.ReactNode
   title: string
   desc: string
-  color?: 'cyan' | 'green'
+  stat?: string
 }
 
 // Données i18n
@@ -62,7 +74,8 @@ const t = {
   contactH: "Prêt à rejoindre Sarintany'COLOC ?",
   contactP: "Dites-nous qui vous êtes : nous vous orientons vers le statut le plus adapté .",
   contactCta: "Nous contacter",
-  // Benefits
+  launchTxt: "Lancement 2026 : de nombreux statuts sont offerts ou inclus pour les premiers partenaires.",
+  // Benefits mapping...
   b1: "Logo + page « Partenaires »",
   b2: "Présence dans 1 newsletter / an",
   b3: "Signalétique « Partenaire engagé 2026 »",
@@ -70,12 +83,12 @@ const t = {
   b5: "Référencement prioritaire",
   b6: "Point d'intérêt sur la carte",
   b7: "Redirection vers vos liens web",
-  b8: "Stats annuelles globales (personas, villes attractives)",
+  b8: "Stats annuelles globales",
   b9: "Référencement prioritaire + présentation 3 lignes",
   b10: "Encarts natifs dans le fil d'annonces",
   b11: "Retour annuel d'audiences statistiques",
   b12: "Logo intégré aux campagnes de communication",
-  b13: "Partenaire mis en avant « ils participent le plus »",
+  b13: "Partenaire mis en avant",
   b14: "Présence sur la page d'accueil",
   b15: "Intégration nationale d'une chaîne",
   b16: "Mise en avant dans les campagnes",
@@ -111,7 +124,7 @@ const t = {
   slotEarlyAfternoon: "Début d'après-midi (12h–15h)",
   slotLateAfternoon: "Fin d'après-midi (15h–18h)",
   lightpopH: "Naviguer en mode allégé ?",
-  lightpopP: "Connexion lente ou data limitée ? Le mode allégé désactive les animations et allège l'affichage.",
+  lightpopP: "Connexion lente ou data limitée ?",
   lightpopYes: "Activer le mode allégé",
   lightpopNo: "Continuer normalement",
   lightpopRemind: "Ne plus me le rappeler",
@@ -259,26 +272,26 @@ const WhySection: React.FC = () => {
     {
       icon: <Users className="w-5 h-5" />,
       title: 'Audience ciblée',
-      desc: 'Étudiants, jeunes actifs et familles : une audience jeune, urbaine et active, difficile à atteindre ailleurs.',
-      color: 'cyan'
+      desc: 'Étudiants, jeunes actifs et familles : une audience jeune, urbaine et active.',
+      stat: '15k+'
     },
     {
       icon: <HeartHandshake className="w-5 h-5" />,
       title: 'Engagement RSE',
-      desc: 'Affichez la signalétique « Partenaire engagé » et associez votre image au logement et à l\'émancipation.',
-      color: 'green'
+      desc: 'Affichez la signalétique « Partenaire engagé » et associez votre image au logement.',
+      stat: '100%'
     },
     {
-      icon: <MapPin className="w-5 h-5" />,
-      title: 'Visibilité sur la carte',
-      desc: 'Votre logo et votre page partenaire visibles par tous les visiteurs de Sarintany\'COLOC.',
-      color: 'green'
+      icon: <Compass className="w-5 h-5" />,
+      title: 'Visibilité maximale',
+      desc: 'Votre logo et votre page partenaire visibles par tous les visiteurs.',
+      stat: '50k+'
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
-      title: 'Données utiles',
-      desc: 'Selon le palier : stats de fréquentation, personas, villes attractives et zones de tension du marché.',
-      color: 'cyan'
+      title: 'Données exclusives',
+      desc: 'Stats de fréquentation, personas, villes attractives et zones de tension.',
+      stat: '365j'
     }
   ]
 
@@ -460,7 +473,7 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
         }`}
       >
         {section.tiers.map((tier, idx) => (
-          <TierCard key={idx} tier={tier} />
+          <TierCard key={idx} tier={tier} index={idx} />
         ))}
       </div>
     </div>
@@ -519,7 +532,7 @@ const ContactSection: React.FC = () => {
       })
       setShowOk(true)
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Impossible d’envoyer votre demande. Veuillez réessayer.')
+      setSubmitError(error instanceof Error ? error.message : 'Impossible d’envoyer votre demande.')
     } finally {
       setSubmitting(false)
     }
@@ -528,11 +541,9 @@ const ContactSection: React.FC = () => {
   const phoneOptions = [
     { value: '+261', label: '+261 (Mada)' },
     { value: '+33', label: '+33 (France)' },
-    { value: '+262', label: '+262 (Réunion / Mayotte)' },
+    { value: '+262', label: '+262 (Réunion)' },
     { value: '+230', label: '+230 (Maurice)' },
     { value: '+269', label: '+269 (Comores)' },
-    { value: '+32', label: '+32 (Belgique)' },
-    { value: '+41', label: '+41 (Suisse)' },
   ]
 
   const slotOptions = [
@@ -721,7 +732,7 @@ const partnerSections: PartnerSection[] = [
     icon: <Store className="w-5 h-5 sm:w-6 sm:h-6" />,
     iconClass: 'cy',
     title: 'Entreprise générale',
-    subtitle: 'De la PME à la grande entreprise, une visibilité croissante et des données d\'audience à chaque niveau.',
+    subtitle: 'De la PME à la grande entreprise, une visibilité croissante.',
     tiers: [
       {
         name: 'PME · Bronze',
@@ -729,8 +740,8 @@ const partnerSections: PartnerSection[] = [
         arg: 'Être référencé comme partenaire officiel du site et afficher son engagement RSE.',
         benefits: [
           'Logo + page « Partenaires »',
-          'Présence dans 1 newsletter / an de Sarintany\'COLOC',
-          'Signalétique « Partenaire engagé Sarintany\'COLOC 2026 »'
+          'Présence dans 1 newsletter / an',
+          'Signalétique « Partenaire engagé 2026 »'
         ],
         tierClass: 'border-t-[#c8843c]'
       },
@@ -740,11 +751,12 @@ const partnerSections: PartnerSection[] = [
         arg: 'Passer devant les autres PME, avec un lien direct vers votre point de vente.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Référencement prioritaire par rapport au statut précédent',
-          'Implantation de votre entreprise comme point d\'intérêt sur la carte',
-          'Intégration et redirection vers vos liens web'
+          'Référencement prioritaire',
+          'Point d\'intérêt sur la carte',
+          'Redirection vers vos liens web'
         ],
-        tierClass: 'border-t-[#9aa3ad]'
+        tierClass: 'border-t-[#9aa3ad]',
+        popular: true
       },
       {
         name: 'Grande entreprise · Or',
@@ -752,11 +764,11 @@ const partnerSections: PartnerSection[] = [
         arg: 'Le bon profil au bon endroit, prouvé par la donnée.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Stats annuelles globales (personas, villes attractives, zones de tension)',
+          'Stats annuelles globales',
           'Référencement prioritaire + présentation 3 lignes',
           'Encarts natifs dans le fil d\'annonces',
-          'Retour annuel d\'audiences statistiques et visibilité',
-          'Intégration du logo partenaires dans les campagnes de communication de Sarintany\'COLOC'
+          'Retour annuel d\'audiences statistiques',
+          'Logo intégré aux campagnes de communication'
         ],
         tierClass: 'border-t-[#d4af37]'
       },
@@ -766,12 +778,12 @@ const partnerSections: PartnerSection[] = [
         arg: 'Notoriété maximale et exclusivité géographique.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Partenaire mis en avant en « ils participent le plus »',
-          'Présence sur la page d\'accueil du site',
-          'Intégration nationale d\'une chaîne (tous les points de vente)',
-          'Mise en avant dans les campagnes de communication',
+          'Partenaire mis en avant',
+          'Présence sur la page d\'accueil',
+          'Intégration nationale d\'une chaîne',
+          'Mise en avant dans les campagnes',
           'Reporting semestriel personnalisé',
-          '1 bandeau régional exclusif compris (hors Antananarivo, région d\'Analamanga)'
+          '1 bandeau régional exclusif compris'
         ],
         tierClass: 'border-t-[#5a8aa0]'
       }
@@ -782,7 +794,7 @@ const partnerSections: PartnerSection[] = [
     icon: <Home className="w-5 h-5 sm:w-6 sm:h-6" />,
     iconClass: '',
     title: 'Immobilier',
-    subtitle: 'De l\'agent indépendant au réseau national, un canal d\'acquisition rentable et des leads qualifiés.',
+    subtitle: 'De l\'agent indépendant au réseau national.',
     tiers: [
       {
         name: 'Indépendant',
@@ -791,7 +803,7 @@ const partnerSections: PartnerSection[] = [
         arg: 'Sans risque : 4 mois de visibilité, une seule colocation conclue rentabilise largement.',
         benefits: [
           '1 annonce à but commercial',
-          'Validité 4 mois (identique à l\'offre Propriétaire)',
+          'Validité 4 mois',
           'Les colocataires s\'inscrivent puis confirment'
         ],
         tierClass: 'border-t-[#99CC33]'
@@ -802,11 +814,12 @@ const partnerSections: PartnerSection[] = [
         icon: <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />,
         arg: 'Un canal d\'acquisition rentable, leads qualifiés et statut partenaire pour votre cabinet.',
         benefits: [
-          '1 compte agence + 12 annonces par an, puis tarif réduit',
+          '1 compte agence + 12 annonces/an',
           'Logo + page « Partenaires »',
-          '1 newsletter par an + signalétique d\'engagement'
+          '1 newsletter par an + signalétique'
         ],
-        tierClass: 'border-t-[#99CC33]'
+        tierClass: 'border-t-[#99CC33]',
+        popular: true
       },
       {
         name: 'Réseau d\'agences',
@@ -814,10 +827,10 @@ const partnerSections: PartnerSection[] = [
         icon: <Layers className="w-4 h-4 sm:w-5 sm:h-5" />,
         arg: 'L\'offre maximale réseau : couverture nationale et exclusivité régionale.',
         benefits: [
-          'Intégration de tout le réseau (1 compte par agence)',
+          'Intégration de tout le réseau',
           'Publications illimitées',
-          'Visibilité maximale : mise en avant en page d\'accueil et dans les campagnes de communication',
-          '1 bandeau régional exclusif compris (hors Antananarivo, région d\'Analamanga)'
+          'Visibilité maximale en page d\'accueil',
+          '1 bandeau régional exclusif compris'
         ],
         tierClass: 'border-t-[#99CC33]'
       }
@@ -828,17 +841,17 @@ const partnerSections: PartnerSection[] = [
     icon: <Landmark className="w-5 h-5 sm:w-6 sm:h-6" />,
     iconClass: 'cy',
     title: 'Institution publique — mécénat',
-    subtitle: 'Soutenez une solution malgache d\'accès au logement, sans logique commerciale.',
+    subtitle: 'Soutenez une solution malgache d\'accès au logement.',
     tiers: [
       {
         name: 'Mécène Argent',
         icon: <Shield className="w-4 h-4 sm:w-5 sm:h-5" />,
         arg: 'Associez votre institution à l\'émancipation des jeunes par le logement.',
         benefits: [
-          'Logo + page « Partenaires » au titre de mécène',
-          'Présence dans 1 newsletter / an de Sarintany\'COLOC',
-          'Signalétique « Mécène engagé Sarintany\'COLOC 2026 »',
-          'Visibilité équivalente au niveau Argent, sans logique commerciale'
+          'Logo + page « Partenaires » mécène',
+          'Présence dans 1 newsletter / an',
+          'Signalétique « Mécène engagé 2026 »',
+          'Visibilité équivalente au niveau Argent'
         ],
         tierClass: 'border-t-[#46BDD6]'
       },
@@ -848,11 +861,12 @@ const partnerSections: PartnerSection[] = [
         arg: 'Un mécénat valorisant, au plus près du développement du projet.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Référencement et présentation du mécène mis en avant',
-          'Logo du mécène dans les campagnes de communication de Sarintany\'COLOC',
+          'Référencement et présentation du mécène',
+          'Logo du mécène dans les campagnes',
           'Visibilité équivalente au niveau Or'
         ],
-        tierClass: 'border-t-[#46BDD6]'
+        tierClass: 'border-t-[#46BDD6]',
+        popular: true
       },
       {
         name: 'Mécène Platine',
@@ -860,9 +874,9 @@ const partnerSections: PartnerSection[] = [
         arg: 'L\'engagement de mécénat le plus fort, sur mesure.',
         benefits: [
           'Intègre toute l\'offre précédente, plus :',
-          'Mise en avant en page d\'accueil (« ils nous soutiennent »)',
-          'Visibilité maximale, équivalente au niveau Platine',
-          'Modalités définies ensemble (mécénat sur mesure)'
+          'Mise en avant en page d\'accueil',
+          'Visibilité maximale équivalente Platine',
+          'Modalités définies ensemble'
         ],
         tierClass: 'border-t-[#46BDD6]'
       }
@@ -872,9 +886,9 @@ const partnerSections: PartnerSection[] = [
     id: 'addon',
     icon: <Flag className="w-5 h-5 sm:w-6 sm:h-6" />,
     title: 'Option · Bandeau régional exclusif',
-    subtitle: 'Un bandeau exclusif pleine largeur en bas de carte, contextuel à la région affichée. Un seul partenaire par région (hors Antananarivo, région d\'Analamanga) — l\'exclusivité géographique pour sécuriser un marché entier.',
+    subtitle: 'Un bandeau exclusif pleine largeur en bas de carte, contextuel à la région affichée.',
     isAddon: true,
-    addonNote: '1er bandeau inclus aux niveaux Platine et Réseau Platine · jusqu\'à 5 régions au total · 22 régions réservables (hors Antananarivo, région d\'Analamanga).',
+    addonNote: '1er bandeau inclus aux niveaux Platine et Réseau Platine · jusqu\'à 5 régions au total.',
     tiers: []
   }
 ]
