@@ -30,20 +30,20 @@ const heroImage =
 const steps = [
   {
     n: "01",
-    t: "Cherche",
-    d: "Filtre par ville, prix, ambiance. Toutes les annonces sont vérifiées.",
+    t: "Cherche dans ta ville",
+    d: "ndique ta ville ou région. La carte interactive affiche toutes les colocations disponibles.",
     c: "bg-brand-cyan-light text-brand-cyan-dark",
   },
   {
     n: "02",
-    t: "Postule",
-    d: "Dépose ton dossier locatif en ligne. Réponse sous 48h.",
+    t: "Consulte les annonces vérifiées et Postuler",
+    d: "Photos, prix, services, règles — tout est détaillé. Chaque annonce est vérifiée avant publication.",
     c: "bg-brand-green-light text-brand-green-dark",
   },
   {
     n: "03",
-    t: "Emménage",
-    d: "Signature électronique, convention de coloc, tu prends les clés.",
+    t: "Contacte directement",
+    d: "Envoie un message sécurisé. Aucune commission, 100% gratuit.",
     c: "bg-pink-50 text-pink-800",
   },
 ];
