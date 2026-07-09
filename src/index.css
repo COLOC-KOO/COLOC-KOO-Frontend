@@ -90,3 +90,88 @@ h4,
   background: rgba(0, 0, 0, 0.15);
   border-radius: 8px;
 }
+/* =========================================
+   EFFET BRILLANT / SHIMMER
+   ========================================= */
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-12deg);
+  }
+}
+
+@keyframes shimmer-slow {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-12deg);
+  }
+}
+
+/* Version avec pause aux extrémités pour un effet plus naturel */
+@keyframes shimmer-pulse {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+
+/* Classes utilitaires */
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-shimmer-slow {
+  animation: shimmer-slow 5s ease-in-out infinite;
+}
+
+.animate-shimmer-pulse {
+  animation: shimmer-pulse 4s ease-in-out infinite;
+}
+
+/* Effet glassmorphism brillant */
+.glass-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  animation: shimmer 4s ease-in-out infinite;
+}
+/* Animation pour les images en fond */
+@keyframes fadeImages {
+  0%, 25% {
+    opacity: 1;
+  }
+  20%, 85% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
