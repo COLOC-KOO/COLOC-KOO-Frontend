@@ -85,7 +85,8 @@ export default function Candidatures() {
     return undefined;
   };
 
-  const annonceId = getAnnonceIdFromUrl();
+  const queryAnnonceId = new URLSearchParams(location.search).get("annonceId");
+  const annonceId = getAnnonceIdFromUrl() || queryAnnonceId || undefined;
 
   // États pour les données réelles
   const [realCandidatures, setRealCandidatures] = useState<any[]>([]);
@@ -94,6 +95,9 @@ export default function Candidatures() {
   const [hasApplied, setHasApplied] = useState(false);
   const [myCandidature, setMyCandidature] = useState<any>(null);
   const [showNotAppliedMessage, setShowNotAppliedMessage] = useState(false);
+  const [isAnnonceOwner, setIsAnnonceOwner] = useState(false);
+  const [candidateActionLoading, setCandidateActionLoading] = useState<number | null>(null);
+  const [candidateActionFeedback, setCandidateActionFeedback] = useState("");
 
   // États UI existants
   const [activeView, setActiveView] = useState<
@@ -171,6 +175,14 @@ export default function Candidatures() {
       const data = await api.getCandidaturesByAnnonce(parseInt(annonceId));
       console.log("📊 Données reçues:", data.length, "candidatures");
       setRealCandidatures(data);
+
+      try {
+        const annonce = await api.annonce(annonceId);
+        const currentUserId = Number(user?.id);
+        setIsAnnonceOwner(Number(annonce.id_utilisateur) === currentUserId);
+      } catch {
+        setIsAnnonceOwner(false);
+      }
 
       // 🔥 Transformer les données avec typage correct
       const formattedCandidates: OwnerCandidate[] = data.map((cand: any) => {
@@ -307,6 +319,56 @@ export default function Candidatures() {
     console.log("🔵 === FIN handlePostuler ===");
   };
 
+  const handleCandidateDecision = async (
+    candidateId: number,
+    action: "accept" | "refuse" | "discuss",
+    message?: string,
+  ) => {
+    if (!candidateId) return;
+    setCandidateActionLoading(candidateId);
+    setCandidateActionFeedback("");
+    try {
+      await api.decideCandidature(candidateId, action, message);
+
+      setOwnerCandidates((prev) =>
+        prev.map((candidate) => {
+          if (candidate.id_candidature !== candidateId) return candidate;
+          if (action === "accept") {
+            return { ...candidate, status: "retained" };
+          }
+          if (action === "refuse") {
+            return { ...candidate, status: "refused" };
+          }
+          return candidate;
+        }),
+      );
+
+      setRealCandidatures((prev) =>
+        prev.map((candidate) => {
+          if (candidate.id_candidature !== candidateId) return candidate;
+          return {
+            ...candidate,
+            statut: action === "accept" ? "signature" : action === "refuse" ? "refusee" : candidate.statut,
+          };
+        }),
+      );
+
+      setCandidateActionFeedback(
+        action === "accept"
+          ? "Candidature acceptée et enregistrée en base."
+          : action === "refuse"
+            ? "Candidature refusée et enregistrée en base."
+            : "Discussion ouverte et enregistrée en base.",
+      );
+      await loadRealCandidatures();
+    } catch (error: any) {
+      console.error("❌ Erreur action candidature:", error);
+      setCandidateActionFeedback(error?.message || "Impossible de traiter cette candidature.");
+    } finally {
+      setCandidateActionLoading(null);
+    }
+  };
+
   // ===== VOIR MA CANDIDATURE =====
   const handleViewMyCandidature = () => {
     if (!user) {
@@ -353,13 +415,12 @@ export default function Candidatures() {
 
   // 🔥 CHARGER LES DONNÉES AU MONTAGE
   useEffect(() => {
-    console.log("🔄 [1] useEffect chargement - annonceId:", annonceId);
+    console.log("🔄 [1] useEffect chargement - annonceId:", annonceId, "userId:", user?.id, "authLoading:", authLoading);
     console.log("🔄 [1] URL actuelle:", location.pathname);
 
-    if (annonceId) {
-      loadRealCandidatures();
-    }
-  }, [annonceId]);
+    if (!annonceId || authLoading) return;
+    loadRealCandidatures();
+  }, [annonceId, user?.id, authLoading]);
 
   // 🔥 VÉRIFIER SI L'UTILISATEUR A POSTULÉ
   useEffect(() => {
@@ -414,24 +475,20 @@ export default function Candidatures() {
     if (view === "join" && !joinTarget) setJoinTarget(JOIN_DEFAULT);
   }
 
-  function acceptCandidate(id: string) {
+  async function acceptCandidate(id: string) {
+    const candidate = ownerCandidates.find((cand) => cand.id === id);
+    if (!candidate?.id_candidature) return;
     if (ownerFilled >= TARGET) {
       alert("Toutes les places sont pourvues.");
       return;
     }
-    setOwnerCandidates((prev) =>
-      prev.map((cand) =>
-        cand.id === id ? { ...cand, status: "retained" } : cand,
-      ),
-    );
+    await handleCandidateDecision(candidate.id_candidature, "accept");
   }
 
-  function refuseCandidate(id: string) {
-    setOwnerCandidates((prev) =>
-      prev.map((cand) =>
-        cand.id === id ? { ...cand, status: "refused" } : cand,
-      ),
-    );
+  async function refuseCandidate(id: string) {
+    const candidate = ownerCandidates.find((cand) => cand.id === id);
+    if (!candidate?.id_candidature) return;
+    await handleCandidateDecision(candidate.id_candidature, "refuse");
   }
 
   function restoreCandidate(id: string) {
@@ -513,21 +570,24 @@ export default function Candidatures() {
     setNewMessage("");
   }
 
-  function sendMessage() {
-    if (!newMessage.trim()) return;
-    setChatMessages([...chatMessages, { who: "Toi", txt: newMessage.trim() }]);
+  async function sendMessage() {
+    if (!newMessage.trim() || !selectedCandidate?.id_candidature) return;
+    const message = newMessage.trim();
     setNewMessage("");
-    setTimeout(() => {
-      if (selectedCandidate) {
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            who: selectedCandidate.name,
-            txt: "Merci pour ton message ! Je te réponds dès que possible.",
-          },
-        ]);
-      }
-    }, 1000);
+    try {
+      await handleCandidateDecision(selectedCandidate.id_candidature, "discuss", message);
+      setChatMessages((prev) => [
+        ...prev,
+        { who: "Toi", txt: message },
+      ]);
+      setChatModalOpen(false);
+      setSelectedCandidate(null);
+    } catch {
+      setChatMessages((prev) => [
+        ...prev,
+        { who: "Toi", txt: message },
+      ]);
+    }
   }
 
   function joinTeam(id: string) {
@@ -719,6 +779,12 @@ export default function Candidatures() {
           </h3>
         </div>
 
+        {candidateActionFeedback ? (
+          <div className="rounded-2xl border border-brand-cyan/20 bg-brand-cyan-light/30 px-4 py-3 text-sm text-brand-cyan-dark">
+            {candidateActionFeedback}
+          </div>
+        ) : null}
+
         {realCandidatures.map((candidat) => {
           const isCurrentUser = candidat.id_utilisateur === user?.id;
           return (
@@ -783,6 +849,34 @@ export default function Candidatures() {
                           : "⏳ En attente"}
                     </span>
                   </div>
+                  {isAnnonceOwner && !isCurrentUser ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCandidateDecision(candidat.id_candidature, "discuss")}
+                        disabled={candidateActionLoading === candidat.id_candidature}
+                        className="rounded-2xl border border-border bg-card px-3 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light disabled:opacity-60"
+                      >
+                        {candidateActionLoading === candidat.id_candidature ? "Traitement..." : "Discuter"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCandidateDecision(candidat.id_candidature, "accept")}
+                        disabled={candidateActionLoading === candidat.id_candidature}
+                        className="rounded-2xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:opacity-60"
+                      >
+                        Accepter
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCandidateDecision(candidat.id_candidature, "refuse")}
+                        disabled={candidateActionLoading === candidat.id_candidature}
+                        className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                      >
+                        Refuser
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
