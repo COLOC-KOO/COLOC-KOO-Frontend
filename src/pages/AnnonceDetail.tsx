@@ -4,7 +4,7 @@ import { ArrowLeft, BedDouble, Calendar, Check, Eye, Heart, MessageSquare, MapPi
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { annonceToListing, api } from '../lib/api'
-import { useAuth } from '../lib/auth'
+import { roleLevel, useAuth } from '../lib/auth'
 import { Listing } from '../types'
 import { formatAr } from '../lib/utils'
 import NotFound from './NotFound'
@@ -137,12 +137,19 @@ export default function AnnonceDetail() {
     }
   }
 
+  const isCapacityFull = Number(listing?.rooms || 0) >= 3
+  const isOwnerOrAdmin = user
+    ? roleLevel(user.poste) >= 2 || Number(listing?.owner.id) === Number(user.id)
+    : false
+  const canViewCandidatures = Boolean(user) && (isOwnerOrAdmin || hasApplied || Boolean(myCandidature))
+
   const handleViewMyCandidature = () => {
     if (!user) {
       navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
       return
     }
     if (!id) return
+    if (!canViewCandidatures) return
     navigate(`/candidatures?annonceId=${id}`)
   }
 
@@ -264,44 +271,9 @@ export default function AnnonceDetail() {
               ) : null}
               {user ? (
                 Number(listing.owner.id) === Number(user.id) ? (
-                  <div className="space-y-3 rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
+                  <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
                     <div className="font-semibold text-foreground">Gestion des candidatures</div>
-                    {ownerCandidates.length === 0 ? (
-                      <p>Aucune candidature reçue pour le moment.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {ownerCandidates.map((candidate) => (
-                          <div key={candidate.id_candidature} className="rounded-lg border border-border bg-background p-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <div>
-                                <div className="font-semibold text-foreground">{candidate.prenom || candidate.nom || 'Candidat'}</div>
-                                <div className="text-xs text-muted-foreground">{candidate.statut}</div>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button type="button" size="sm" variant="outline" onClick={() => handleCandidateAction(candidate.id_candidature, 'discuss')} disabled={candidateActionLoading === candidate.id_candidature}>
-                                  <MessageSquare className="w-4 h-4" /> Discuter
-                                </Button>
-                                <Button type="button" size="sm" className="bg-brand-green text-white hover:bg-brand-green-dark" onClick={() => handleCandidateAction(candidate.id_candidature, 'accept')} disabled={candidateActionLoading === candidate.id_candidature}>
-                                  Accepter
-                                </Button>
-                                <Button type="button" size="sm" variant="outline" onClick={() => handleCandidateAction(candidate.id_candidature, 'refuse')} disabled={candidateActionLoading === candidate.id_candidature}>
-                                  Refuser
-                                </Button>
-                              </div>
-                            </div>
-                            {candidate.message ? <p className="mt-2 text-xs text-muted-foreground">{candidate.message}</p> : null}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="rounded-lg border border-dashed border-brand-cyan/40 bg-brand-cyan-light/40 p-3">
-                      <div className="font-semibold text-brand-cyan-dark">Lancer la colocation</div>
-                      <p className="text-xs text-muted-foreground mt-1">Disponible à partir de 3 candidats acceptés.</p>
-                      <Button type="button" className="mt-3 w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white" disabled={launchLoading} onClick={handleLaunchColocation}>
-                        {launchLoading ? 'Traitement...' : 'Lancer la colocation'}
-                      </Button>
-                      {launchMessage ? <p className="mt-2 text-sm text-brand-cyan-dark">{launchMessage}</p> : null}
-                    </div>
+                    <p className="mt-2">La gestion des candidatures se fait depuis la page dédiée.</p>
                   </div>
                 ) : hasApplied ? (
                   <div className="rounded-xl border border-brand-green/20 bg-brand-green-light/50 p-3 text-sm text-brand-green-dark">
@@ -364,7 +336,7 @@ export default function AnnonceDetail() {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={!user || !hasApplied}
+                  disabled={!canViewCandidatures}
                   onClick={handleViewMyCandidature}
                 >
                   <Eye className="w-4 h-4" /> Voir ma candidature

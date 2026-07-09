@@ -594,6 +594,11 @@ export const api = {
       body: JSON.stringify({ statut }),
     })
   },
+  deleteCandidature(id: string | number) {
+    return request<{ message: string }>(`/candidatures/${id}`, {
+      method: 'DELETE',
+    })
+  },
   decideCandidature(id: string | number, action: 'accept' | 'refuse' | 'discuss', message?: string) {
     return request<{ message: string; conversationId?: number; equipeId?: number }>(`/candidatures/${id}/decision`, {
       method: 'POST',
