@@ -18,11 +18,11 @@ interface Partenaire {
 interface ApiPartenaire {
   id_partenaire: number
   nom: string
-  secteur: string | null
-  niveau: string | null
-  remise: string | null
-  engagement: string | null
-  logo: string | null
+  secteur?: string | null
+  niveau?: string | null
+  remise?: string | null
+  engagement?: string | null
+  logo?: string | null
   actif: 0 | 1
   date_creation: string
 }
@@ -48,7 +48,7 @@ function PartnerModal({
 }: {
   partner?: Partenaire | null
   onClose: () => void
-  onSave: (payload: Omit<Partenaire, 'id' | 'dateCreation'>) => void
+  onSave: (payload: Omit<Partenaire, 'id' | 'dateCreation'> & { logoFile?: File | null }) => Promise<void>
 }) {
   const [nom, setNom] = useState(partner?.nom || '')
   const [secteur, setSecteur] = useState(partner?.secteur || '')
@@ -56,12 +56,27 @@ function PartnerModal({
   const [remise, setRemise] = useState(partner?.remise || '')
   const [engagement, setEngagement] = useState(partner?.engagement || '')
   const [logo, setLogo] = useState(partner?.logo || '')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState(partner?.logo || '')
   const [actif, setActif] = useState(partner?.actif ?? true)
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setLogoFile(file)
+    setPreview(URL.createObjectURL(file))
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!nom.trim()) return
-    onSave({ nom: nom.trim(), secteur: secteur.trim(), niveau: niveau.trim(), remise: remise.trim(), engagement: engagement.trim(), logo: logo.trim(), actif })
+    setSubmitting(true)
+    try {
+      await onSave({ nom: nom.trim(), secteur: secteur.trim(), niveau: niveau.trim(), remise: remise.trim(), engagement: engagement.trim(), logo: logo.trim(), actif, logoFile })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -104,7 +119,14 @@ function PartnerModal({
             </div>
             <div>
               <label className="text-xs text-white/40 uppercase">Logo</label>
-              <input value={logo} onChange={(e) => setLogo(e.target.value)} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
+              <input value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="URL du logo ou laissez vide pour uploader une image" className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
+              <input type="file" accept="image/*" onChange={handleFileChange} className="mt-2 block w-full text-sm text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-cyan/20 file:px-3 file:py-2 file:text-brand-cyan" />
+              {(preview || logo) && (
+                <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-2">
+                  <img src={preview || logo} alt="Prévisualisation logo" className="h-10 w-10 rounded object-cover" />
+                  <span className="text-xs text-white/50">Logo prêt à être enregistré</span>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -117,8 +139,8 @@ function PartnerModal({
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm">
               Annuler
             </button>
-            <button type="submit" className="px-4 py-2 rounded-lg bg-brand-cyan text-[oklch(0.15_0_0)] text-sm font-medium hover:opacity-90">
-              Enregistrer
+            <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-brand-cyan text-[oklch(0.15_0_0)] text-sm font-medium hover:opacity-90 disabled:opacity-70">
+              {submitting ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </div>
         </form>
@@ -140,7 +162,7 @@ export default function AdminPartenaires() {
     setError(null)
     try {
       const rows = await api.backofficePartenaires()
-      
+      setPartenaires(rows.map(mapPartenaire))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger les partenaires')
     } finally {
@@ -157,10 +179,16 @@ export default function AdminPartenaires() {
     setShowModal(true)
   }
 
-  const handleSavePartenaire = async (payload: Omit<Partenaire, 'id' | 'dateCreation'>) => {
+  const handleSavePartenaire = async (payload: Omit<Partenaire, 'id' | 'dateCreation'> & { logoFile?: File | null }) => {
     setLoading(true)
     setError(null)
     try {
+      let logoValue = payload.logo || ''
+      if (payload.logoFile) {
+        const uploadResult = await api.uploadPartenaireLogo(payload.logoFile)
+        logoValue = uploadResult.url
+      }
+
       if (editingPartner) {
         await api.updatePartenaire(editingPartner.id, {
           nom: payload.nom,
@@ -168,7 +196,7 @@ export default function AdminPartenaires() {
           niveau: payload.niveau,
           remise: payload.remise,
           engagement: payload.engagement,
-          logo: payload.logo,
+          logo: logoValue,
           actif: payload.actif ? 1 : 0,
         })
         setSuccessMessage('Partenaire mis à jour')
@@ -179,7 +207,7 @@ export default function AdminPartenaires() {
           niveau: payload.niveau,
           remise: payload.remise,
           engagement: payload.engagement,
-          logo: payload.logo,
+          logo: logoValue,
           actif: payload.actif ? 1 : 0,
         })
         setSuccessMessage('Partenaire créé')
@@ -249,8 +277,12 @@ export default function AdminPartenaires() {
             <div key={partner.id} className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl p-5 flex flex-col gap-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-brand-cyan/10 text-brand-cyan flex items-center justify-center">
-                    <Building2 className="w-5 h-5" />
+                  <div className="w-11 h-11 rounded-xl bg-brand-cyan/10 text-brand-cyan flex items-center justify-center overflow-hidden">
+                    {partner.logo ? (
+                      <img src={partner.logo.startsWith('http') ? partner.logo : `${(import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')}${partner.logo.startsWith('/') ? partner.logo : `/${partner.logo}`}` } alt={partner.nom} className="h-full w-full object-cover" />
+                    ) : (
+                      <Building2 className="w-5 h-5" />
+                    )}
                   </div>
                   <div>
                     <div className="text-lg font-semibold text-white">{partner.nom}</div>
