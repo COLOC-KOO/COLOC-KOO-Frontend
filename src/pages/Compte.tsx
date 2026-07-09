@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, Calendar, Bed, Building2, Image as ImageIcon } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, Calendar, Bed, Building2, Image as ImageIcon, Heart } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api, ApiAnnonce, Langue } from '../lib/api'
@@ -17,14 +17,6 @@ function normalizePhotos(value: unknown): string[] {
   }
   return []
 }
-
-const tabs = [
-  { id: 'profil', label: 'Profil', icon: User },
-  { id: 'dossier', label: 'Mes annonces', icon: FileText },
-  { id: 'notif', label: 'Notifications', icon: Bell },
-  { id: 'paiements', label: 'Messages', icon: MessageSquare },
-  { id: 'secu', label: 'Sécurité', icon: Lock }
-]
 
 function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user']; onSave: (payload: Record<string, unknown>) => Promise<unknown> }) {
   const [form, setForm] = useState({
@@ -642,6 +634,102 @@ function TabMesAnnonces() {
   )
 }
 
+function TabMesFavoris() {
+  const [favoris, setFavoris] = useState<Array<{
+    id: number
+    titre: string
+    description?: string | null
+    quartier?: string | null
+    ville?: string
+    prix_louer?: number | null
+    type_propriete?: string
+    photo?: string | null
+  }>>([])
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('colockoo_favoris')
+      if (!raw) {
+        setFavoris([])
+        return
+      }
+      const parsed = JSON.parse(raw)
+      setFavoris(Array.isArray(parsed) ? parsed : [])
+    } catch {
+      setFavoris([])
+    }
+  }, [])
+
+  const removeFavorite = (id: number) => {
+    const next = favoris.filter((item) => item.id !== id)
+    setFavoris(next)
+    try {
+      window.localStorage.setItem('colockoo_favoris', JSON.stringify(next))
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <div>
+      <h2 className="bebas text-2xl">Mes favoris</h2>
+      <p className="text-sm text-muted-foreground mt-1">
+        Retrouvez ici les annonces que vous avez enregistrées comme favorites.
+      </p>
+
+      {favoris.length === 0 ? (
+        <div className="mt-5 rounded-3xl border border-dashed border-border bg-white p-6 text-sm text-muted-foreground">
+          Aucun favori pour l’instant. Ajoutez des annonces depuis la liste pour les retrouver ici.
+        </div>
+      ) : (
+        <div className="mt-5 space-y-4">
+          {favoris.map((annonce) => (
+            <div key={annonce.id} className="rounded-3xl border border-border bg-white shadow-sm overflow-hidden">
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Link to={`/annonces/${annonce.id}`} className="sm:w-48 sm:h-36 shrink-0 overflow-hidden bg-muted">
+                  <img
+                    src={annonce.photo || FALLBACK_IMG}
+                    alt={annonce.titre}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                </Link>
+                <div className="flex-1 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <Link to={`/annonces/${annonce.id}`} className="text-lg font-semibold text-foreground hover:text-brand-cyan-dark">
+                        {annonce.titre}
+                      </Link>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        {[annonce.quartier, annonce.ville].filter(Boolean).join(', ')}
+                      </div>
+                    </div>
+                    <button
+                      title="Retirer des favoris"
+                      onClick={() => removeFavorite(annonce.id)}
+                      className="p-1.5 hover:bg-red-50 rounded text-red-500"
+                    >
+                      <Trash className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="mt-3 text-sm text-muted-foreground">
+                    {annonce.description || 'Aucune description disponible.'}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                    <span>Prix: {annonce.prix_louer ? `${annonce.prix_louer.toLocaleString('fr-FR')} Ar` : 'Indisponible'}</span>
+                    <span>Type: {annonce.type_propriete || '—'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function TabNotif() {
   const [prefs, setPrefs] = useState<Record<string, boolean>>({
     annonces: true,
@@ -1092,9 +1180,31 @@ function TabSecu() {
 }
 
 export default function Compte() {
-  const [tab, setTab] = useState('profil')
-  const { user, loading, logout, updateProfile, isAdmin } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
+  const { user, loading, logout, updateProfile, isAdmin } = useAuth()
+  const isColocataire = user?.poste === 'colocataire'
+  const tabs = [
+    { id: 'profil', label: 'Profil', icon: User },
+    { id: isColocataire ? 'favoris' : 'dossier', label: isColocataire ? 'Mes favoris' : 'Mes annonces', icon: isColocataire ? Heart : FileText },
+    { id: 'notif', label: 'Notifications', icon: Bell },
+    { id: 'paiements', label: 'Messages', icon: MessageSquare },
+    { id: 'secu', label: 'Sécurité', icon: Lock }
+  ]
+
+  const getInitialTab = () => {
+    const params = new URLSearchParams(location.search)
+    const requestedTab = params.get('tab')
+    if (requestedTab === 'paiements' || requestedTab === 'messages') return 'paiements'
+    if (requestedTab === 'favoris') return 'favoris'
+    if (requestedTab === 'dossier') return isColocataire ? 'favoris' : 'dossier'
+    return 'profil'
+  }
+  const [tab, setTab] = useState(getInitialTab)
+
+  useEffect(() => {
+    setTab(getInitialTab())
+  }, [location.search, isColocataire])
 
   const initials = (user?.prenom?.[0] || user?.name?.[0] || 'U').toUpperCase()
   const fullName = `${user?.prenom || ''} ${user?.nom || ''}`.trim() || user?.name || 'Utilisateur'
@@ -1136,7 +1246,10 @@ export default function Compte() {
             {tabs.map((t) => (
               <button
                 key={t.id}
-                onClick={() => setTab(t.id)}
+                onClick={() => {
+                  setTab(t.id)
+                  navigate(`/compte?tab=${t.id}`)
+                }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
                   tab === t.id ? 'bg-brand-cyan-light text-brand-cyan-dark' : 'hover:bg-muted text-foreground/70'
                 }`}
@@ -1149,6 +1262,7 @@ export default function Compte() {
           <div className="bg-card border border-border rounded-2xl p-6">
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
             {tab === 'dossier' && <TabMesAnnonces />}
+            {tab === 'favoris' && <TabMesFavoris />}
             {tab === 'notif' && <TabNotif />}
             {tab === 'paiements' && <TabMessages />}
             {tab === 'secu' && <TabSecu />}
