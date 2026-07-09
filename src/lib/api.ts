@@ -594,6 +594,17 @@ export const api = {
       body: JSON.stringify({ statut }),
     })
   },
+  decideCandidature(id: string | number, action: 'accept' | 'refuse' | 'discuss', message?: string) {
+    return request<{ message: string; conversationId?: number; equipeId?: number }>(`/candidatures/${id}/decision`, {
+      method: 'POST',
+      body: JSON.stringify({ action, message }),
+    })
+  },
+  launchColocation(annonceId: string | number) {
+    return request<{ message: string; equipeId?: number }>(`/candidatures/annonce/${annonceId}/launch`, {
+      method: 'POST',
+    })
+  },
 
   contact(payload: { nom: string; email: string; sujet: string; message: string }) {
     return request<{ id_message: number }>('/contact', {
