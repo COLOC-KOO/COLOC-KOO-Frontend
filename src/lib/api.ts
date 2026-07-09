@@ -660,6 +660,11 @@ export const api = {
   backofficeJournal() {
     return request<ApiJournalEntry[]>('/backoffice/journal')
   },
+  deleteBackofficeJournalEntry(id: string | number) {
+    return request<{ message: string }>(`/backoffice/journal/${id}`, {
+      method: 'DELETE',
+    })
+  },
   backofficeAdministration() {
     return request<BackofficeAdministration>('/backoffice/administration')
   },
