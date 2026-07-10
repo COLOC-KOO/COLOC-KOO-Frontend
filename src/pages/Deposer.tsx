@@ -3,7 +3,7 @@ import {
   ArrowLeft, ArrowRight, Camera, Check, DollarSign, House, Info, MapPin, 
   Upload, X, Image, Trash2, Sparkles, Shield, Clock, Users, Ruler, Bed, 
   Wifi, Coffee, Car, Dog, AlertCircle, Building2, CheckCircle2, 
-  Loader2, PartyPopper, Home, Key, Heart, Star, Award, Zap
+  Loader2, PartyPopper, Home, Key, Heart, Star, Award, Zap, Search
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { SiteLayout } from '../components/site/SiteLayout'
@@ -11,6 +11,9 @@ import { Button } from '../components/ui/Button'
 import { api, Ville } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
+
+// Ajout de l'image hero
+const heroImage = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80"
 
 const steps = [
   { n: 1, label: 'Type', icon: House, description: 'Type de bien', color: 'from-blue-400 to-cyan-400' },
@@ -246,8 +249,16 @@ export default function Deposer() {
 
   return (
     <SiteLayout>
-      <div className="relative bg-gradient-to-b from-brand-cyan-light/30 via-white/0 to-white/0 overflow-hidden">
-        <div className="relative max-w-5xl mx-auto px-6 py-12">
+      {/* Section Hero avec l'image de fond */}
+      <section className="relative">
+        <div className="absolute inset-0">
+          <img src={heroImage} alt="" className="w-full h-full object-cover" />
+          {/* Overlay plus foncé pour améliorer la lisibilité */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+          {/* Ajout d'un overlay de couleur pour harmoniser */}
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
+        </div>
+        <div className="relative max-w-5xl mx-auto px-6 py-12 text-white">
           {/* Header avec animation */}
           <motion.div 
             className="text-center mb-8"
@@ -256,25 +267,28 @@ export default function Deposer() {
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <motion.div 
-              className="inline-flex items-center gap-2 bg-brand-cyan/10 text-brand-cyan-dark px-4 py-1.5 rounded-full text-sm font-semibold mb-4"
+              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-semibold mb-4 border border-white/20 shadow-lg"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400 }}
             >
-             
+              <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
               Publication après validation admin
             </motion.div>
             <motion.h1 
-              className="bebas text-5xl md:text-7xl bg-gradient-to-r from-brand-cyan-dark via-brand-cyan to-brand-green bg-clip-text text-transparent"
+              className="bebas text-5xl md:text-7xl drop-shadow-2xl"
               animate={{ 
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                textShadow: ['0 0 20px rgba(255,255,255,0.2)', '0 0 40px rgba(255,255,255,0.1)', '0 0 20px rgba(255,255,255,0.2)'],
               }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              style={{ backgroundSize: '200% 200%' }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             >
-              Dépose ton annonce
+              <span className="text-white">Dépose ton</span>
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+                annonce
+              </span>
             </motion.h1>
             <motion.p 
-              className="text-muted-foreground mt-2 max-w-2xl mx-auto"
+              className="text-white/90 mt-2 max-w-2xl mx-auto text-lg bg-black/15 backdrop-blur-md p-4 rounded-xl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -283,7 +297,12 @@ export default function Deposer() {
               Notre équipe la validera dans les plus brefs délais.
             </motion.p>
           </motion.div>
+        </div>
+      </section>
 
+      {/* Formulaire */}
+      <div className="relative bg-gradient-to-b from-brand-cyan-light/30 via-white/0 to-white/0 overflow-hidden">
+        <div className="relative max-w-5xl mx-auto px-6 py-12">
           {!user && (
             <motion.div 
               className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800 flex items-center justify-between gap-3"
@@ -393,9 +412,9 @@ export default function Deposer() {
                     variants={itemVariants}
                   >
                     {[
-                      ['appartement', 'Appartement'],
-                      ['maison', 'Maison'],
-                      ['autre', 'Autre'],
+                      ['appartement', 'Appartement', '🏢'],
+                      ['maison', 'Maison', '🏠'],
+                      ['autre', 'Autre', '🏘️'],
                     ].map(([value, label, emoji]) => (
                       <label 
                         key={value} 

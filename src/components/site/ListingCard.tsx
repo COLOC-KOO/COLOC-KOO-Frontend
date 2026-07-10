@@ -121,7 +121,7 @@ export function ListingCard({ l }: { l: Listing }) {
   return (
     <Link
       to={`/annonces/${l.id}`}
-      className="group bg-card rounded-2xl overflow-hidden border border-border hover:shadow-xl hover:-translate-y-0.5 transition-all relative"
+      className="group bg-card rounded-2xl overflow-hidden border border-border hover:shadow-xl hover:-translate-y-0.5 transition-all relative block w-full"
     >
       {toastMessage ? (
         <div className="fixed top-5 right-5 z-50 max-w-sm rounded-xl border border-border bg-white px-4 py-3 text-sm font-medium text-foreground shadow-2xl">
