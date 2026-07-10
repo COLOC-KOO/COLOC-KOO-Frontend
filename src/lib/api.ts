@@ -68,6 +68,12 @@ export interface ApiAnnonce {
   date_publication?: string
 }
 
+export interface ApiFavoriResponse {
+  favori: boolean
+  alreadyExists: boolean
+  message: string
+}
+
 export interface ApiCandidature {
   id_candidature: number
   id_utilisateur: number
@@ -506,6 +512,19 @@ export const api = {
   },
   annonce(id: string | number) {
     return request<ApiAnnonce>(`/annonces/${id}`)
+  },
+  favoris() {
+    return request<ApiAnnonce[]>('/favoris')
+  },
+  addFavori(idAnnonce: string | number) {
+    return request<ApiFavoriResponse>(`/favoris/${idAnnonce}`, {
+      method: 'POST',
+    })
+  },
+  deleteFavori(idAnnonce: string | number) {
+    return request<{ favori: false }>(`/favoris/${idAnnonce}`, {
+      method: 'DELETE',
+    })
   },
   uploadAnnoncePhotos(formData: FormData) {
     return request<{ photos: string[] }>('/annonces/upload', {

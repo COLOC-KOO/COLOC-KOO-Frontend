@@ -31,7 +31,7 @@ const steps = [
   {
     n: "01",
     t: "Cherche dans ta ville",
-    d: "ndique ta ville ou région. La carte interactive affiche toutes les colocations disponibles.",
+    d: "Indique ta ville ou région. La carte interactive affiche toutes les colocations disponibles.",
     c: "bg-brand-cyan-light text-brand-cyan-dark",
   },
   {
@@ -300,48 +300,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <h2 className="bebas text-4xl">Explore par ville</h2>
-            <p className="text-muted-foreground mt-1">{summaryText}</p>
-          </div>
-          <Link
-            to="/annonces"
-            className="hidden md:inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
-          >
-            Toutes les annonces <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {cityCards.map((c) => (
-            <Link
-              key={c.name}
-              to="/annonces"
-              className="group relative aspect-square rounded-2xl overflow-hidden"
-            >
-              <img
-                src={c.image}
-                alt={c.name}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/80 to-transparent" />
-              <div className="absolute bottom-3 left-3 right-3 text-white">
-                <div className="bebas text-xl">{c.name}</div>
-                <div className="text-xs text-white/70">
-                  {c.count} annonce{c.count > 1 ? "s" : ""}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <section className="bg-white/60 border-y border-border py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-end justify-between mb-8">
@@ -411,6 +369,48 @@ export default function Home() {
               Aucune annonce validée n'est disponible pour le moment.
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-6 py-20">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <h2 className="bebas text-4xl">Explore par ville</h2>
+            <p className="text-muted-foreground mt-1">{summaryText}</p>
+          </div>
+          <Link
+            to="/annonces"
+            className="hidden md:inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
+          >
+            Toutes les annonces <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+        {error ? (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {cityCards.map((c) => (
+            <Link
+              key={c.name}
+              to="/annonces"
+              className="group relative aspect-square rounded-2xl overflow-hidden"
+            >
+              <img
+                src={c.image}
+                alt={c.name}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/80 to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3 text-white">
+                <div className="bebas text-xl">{c.name}</div>
+                <div className="text-xs text-white/70">
+                  {c.count} annonce{c.count > 1 ? "s" : ""}
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
