@@ -23,6 +23,7 @@ import { Button } from "../components/ui/Button";
 import { MapView } from "../components/MapView";
 import { api, annonceToListing, ApiPartenaire } from "../lib/api";
 import { CityInfo, Listing } from "../types";
+import { motion } from "framer-motion";
 
 const heroImage =
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80";
@@ -66,9 +67,9 @@ export default function Home() {
     if (typeof window !== "undefined") {
       if (window.innerWidth < 640) return 1;
       if (window.innerWidth < 1024) return 2;
-      return 4;
+      return 3;
     }
-    return 4;
+    return 3;
   };
 
   const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
@@ -145,15 +146,19 @@ export default function Home() {
     };
   }, []);
 
-  // Auto-play du carrousel
+  // Auto-play du carrousel - INFINI ET LENT
   useEffect(() => {
     if (isAutoPlaying && partners.length > 0) {
       autoPlayInterval.current = setInterval(() => {
         setCurrentPartnerIndex((prev) => {
           const maxIndex = Math.max(0, partners.length - itemsPerSlide);
-          return prev >= maxIndex ? 0 : prev + 1;
+          if (prev >= maxIndex) {
+            // Retour au début pour un défilement infini
+            return 0;
+          }
+          return prev + 0.5; // Défilement très lent (0.5 au lieu de 1)
         });
-      }, 4000);
+      }, 3000); // Intervalle plus long pour un défilement lent
     }
     return () => {
       if (autoPlayInterval.current) {
@@ -211,57 +216,52 @@ export default function Home() {
 
   return (
     <SiteLayout>
-      <section className="relative">
+      {/* Hero - Hauteur réduite */}
+      <section className="relative min-h-[400px] sm:min-h-[450px]">
         <div className="absolute inset-0">
           <img src={heroImage} alt="" className="w-full h-full object-cover" />
-          {/* Overlay plus foncé pour améliorer la lisibilité */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-          {/* Ajout d'un overlay de couleur pour harmoniser */}
           <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
         </div>
-        <div className="relative max-w-6xl mx-auto px-6 pt-24 pb-32 text-white">
+        <div className="relative max-w-6xl mx-auto px-6 pt-14 pb-16 text-white">
           <div className="max-w-2xl">
-            {/* Badge avec fond semi-transparent et blur */}
             <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-xs font-semibold text-white border border-white/20 shadow-lg">
               <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
               Colocation nouvelle génération
             </span>
 
-            {/* Titre avec ombre portée */}
-            <h1 className="bebas text-5xl md:text-7xl mt-5 leading-[0.95] drop-shadow-2xl">
+            <h1 className="bebas text-4xl md:text-6xl mt-4 leading-[0.95] drop-shadow-2xl">
               Trouve ta coloc,
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
-                partout à Madagascar
+                partout à 
+                <span className="text-[--brand-green-dark]"> Madagascar</span>
               </span>
             </h1>
 
-            {/* Description avec fond semi-transparent */}
-            <p className="mt-5 text-xl md:text-1xl font-bold text-white max-w-lg bg-black/15 backdrop-blur-md p-4 rounded-xl">
-              Chambres, appartements et maisons vérifiés — dossiers en ligne,
+            <p className="mt-4 text-lg md:text-xl font-bold text-white max-w-lg bg-black/15 backdrop-blur-md p-3 rounded-xl">
+              Chambres, appartements et maisons vérifiés dossiers en ligne,
               signature simplifiée.
             </p>
           </div>
 
-          {/* Boutons avec ombres et effets */}
-          <div className="mt-8 flex flex-wrap gap-3 max-w-3xl">
+          <div className="mt-6 flex flex-wrap gap-3 max-w-3xl">
             <Link to="/annonces">
-              <button className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-2xl hover:from-cyan-600 hover:to-blue-700 hover:shadow-2xl hover:scale-105 border border-white/20">
+              <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-2xl hover:from-cyan-600 hover:to-blue-700 hover:shadow-2xl hover:scale-105 border border-white/20">
                 <MapPin className="w-4 h-4" />
                 Je cherche un logement
               </button>
             </Link>
             <Link to="/deposer">
-              <button className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-2xl hover:from-green-600 hover:to-emerald-700 hover:shadow-2xl hover:scale-105 border border-white/20">
+              <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-2xl hover:from-green-600 hover:to-emerald-700 hover:shadow-2xl hover:scale-105 border border-white/20">
                 <KeyRound className="w-4 h-4" />
                 Je propose un logement
               </button>
             </Link>
           </div>
 
-          {/* Barre de recherche avec fond opaque */}
-          <div className="mt-6 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2 max-w-3xl border border-white/20">
-            <div className="flex-1 flex items-center gap-2 px-4 py-3">
+          <div className="mt-5 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2 max-w-3xl border border-white/20">
+            <div className="flex-1 flex items-center gap-2 px-4 py-2.5">
               <MapPin className="w-5 h-5 text-brand-cyan" />
               <input
                 placeholder="Ville, quartier..."
@@ -269,7 +269,7 @@ export default function Home() {
               />
             </div>
             <div className="hidden md:block w-px bg-gray-300 my-2" />
-            <select className="px-4 py-3 bg-transparent text-gray-800 text-sm outline-none cursor-pointer">
+            <select className="px-4 py-2.5 bg-transparent text-gray-800 text-sm outline-none cursor-pointer">
               <option>Tous types</option>
               <option>Chambre</option>
               <option>Appartement</option>
@@ -282,17 +282,16 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Statistiques avec fond semi-transparent */}
-          <div className="mt-8 flex flex-wrap gap-6 text-sm">
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
+          <div className="mt-5 flex flex-wrap gap-4 text-sm">
+            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <Shield className="w-4 h-4 text-green-400" />
               <span className="text-white">Annonces vérifiées</span>
             </div>
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
+            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <Users className="w-4 h-4 text-green-400" />
               <span className="text-white">1 400+ colocataires</span>
             </div>
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
+            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <Star className="w-4 h-4 text-yellow-400" />
               <span className="text-white">4,8/5 satisfaction</span>
             </div>
@@ -300,12 +299,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white/60 border-y border-border py-20">
+      {/* Annonces vedettes - Espace réduit */}
+      <section className="bg-white/60 border-y border-border py-10">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-end justify-between mb-8">
+          <div className="flex items-end justify-between mb-5">
             <div>
-              <h2 className="bebas text-4xl">Annonces vedettes</h2>
-              <p className="text-muted-foreground mt-1">
+              <h1 className="bebas text-3xl">
+                <span className="text-[--brand-cyan-dark]">Annonces </span>
+                <span className="text-[--brand-green-dark]">vedettes</span>
+              </h1>
+              <p className="text-muted-foreground text-sm mt-0.5">
                 Sélection de la semaine, vérifiée par notre équipe
               </p>
             </div>
@@ -313,7 +316,7 @@ export default function Home() {
             <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setViewMode("list")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                   viewMode === "list"
                     ? "bg-white shadow-sm text-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -324,7 +327,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setViewMode("map")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                   viewMode === "map"
                     ? "bg-white shadow-sm text-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -337,19 +340,19 @@ export default function Home() {
           </div>
 
           {loading ? (
-            <div className="text-center text-muted-foreground py-10">
+            <div className="text-center text-muted-foreground py-8">
               Chargement des annonces validées...
             </div>
           ) : featuredListings.length > 0 ? (
             viewMode === "list" ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {featuredListings.map((l) => (
                   <ListingCard key={l.id} l={l} />
                 ))}
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="h-[500px] lg:h-[600px] rounded-xl overflow-hidden bg-gray-50">
+                <div className="h-[450px] lg:h-[500px] rounded-xl overflow-hidden bg-gray-50">
                   <MapView
                     listings={featuredListings}
                     onListingClick={(listing) => {
@@ -357,7 +360,7 @@ export default function Home() {
                     }}
                   />
                 </div>
-                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                   {featuredListings.map((l) => (
                     <ListingCard key={l.id} l={l} />
                   ))}
@@ -372,11 +375,17 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <div className="flex items-end justify-between mb-8">
+      {/* Explore par ville - Sans image, fond bleu */}
+      <section className="max-w-7xl mx-auto px-6 py-10">
+        <div className="flex items-end justify-between mb-5">
           <div>
-            <h2 className="bebas text-4xl">Explore par ville</h2>
-            <p className="text-muted-foreground mt-1">{summaryText}</p>
+            <h1 className="bebas text-3xl">
+              <span className="text-[--brand-cyan-dark]">Explore par </span>
+              <span className="text-[--brand-green-dark]">ville</span>
+            </h1>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              {summaryText}
+            </p>
           </div>
           <Link
             to="/annonces"
@@ -390,60 +399,91 @@ export default function Home() {
             {error}
           </div>
         ) : null}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {cityCards.map((c) => (
             <Link
               key={c.name}
               to="/annonces"
-              className="group relative aspect-square rounded-2xl overflow-hidden"
+              className="group relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-brand-cyan-dark to-brand-cyan hover:scale-105 transition-transform duration-300"
             >
-              <img
-                src={c.image}
-                alt={c.name}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/80 to-transparent" />
-              <div className="absolute bottom-3 left-3 right-3 text-white">
-                <div className="bebas text-xl">{c.name}</div>
-                <div className="text-xs text-white/70">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                <div
+                  className="bebas text-2xl"
+                  style={{ color: "oklch(78% 0.16 130)" }}
+                >
+                  {c.name}
+                </div>
+                <div className="text-sm text-white/80 mt-1">
                   {c.count} annonce{c.count > 1 ? "s" : ""}
                 </div>
+                <div className="mt-3 w-8 h-0.5 bg-white/30 rounded-full" />
+                <div className="mt-2 text-xs text-white/60">
+                  Voir les annonces
+                </div>
+              </div>
+              {/* Effet de brillance au survol */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
               </div>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 py-24">
-        <div className="text-center mb-12">
-          <h2 className="bebas text-4xl">Comment ça marche</h2>
-          <p className="text-muted-foreground mt-2">
+      {/* Comment ça marche - AVEC ANIMATIONS ET ZOOM */}
+      <section className="max-w-6xl mx-auto px-6 py-10">
+        <div className="text-center mb-6">
+          <h1 className="bebas text-3xl">
+            <span className="text-[--brand-cyan-dark]">Comment ça </span>
+            <span className="text-[--brand-green-dark]">marche</span>
+          </h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
             3 étapes pour rejoindre ta coloc
           </p>
         </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          {steps.map((s) => (
-            <div
+        <div className="grid md:grid-cols-3 gap-5">
+          {steps.map((s, index) => (
+            <motion.div
               key={s.n}
-              className="bg-card border border-border rounded-2xl p-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.15, duration: 0.5 }}
+              whileHover={{
+                scale: 1.05,
+                boxShadow: "0 20px 40px rgba(0,0,0,0.12)",
+                transition: { duration: 0.3 },
+              }}
+              className="bg-card border border-border rounded-2xl p-6 transition-all duration-300 cursor-pointer hover:border-brand-cyan/30"
             >
-              <div
-                className={`inline-block bebas text-3xl px-4 py-1 rounded-full ${s.c}`}
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={{ duration: 0.3 }}
+                className={`inline-block bebas text-2xl px-3 py-0.5 rounded-full ${s.c}`}
               >
                 {s.n}
-              </div>
-              <h3 className="mt-5 text-xl font-semibold">{s.t}</h3>
+              </motion.div>
+              <h3 className="mt-4 text-lg font-semibold">{s.t}</h3>
               <p className="mt-2 text-muted-foreground text-sm">{s.d}</p>
-            </div>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "0%" }}
+                whileHover={{ width: "100%" }}
+                transition={{ duration: 0.4 }}
+                className="h-0.5 bg-gradient-to-r from-brand-cyan to-brand-green mt-4 rounded-full"
+              />
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Section Partenaires - Version moderne et compacte */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
-        <div className="flex items-end justify-between mb-6">
+      {/* Partenaires - Carrousel infini lent avec cartes agrandies */}
+      <section className="max-w-7xl mx-auto px-6 py-10">
+        <div className="flex items-end justify-between mb-4">
           <div>
-            <h2 className="bebas text-3xl">Nos Partenaires</h2>
+            <h2 className="bebas text-3xl">
+              <span className="text-[--brand-cyan-dark]">Nos </span>
+              <span className="text-[--brand-green-dark]">Partenaires</span>
+            </h2>
             <p className="text-sm text-muted-foreground mt-0.5">
               Ils nous font confiance
             </p>
@@ -457,7 +497,7 @@ export default function Home() {
         </div>
 
         {partners.length === 0 ? (
-          <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
             {loading ? "Chargement..." : "Aucun partenaire disponible"}
           </div>
         ) : (
@@ -466,24 +506,24 @@ export default function Home() {
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            {/* Carrousel Container */}
             <div className="overflow-hidden rounded-2xl">
               <div
                 ref={carouselRef}
-                className="flex transition-transform duration-700 ease-in-out"
+                className="flex transition-transform duration-[8000ms] ease-linear"
                 style={{
-                  transform: `translateX(-${currentPartnerIndex * (100 / itemsPerSlide)}%)`,
+                  transform: `translateX(-${Math.floor(currentPartnerIndex) * (100 / itemsPerSlide)}%)`,
                 }}
               >
-                {partners.map((partner) => (
+                {/* Partners avec duplication pour effet infini */}
+                {[...partners, ...partners, ...partners].map((partner, idx) => (
                   <div
-                    key={partner.id_partenaire}
-                    className="flex-shrink-0 px-2"
+                    key={`${partner.id_partenaire}-${idx}`}
+                    className="flex-shrink-0 px-3"
                     style={{ width: `${100 / itemsPerSlide}%` }}
                   >
-                    <div className="group relative rounded-2xl border border-border/60 bg-white p-5 transition-all duration-300 hover:shadow-lg hover:border-brand-cyan/30 hover:-translate-y-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-cyan-light/40 to-brand-cyan/10 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="group relative rounded-2xl border border-border/60 bg-white p-6 transition-all duration-300 hover:shadow-xl hover:border-brand-cyan/30 hover:-translate-y-2 min-h-[180px] flex flex-col justify-between">
+                      <div className="flex items-center gap-4 mb-3">
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-cyan-light/40 to-brand-cyan/10 flex items-center justify-center overflow-hidden shrink-0">
                           {partner.logo ? (
                             <img
                               src={partner.logo}
@@ -500,37 +540,37 @@ export default function Home() {
                             />
                           ) : null}
                           <div
-                            className="hidden h-full w-full items-center justify-center text-xl font-bold text-brand-cyan-dark"
+                            className="hidden h-full w-full items-center justify-center text-2xl font-bold text-brand-cyan-dark"
                             data-fallback
                           >
                             {partner.nom.charAt(0)}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold truncate">
+                          <div className="text-base font-semibold truncate">
                             {partner.nom}
                           </div>
-                          <div className="text-xs text-muted-foreground truncate">
+                          <div className="text-sm text-muted-foreground truncate">
                             {partner.secteur || "Partenaire"}
                           </div>
                         </div>
                       </div>
 
                       {partner.remise && (
-                        <div className="inline-flex items-center gap-1 rounded-full bg-brand-green-light/30 px-2.5 py-0.5 text-xs font-medium text-brand-green-dark">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-brand-green-light/30 px-3 py-1 text-xs font-medium text-brand-green-dark w-fit">
                           <Award className="w-3 h-3" />
                           {partner.remise}
                         </div>
                       )}
 
                       {partner.engagement && (
-                        <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
                           {partner.engagement}
                         </p>
                       )}
 
                       <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] font-medium text-brand-cyan-dark bg-brand-cyan-light/50 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-medium text-brand-cyan-dark bg-brand-cyan-light/50 px-2.5 py-0.5 rounded-full">
                           {partner.niveau || "Partenaire"}
                         </span>
                       </div>
@@ -540,7 +580,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Contrôles */}
             {partners.length > itemsPerSlide && (
               <>
                 <button
@@ -560,58 +599,60 @@ export default function Home() {
               </>
             )}
 
-            {/* Indicateurs */}
             {totalSlides > 1 && (
               <div className="flex justify-center gap-1.5 mt-4">
-                {Array.from({ length: totalSlides }).map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => goToSlide(index)}
-                    className={`transition-all duration-300 rounded-full ${
-                      index === currentPartnerIndex
-                        ? "w-6 h-1.5 bg-brand-cyan"
-                        : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
-                    }`}
-                    aria-label={`Aller à la slide ${index + 1}`}
-                  />
-                ))}
+                {Array.from({ length: Math.min(totalSlides, 10) }).map(
+                  (_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => goToSlide(index)}
+                      className={`transition-all duration-300 rounded-full ${
+                        index === Math.floor(currentPartnerIndex)
+                          ? "w-6 h-1.5 bg-brand-cyan"
+                          : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
+                      }`}
+                      aria-label={`Aller à la slide ${index + 1}`}
+                    />
+                  ),
+                )}
               </div>
             )}
-
-            {/* Auto-play status */}
-            <div className="text-center mt-2">
-              <span className="text-[10px] text-muted-foreground/60 flex items-center justify-center gap-1.5">
-                <span
-                  className={`inline-block w-1.5 h-1.5 rounded-full ${isAutoPlaying ? "bg-green-500 animate-pulse" : "bg-gray-400"}`}
-                />
-                {isAutoPlaying ? "" : ""}
-              </span>
-            </div>
           </div>
         )}
       </section>
 
-      <section className="max-w-6xl mx-auto px-6 pb-24">
-        <div className="rounded-3xl bg-brand-dark text-white p-10 md:p-16 grid md:grid-cols-2 gap-10 items-center overflow-hidden relative">
-          <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-brand-cyan/20 blur-3xl" />
-          <div className="relative">
-            <h2 className="bebas text-4xl md:text-5xl">
+      {/* CTA - Coloré en bleu brand-cyan-dark */}
+      <section className="max-w-6xl mx-auto px-6 pb-6">
+        <div
+          className="rounded-2xl p-8 md:p-12 grid md:grid-cols-2 gap-8 items-center overflow-hidden relative"
+          style={{
+            backgroundColor: "oklch(66% 0.11 210)",
+          }}
+        >
+          <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
+          <div className="relative text-white">
+            <h2 className="bebas text-3xl md:text-4xl">
               Propriétaire ou agence ?
             </h2>
-            <p className="mt-3 text-white/70">
+            <p className="mt-2 text-white/80 text-sm">
               Publie ton annonce et gère tes colocataires en toute simplicité.
             </p>
           </div>
-          <div className="relative flex md:justify-end gap-3">
+          <div className="relative flex md:justify-end gap-3 flex-wrap">
             <Link to="/deposer">
-              <Button className="bg-brand-green text-brand-dark hover:bg-brand-green-dark hover:text-white">
+              <Button
+                className="text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                style={{
+                  backgroundColor: "oklch(68% 0.17 130)",
+                }}
+              >
                 Déposer une annonce
               </Button>
             </Link>
             <Link to="/partenaires">
               <Button
                 variant="outline"
-                className="border-white/30 text-white bg-transparent hover:bg-white/10"
+                className="border-white/30 text-white bg-white/10 hover:bg-white/20 transition-all duration-300"
               >
                 Devenir partenaire
               </Button>

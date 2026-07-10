@@ -13,6 +13,10 @@ import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { useConfig } from '../lib/config'
+import { motion, AnimatePresence } from 'framer-motion'
+
+// Image hero
+const heroImage = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1600&q=80"
 
 // Types
 interface PartnerTier {
@@ -123,74 +127,59 @@ const t = {
 }
 
 // =============================================
-// COMPOSANT HERO - FULLY RESPONSIVE
+// COMPOSANT HERO - AVEC IMAGE DE FOND
+// =============================================
 const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }> = ({ 
   onContactClick, onStatutsClick 
 }) => {
-  // Image de fond
-  const bgImage = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1600&q=80'
-
   return (
-    <section className="relative overflow-hidden bg-[#0b1628] border-b border-white/10 min-h-[500px] sm:min-h-[600px] flex items-center">
+    <section className="relative overflow-hidden min-h-[400px] sm:min-h-[450px] flex items-center">
       {/* Image de fond */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${bgImage})` }}
-      />
-      
-      {/* Overlay sombre */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0b1628]/90 via-[#16324f]/80 to-[#214c70]/80" />
-      
-      {/* ✅ REFLET LUMINEUX DIAGONAL PUR - sans masque sur les éléments clés */}
-      <div className="absolute inset-0 pointer-events-none shimmer-container">
-        {/* Premier rayon lumineux diagonal */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-[shimmer_3s_infinite] skew-x-12" />
-        {/* Deuxième rayon lumineux décalé pour un effet plus naturel */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-[200%] animate-[shimmer_4s_infinite_1.5s] skew-x-12" />
+      <div className="absolute inset-0">
+        <img src={heroImage} alt="" className="w-full h-full object-cover" />
+        {/* Overlay plus foncé */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/85 via-black/70 to-black/60" />
+        {/* Overlay de couleur pour harmoniser */}
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
       </div>
 
-      <div className="relative z-10 max-w-[900px] mx-auto px-4 sm:px-6 py-10 sm:py-12 md:py-16 text-white">
+      <div className="relative z-10 max-w-[900px] mx-auto px-4 sm:px-6 py-8 sm:py-10 md:py-12 text-white w-full">
         <div className="text-center">
-          {/* Badge - SANS EFFET SHIMMER (classe no-shimmer) */}
-          <div className="relative inline-flex items-center gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 text-[#b7df58] text-[10px] sm:text-xs mb-3 sm:mb-5 overflow-hidden no-shimmer">
-            <Gift className="w-3 h-3 sm:w-3.5 sm:h-3.5 relative z-10" />
-            <span className="relative z-10">{t.heroBadge}</span>
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-yellow-300 text-[10px] sm:text-xs mb-2 sm:mb-3 shadow-lg">
+            <Gift className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span>{t.heroBadge}</span>
           </div>
 
-          {/* Mission - SANS EFFET SHIMMER */}
-          <p className="font-['Bebas_Neue'] text-xl sm:text-2xl md:text-3xl text-white/90 leading-tight mb-1 sm:mb-2 px-2 drop-shadow-lg no-shimmer">
+          {/* Mission */}
+          <p className="font-['Bebas_Neue'] text-lg sm:text-xl md:text-2xl text-white/90 leading-tight mb-1 px-2 drop-shadow-lg">
             {t.heroMission}
           </p>
 
-          {/* Titre - SANS EFFET SHIMMER */}
-          <div className="relative inline-block no-shimmer">
-            <h1 className="font-['Bebas_Neue'] text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-none tracking-wide bg-gradient-to-r from-white to-[#99CC33] bg-clip-text text-transparent relative z-10 px-2 drop-shadow-lg">
-              {t.heroTitle}
-            </h1>
-          </div>
-
-          {/* Description - SANS EFFET SHIMMER */}
-          <p className="max-w-xl mx-auto text-xs sm:text-sm md:text-base text-white/80 leading-relaxed mb-5 sm:mb-7 px-3 backdrop-blur-sm bg-black/10 rounded-xl py-2 no-shimmer">
-            {t.heroDesc}
-          </p>
-
+          {/* Titre */}
+          <h1 className="font-['Bebas_Neue'] text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-none tracking-wide drop-shadow-2xl">
+            <span className="text-white">{t.heroTitle}</span>
+          </h1>
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 px-3">
             <button
               onClick={onContactClick}
-              onContextMenu={(e) => e.preventDefault()}
-              className="relative flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg bg-[#99CC33] text-[#102033] text-xs sm:text-sm font-semibold shadow-lg shadow-[#99CC33]/30 transition-all hover:-translate-y-0.5 overflow-hidden group"
+              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-white text-xs sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+              style={{ 
+                backgroundColor: 'oklch(66% 0.11 210)',
+                boxShadow: '0 8px 25px rgba(0, 150, 200, 0.35)'
+              }}
             >
-              {/* Effet shimmer UNIQUEMENT sur le bouton au hover */}
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
-              <Handshake className="w-3.5 h-3.5 sm:w-4 sm:h-4 relative z-10" />
-              <span className="relative z-10">{t.heroCta}</span>
+              <Handshake className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              {t.heroCta}
             </button>
-
             <button
               onClick={onStatutsClick}
-              onContextMenu={(e) => e.preventDefault()}
-              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg border border-white/30 bg-white/10 text-white text-xs sm:text-sm font-semibold backdrop-blur-md transition-all hover:bg-white/20 hover:border-white/50 no-shimmer"
+              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-white text-xs sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+              style={{ 
+                backgroundColor: 'oklch(78% 0.16 130)',
+                boxShadow: '0 8px 25px rgba(80, 200, 80, 0.35)'
+              }}
             >
               <ListChecks className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {t.heroCta2}
@@ -198,66 +187,11 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
           </div>
         </div>
       </div>
-
-      {/* Styles pour un reflet lumineux pur et ciblé */}
-      <style>{`
-        /* Animation du reflet lumineux */
-        @keyframes shimmer {
-          0% { transform: translateX(-100%) skewX(-12deg); }
-          100% { transform: translateX(200%) skewX(-12deg); }
-        }
-
-        /* Masquer le shimmer sur les éléments .no-shimmer */
-        .shimmer-container {
-          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Crect width='100%25' height='100%25' fill='white' /%3E%3C/svg%3E");
-          -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Crect width='100%25' height='100%25' fill='white' /%3E%3C/svg%3E");
-          mask-composite: add;
-          -webkit-mask-composite: source-over;
-        }
-
-        /* Masquer le shimmer sur les éléments .no-shimmer en utilisant mask-image avec des trous */
-        .shimmer-container .no-shimmer {
-          /* Forcer le rendu au-dessus du shimmer */
-          position: relative;
-          z-index: 2;
-        }
-
-        /* Approche alternative : utiliser un pseudo-élément pour cacher le shimmer sous les éléments .no-shimmer */
-        .shimmer-container::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: transparent;
-          pointer-events: none;
-          /* Créer des "trous" dans le masque aux emplacements des éléments no-shimmer */
-          mask-image: radial-gradient(ellipse 300px 80px at 50% 15%, transparent 0%, transparent 60%, black 61%, black 100%),
-                      radial-gradient(ellipse 500px 100px at 50% 30%, transparent 0%, transparent 70%, black 71%, black 100%),
-                      radial-gradient(ellipse 200px 40px at 50% 65%, transparent 0%, transparent 60%, black 61%, black 100%);
-          -webkit-mask-image: radial-gradient(ellipse 300px 80px at 50% 15%, transparent 0%, transparent 60%, black 61%, black 100%),
-                              radial-gradient(ellipse 500px 100px at 50% 30%, transparent 0%, transparent 70%, black 71%, black 100%),
-                              radial-gradient(ellipse 200px 40px at 50% 65%, transparent 0%, transparent 60%, black 61%, black 100%);
-          mask-composite: exclude;
-          -webkit-mask-composite: xor;
-        }
-
-        /* Version simplifiée : appliquer un no-shimmer via z-index */
-        .no-shimmer {
-          position: relative;
-          z-index: 5 !important;
-          isolation: isolate;
-        }
-
-        /* S'assurer que le conteneur shimmer n'affecte pas les éléments no-shimmer */
-        .shimmer-container > * {
-          pointer-events: none;
-        }
-      `}</style>
     </section>
   )
 }
-
 // =============================================
-// COMPOSANT POURQUOI - FULLY RESPONSIVE
+// COMPOSANT POURQUOI - CARTES BLANCHES AVEC ZOOM ET DÉGRADÉ AU HOVER
 // =============================================
 const WhySection: React.FC = () => {
   const cards: WhyCard[] = [
@@ -288,40 +222,60 @@ const WhySection: React.FC = () => {
   ]
 
   return (
-    <section className="py-8 sm:py-12 md:py-16 px-4 sm:px-6">
+    <section className="py-6 sm:py-8 md:py-10 px-4 sm:px-6 bg-gradient-to-b from-white to-[#f5f7f2]">
       <div className="max-w-[1120px] mx-auto">
-        <div className="flex flex-col items-center gap-3 mb-2">
-        <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] text-center">
-          {t.whyTitle}
-        </h2>
-      </div>
-        <p className="text-xs sm:text-sm md:text-base text-[#666] leading-relaxed max-w-3xlmx-auto text-center mb-4 sm:mb-6">
+        <div className="flex flex-col items-center gap-2 mb-2">
+          <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] text-center">
+            {t.whyTitle}
+          </h2>
+        </div>
+        <p className="text-xs sm:text-sm md:text-base text-[#666] leading-relaxed max-w-3xl mx-auto text-center mb-3 sm:mb-4">
           {t.whySub}
-        </p>
-        <p className="font-['Bebas_Neue'] text-xl sm:text-2xl md:text-3xl text-[#99CC33] text-center my-2 mb-4 sm:mb-6">
-          {t.whyReasons}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {cards.map((card, idx) => (
-            <div 
+            <motion.div 
               key={idx} 
-              className={`group bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 text-center transition-all duration-200 hover:shadow-xl hover:-translate-y-1 ${
-                idx % 2 === 1 ? 'hover:border-[#46BDD6]' : 'hover:border-[#99CC33]'
-              }`}
+              className="group relative bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 text-center transition-all duration-500 cursor-pointer overflow-hidden shadow-sm hover:shadow-2xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1, duration: 0.5 }}
+              whileHover={{ 
+                scale: 1.05,
+                transition: { duration: 0.3 }
+              }}
             >
-              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 transition-all duration-200 group-hover:scale-110 ${
-                idx % 2 === 1 ? 'bg-[#E8F7FA]' : 'bg-[#F4F8E8]'
-              }`}>
-                <span className={idx % 2 === 1 ? 'text-[#46BDD6]' : 'text-[#99CC33]'}>
-                  {card.icon}
-                </span>
+              {/* Fond dégradé qui apparaît au hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#99CC33] to-[#46BDD6] opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
+              
+              {/* Effet de brillance au hover */}
+              <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
               </div>
-              <h3 className="text-sm sm:text-base font-semibold text-[#2C2C2C] mb-1 sm:mb-2">{card.title}</h3>
-              <p className="text-xs sm:text-sm text-[#666] leading-relaxed">{card.desc}</p>
-            </div>
+
+              {/* Contenu de la carte */}
+              <div className="relative z-10">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 transition-all duration-500 bg-[#F4F8E8] group-hover:bg-white/20 group-hover:scale-110">
+                  <span className="text-[#99CC33] group-hover:text-white transition-colors duration-500">
+                    {card.icon}
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-base font-semibold text-[#2C2C2C] group-hover:text-white transition-colors duration-500 mb-1 sm:mb-2">
+                  {card.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-[#666] group-hover:text-white/90 transition-colors duration-500 leading-relaxed">
+                  {card.desc}
+                </p>
+                {card.stat && (
+                  <div className="mt-2 text-lg sm:text-xl font-bold text-[#46BDD6] group-hover:text-white/80 transition-colors duration-500">
+                    {card.stat}
+                  </div>
+                )}
+              </div>
+            </motion.div>
           ))}
         </div>
-        <div className="mt-4 sm:mt-6 bg-[#F4F8E8] border border-dashed border-[#99CC33]/60 rounded-2xl px-4 sm:px-5 py-3 sm:py-4 flex items-start sm:items-center gap-3 sm:gap-4">
+        <div className="mt-3 sm:mt-4 bg-[#F4F8E8] border border-dashed border-[#99CC33]/60 rounded-2xl px-4 sm:px-5 py-2.5 sm:py-3 flex items-start sm:items-center gap-3 sm:gap-4">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#99CC33]/20 flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0">
             <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-[#99CC33]" />
           </div>
@@ -333,9 +287,9 @@ const WhySection: React.FC = () => {
 }
 
 // =============================================
-// COMPOSANT TIER CARD - FULLY RESPONSIVE
+// COMPOSANT TIER CARD AMÉLIORÉ AVEC DÉGRADÉ
 // =============================================
-const TierCard: React.FC<{ tier: PartnerTier }> = ({ tier }) => {
+const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index }) => {
   const keyMap: Record<string, string> = {
     'Logo + page « Partenaires »': t.b1,
     'Présence dans 1 newsletter / an de Sarintany\'COLOC': t.b2,
@@ -381,47 +335,123 @@ const TierCard: React.FC<{ tier: PartnerTier }> = ({ tier }) => {
   })
 
   const getBadgeColor = (tierClass: string) => {
-    if (tierClass.includes('bronze')) return 'border-[#c8843c]'
-    if (tierClass.includes('argent')) return 'border-[#9aa3ad]'
-    if (tierClass.includes('or')) return 'border-[#d4af37]'
-    if (tierClass.includes('platine')) return 'border-[#5a8aa0]'
-    if (tierClass.includes('green')) return 'border-[#99CC33]'
-    if (tierClass.includes('cy')) return 'border-[#46BDD6]'
-    return 'border-[#e8e8e8]'
+    if (tierClass.includes('bronze')) return 'border-[#c8843c] text-[#c8843c] bg-[#c8843c]/10'
+    if (tierClass.includes('argent')) return 'border-[#9aa3ad] text-[#9aa3ad] bg-[#9aa3ad]/10'
+    if (tierClass.includes('or')) return 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/10'
+    if (tierClass.includes('platine')) return 'border-[#5a8aa0] text-[#5a8aa0] bg-[#5a8aa0]/10'
+    if (tierClass.includes('green')) return 'border-[#99CC33] text-[#99CC33] bg-[#99CC33]/10'
+    if (tierClass.includes('cy')) return 'border-[#46BDD6] text-[#46BDD6] bg-[#46BDD6]/10'
+    return 'border-[#e8e8e8] text-[#666] bg-[#f5f5f5]'
+  }
+
+  const getTierBorderColor = (tierClass: string) => {
+    if (tierClass.includes('bronze')) return 'from-[#c8843c]/30 to-[#c8843c]/10'
+    if (tierClass.includes('argent')) return 'from-[#9aa3ad]/30 to-[#9aa3ad]/10'
+    if (tierClass.includes('or')) return 'from-[#d4af37]/30 to-[#d4af37]/10'
+    if (tierClass.includes('platine')) return 'from-[#5a8aa0]/30 to-[#5a8aa0]/10'
+    if (tierClass.includes('green')) return 'from-[#99CC33]/30 to-[#99CC33]/10'
+    if (tierClass.includes('cy')) return 'from-[#46BDD6]/30 to-[#46BDD6]/10'
+    return 'from-gray-200 to-gray-100'
   }
 
   return (
-    <div className={`group bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-5 flex flex-col transition-all duration-200 hover:shadow-xl hover:-translate-y-1 border-t-[4px] ${tier.tierClass}`}>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-1">
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {tier.icon && (
-            <span className="text-[#99CC33]">{tier.icon}</span>
-          )}
-          <span className="font-['Bebas_Neue'] text-lg sm:text-xl md:text-2xl text-[#2C2C2C]">{tier.name}</span>
-        </div>
-        {tier.launch && (
-          <span className={`text-[8px] sm:text-[10px] font-bold text-[#5a7a1a] bg-[#F4F8E8] border ${getBadgeColor(tier.tierClass)} rounded-full px-2 sm:px-3 py-0.5 sm:py-1 whitespace-nowrap`}>
-            {tier.launch}
-          </span>
-        )}
+    <motion.div 
+      className="group relative bg-gradient-to-br from-[#99CC33] to-[#46BDD6] rounded-2xl p-[2px] shadow-lg hover:shadow-2xl transition-all duration-500"
+      initial={{ opacity: 0, y: 50, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ 
+        delay: index * 0.15, 
+        duration: 0.6,
+        type: "spring",
+        stiffness: 100,
+        damping: 15
+      }}
+      whileHover={{ 
+        scale: 1.03,
+        rotateY: 2,
+        rotateX: 2,
+        transition: { duration: 0.3 }
+      }}
+    >
+      {/* Effet de brillance au survol */}
+      <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
       </div>
-      <p className="text-xs sm:text-sm text-[#46BDD6] italic leading-relaxed my-1 sm:my-2 mb-2 sm:mb-3">{tier.arg}</p>
-      <ul className="list-none flex flex-col gap-1.5 sm:gap-2 p-0 m-0 flex-1">
-        {benefits.map((b, idx) => (
-          <li key={idx} className={`text-xs sm:text-sm leading-relaxed flex gap-2 sm:gap-2.5 items-start ${b.isHead ? 'font-semibold text-[#2C2C2C]' : 'text-[#555]'}`}>
-            <span className={`flex-shrink-0 mt-0.5 ${b.isHead ? 'text-[#999]' : 'text-[#99CC33]'}`}>
-              {b.isHead ? <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <Check className="w-3 h-3 sm:w-4 sm:h-4" />}
+
+      {/* Contenu de la carte */}
+      <div className="relative bg-white rounded-2xl p-4 sm:p-5 flex flex-col h-full transition-all duration-300">
+        {/* Bandeau de couleur en haut */}
+        <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-gradient-to-r ${getTierBorderColor(tier.tierClass)}`} />
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-1 pt-1">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {tier.icon && (
+              <span className="text-[#99CC33] group-hover:scale-110 transition-transform duration-300">
+                {tier.icon}
+              </span>
+            )}
+            <span className="font-['Bebas_Neue'] text-lg sm:text-xl md:text-2xl text-[#2C2C2C] group-hover:text-[#46BDD6] transition-colors duration-300">
+              {tier.name}
             </span>
-            <span>{b.text}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+          </div>
+          {tier.launch && (
+            <span className={`text-[8px] sm:text-[10px] font-bold border rounded-full px-2 sm:px-3 py-0.5 sm:py-1 whitespace-nowrap ${getBadgeColor(tier.tierClass)}`}>
+              {tier.launch}
+            </span>
+          )}
+        </div>
+
+        <p className="text-xs sm:text-sm text-[#46BDD6] italic leading-relaxed my-1 sm:my-2 mb-2 sm:mb-3">
+          {tier.arg}
+        </p>
+
+        <ul className="list-none flex flex-col gap-1.5 sm:gap-2 p-0 m-0 flex-1">
+          {benefits.map((b, idx) => (
+            <motion.li 
+              key={idx} 
+              className={`text-xs sm:text-sm leading-relaxed flex gap-2 sm:gap-2.5 items-start ${b.isHead ? 'font-semibold text-[#2C2C2C]' : 'text-[#555]'}`}
+              initial={{ opacity: 0, x: -15 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ 
+                delay: index * 0.15 + idx * 0.06, 
+                duration: 0.4,
+                type: "spring",
+                stiffness: 200
+              }}
+            >
+              <span className={`flex-shrink-0 mt-0.5 transition-transform duration-300 group-hover:scale-110 ${b.isHead ? 'text-[#999]' : 'text-[#99CC33]'}`}>
+                {b.isHead ? <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <Check className="w-3 h-3 sm:w-4 sm:h-4" />}
+              </span>
+              <span>{b.text}</span>
+            </motion.li>
+          ))}
+        </ul>
+
+        {tier.popular && (
+          <motion.div 
+            className="mt-3 pt-3 border-t border-[#e8e8e8]"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.15 + 0.3, duration: 0.4 }}
+          >
+            <span className="text-[10px] sm:text-xs font-semibold text-[#99CC33] bg-[#F4F8E8] px-3 py-1 rounded-full inline-flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3" />
+              Le plus populaire
+            </span>
+          </motion.div>
+        )}
+
+        {/* Effet de survol : bordure lumineuse */}
+        <div className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#99CC33]/20 to-[#46BDD6]/20 blur-xl" />
+        </div>
+      </div>
+    </motion.div>
   )
 }
 
 // =============================================
-// COMPOSANT SECTION PARTENAIRE - FULLY RESPONSIVE
+// COMPOSANT SECTION PARTENAIRE
 // =============================================
 const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ section }) => {
   const isCyan = section.iconClass === 'cy'
@@ -444,7 +474,12 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
   }
 
   return (
-    <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-5 md:p-6 transition-all duration-200 hover:shadow-lg">
+    <motion.div 
+      className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-5 md:p-6 transition-all duration-200 hover:shadow-lg"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 mb-4 sm:mb-5 pb-4 sm:pb-5 border-b border-[#e8e8e8]">
         <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${isCyan ? 'bg-[#E8F7FA]' : 'bg-[#F4F8E8]'}`}>
           <span className={isCyan ? 'text-[#46BDD6]' : 'text-[#99CC33]'}>{section.icon}</span>
@@ -465,14 +500,15 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
         }`}
       >
         {section.tiers.map((tier, idx) => (
-          <TierCard key={idx} tier={tier} />
+          <TierCard key={idx} tier={tier} index={idx} />
         ))}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
-// COMPOSANT CONTACT - FULLY RESPONSIVE
+// =============================================
+// COMPOSANT CONTACT
 // =============================================
 const ContactSection: React.FC = () => {
   const [showCallback, setShowCallback] = useState(false)
@@ -546,14 +582,13 @@ const ContactSection: React.FC = () => {
   ]
 
   return (
-    <section className="relative py-12 sm:py-16 md:py-24 px-4 sm:px-6 overflow-hidden" id="contact">
+    <section className="relative py-8 sm:py-12 md:py-16 px-4 sm:px-6 overflow-hidden" id="contact">
       <div className="absolute inset-0 bg-gradient-to-br from-[#f5f7f2] via-white to-[#f0f5ed]" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-[#99CC33]/8 rounded-full blur-3xl" />
 
       <div className="max-w-xl mx-auto relative z-10 px-2 sm:px-0">
         {/* En-tête */}
         <div className="text-center mb-6 sm:mb-8">
-          
           <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] mb-1 sm:mb-2">
             {t.contactH}
           </h2>
@@ -735,7 +770,7 @@ const partnerSections: PartnerSection[] = [
           'Présence dans 1 newsletter / an',
           'Signalétique « Partenaire engagé 2026 »'
         ],
-        tierClass: 'border-t-[#c8843c]'
+        tierClass: 'bronze'
       },
       {
         name: 'Entreprise · Argent',
@@ -747,7 +782,7 @@ const partnerSections: PartnerSection[] = [
           'Point d\'intérêt sur la carte',
           'Redirection vers vos liens web'
         ],
-        tierClass: 'border-t-[#9aa3ad]',
+        tierClass: 'argent',
         popular: true
       },
       {
@@ -762,7 +797,7 @@ const partnerSections: PartnerSection[] = [
           'Retour annuel d\'audiences statistiques',
           'Logo intégré aux campagnes de communication'
         ],
-        tierClass: 'border-t-[#d4af37]'
+        tierClass: 'or'
       },
       {
         name: 'Grande entreprise · Platine',
@@ -777,7 +812,7 @@ const partnerSections: PartnerSection[] = [
           'Reporting semestriel personnalisé',
           '1 bandeau régional exclusif compris'
         ],
-        tierClass: 'border-t-[#5a8aa0]'
+        tierClass: 'platine'
       }
     ]
   },
@@ -798,7 +833,7 @@ const partnerSections: PartnerSection[] = [
           'Validité 4 mois',
           'Les colocataires s\'inscrivent puis confirment'
         ],
-        tierClass: 'border-t-[#99CC33]'
+        tierClass: 'green'
       },
       {
         name: 'Agence',
@@ -810,7 +845,7 @@ const partnerSections: PartnerSection[] = [
           'Logo + page « Partenaires »',
           '1 newsletter par an + signalétique'
         ],
-        tierClass: 'border-t-[#99CC33]',
+        tierClass: 'green',
         popular: true
       },
       {
@@ -824,7 +859,7 @@ const partnerSections: PartnerSection[] = [
           'Visibilité maximale en page d\'accueil',
           '1 bandeau régional exclusif compris'
         ],
-        tierClass: 'border-t-[#99CC33]'
+        tierClass: 'green'
       }
     ]
   },
@@ -845,7 +880,7 @@ const partnerSections: PartnerSection[] = [
           'Signalétique « Mécène engagé 2026 »',
           'Visibilité équivalente au niveau Argent'
         ],
-        tierClass: 'border-t-[#46BDD6]'
+        tierClass: 'cy'
       },
       {
         name: 'Mécène Or',
@@ -857,7 +892,7 @@ const partnerSections: PartnerSection[] = [
           'Logo du mécène dans les campagnes',
           'Visibilité équivalente au niveau Or'
         ],
-        tierClass: 'border-t-[#46BDD6]',
+        tierClass: 'cy',
         popular: true
       },
       {
@@ -870,7 +905,7 @@ const partnerSections: PartnerSection[] = [
           'Visibilité maximale équivalente Platine',
           'Modalités définies ensemble'
         ],
-        tierClass: 'border-t-[#46BDD6]'
+        tierClass: 'cy'
       }
     ]
   },
@@ -886,7 +921,7 @@ const partnerSections: PartnerSection[] = [
 ]
 
 // =============================================
-// COMPOSANT PRINCIPAL - FULLY RESPONSIVE
+// COMPOSANT PRINCIPAL
 // =============================================
 export default function Partenaires() {
   const { config } = useConfig()
@@ -1046,11 +1081,11 @@ export default function Partenaires() {
         {/* Statuts Section - CARROUSEL */}
         <section className="py-4 px-4 sm:px-6" id="statuts">
           <div className="max-w-[1120px] mx-auto">
-        <div className="flex justify-center mb-2">
-          <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] text-center">
-            {t.statutsTitle}
-          </h2>
-        </div>
+            <div className="flex justify-center mb-2">
+              <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] text-center">
+                {t.statutsTitle}
+              </h2>
+            </div>
             <p className="text-xs sm:text-sm md:text-base text-[#666] leading-relaxed max-w-3xl mx-auto mb-4 sm:mb-6 text-center">
               {t.statutsSub}
             </p>
@@ -1072,12 +1107,17 @@ export default function Partenaires() {
               </div>
 
               {/* Section courante */}
-              <div
-                key={currentSection}
-                className="animate-[fadeSlideUp_0.6s_ease]"
-              >
-                <PartnerSectionComponent section={currentSectionData} />
-              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSection}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <PartnerSectionComponent section={currentSectionData} />
+                </motion.div>
+              </AnimatePresence>
 
               {/* Boutons de navigation */}
               <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 mt-4 sm:mt-6">

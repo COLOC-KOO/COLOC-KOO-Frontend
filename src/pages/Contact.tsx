@@ -1,10 +1,13 @@
 import React, { useState, useRef } from 'react'
-import { Mail, MapPin, MessageCircle, Phone, Send, CheckCircle2, Sparkles, Clock, Award, Building2, Users, Heart, ArrowRight, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react'
+import { Mail, MapPin, MessageCircle, Phone, Send, CheckCircle2, Sparkles, Clock, Award, Building2, Users, Heart, ArrowRight, Facebook, Twitter, Linkedin, Instagram, Search } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
+
+// Image hero identique à celle de Home.tsx
+const heroImage = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80"
 
 const infos = [
   { icon: Mail, t: 'Email', v: 'hello@sarintany-coloc.mg', desc: 'Réponse sous 24h' },
@@ -65,40 +68,46 @@ export default function Contact() {
 
   return (
     <SiteLayout>
-      <div className="relative overflow-hidden">
-        {/* Background gradient avec formes */}
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-cyan-light/20 via-white/0 to-white/0" />
-        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-brand-cyan/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-brand-green/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-
-        <div className="relative max-w-6xl mx-auto px-6 py-16">
+      {/* Section Hero avec l'image de fond */}
+      <section className="relative">
+        <div className="absolute inset-0">
+          <img src={heroImage} alt="" className="w-full h-full object-cover" />
+          {/* Overlay plus foncé pour améliorer la lisibilité */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+          {/* Ajout d'un overlay de couleur pour harmoniser */}
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
+        </div>
+        <div className="relative max-w-6xl mx-auto px-6 py-16 text-white">
           {/* Header avec animation */}
           <motion.div 
-            className="text-center mb-16"
+            className="text-center"
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <motion.div 
-              className="inline-flex items-center gap-2 bg-brand-cyan/10 text-brand-cyan-dark px-4 py-1.5 rounded-full text-sm font-semibold mb-4"
+              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-semibold mb-4 border border-white/20 shadow-lg"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400 }}
             >
-          
+              <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
               Contactez-nous
             </motion.div>
             <motion.h1 
-              className="bebas text-5xl md:text-7xl bg-gradient-to-r from-brand-cyan-dark via-brand-cyan to-brand-green bg-clip-text text-transparent"
+              className="bebas text-5xl md:text-7xl drop-shadow-2xl"
               animate={{ 
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                textShadow: ['0 0 20px rgba(255,255,255,0.2)', '0 0 40px rgba(255,255,255,0.1)', '0 0 20px rgba(255,255,255,0.2)'],
               }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              style={{ backgroundSize: '200% 200%' }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             >
-              On vous écoute
+              <span className="text-white">On vous</span>
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+                écoute
+              </span>
             </motion.h1>
             <motion.p 
-              className="text-muted-foreground mt-2 max-w-2xl mx-auto text-lg"
+              className="text-white/90 mt-2 max-w-2xl mx-auto text-lg bg-black/15 backdrop-blur-md p-4 rounded-xl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -107,7 +116,17 @@ export default function Contact() {
               Notre équipe est là pour vous accompagner.
             </motion.p>
           </motion.div>
+        </div>
+      </section>
 
+      {/* Le reste du contenu */}
+      <div className="relative overflow-hidden">
+        {/* Background gradient avec formes */}
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-cyan-light/20 via-white/0 to-white/0" />
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-brand-cyan/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-brand-green/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative max-w-6xl mx-auto px-6 py-16">
           {/* Stats */}
           <motion.div 
             className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"
@@ -357,16 +376,6 @@ export default function Contact() {
                 </motion.p>
               </form>
             </div>
-          </motion.div>
-
-          {/* Section FAQ rapide */}
-          <motion.div 
-            className="mt-16 text-center"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
-          >
-         
           </motion.div>
         </div>
       </div>
