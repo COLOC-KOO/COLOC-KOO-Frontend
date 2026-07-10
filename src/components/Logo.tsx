@@ -16,9 +16,10 @@ export function Logo({ small = false }: { small?: boolean }) {
     <Link to="/" className="flex items-center gap-2 flex-shrink-0">
       <LogoMark className={small ? 'h-7 w-auto' : 'h-9 w-auto'} />
       <div className="flex flex-col leading-none">
-        <span className="bebas text-[20px] tracking-wider">
-          Sarintany<span className="text-brand-cyan">'</span>COLOC
-        </span>
+          <h5 className="bebas text-2xl">
+            <span className="text-[--brand-cyan-dark]">Sarintany'</span>
+            <span className="text-[--brand-green-dark]">COLOC</span>
+          </h5>
         <span className="text-[9px] text-muted-foreground">by Sarintany Group</span>
       </div>
     </Link>
