@@ -318,8 +318,8 @@ export default function Home() {
               <button
                 onClick={() => setViewMode("list")}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "list"
-                    ? "bg-white shadow-sm text-gray-900"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                  ? "bg-white shadow-sm text-gray-900"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
                   }`}
               >
                 <List className="w-4 h-4" />
@@ -328,8 +328,8 @@ export default function Home() {
               <button
                 onClick={() => setViewMode("map")}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "map"
-                    ? "bg-white shadow-sm text-gray-900"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                  ? "bg-white shadow-sm text-gray-900"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
                   }`}
               >
                 <Map className="w-4 h-4" />
@@ -356,7 +356,58 @@ export default function Home() {
             viewMode === "list" ? (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {featuredListings.map((l) => (
-                  <ListingCard key={l.id} l={l} />
+                  <div key={l.id} className="group cursor-pointer" onClick={() => navigate(`/annonces/${l.id}`)}>
+                    <div className="relative rounded-2xl overflow-hidden bg-gray-100">
+                      {/* Image */}
+                      {l.image ? (
+                        <img
+                          src={l.image}
+                          alt={l.title}
+                          className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full aspect-[4/3] bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                          <Building2 className="w-12 h-12 text-gray-400" />
+                        </div>
+                      )}
+
+                      {/* Badge "Vérifiée" */}
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-medium text-gray-700 shadow-sm">
+                        ✓ Vérifiée
+                      </div>
+
+                      {/* PRIX SUR LA CARTE - Style Airbnb */}
+                      <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm px-3.5 py-1.5 rounded-xl shadow-md">
+                        <span className="text-sm font-bold text-gray-900">
+                          {l.price ? `${(l.price / 1000).toFixed(0)}k Ar` : "Prix sur demande"}
+                        </span>
+                        {l.price && (
+                          <span className="text-[10px] text-gray-500 ml-1">/mois</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Informations sous la carte */}
+                    <div className="mt-3 space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-sm font-medium text-gray-900 line-clamp-1 flex-1">
+                          {l.title || "Annonce sans titre"}
+                        </h3>
+                        {/* Étoile de notation (optionnelle) */}
+                        <div className="flex items-center gap-0.5 text-xs text-gray-600 shrink-0">
+                          <Star className="w-3 h-3 fill-[#FF385C] text-[#FF385C]" />
+                          <span>4.8</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {l.city || "Ville non spécifiée"}
+                      </p>
+                      <p className="text-xs text-gray-500 line-clamp-1">
+                        {l.description || ""}
+                      </p>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -371,7 +422,39 @@ export default function Home() {
                 </div>
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                   {featuredListings.map((l) => (
-                    <ListingCard key={l.id} l={l} />
+                    <div key={l.id} className="group cursor-pointer flex gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors" onClick={() => navigate(`/annonces/${l.id}`)}>
+                      <div className="relative flex-shrink-0 w-32 h-24 rounded-xl overflow-hidden bg-gray-100">
+                        {l.image ? (
+                          <img
+                            src={l.image}
+                            alt={l.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                            <Building2 className="w-8 h-8 text-gray-400" />
+                          </div>
+                        )}
+                        {/* PRIX SUR LA CARTE (vue carte) */}
+                        <div className="absolute bottom-1.5 right-1.5 bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-lg shadow-sm">
+                          <span className="text-xs font-bold text-gray-900">
+                            {l.price ? `${(l.price / 1000).toFixed(0)}k Ar` : "—"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-medium text-gray-900 line-clamp-1">
+                          {l.title || "Annonce sans titre"}
+                        </h3>
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3" />
+                          {l.city || "Ville non spécifiée"}
+                        </p>
+                        <p className="text-xs text-gray-500 line-clamp-2 mt-1">
+                          {l.description || ""}
+                        </p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -390,56 +473,77 @@ export default function Home() {
 
       {/* Explore par ville - Sans image, fond bleu */}
       {/* Explore par ville - Sans espaces sur les côtés, taille des cards inchangée */}
-      <section className="w-full py-10">
-        <div className="w-full px-4 md:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-5">
+      <section className="bg-gray-50/50 border-y border-gray-100 py-10 w-full px-4 md:px-6 lg:px-8">
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="flex items-end justify-between mb-6">
             <div>
-              <h1 className="bebas text-3xl">
-                <span className="text-[--brand-cyan-dark]">Explore par </span>
-                <span className="text-[--brand-green-dark]">ville</span>
-              </h1>
-              <p className="text-muted-foreground text-sm mt-0.5">
+              <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+                Explorez par ville
+              </h2>
+              <p className="text-gray-500 text-sm mt-1">
                 {summaryText}
               </p>
             </div>
             <Link
               to="/annonces"
-              className="hidden md:inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
+              className="hidden md:inline-flex items-center gap-1 text-sm font-medium text-[#FF385C] hover:gap-2 transition-all duration-300"
             >
               Toutes les annonces <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
+
           {error ? (
             <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {error}
             </div>
           ) : null}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+
+          {/* Grille de villes - Style épuré Airbnb */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {cityCards.map((c) => (
               <Link
                 key={c.name}
                 to="/annonces"
-                className="group relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-brand-cyan-dark to-brand-cyan hover:scale-105 transition-transform duration-300"
+                className="group relative aspect-square rounded-2xl overflow-hidden bg-white border border-gray-200 hover:border-[#FF385C]/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
+                {/* Fond avec dégradé doux */}
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-[#FF385C]/5 group-hover:to-[#FF385C]/10 transition-colors duration-300" />
+
+                {/* Icône de localisation */}
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <MapPin className="w-4 h-4 text-[#FF385C]" />
+                </div>
+
+                {/* Contenu centré */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                  <div
-                    className="bebas text-2xl"
-                    style={{ color: "oklch(78% 0.16 130)" }}
-                  >
+                  {/* Nom de la ville - style épuré */}
+                  <div className="text-xl md:text-2xl font-semibold text-gray-800 group-hover:text-[#FF385C] transition-colors duration-300">
                     {c.name}
                   </div>
-                  <div className="text-sm text-white/80 mt-1">
+
+                  {/* Séparateur */}
+                  <div className="w-8 h-0.5 bg-gray-300 group-hover:bg-[#FF385C] rounded-full transition-all duration-300 my-2" />
+
+                  {/* Nombre d'annonces */}
+                  <div className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
                     {c.count} annonce{c.count > 1 ? "s" : ""}
                   </div>
-                  <div className="mt-3 w-8 h-0.5 bg-white/30 rounded-full" />
-                  <div className="mt-2 text-xs text-white/60">
-                    Voir les annonces
+
+                  {/* Lien "Explorer" qui apparaît au survol */}
+                  <div className="mt-3 overflow-hidden">
+                    <span className="inline-block text-xs font-medium text-[#FF385C] opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                      Explorer →
+                    </span>
                   </div>
                 </div>
-                {/* Effet de brillance au survol */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
+
+                {/* Effet de brillance subtil au survol */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
                 </div>
+
+                {/* Bordure animée en bas */}
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#FF385C] to-[#FF385C]/30 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
               </Link>
             ))}
           </div>
@@ -447,48 +551,83 @@ export default function Home() {
       </section>
 
       {/* Comment ça marche - AVEC ANIMATIONS ET ZOOM */}
-      <section className="max-w-6xl mx-auto px-6 py-10">
-        <div className="text-center mb-6">
-          <h1 className="bebas text-3xl">
-            <span className="text-[--brand-cyan-dark]">Comment ça </span>
-            <span className="text-[--brand-green-dark]">marche</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            3 étapes pour rejoindre ta coloc
-          </p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-5">
-          {steps.map((s, index) => (
-            <motion.div
-              key={s.n}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.15, duration: 0.5 }}
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.12)",
-                transition: { duration: 0.3 },
-              }}
-              className="bg-card border border-border rounded-2xl p-6 transition-all duration-300 cursor-pointer hover:border-brand-cyan/30"
+      <section className="bg-white border-b border-gray-100 py-10 w-full px-4 md:px-6 lg:px-8">
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
+                Comment ça marche
+              </h2>
+              <p className="text-muted-foreground text-sm mt-1">
+                3 étapes simples pour rejoindre ta coloc
+              </p>
+            </div>
+            <Link
+              to="/annonces"
+              className="hidden md:inline-flex items-center gap-1 text-sm font-medium text-[--brand-cyan-dark] hover:gap-2 transition-all duration-300"
             >
+              Voir les annonces <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-5">
+            {steps.map((s, index) => (
               <motion.div
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ duration: 0.3 }}
-                className={`inline-block bebas text-2xl px-3 py-0.5 rounded-full ${s.c}`}
+                key={s.n}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.15, duration: 0.5 }}
+                whileHover={{
+                  y: -4,
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
+                  transition: { duration: 0.3 },
+                }}
+                className="group relative bg-card border border-border rounded-2xl p-6 transition-all duration-300 hover:border-[--brand-cyan]/30"
               >
-                {s.n}
+                {/* Numéro d'étape */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[--brand-cyan-light] text-[--brand-cyan-dark] text-lg font-bold transition-all duration-300 group-hover:bg-[--brand-cyan] group-hover:text-white">
+                    {s.n}
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className="hidden lg:block flex-1 h-px bg-border group-hover:bg-[--brand-cyan]/30 transition-colors duration-300" />
+                  )}
+                </div>
+
+                {/* Titre */}
+                <h3 className="text-base font-semibold text-foreground group-hover:text-[--brand-cyan-dark] transition-colors duration-300">
+                  {s.t}
+                </h3>
+
+                {/* Description */}
+                <p className="mt-1.5 text-muted-foreground text-sm leading-relaxed">
+                  {s.d}
+                </p>
+
+                {/* Ligne d'accentuation au survol */}
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[--brand-cyan] to-[--brand-green] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-b-2xl" />
+
+                {/* Indicateur de progression */}
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="text-xs font-medium text-[--brand-cyan-dark] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Étape {s.n}
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-[--brand-cyan-dark] opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-1" />
+                </div>
               </motion.div>
-              <h3 className="mt-4 text-lg font-semibold">{s.t}</h3>
-              <p className="mt-2 text-muted-foreground text-sm">{s.d}</p>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: "0%" }}
-                whileHover={{ width: "100%" }}
-                transition={{ duration: 0.4 }}
-                className="h-0.5 bg-gradient-to-r from-brand-cyan to-brand-green mt-4 rounded-full"
-              />
-            </motion.div>
-          ))}
+            ))}
+          </div>
+
+          {/* Lien "Toutes les annonces" en bas - comme la section villes */}
+          <div className="text-center mt-6">
+            <Link
+              to="/annonces"
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-[--brand-cyan-dark] transition-colors duration-300 group"
+            >
+              <span>Commencer ma recherche</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -623,8 +762,8 @@ export default function Home() {
                       key={index}
                       onClick={() => goToSlide(index)}
                       className={`transition-all duration-300 rounded-full ${index === Math.floor(currentPartnerIndex)
-                          ? "w-6 h-1.5 bg-brand-cyan"
-                          : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
+                        ? "w-6 h-1.5 bg-brand-cyan"
+                        : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
                         }`}
                       aria-label={`Aller à la slide ${index + 1}`}
                     />
