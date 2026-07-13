@@ -27,6 +27,8 @@ export interface Listing {
   furnished: boolean
   available: string
   type: ListingType
+  annonceType?: string
+  candidatureCount?: number
   image: string
   address?: string
   latitude?: number    // <-- Ajoutez cette ligne
