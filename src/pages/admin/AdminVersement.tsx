@@ -200,7 +200,7 @@ const MOCK_VERSEMENTS: Versement[] = [
     date: '2026-01-15',
     montantDu: 120000,
     montantRecu: 0,
-    statut: 'en-attente',
+    statut: 'en_attente',
     commentaire: 'Paiement non reçu à ce jour'
   }
 ]
@@ -511,7 +511,7 @@ export default function AdminVersements() {
     const aVerifier = versements.filter(v => v.statut === 'a-verifier').length
     const conformes = versements.filter(v => v.statut === 'conforme').length
     const nonConformes = versements.filter(v => v.statut === 'non-conforme').length
-    const enAttente = versements.filter(v => v.statut === 'en-attente').length
+    const enAttente = versements.filter(v => v.statut === 'en_attente').length
     
     const totalRecu = versements.reduce((sum, v) => sum + v.montantRecu, 0)
     const totalDu = versements.reduce((sum, v) => sum + v.montantDu, 0)
