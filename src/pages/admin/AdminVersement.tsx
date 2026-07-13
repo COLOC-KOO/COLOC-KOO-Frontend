@@ -231,7 +231,7 @@ const StatusBadge = ({ statut }: { statut: Versement['statut'] }) => {
     'a-verifier': { label: 'À vérifier', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: Clock },
     'conforme': { label: 'Conforme', className: 'bg-green-500/15 text-green-400 border-green-500/30', icon: CheckCircle },
     'non-conforme': { label: 'Non conforme', className: 'bg-red-500/15 text-red-400 border-red-500/30', icon: XCircle },
-    'en-attente': { label: 'En attente', className: 'bg-gray-500/15 text-gray-400 border-gray-500/30', icon: AlertCircle },
+    'en_attente': { label: 'En attente', className: 'bg-gray-500/15 text-gray-400 border-gray-500/30', icon: AlertCircle },
     'valide': { label: 'Validé', className: 'bg-brand-green/15 text-brand-green border-brand-green/30', icon: CheckCircle },
     'echoue': { label: 'Échoué', className: 'bg-red-500/15 text-red-400 border-red-500/30', icon: XCircle }
   }
@@ -684,7 +684,7 @@ export default function AdminVersements() {
                   <option value="a-verifier" className="bg-[oklch(0.22_0.005_260)]">À vérifier</option>
                   <option value="conforme" className="bg-[oklch(0.22_0.005_260)]">Conforme</option>
                   <option value="non-conforme" className="bg-[oklch(0.22_0.005_260)]">Non conforme</option>
-                  <option value="en-attente" className="bg-[oklch(0.22_0.005_260)]">En attente</option>
+                  <option value="en_attente" className="bg-[oklch(0.22_0.005_260)]">En attente</option>
                   <option value="valide" className="bg-[oklch(0.22_0.005_260)]">Validé</option>
                   <option value="echoue" className="bg-[oklch(0.22_0.005_260)]">Échoué</option>
                 </select>
