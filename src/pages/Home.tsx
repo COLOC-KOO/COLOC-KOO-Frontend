@@ -217,7 +217,7 @@ export default function Home() {
   return (
     <SiteLayout>
       {/* Hero - Hauteur réduite */}
-      <section className="relative min-h-[400px] sm:min-h-[450px]">
+      <section className="relative min-h-[400px] sm:min-h-[450px] w-full">
         <div className="absolute inset-0">
           <img src={heroImage} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
@@ -300,8 +300,8 @@ export default function Home() {
       </section>
 
       {/* Annonces vedettes - Espace réduit */}
-      <section className="bg-white/60 border-y border-border py-10">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="bg-white/60 border-y border-border py-10 w-full px-4 md:px-6 lg:px-8">
+        <div className="w-full">
           <div className="flex items-end justify-between mb-5">
             <div>
               <h1 className="bebas text-3xl">
@@ -376,59 +376,62 @@ export default function Home() {
       </section>
 
       {/* Explore par ville - Sans image, fond bleu */}
-      <section className="max-w-7xl mx-auto px-6 py-10">
-        <div className="flex items-end justify-between mb-5">
-          <div>
-            <h1 className="bebas text-3xl">
-              <span className="text-[--brand-cyan-dark]">Explore par </span>
-              <span className="text-[--brand-green-dark]">ville</span>
-            </h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              {summaryText}
-            </p>
-          </div>
-          <Link
-            to="/annonces"
-            className="hidden md:inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
-          >
-            Toutes les annonces <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {cityCards.map((c) => (
-            <Link
-              key={c.name}
-              to="/annonces"
-              className="group relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-brand-cyan-dark to-brand-cyan hover:scale-105 transition-transform duration-300"
+      {/* Explore par ville - Sans espaces sur les côtés, taille des cards inchangée */}
+<section className="w-full py-10">
+  <div className="w-full px-4 md:px-6 lg:px-8">
+    <div className="flex items-end justify-between mb-5">
+      <div>
+        <h1 className="bebas text-3xl">
+          <span className="text-[--brand-cyan-dark]">Explore par </span>
+          <span className="text-[--brand-green-dark]">ville</span>      
+        </h1>
+        <p className="text-muted-foreground text-sm mt-0.5">
+          {summaryText}
+        </p>
+      </div>
+      <Link
+        to="/annonces"
+        className="hidden md:inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
+      >
+        Toutes les annonces <ArrowRight className="w-4 h-4" />
+      </Link>
+    </div>
+    {error ? (
+      <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        {error}
+      </div>
+    ) : null}
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {cityCards.map((c) => (
+        <Link
+          key={c.name}
+          to="/annonces"
+          className="group relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-brand-cyan-dark to-brand-cyan hover:scale-105 transition-transform duration-300"
+        >
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+            <div
+              className="bebas text-2xl"
+              style={{ color: "oklch(78% 0.16 130)" }}
             >
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                <div
-                  className="bebas text-2xl"
-                  style={{ color: "oklch(78% 0.16 130)" }}
-                >
-                  {c.name}
-                </div>
-                <div className="text-sm text-white/80 mt-1">
-                  {c.count} annonce{c.count > 1 ? "s" : ""}
-                </div>
-                <div className="mt-3 w-8 h-0.5 bg-white/30 rounded-full" />
-                <div className="mt-2 text-xs text-white/60">
-                  Voir les annonces
-                </div>
-              </div>
-              {/* Effet de brillance au survol */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+              {c.name}
+            </div>
+            <div className="text-sm text-white/80 mt-1">
+              {c.count} annonce{c.count > 1 ? "s" : ""}
+            </div>
+            <div className="mt-3 w-8 h-0.5 bg-white/30 rounded-full" />
+            <div className="mt-2 text-xs text-white/60">
+              Voir les annonces
+            </div>
+          </div>
+          {/* Effet de brillance au survol */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
+          </div>
+        </Link>
+      ))}
+    </div>
+  </div>
+</section>
 
       {/* Comment ça marche - AVEC ANIMATIONS ET ZOOM */}
       <section className="max-w-6xl mx-auto px-6 py-10">
