@@ -117,11 +117,11 @@ export default function Home() {
           dynamicCities.length > 0
             ? dynamicCities
             : villes.slice(0, 6).map((v) => ({
-                name: v.nom_ville,
-                count: 0,
-                image:
-                  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
-              })),
+              name: v.nom_ville,
+              count: 0,
+              image:
+                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+            })),
         );
         setPartners(partenaires);
       })
@@ -234,7 +234,7 @@ export default function Home() {
               Trouve ta coloc,
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
-                partout à 
+                partout à
                 <span className="text-[--brand-green-dark]"> Madagascar</span>
               </span>
             </h1>
@@ -300,59 +300,68 @@ export default function Home() {
       </section>
 
       {/* Annonces vedettes - Espace réduit */}
-      <section className="bg-white/60 border-y border-border py-10 w-full px-4 md:px-6 lg:px-8">
-        <div className="w-full">
-          <div className="flex items-end justify-between mb-5">
+      <section className="bg-white border-b border-gray-100 py-10 w-full px-4 md:px-6 lg:px-8">
+        <div className="w-full max-w-7xl mx-auto">
+          {/* En-tête style Airbnb */}
+          <div className="flex items-end justify-between mb-6">
             <div>
-              <h1 className="bebas text-3xl">
-                <span className="text-[--brand-cyan-dark]">Annonces </span>
-                <span className="text-[--brand-green-dark]">vedettes</span>
-              </h1>
-              <p className="text-muted-foreground text-sm mt-0.5">
+              <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+                Annonces vedettes
+              </h2>
+              <p className="text-gray-500 text-sm mt-1">
                 Sélection de la semaine, vérifiée par notre équipe
               </p>
             </div>
 
-            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+            {/* Vue liste/carte - Style Airbnb épuré */}
+            <div className="flex gap-1 bg-gray-100/80 p-1 rounded-xl">
               <button
                 onClick={() => setViewMode("list")}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  viewMode === "list"
-                    ? "bg-white shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "list"
+                    ? "bg-white shadow-sm text-gray-900"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                  }`}
               >
                 <List className="w-4 h-4" />
-                Liste
+                <span className="hidden sm:inline">Liste</span>
               </button>
               <button
                 onClick={() => setViewMode("map")}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  viewMode === "map"
-                    ? "bg-white shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "map"
+                    ? "bg-white shadow-sm text-gray-900"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                  }`}
               >
                 <Map className="w-4 h-4" />
-                Carte
+                <span className="hidden sm:inline">Carte</span>
               </button>
             </div>
           </div>
 
+          {/* Contenu */}
           {loading ? (
-            <div className="text-center text-muted-foreground py-8">
-              Chargement des annonces validées...
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-gray-200 rounded-2xl aspect-[4/3] w-full"></div>
+                  <div className="mt-3 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : featuredListings.length > 0 ? (
             viewMode === "list" ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {featuredListings.map((l) => (
                   <ListingCard key={l.id} l={l} />
                 ))}
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="h-[450px] lg:h-[500px] rounded-xl overflow-hidden bg-gray-50">
+                <div className="h-[450px] lg:h-[500px] rounded-2xl overflow-hidden bg-gray-100 shadow-inner">
                   <MapView
                     listings={featuredListings}
                     onListingClick={(listing) => {
@@ -368,8 +377,12 @@ export default function Home() {
               </div>
             )
           ) : (
-            <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
-              Aucune annonce validée n'est disponible pour le moment.
+            <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-12 text-center">
+              <div className="text-4xl mb-3">🏠</div>
+              <h3 className="text-lg font-medium text-gray-700">Aucune annonce disponible</h3>
+              <p className="text-gray-500 text-sm mt-1">
+                Revenez plus tard pour découvrir les nouvelles annonces
+              </p>
             </div>
           )}
         </div>
@@ -377,61 +390,61 @@ export default function Home() {
 
       {/* Explore par ville - Sans image, fond bleu */}
       {/* Explore par ville - Sans espaces sur les côtés, taille des cards inchangée */}
-<section className="w-full py-10">
-  <div className="w-full px-4 md:px-6 lg:px-8">
-    <div className="flex items-end justify-between mb-5">
-      <div>
-        <h1 className="bebas text-3xl">
-          <span className="text-[--brand-cyan-dark]">Explore par </span>
-          <span className="text-[--brand-green-dark]">ville</span>      
-        </h1>
-        <p className="text-muted-foreground text-sm mt-0.5">
-          {summaryText}
-        </p>
-      </div>
-      <Link
-        to="/annonces"
-        className="hidden md:inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
-      >
-        Toutes les annonces <ArrowRight className="w-4 h-4" />
-      </Link>
-    </div>
-    {error ? (
-      <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-        {error}
-      </div>
-    ) : null}
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-      {cityCards.map((c) => (
-        <Link
-          key={c.name}
-          to="/annonces"
-          className="group relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-brand-cyan-dark to-brand-cyan hover:scale-105 transition-transform duration-300"
-        >
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-            <div
-              className="bebas text-2xl"
-              style={{ color: "oklch(78% 0.16 130)" }}
+      <section className="w-full py-10">
+        <div className="w-full px-4 md:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <h1 className="bebas text-3xl">
+                <span className="text-[--brand-cyan-dark]">Explore par </span>
+                <span className="text-[--brand-green-dark]">ville</span>
+              </h1>
+              <p className="text-muted-foreground text-sm mt-0.5">
+                {summaryText}
+              </p>
+            </div>
+            <Link
+              to="/annonces"
+              className="hidden md:inline-flex items-center gap-1 text-sm font-semibold text-brand-cyan-dark hover:gap-2 transition-all"
             >
-              {c.name}
-            </div>
-            <div className="text-sm text-white/80 mt-1">
-              {c.count} annonce{c.count > 1 ? "s" : ""}
-            </div>
-            <div className="mt-3 w-8 h-0.5 bg-white/30 rounded-full" />
-            <div className="mt-2 text-xs text-white/60">
-              Voir les annonces
-            </div>
+              Toutes les annonces <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-          {/* Effet de brillance au survol */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
+          {error ? (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {cityCards.map((c) => (
+              <Link
+                key={c.name}
+                to="/annonces"
+                className="group relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-brand-cyan-dark to-brand-cyan hover:scale-105 transition-transform duration-300"
+              >
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                  <div
+                    className="bebas text-2xl"
+                    style={{ color: "oklch(78% 0.16 130)" }}
+                  >
+                    {c.name}
+                  </div>
+                  <div className="text-sm text-white/80 mt-1">
+                    {c.count} annonce{c.count > 1 ? "s" : ""}
+                  </div>
+                  <div className="mt-3 w-8 h-0.5 bg-white/30 rounded-full" />
+                  <div className="mt-2 text-xs text-white/60">
+                    Voir les annonces
+                  </div>
+                </div>
+                {/* Effet de brillance au survol */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
+                </div>
+              </Link>
+            ))}
           </div>
-        </Link>
-      ))}
-    </div>
-  </div>
-</section>
+        </div>
+      </section>
 
       {/* Comment ça marche - AVEC ANIMATIONS ET ZOOM */}
       <section className="max-w-6xl mx-auto px-6 py-10">
@@ -609,11 +622,10 @@ export default function Home() {
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`transition-all duration-300 rounded-full ${
-                        index === Math.floor(currentPartnerIndex)
+                      className={`transition-all duration-300 rounded-full ${index === Math.floor(currentPartnerIndex)
                           ? "w-6 h-1.5 bg-brand-cyan"
                           : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
-                      }`}
+                        }`}
                       aria-label={`Aller à la slide ${index + 1}`}
                     />
                   ),
