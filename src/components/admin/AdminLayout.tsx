@@ -76,7 +76,7 @@ const navItems: NavSection[] = [
         to: '/admin/annonces', 
         label: 'File de validation des annonces', 
         icon: ListChecks, 
-        badge: 5, 
+        // badge: 5, 
         minRole: 1,
         description: 'Annonces en attente de modération'
       },
@@ -84,7 +84,7 @@ const navItems: NavSection[] = [
         to: '/admin/signalements-conversations', 
         label: 'Signalements conversations', 
         icon: MessageCircleWarning, 
-        badge: 2, 
+        // badge: 2, 
         minRole: 1,
         description: 'Conversations signalées'
       },
@@ -126,7 +126,7 @@ const navItems: NavSection[] = [
         to: '/admin/services-colockoo', 
         label: 'Services Coloc\'KOO', 
         icon: Wrench, 
-        badge: 3, 
+        // badge: 3, 
         minRole: 2,
         description: 'Acquisition et offres'
       },
