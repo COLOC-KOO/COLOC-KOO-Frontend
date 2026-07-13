@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, Calendar, Bed, Building2, Image as ImageIcon, Heart } from 'lucide-react'
+import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, Calendar, Bed, Building2, Users, Image as ImageIcon, Heart } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api, ApiAnnonce, Langue } from '../lib/api'
@@ -151,6 +151,7 @@ function EditAnnonceModal({
     type_propriete: 'appartement',
     prix_loyer: '',
     surface: '',
+    total_colocataires: '',
     date_disponibilite: '',
     est_meuble: false,
   })
@@ -170,6 +171,7 @@ function EditAnnonceModal({
         type_propriete: annonce.type_propriete || 'appartement',
         prix_loyer: annonce.chambre?.prix_loyer ? String(annonce.chambre.prix_loyer) : '',
         surface: annonce.chambre?.surface ? String(annonce.chambre.surface) : '',
+        total_colocataires: annonce.total_colocataires !== null && annonce.total_colocataires !== undefined ? String(annonce.total_colocataires) : '',
         date_disponibilite: annonce.chambre?.date_disponibilite || '',
         est_meuble: Boolean(annonce.chambre?.date_disponibilite && annonce.chambre.est_meuble === 1),
       })
@@ -220,6 +222,7 @@ function EditAnnonceModal({
         quartier: form.quartier.trim() || null,
         adresse_exacte: form.adresse_exacte.trim() || null,
         type_propriete: form.type_propriete,
+        total_colocataires: form.total_colocataires ? Number(form.total_colocataires) : null,
         id_ville: annonce.id_ville,
         chambres: {
           surface: form.surface ? Number(form.surface) : null,
@@ -384,6 +387,24 @@ function EditAnnonceModal({
                 <option value="studio">Studio</option>
                 <option value="autre">Autre</option>
               </select>
+            </div>
+
+            {/* Nombre de colocataires */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-brand-cyan" />
+                  Nombre de colocataires
+                </div>
+              </label>
+              <input
+                type="number"
+                min="1"
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
+                placeholder="3"
+                value={form.total_colocataires}
+                onChange={(e) => setForm((prev) => ({ ...prev, total_colocataires: e.target.value }))}
+              />
             </div>
 
             {/* Quartier */}
