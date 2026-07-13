@@ -173,16 +173,40 @@ export function ListingCard({ l }: { l: Listing }) {
         <h3 className="mt-1.5 font-semibold text-[15px] leading-snug line-clamp-2 min-h-[42px]">
           {l.title}
         </h3>
-        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <BedDouble className="w-3.5 h-3.5" /> {l.surface} m2
           </span>
           <span className="inline-flex items-center gap-1">
-            <Users className="w-3.5 h-3.5" /> {l.colocs.length + 1} colocs
+            <Users className="w-3.5 h-3.5" /> {l.rooms} colocataire{l.rooms > 1 ? 's' : ''}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 text-[11px] uppercase tracking-wide text-brand-cyan-dark bg-white/90">
+            {l.type === 'chambre' ? 'Chambre' : l.type === 'appartement' ? 'Appartement' : 'Maison'}
           </span>
           <span className="ml-auto text-brand-cyan-dark font-medium">
             Dispo {l.available.slice(0, 5)}
           </span>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 bg-white/90">
+            {l.candidatureCount && l.candidatureCount > 0
+              ? 'Colocataires existants'
+              : 'Colocataires à créer'}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 bg-white/90">
+            {l.candidatureCount && l.candidatureCount > 0
+              ? `${l.candidatureCount} candidature${l.candidatureCount > 1 ? 's' : ''}`
+              : 'Aucune candidature'}
+          </span>
+          {l.amenities.length > 0 ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 bg-white/90">
+              {l.amenities.slice(0, 2).join(', ')}{l.amenities.length > 2 ? ` +${l.amenities.length - 2}` : ''}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 bg-white/90">
+              Equipements à préciser
+            </span>
+          )}
         </div>
       </div>
     </Link>

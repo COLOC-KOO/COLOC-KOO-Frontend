@@ -235,8 +235,20 @@ export default function AnnonceDetail() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 border-y border-border py-6">
             <StatItem icon={<BedDouble />} value={`${listing.surface || '-'} m2`} label="Surface" />
             <StatItem icon={<Users />} value={`${listing.rooms}`} label="Colocataires" />
-            <StatItem icon={<Calendar />} value={listing.available || '-'} label="Disponible" />
-            <StatItem icon={<Check />} value={`${listing.amenities.length}`} label="Equipements" />
+            <StatItem icon={<Shield />} value={
+              listing.candidatureCount && listing.candidatureCount > 0
+                ? 'Existants'
+                : 'À créer'
+            } label="Colocs" />
+            <StatItem
+              icon={<Check />}
+              value={
+                listing.candidatureCount && listing.candidatureCount > 0
+                  ? String(listing.candidatureCount)
+                  : 'Aucune'
+              }
+              label="Candidatures"
+            />
           </div>
 
           <section className="mt-8">
