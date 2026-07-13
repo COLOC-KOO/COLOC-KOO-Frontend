@@ -630,6 +630,12 @@ export const api = {
       method: 'POST',
     })
   },
+  createContracts(annonceId: string | number, mode: 'contrat' | 'edl' | 'both') {
+    return request<{ contratIds: number[]; contracts: ApiBackofficeContratDetails[] }>(`/candidatures/annonce/${annonceId}/contrats`, {
+      method: 'POST',
+      body: JSON.stringify({ mode }),
+    })
+  },
 
   contact(payload: { nom: string; email: string; sujet: string; message: string }) {
     return request<{ id_message: number }>('/contact', {

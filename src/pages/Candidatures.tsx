@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { useAuth } from "../lib/auth";
-import { api, ApiAnnonce } from "../lib/api";
+import { api, ApiAnnonce, ApiBackofficeContratDetails } from "../lib/api";
 
 type OwnerCandidate = {
   id: string;
@@ -124,6 +124,8 @@ export default function Candidatures() {
   const [contractMode, setContractMode] = useState<"contrat" | "edl" | "both">(
     "contrat",
   );
+  const [createdContractIds, setCreatedContractIds] = useState<number[]>([]);
+  const [createdContracts, setCreatedContracts] = useState<ApiBackofficeContratDetails[]>([]);
   const [celebrateOpen, setCelebrateOpen] = useState(false);
 
   // États pour la discussion
@@ -393,7 +395,7 @@ export default function Candidatures() {
   };
 
   const handleLaunchColocationFromPage = async () => {
-    if (!annonceId) return;
+    if (!annonceId) return false;
     try {
       const result = await api.launchColocation(annonceId);
       const members = Array.isArray((result as any).membres)
@@ -406,8 +408,10 @@ export default function Candidatures() {
       setCompletedMembers(members);
       setCandidateActionFeedback("Colocation lancée et membres enregistrés.");
       await loadRealCandidatures();
+      return true;
     } catch (error: any) {
       setCandidateActionFeedback(error?.message || "Impossible de lancer la colocation.");
+      return false;
     }
   };
 
@@ -541,9 +545,15 @@ export default function Candidatures() {
     );
   }
 
-  function launchColoc() {
+  async function launchColoc() {
+    if (!user) {
+      setCandidateActionFeedback("Veuillez vous connecter pour lancer la colocation.");
+      return;
+    }
+
     if (ownerFilled < TARGET) return;
-    void handleLaunchColocationFromPage();
+    const launched = await handleLaunchColocationFromPage();
+    if (!launched) return;
     setContractMode("contrat");
     setContractModalOpen(true);
   }
@@ -552,10 +562,27 @@ export default function Candidatures() {
     setContractModalOpen(false);
   }
 
-  function confirmContractChoice(mode: "contrat" | "edl" | "both") {
+  async function createContractsForAnnonce(mode: "contrat" | "edl" | "both") {
+    if (!annonceId) return false;
+    try {
+      const result = await api.createContracts(annonceId, mode);
+      setCreatedContractIds(Array.isArray(result.contratIds) ? result.contratIds : []);
+      setCreatedContracts(Array.isArray(result.contracts) ? result.contracts : []);
+      return true;
+    } catch (error: any) {
+      const message = error?.message || "Impossible de créer le contrat.";
+      setCandidateActionFeedback(message);
+      return false;
+    }
+  }
+
+  async function confirmContractChoice(mode: "contrat" | "edl" | "both") {
     setContractMode(mode);
     setContractModalOpen(false);
-    setCelebrateOpen(true);
+    const created = await createContractsForAnnonce(mode);
+    if (created) {
+      setCelebrateOpen(true);
+    }
   }
 
   function toggleAgentView() {
@@ -1969,6 +1996,30 @@ export default function Candidatures() {
               Tu as permis à plusieurs colocataires de se rencontrer à travers
               ton logement pour un mieux vivre ensemble.
             </p>
+            {createdContractIds.length > 0 && (
+              <div className="mt-4 space-y-4 rounded-3xl border border-brand-cyan/30 bg-white p-4 text-sm text-brand-cyan-dark">
+                <div className="font-semibold">
+                  Contrat{createdContractIds.length > 1 ? 's' : ''} créé{createdContractIds.length > 1 ? 's' : ''}
+                </div>
+                {createdContracts.map((contract) => (
+                  <div key={contract.id_contrat} className="rounded-3xl border border-border p-4">
+                    <div className="text-sm font-semibold">
+                      #{contract.id_contrat} · {contract.type === 'contrat' ? 'Contrat de colocation' : "État des lieux"}
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Parties :
+                    </div>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      {contract.parties.map((partie, index) => (
+                        <li key={`${contract.id_contrat}-${index}`}>
+                          <span className="font-medium text-brand-cyan-dark">{partie.nom_complet || 'Participant'}</span> — {partie.role || 'Participant'}{partie.email ? ` · ${partie.email}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="mt-6 rounded-3xl border border-border bg-brand-cyan-light/30 p-6">
               <div className="text-sm text-muted-foreground">Logement</div>
               <div className="bebas text-2xl text-brand-cyan-dark mt-2">
