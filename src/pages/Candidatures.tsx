@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { useAuth } from "../lib/auth";
-import { api } from "../lib/api";
+import { api, ApiAnnonce } from "../lib/api";
 
 type OwnerCandidate = {
   id: string;
@@ -45,7 +45,6 @@ type Team = {
 
 type NotificationMode = "indiv" | "group";
 
-const TARGET = 3;
 const MOVEIN = "1er juillet 2026";
 const PROP_ADDR = "Analakely, Antananarivo (T4 · 95 m²)";
 const FEE_TOTAL = 350000;
@@ -100,6 +99,8 @@ export default function Candidatures() {
   const [candidateActionLoading, setCandidateActionLoading] = useState<number | null>(null);
   const [candidateActionFeedback, setCandidateActionFeedback] = useState("");
   const [completedMembers, setCompletedMembers] = useState<Array<{ nom: string; initiales?: string; statut?: string }>>([]);
+  const [annonceData, setAnnonceData] = useState<ApiAnnonce | null>(null);
+  const TARGET = annonceData?.total_colocataires ?? 3;
 
   // États UI existants
   const [activeView, setActiveView] = useState<
@@ -180,6 +181,7 @@ export default function Candidatures() {
 
       try {
         const annonce = await api.annonce(annonceId);
+        setAnnonceData(annonce);
         const currentUserId = Number(user?.id);
         setIsAnnonceOwner(Number(annonce.id_utilisateur) === currentUserId);
       } catch {
@@ -1094,7 +1096,7 @@ export default function Candidatures() {
                       </div>
                       <div>
                         <div className="text-sm uppercase tracking-[0.18em] text-muted-foreground">
-                          Analakely · T4 · 95 m² · 3 colocataires
+                          Analakely · T4 · 95 m² · {TARGET} colocataires
                         </div>
                         <div className="bebas text-3xl text-brand-cyan-dark mt-2">
                           450 000 Ar{" "}
@@ -1117,7 +1119,7 @@ export default function Candidatures() {
                       <p className="mt-3 text-sm text-muted-foreground">
                         En tant que membre de la colocation, tu valides les
                         colocataires un par un et peux échanger avec chacun·e
-                        avant d'accepter. La coloc se lance quand les 3 places
+                        avant d'accepter. La coloc se lance quand les {TARGET} places
                         sont pourvues.
                       </p>
                     </div>
@@ -1294,7 +1296,7 @@ export default function Candidatures() {
                       </div>
                       <div>
                         <div className="text-sm uppercase tracking-[0.18em] text-muted-foreground">
-                          Analakely · T4 · 95 m² · 3 colocataires
+                          Analakely · T4 · 95 m² · {TARGET} colocataires
                         </div>
                         <div className="bebas text-3xl text-brand-cyan-dark mt-2">
                           450 000 Ar{" "}
@@ -1521,7 +1523,7 @@ export default function Candidatures() {
                               : "Forme ton équipe pour remporter la coloc"}
                       </div>
                       <h2 className="bebas mt-4 text-3xl">
-                        3 places à pourvoir
+                        {TARGET} places à pourvoir
                       </h2>
                       <p className="mt-3 text-sm text-muted-foreground max-w-2xl">
                         Rejoins une équipe qui te ressemble, ou crée la tienne.

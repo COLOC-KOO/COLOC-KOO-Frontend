@@ -760,6 +760,7 @@ function TabMesFavoris() {
 }
 
 function TabNotif() {
+  const navigate = useNavigate()
   const [prefs, setPrefs] = useState<Record<string, boolean>>({
     annonces: true,
     candidatures: true,
@@ -817,27 +818,63 @@ function TabNotif() {
           <p className="text-sm text-muted-foreground">Aucune notification pour le moment.</p>
         ) : (
           notifications.map((item) => (
-            <div key={item.id_notification} className="flex items-start justify-between gap-3 rounded-xl border border-border p-4">
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium">{item.titre}</div>
-                <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{item.texte}</div>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="rounded-full bg-muted px-2.5 py-1 font-medium">
-                    {item.type_notification === 'message' ? 'Message de contact' : 'Notification'}
-                  </span>
-                  <span>{new Date(item.date_creation).toLocaleString('fr-FR')}</span>
+            <div
+              key={item.id_notification}
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                if (item.lien) {
+                  navigate(item.lien)
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  if (item.lien) {
+                    navigate(item.lien)
+                  }
+                }
+              }}
+              className="w-full text-left"
+            >
+              <div className="flex items-start justify-between gap-3 rounded-xl border border-border p-4 hover:border-brand-cyan hover:bg-brand-cyan-light/10 transition-colors cursor-pointer">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium">{item.titre}</div>
+                  <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{item.texte}</div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="rounded-full bg-muted px-2.5 py-1 font-medium">
+                      {item.type_notification === 'message' ? 'Message de contact' : 'Notification'}
+                    </span>
+                    <span>{new Date(item.date_creation).toLocaleString('fr-FR')}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => handleMarkOne(item.id_notification)} title="Marquer comme lu et supprimer" className="p-1.5 hover:bg-white/5 rounded text-sm text-muted-foreground">
-                  <Check className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleDeleteNotification(item.id_notification)} title="Supprimer" className="p-1.5 hover:bg-white/5 rounded text-red-500">
-                  <Trash className="w-4 h-4" />
-                </button>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.est_lue ? 'bg-muted text-muted-foreground' : 'bg-brand-cyan-light text-brand-cyan-dark'}`}>
-                  {item.est_lue ? 'Lue' : 'Nouvelle'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      handleMarkOne(item.id_notification)
+                    }}
+                    title="Marquer comme lu et supprimer"
+                    className="p-1.5 hover:bg-white/5 rounded text-sm text-muted-foreground"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      handleDeleteNotification(item.id_notification)
+                    }}
+                    title="Supprimer"
+                    className="p-1.5 hover:bg-white/5 rounded text-red-500"
+                  >
+                    <Trash className="w-4 h-4" />
+                  </button>
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.est_lue ? 'bg-muted text-muted-foreground' : 'bg-brand-cyan-light text-brand-cyan-dark'}`}>
+                    {item.est_lue ? 'Lue' : 'Nouvelle'}
+                  </span>
+                </div>
               </div>
             </div>
           ))
@@ -1224,9 +1261,13 @@ export default function Compte() {
   const getInitialTab = () => {
     const params = new URLSearchParams(location.search)
     const requestedTab = params.get('tab')
+    if (!requestedTab) return 'profil'
     if (requestedTab === 'paiements' || requestedTab === 'messages') return 'paiements'
     if (requestedTab === 'favoris') return 'favoris'
     if (requestedTab === 'dossier') return isColocataire ? 'favoris' : 'dossier'
+    if (requestedTab === 'notif') return 'notif'
+    if (requestedTab === 'secu') return 'secu'
+    if (requestedTab === 'profil') return 'profil'
     return 'profil'
   }
   const [tab, setTab] = useState(getInitialTab)
@@ -1273,19 +1314,16 @@ export default function Compte() {
         <div className="mt-8 grid md:grid-cols-[220px_1fr] gap-6">
           <aside className="space-y-1">
             {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setTab(t.id)
-                  navigate(`/compte?tab=${t.id}`)
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                  tab === t.id ? 'bg-brand-cyan-light text-brand-cyan-dark' : 'hover:bg-muted text-foreground/70'
-                }`}
-              >
-                <t.icon className="w-4 h-4" /> {t.label}
-              </button>
-            ))}
+            <Link
+              key={t.id}
+              to={`/compte?tab=${t.id}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
+                tab === t.id ? 'bg-brand-cyan-light text-brand-cyan-dark' : 'hover:bg-muted text-foreground/70'
+              }`}
+            >
+              <t.icon className="w-4 h-4" /> {t.label}
+            </Link>
+          ))}
           </aside>
 
           <div className="bg-card border border-border rounded-2xl p-6">
