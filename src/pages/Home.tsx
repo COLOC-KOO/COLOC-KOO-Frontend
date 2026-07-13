@@ -473,20 +473,20 @@ export default function Home() {
 
       {/* Explore par ville - Sans image, fond bleu */}
       {/* Explore par ville - Sans espaces sur les côtés, taille des cards inchangée */}
-      <section className="bg-gray-50/50 border-y border-gray-100 py-10 w-full px-4 md:px-6 lg:px-8">
+      <section className="bg-gray-50/50 border-y border-border py-10 w-full px-4 md:px-6 lg:px-8">
         <div className="w-full max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-6">
             <div>
-              <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+              <h2 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
                 Explorez par ville
               </h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-muted-foreground text-sm mt-1">
                 {summaryText}
               </p>
             </div>
             <Link
               to="/annonces"
-              className="hidden md:inline-flex items-center gap-1 text-sm font-medium text-[#FF385C] hover:gap-2 transition-all duration-300"
+              className="hidden md:inline-flex items-center gap-1 text-sm font-medium text-[--brand-cyan-dark] hover:gap-2 transition-all duration-300"
             >
               Toutes les annonces <ArrowRight className="w-4 h-4" />
             </Link>
@@ -498,40 +498,40 @@ export default function Home() {
             </div>
           ) : null}
 
-          {/* Grille de villes - Style épuré Airbnb */}
+          {/* Grille de villes - Style épuré avec couleurs brand */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {cityCards.map((c) => (
               <Link
                 key={c.name}
                 to="/annonces"
-                className="group relative aspect-square rounded-2xl overflow-hidden bg-white border border-gray-200 hover:border-[#FF385C]/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                className="group relative aspect-square rounded-2xl overflow-hidden bg-card border border-border hover:border-[--brand-cyan]/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
-                {/* Fond avec dégradé doux */}
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-[#FF385C]/5 group-hover:to-[#FF385C]/10 transition-colors duration-300" />
+                {/* Fond avec dégradé doux utilisant les couleurs brand */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[--brand-cyan-light] to-[--brand-green-light] group-hover:from-[--brand-cyan]/10 group-hover:to-[--brand-green]/10 transition-colors duration-300" />
 
                 {/* Icône de localisation */}
                 <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <MapPin className="w-4 h-4 text-[#FF385C]" />
+                  <MapPin className="w-4 h-4 text-[--brand-cyan-dark]" />
                 </div>
 
                 {/* Contenu centré */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                  {/* Nom de la ville - style épuré */}
-                  <div className="text-xl md:text-2xl font-semibold text-gray-800 group-hover:text-[#FF385C] transition-colors duration-300">
+                  {/* Nom de la ville */}
+                  <div className="text-xl md:text-2xl font-semibold text-foreground group-hover:text-[--brand-cyan-dark] transition-colors duration-300">
                     {c.name}
                   </div>
 
                   {/* Séparateur */}
-                  <div className="w-8 h-0.5 bg-gray-300 group-hover:bg-[#FF385C] rounded-full transition-all duration-300 my-2" />
+                  <div className="w-8 h-0.5 bg-border group-hover:bg-[--brand-cyan] rounded-full transition-all duration-300 my-2" />
 
                   {/* Nombre d'annonces */}
-                  <div className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
+                  <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
                     {c.count} annonce{c.count > 1 ? "s" : ""}
                   </div>
 
                   {/* Lien "Explorer" qui apparaît au survol */}
                   <div className="mt-3 overflow-hidden">
-                    <span className="inline-block text-xs font-medium text-[#FF385C] opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                    <span className="inline-block text-xs font-medium text-[--brand-cyan-dark] opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                       Explorer →
                     </span>
                   </div>
@@ -542,8 +542,8 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
                 </div>
 
-                {/* Bordure animée en bas */}
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#FF385C] to-[#FF385C]/30 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                {/* Bordure animée en bas - Dégradé brand */}
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[--brand-cyan] to-[--brand-green] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
               </Link>
             ))}
           </div>
