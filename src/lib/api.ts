@@ -47,6 +47,7 @@ export interface ApiAnnonce {
   type_annonce: string
   type_propriete: 'appartement' | 'maison' | 'autre'
   total_colocataires: number | null
+  candidature_count?: number
   surface_totale: number | null
   adresse_exacte: string | null
   quartier: string | null
@@ -867,5 +868,7 @@ export function annonceToListing(a: ApiAnnonce): Listing {
       since: '2026',
     },
     tags: a.statut === 'active' ? ['verifie'] : [],
+    annonceType: a.type_annonce || 'existante',
+    candidatureCount: a.candidature_count != null ? Number(a.candidature_count) : undefined,
   }
 }

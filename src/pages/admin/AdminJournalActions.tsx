@@ -397,6 +397,7 @@ export default function AdminJournalActions() {
                           e.stopPropagation()
                           handleDelete(log.id)
                         }}
+                        
                         disabled={deletingId === log.id}
                         className="rounded-full p-2 text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
                         title="Supprimer cette entrée"
