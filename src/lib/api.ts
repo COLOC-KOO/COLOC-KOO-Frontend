@@ -154,7 +154,7 @@ export interface ApiPaiement {
   montant_recu: number
   moyen_paiement: 'MVOLA' | 'Orange Money' | 'Airtel Money' | 'CB' | 'Autre'
   service_type: 'booster' | 'publicite' | 'contrat' | 'autre'
-  statut: 'a-verifier' | 'conforme' | 'non-conforme' | 'en-attente' | 'valide' | 'echoue'
+  statut: 'a-verifier' | 'conforme' | 'non-conforme' | 'en_attente' | 'valide' | 'echoue'
   date_paiement: string
   reference_operateur?: string | null
   date_creation: string
