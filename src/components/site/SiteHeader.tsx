@@ -116,12 +116,13 @@ export function SiteHeader() {
 
   return (
     <header className={cn(
-      'sticky top-0 z-50 transition-all duration-300',
+      'sticky top-0 z-50 transition-all duration-300 w-full',
       scrolled 
         ? 'bg-white/95 backdrop-blur-xl shadow-lg border-b border-border/50' 
         : 'bg-white/90 backdrop-blur-sm border-b border-border'
     )}>
-      <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center gap-4">
+      {/* Changement: w-full au lieu de max-w-7xl, padding responsive */}
+      <div className="w-full px-4 md:px-6 lg:px-8 h-16 md:h-20 flex items-center gap-4">
         {/* Logo */}
         <div className="flex-shrink-0">
           <Logo />
