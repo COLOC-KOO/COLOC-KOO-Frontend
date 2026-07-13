@@ -32,7 +32,7 @@ interface Versement {
   date: string
   montantDu: number
   montantRecu: number
-  statut: 'a-verifier' | 'conforme' | 'non-conforme' | 'en-attente' | 'valide' | 'echoue'
+  statut: 'a-verifier' | 'conforme' | 'non-conforme' | 'en_attente' | 'valide' | 'echoue'
   commentaire?: string
   dateVerification?: string
   verifiePar?: string
