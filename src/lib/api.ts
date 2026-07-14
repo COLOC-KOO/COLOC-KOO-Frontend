@@ -95,6 +95,26 @@ export interface ApiCandidature {
   utilisateur_id?: number
 }
 
+// ===== NOUVEAUX TYPES POUR LES ÉQUIPES =====
+export interface ApiEquipe {
+  id_equipe: number
+  id_annonce: number
+  nom: string
+  ambiance: string | null
+  statut: 'forming' | 'selected' | 'rejected' | 'complete'
+  date_creation: string
+  membres: ApiMembreEquipe[]
+}
+
+export interface ApiMembreEquipe {
+  id_utilisateur: number
+  nom: string
+  prenom: string
+  email: string
+  statut: 'pending' | 'accepted' | 'refused' | 'owner'
+  initials: string
+}
+
 export interface ApiPartenaire {
   id_partenaire: number
   nom: string
@@ -563,47 +583,36 @@ export const api = {
       body: JSON.stringify(payload),
     })
   },
-    // 🆕 NOUVELLES FONCTIONS À AJOUTER
   
+  // ===== CANDIDATURES =====
   // Récupérer toutes les candidatures pour une annonce spécifique
   getCandidaturesByAnnonce(annonceId: string | number) {
     return request<ApiCandidature[]>(`/candidatures/annonce/${annonceId}`)
   },
   
   // Vérifier si l'utilisateur a déjà postulé à une annonce
-  // checkUserApplied(annonceId: string | number, userId: string | number) {
-  //   return request<{ hasApplied: boolean; count: number }>(
-  //     `/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`
-  //   )
-  // },
-
   checkUserApplied(annonceId: string | number, userId: string | number) {
-  // 🔥 Récupérer le token manuellement
-  const token = getToken();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
-  // Utiliser fetch directement au lieu de request()
-  return fetch(`${API_URL}/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`, {
-    method: 'GET',
-    headers,
-  }).then(async (response) => {
-    const text = await response.text();
-    const data = text ? JSON.parse(text) : null;
-    if (!response.ok) {
-      throw new Error(data?.message || 'Erreur API');
+    const token = getToken();
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
-    return data as { hasApplied: boolean; count: number };
-  });
-},
-  
-  // Récupérer mes candidatures (déjà existante, mais on la garde)
-  // candidatures() existe déjà
+    
+    return fetch(`${API_URL}/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`, {
+      method: 'GET',
+      headers,
+    }).then(async (response) => {
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!response.ok) {
+        throw new Error(data?.message || 'Erreur API');
+      }
+      return data as { hasApplied: boolean; count: number };
+    });
+  },
   
   adminCandidatures() {
     return request<ApiCandidature[]>('/candidatures/admin/all')
@@ -634,6 +643,65 @@ export const api = {
     return request<{ contratIds: number[]; contracts: ApiBackofficeContratDetails[] }>(`/candidatures/annonce/${annonceId}/contrats`, {
       method: 'POST',
       body: JSON.stringify({ mode }),
+    })
+  },
+
+  // ===== GESTION DES ÉQUIPES =====
+  
+  // Récupérer toutes les équipes d'une annonce
+  getEquipesByAnnonce(annonceId: string | number): Promise<ApiEquipe[]> {
+    return request<ApiEquipe[]>(`/equipes/annonces/${annonceId}`)
+  },
+
+  // Récupérer une équipe par son ID
+  getEquipe(id: string | number): Promise<ApiEquipe> {
+    return request<ApiEquipe>(`/equipes/${id}`)
+  },
+
+  // Créer une équipe
+  createEquipe(data: { 
+    id_annonce: number; 
+    nom: string; 
+    ambiance?: string | null; 
+    statut?: 'forming' | 'selected' | 'rejected' | 'complete' 
+  }): Promise<{ id_equipe: number; message?: string }> {
+    return request<{ id_equipe: number; message?: string }>('/equipes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  },
+
+  // Mettre à jour une équipe
+  updateEquipe(id: string | number, data: { 
+    nom?: string; 
+    ambiance?: string | null; 
+    statut?: 'forming' | 'selected' | 'rejected' | 'complete' 
+  }): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  },
+
+  // Supprimer une équipe
+  deleteEquipe(id: string | number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${id}`, {
+      method: 'DELETE',
+    })
+  },
+
+  // Ajouter un membre à une équipe
+  addMemberToEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${equipeId}/membres`, {
+      method: 'POST',
+      body: JSON.stringify({ id_utilisateur: userId }),
+    })
+  },
+
+  // Retirer un membre d'une équipe
+  removeMemberFromEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${equipeId}/membres/${userId}`, {
+      method: 'DELETE',
     })
   },
 
