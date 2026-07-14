@@ -46,12 +46,90 @@ type Team = {
 type NotificationMode = "indiv" | "group";
 
 const MOVEIN = "1er juillet 2026";
-const PROP_ADDR = "Analakely, Antananarivo (T4 · 95 m²)";
 const FEE_TOTAL = 350000;
 const JOIN_DEFAULT = "t2";
 
 function fmtAr(value: number) {
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+// Bareme + options de paiement : la source de verite est la DB
+// (configuration_backoffice, via GET /meta/contract-pricing). Ces valeurs ne
+// servent QUE de repli si l'API n'a pas encore repondu.
+type ContractTier = { maxLoyer: number | null; prix: number };
+type MobileMoneyOption = { nom: string; numero: string; couleur: string; hint: string };
+type ContractOption = { cle: string; titre: string; description: string };
+type ContractClause = { titre: string; description: string };
+type ContractConfig = {
+  tiers: ContractTier[];
+  edlPrix: number;
+  mobileMoney: MobileMoneyOption[];
+  clauses: ContractClause[];
+  offer: { titre: string; texte: string };
+  body: { titre: string; intro: string; corps: string };
+  bail: ContractOption[];
+  solidarite: ContractOption[];
+  mailNote: { contrat: string; edl: string };
+};
+
+const FALLBACK_TIERS: ContractTier[] = [
+  { maxLoyer: 450000, prix: 27000 },
+  { maxLoyer: 1350000, prix: 47000 },
+  { maxLoyer: null, prix: 60000 },
+];
+const FALLBACK_EDL_PRIX = 10000;
+const FALLBACK_MOBILE_MONEY: MobileMoneyOption[] = [
+  { nom: "Orange Money", numero: "0320000000", couleur: "#ff7900", hint: "Scanne ce QR code avec l'appli Orange Money, ou compose le numéro." },
+  { nom: "MVOLA", numero: "0340000000", couleur: "#e2001a", hint: "Scanne ce QR code avec l'appli MVOLA, ou compose le numéro." },
+];
+const FALLBACK_CLAUSES: ContractClause[] = [
+  { titre: "Identités & logement", description: "Colocataires, adresse du bien, date d'entrée (inclus)." },
+  { titre: "Répartition du loyer et des charges", description: "Quote-part de chacun, modalités de paiement." },
+  { titre: "Dépôt de garantie / caution solidaire", description: "Montant, conditions de restitution." },
+  { titre: "État des lieux d'entrée", description: "Annexe descriptive des parties privatives et communes." },
+  { titre: "Clause de départ anticipé", description: "Préavis, remplacement du colocataire sortant." },
+];
+const FALLBACK_OFFER = {
+  titre: "Aide à la création de contrats avec les colocataires",
+  texte:
+    "Coloc'KOO peut rédiger pour toi un contrat de colocation conforme, signé entre les colocataires et/ou te proposer un document d'état des lieux. Voici un aperçu pré-rempli avec leurs noms et l'adresse du bien :",
+};
+const FALLBACK_BODY = {
+  titre: "Contrat de colocation — Sarintany'COLOC",
+  intro:
+    "Entre les soussigné·e·s : {names}, ci-après dénommé·e·s « les colocataires »,\nPour le logement situé : {address},\nDate d'entrée dans les lieux : {date}.",
+  corps:
+    "Il a été convenu et arrêté ce qui suit. Article 1 — Objet : le présent contrat a pour objet de définir les règles de la vie commune et la répartition…",
+};
+const FALLBACK_BAIL: ContractOption[] = [
+  { cle: "individuel", titre: "Bail individuel", description: "Chaque colocataire signe son propre contrat avec le propriétaire." },
+  { cle: "collectif", titre: "Bail collectif", description: "Un seul document signé par l'ensemble des parties." },
+];
+const FALLBACK_SOLIDARITE: ContractOption[] = [
+  { cle: "avec", titre: "AVEC clause de solidarité", description: "Tous les colocataires sont solidaires : si l'un manque, les autres sont redevables de l'ensemble du loyer." },
+  { cle: "sans", titre: "SANS clause de solidarité", description: "Chaque colocataire reste responsable de sa part seulement." },
+];
+const FALLBACK_MAIL_NOTE = {
+  contrat:
+    "Le contrat finalisé te sera envoyé par e-mail à {email}. Tu n'auras plus qu'à le faire signer par l'ensemble des parties lors de la remise des clés. Pour compléter les informations nécessaires à la rédaction du contrat, rendez-vous dans ta messagerie.",
+  edl:
+    "Le document te sera envoyé par e-mail à {email}. Tu n'auras plus qu'à le faire signer par l'ensemble des parties lors de la remise des clés.",
+};
+function priceFromTiers(tiers: ContractTier[], loyer: number) {
+  const list = tiers.length ? tiers : FALLBACK_TIERS;
+  for (const tier of list) {
+    if (tier.maxLoyer == null || loyer <= tier.maxLoyer) return tier.prix;
+  }
+  return list[list.length - 1].prix;
+}
+// Rend un gabarit DB : remplace {names}/{address}/{date}/{email} (valeurs en gras) et \n en <br/>.
+function renderTemplate(tpl: string, vars: Record<string, string>) {
+  return tpl.split(/(\{[a-z]+\}|\n)/g).map((part, i) => {
+    if (part === "\n") return <br key={i} />;
+    const m = part.match(/^\{([a-z]+)\}$/);
+    if (m) return <b key={i}>{vars[m[1]] ?? part}</b>;
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
 }
 
 function formatCountdown(ms: number) {
@@ -126,6 +204,17 @@ export default function Candidatures() {
   );
   const [createdContractIds, setCreatedContractIds] = useState<number[]>([]);
   const [createdContracts, setCreatedContracts] = useState<ApiBackofficeContratDetails[]>([]);
+  // Assistant contrat (maquette 3 etapes)
+  const [contractStep, setContractStep] = useState<"offer" | "bail" | "contenu" | "paiement" | "done">("offer");
+  const [bailType, setBailType] = useState<"individuel" | "collectif" | null>(null);
+  const [solidarite, setSolidarite] = useState<"avec" | "sans">("avec");
+  const [wantEdl, setWantEdl] = useState(false);
+  const [moyenPaiement, setMoyenPaiement] = useState<string | null>(null);
+  const [payRef, setPayRef] = useState("");
+  const [contractSubmitting, setContractSubmitting] = useState(false);
+  const [contractError, setContractError] = useState<string | null>(null);
+  const [paymentInfo, setPaymentInfo] = useState<{ reference: string; montant: number } | null>(null);
+  const [pricing, setPricing] = useState<ContractConfig | null>(null);
   const [celebrateOpen, setCelebrateOpen] = useState(false);
 
   // États pour la discussion
@@ -554,7 +643,61 @@ export default function Candidatures() {
     if (ownerFilled < TARGET) return;
     const launched = await handleLaunchColocationFromPage();
     if (!launched) return;
+    openContractWizard();
+  }
+
+  const monthlyRent = Number(annonceData?.chambre?.prix_loyer) || 450000;
+
+  // Contenu du contrat : valeurs DB si chargees, sinon repli.
+  const activeTiers = pricing?.tiers?.length ? pricing.tiers : FALLBACK_TIERS;
+  const activeEdlPrix = pricing?.edlPrix ?? FALLBACK_EDL_PRIX;
+  const mobileMoneyList = pricing?.mobileMoney?.length ? pricing.mobileMoney : FALLBACK_MOBILE_MONEY;
+  const activeClauses = pricing?.clauses?.length ? pricing.clauses : FALLBACK_CLAUSES;
+  const activeOffer = pricing?.offer ?? FALLBACK_OFFER;
+  const activeBody = pricing?.body ?? FALLBACK_BODY;
+  const activeBail = pricing?.bail?.length ? pricing.bail : FALLBACK_BAIL;
+  const activeSolidarite = pricing?.solidarite?.length ? pricing.solidarite : FALLBACK_SOLIDARITE;
+  const activeMailNote = pricing?.mailNote ?? FALLBACK_MAIL_NOTE;
+
+  // Logement reel (annonce) — remplace les valeurs demo codees en dur.
+  const logementTitre = annonceData?.titre || "Logement";
+  const logementResume = [
+    annonceData?.type_propriete,
+    annonceData?.surface_totale ? `${annonceData.surface_totale} m²` : null,
+    `${TARGET} colocataire${TARGET > 1 ? "s" : ""}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const moveInLabel = annonceData?.chambre?.date_disponibilite
+    ? new Date(annonceData.chambre.date_disponibilite).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : MOVEIN;
+
+  useEffect(() => {
+    api.contractConfig().then(setPricing).catch(() => {});
+  }, []);
+
+  // Montant apercu cote client (le backend recalcule et fait foi).
+  function previewAmount(mode: "contrat" | "edl" | "both", edl: boolean) {
+    if (mode === "edl") return activeEdlPrix;
+    return priceFromTiers(activeTiers, monthlyRent) + (mode === "both" || edl ? activeEdlPrix : 0);
+  }
+
+  function openContractWizard() {
     setContractMode("contrat");
+    setBailType(null);
+    setSolidarite("avec");
+    setWantEdl(false);
+    setMoyenPaiement(null);
+    setPayRef("");
+    setContractError(null);
+    setPaymentInfo(null);
+    setCreatedContractIds([]);
+    setCreatedContracts([]);
+    setContractStep("offer");
     setContractModalOpen(true);
   }
 
@@ -562,27 +705,85 @@ export default function Candidatures() {
     setContractModalOpen(false);
   }
 
-  async function createContractsForAnnonce(mode: "contrat" | "edl" | "both") {
-    if (!annonceId) return false;
+  // Etape 0 : choix de l'offre (contrat / EDL / les deux)
+  function chooseOffer(mode: "contrat" | "edl" | "both") {
+    setContractMode(mode);
+    setContractError(null);
+    setWantEdl(mode === "both");
+    setContractStep(mode === "edl" ? "contenu" : "bail");
+  }
+
+  // Etape 1 -> 2 : valide le type de bail
+  function goContenu() {
+    if ((contractMode === "contrat" || contractMode === "both") && !bailType) {
+      setContractError("Choisis d'abord un type de bail : individuel ou collectif.");
+      return;
+    }
+    setContractError(null);
+    setContractStep("contenu");
+  }
+
+  // Etape 2 -> 3 : cree les contrats cote serveur puis passe au paiement
+  async function goPaiement() {
+    if (!annonceId) return;
+    const effectiveMode: "contrat" | "edl" | "both" =
+      contractMode === "edl" ? "edl" : wantEdl ? "both" : "contrat";
+    setContractSubmitting(true);
+    setContractError(null);
     try {
-      const result = await api.createContracts(annonceId, mode);
+      const options =
+        effectiveMode === "edl"
+          ? {}
+          : { type_bail: bailType, clause_solidarite: solidarite };
+      const result = await api.createContracts(annonceId, effectiveMode, options);
+      const contracts = Array.isArray(result.contracts) ? result.contracts : [];
       setCreatedContractIds(Array.isArray(result.contratIds) ? result.contratIds : []);
-      setCreatedContracts(Array.isArray(result.contracts) ? result.contracts : []);
-      return true;
+      setCreatedContracts(contracts);
+      setContractStep("paiement");
     } catch (error: any) {
-      const message = error?.message || "Impossible de créer le contrat.";
-      setCandidateActionFeedback(message);
-      return false;
+      setContractError(error?.message || "Impossible de créer le contrat.");
+    } finally {
+      setContractSubmitting(false);
     }
   }
 
-  async function confirmContractChoice(mode: "contrat" | "edl" | "both") {
-    setContractMode(mode);
-    setContractModalOpen(false);
-    const created = await createContractsForAnnonce(mode);
-    if (created) {
-      setCelebrateOpen(true);
+  // Etape 3 : enregistre le paiement Mobile Money manuel
+  async function confirmPayment() {
+    if (!moyenPaiement) {
+      setContractError("Choisis un moyen de paiement (Orange Money ou MVOLA).");
+      return;
     }
+    if (payRef.trim().length < 4) {
+      setContractError("Saisis la référence de ton paiement Mobile Money.");
+      return;
+    }
+    const target = createdContracts[0];
+    if (!target) {
+      setContractError("Aucun contrat à régler.");
+      return;
+    }
+    const total = createdContracts.reduce((sum, c) => sum + Number(c.montant_total || 0), 0);
+    setContractSubmitting(true);
+    setContractError(null);
+    try {
+      const res = await api.submitContractPayment(target.id_contrat, {
+        moyen_paiement: moyenPaiement as "MVOLA" | "Orange Money",
+        reference_operateur: payRef.trim(),
+        montant: total || undefined,
+      });
+      setPaymentInfo({ reference: res.reference, montant: total });
+      setContractStep("done");
+    } catch (error: any) {
+      setContractError(error?.message || "Impossible d'enregistrer le paiement.");
+    } finally {
+      setContractSubmitting(false);
+    }
+  }
+
+  // Ignorer l'offre : ferme l'assistant et affiche la synthese
+  function ignoreOffer() {
+    setContractModalOpen(false);
+    setCelebrateOpen(true);
   }
 
   function toggleAgentView() {
@@ -1123,10 +1324,10 @@ export default function Candidatures() {
                       </div>
                       <div>
                         <div className="text-sm uppercase tracking-[0.18em] text-muted-foreground">
-                          Analakely · T4 · 95 m² · {TARGET} colocataires
+                          {logementTitre} · {logementResume}
                         </div>
                         <div className="bebas text-3xl text-brand-cyan-dark mt-2">
-                          450 000 Ar{" "}
+                          {fmtAr(monthlyRent)} Ar{" "}
                           <span className="text-base font-medium text-muted-foreground">
                             / mois · loyer global
                           </span>
@@ -1323,10 +1524,10 @@ export default function Candidatures() {
                       </div>
                       <div>
                         <div className="text-sm uppercase tracking-[0.18em] text-muted-foreground">
-                          Analakely · T4 · 95 m² · {TARGET} colocataires
+                          {logementTitre} · {logementResume}
                         </div>
                         <div className="bebas text-3xl text-brand-cyan-dark mt-2">
-                          450 000 Ar{" "}
+                          {fmtAr(monthlyRent)} Ar{" "}
                           <span className="text-base font-medium text-muted-foreground">
                             / mois · loyer global
                           </span>
@@ -1833,9 +2034,11 @@ export default function Candidatures() {
                   </h2>
                   <p className="mt-3 text-sm text-muted-foreground">
                     {wonMode === "indiv"
-                      ? `Ta candidature est retenue : tu fais partie de la colocation Analakely · T4. Bienvenue ! Emménagement prévu le ${MOVEIN}.`
-                      : "Votre équipe « Les lève-tôt studieux » remporte la colocation Analakely · T4 ! Vous allez vivre ensemble dès le " +
-                        MOVEIN +
+                      ? `Ta candidature est retenue : tu fais partie de la colocation ${logementTitre}. Bienvenue ! Emménagement prévu le ${moveInLabel}.`
+                      : "Votre équipe « Les lève-tôt studieux » remporte la colocation " +
+                        logementTitre +
+                        " ! Vous allez vivre ensemble dès le " +
+                        moveInLabel +
                         "."}
                   </p>
                   <div className="mt-6 rounded-3xl border border-border bg-card p-5 text-left text-sm text-muted-foreground">
@@ -1843,7 +2046,7 @@ export default function Candidatures() {
                       <Calendar className="h-4 w-4 text-brand-cyan-dark" />
                       <div>
                         <div className="font-semibold">Emménagement</div>
-                        <div>{MOVEIN}</div>
+                        <div>{moveInLabel}</div>
                       </div>
                     </div>
                     <div className="mt-4 flex items-start gap-3">
@@ -1893,7 +2096,7 @@ export default function Candidatures() {
                   </h2>
                   <p className="mt-3 text-sm text-muted-foreground">
                     {lostMode === "indiv"
-                      ? "Une autre équipe s'est complétée en premier pour Analakely · T4. Ça arrive vite ! De nombreuses colocations cherchent encore des profils comme le tien."
+                      ? `Une autre équipe s'est complétée en premier pour ${logementTitre}. Ça arrive vite ! De nombreuses colocations cherchent encore des profils comme le tien.`
                       : "Une autre équipe s'est complétée en premier sur cette annonce. Votre dynamique de groupe est précieuse — restez ensemble et retentez sur une autre colocation !"}
                   </p>
                   <div className="mt-6 rounded-3xl border border-border bg-card p-5 text-left text-sm text-muted-foreground">
@@ -2023,14 +2226,14 @@ export default function Candidatures() {
             <div className="mt-6 rounded-3xl border border-border bg-brand-cyan-light/30 p-6">
               <div className="text-sm text-muted-foreground">Logement</div>
               <div className="bebas text-2xl text-brand-cyan-dark mt-2">
-                Analakely · T4 · 95 m² · 450 000 Ar / mois
+                {logementTitre} · {logementResume} · {fmtAr(monthlyRent)} Ar / mois
               </div>
               <div className="mt-4 text-sm text-muted-foreground">
                 Colocataires —{" "}
                 {ownerRetained.map((c) => c.name).join(" · ") || "—"}
               </div>
               <div className="mt-2 text-sm text-muted-foreground">
-                Début d'emménagement — {MOVEIN}
+                Début d'emménagement — {moveInLabel}
               </div>
             </div>
             <button
@@ -2044,70 +2247,285 @@ export default function Candidatures() {
         </div>
       )}
 
-      {/* ===== MODAL CONTRAT ===== */}
-      {contractModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-brand-cyan-light px-3 py-1.5 text-sm font-semibold text-brand-cyan-dark">
-                  <Sparkles className="h-4 w-4" /> Assistance Coloc'KOO
-                </div>
-                <h2 className="bebas mt-4 text-3xl">
-                  Choisis ton aide pour finaliser la colocation
-                </h2>
+      {/* ===== MODAL CONTRAT (assistant 3 etapes) ===== */}
+      {contractModalOpen && (() => {
+        const orderTotal = createdContracts.reduce((sum, c) => sum + Number(c.montant_total || 0), 0);
+        const previewTotal = previewAmount(contractMode, wantEdl);
+        const isEdlOnly = contractMode === "edl";
+        const priceLabel = isEdlOnly ? "Document d'état des lieux (forfait)" : "Création du contrat (forfait)";
+        const userEmail = user?.email || "ton adresse e-mail";
+        const clauses = activeClauses;
+        // Apercu pre-rempli du contrat (donnees DB)
+        const coName = ownerRetained.map((c) => c.name).join(", ") || "—";
+        const coAddr =
+          [annonceData?.quartier, annonceData?.ville].filter(Boolean).join(", ") || "—";
+        const coDate = moveInLabel;
+        return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            {contractStep !== "offer" && (
+              <div className="relative text-center">
+                <button
+                  type="button"
+                  className="absolute right-0 top-0 rounded-full bg-muted p-2 text-muted-foreground hover:bg-muted/80"
+                  onClick={closeContractModal}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <h2 className="bebas text-3xl text-[#a8467f]">Ton contrat de colocation</h2>
+                <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                  Ton contrat comprend tous les éléments nécessaires pour établir un contrat
+                  légal entre les colocataires et le propriétaire.
+                </p>
               </div>
-              <button
-                type="button"
-                className="rounded-full bg-muted p-3 text-muted-foreground hover:bg-muted/80"
-                onClick={closeContractModal}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Avant de lancer la colocation, choisis si tu veux une aide pour le
-              contrat, l'état des lieux, ou les deux.
-            </p>
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <button
-                type="button"
-                className="rounded-3xl border border-border bg-card px-4 py-5 text-left text-sm font-semibold text-brand-cyan-dark hover:border-brand-cyan"
-                onClick={() => confirmContractChoice("contrat")}
-              >
-                <div className="text-lg font-semibold">Aide au contrat</div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  Contrat de colocation conforme, rédigé avec les noms et
-                  l'adresse.
+            )}
+
+            {contractError && (
+              <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {contractError}
+              </div>
+            )}
+
+            {/* ---------- ETAPE 0 : celebration + offre (maquette) ---------- */}
+            {contractStep === "offer" && (
+              <div className="relative text-center">
+                <button
+                  type="button"
+                  className="absolute right-0 top-0 rounded-full bg-muted p-2 text-muted-foreground hover:bg-muted/80"
+                  onClick={closeContractModal}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-br from-brand-green to-brand-cyan" />
+                <h2 className="bebas text-3xl">Toutes nos félicitations !</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                  Tu as permis à plusieurs colocataires de se rencontrer à travers ton
+                  logement pour un mieux vivre ensemble.
+                </p>
+
+                {/* Carte offre contrat (magenta) */}
+                <div className="mt-6 rounded-2xl border border-[#CD6CA8]/30 bg-gradient-to-br from-brand-green-light to-brand-cyan-light p-5 pt-10">
+                  <div className="mx-auto -mt-16 mb-3 grid h-[94px] w-[94px] place-items-center rounded-full bg-white shadow-md">
+                    <span className="bebas text-lg leading-none text-[#a8467f]">
+                      COLOC'<span className="text-brand-cyan-dark">KOO</span>
+                    </span>
+                  </div>
+                  <h3 className="bebas mx-auto max-w-md text-2xl text-[#a8467f]">
+                    {activeOffer.titre}
+                  </h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm text-foreground/80">
+                    {activeOffer.texte}
+                  </p>
+
+                  {/* Apercu du contrat (gabarit + donnees DB) */}
+                  <div className="relative mt-3 max-h-40 overflow-hidden rounded-xl border border-border bg-white p-4 text-left text-xs leading-relaxed text-foreground">
+                    <div className="bebas mb-1.5 text-base">{activeBody.titre}</div>
+                    {renderTemplate(activeBody.intro, { names: coName, address: coAddr, date: coDate })}
+                    <br /><br />
+                    {activeBody.corps}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white to-transparent" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => chooseOffer("contrat")}
+                    className="mt-3 w-full rounded-xl bg-[#CD6CA8] px-4 py-3 text-sm font-bold text-white hover:bg-[#bb5b96]"
+                  >
+                    Aide au contrat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => chooseOffer("edl")}
+                    className="mt-2.5 w-full rounded-xl bg-[#CD6CA8] px-4 py-3 text-sm font-bold text-white hover:bg-[#bb5b96]"
+                  >
+                    Aide à l'état des lieux
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => chooseOffer("both")}
+                    className="mt-2.5 w-full rounded-xl bg-[#CD6CA8] px-4 py-3 text-sm font-bold text-white hover:bg-[#bb5b96]"
+                  >
+                    Les deux Monsieur !
+                  </button>
+                  <button
+                    type="button"
+                    onClick={ignoreOffer}
+                    className="mt-2.5 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Ignorer l'offre et continuer ›
+                  </button>
                 </div>
-              </button>
-              <button
-                type="button"
-                className="rounded-3xl border border-border bg-card px-4 py-5 text-left text-sm font-semibold text-brand-cyan-dark hover:border-brand-cyan"
-                onClick={() => confirmContractChoice("edl")}
-              >
-                <div className="text-lg font-semibold">
-                  Aide à l'état des lieux
+              </div>
+            )}
+
+            {/* ---------- ETAPE 1 : type de bail ---------- */}
+            {contractStep === "bail" && (
+              <div className="mt-6 space-y-4">
+                <div className="text-sm font-semibold">Type de contrat souhaité</div>
+                {activeBail.map((opt, idx) => (
+                  <React.Fragment key={opt.cle}>
+                    {idx > 0 && (
+                      <div className="text-center text-xs uppercase tracking-wider text-muted-foreground">ou</div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setBailType(opt.cle as "individuel" | "collectif")}
+                      className={`w-full rounded-3xl border px-4 py-4 text-left ${bailType === opt.cle ? "border-brand-cyan bg-brand-cyan-light" : "border-border bg-card hover:border-brand-cyan"}`}
+                    >
+                      <div className="font-semibold text-brand-cyan-dark">{opt.titre}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">{opt.description}</div>
+                    </button>
+                  </React.Fragment>
+                ))}
+
+                <div className="space-y-2 rounded-3xl border border-border bg-muted/30 p-4">
+                  {activeSolidarite.map((opt) => (
+                    <label key={opt.cle} className="flex cursor-pointer items-start gap-3">
+                      <input type="radio" name="solid" className="mt-1" checked={solidarite === opt.cle} onChange={() => setSolidarite(opt.cle as "avec" | "sans")} />
+                      <span>
+                        <span className="block text-sm font-semibold">{opt.titre}</span>
+                        <span className="block text-xs text-muted-foreground">{opt.description}</span>
+                      </span>
+                    </label>
+                  ))}
                 </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  Document d'état des lieux pré-rempli pour l'entrée et la
-                  sortie.
+
+                <button type="button" onClick={goContenu} className="w-full rounded-xl bg-[#CD6CA8] px-5 py-3.5 text-sm font-bold text-white hover:bg-[#bb5b96]">
+                  Prochaine étape
+                </button>
+                <div className="flex items-center justify-between text-xs">
+                  <button type="button" onClick={() => setContractStep("offer")} className="text-muted-foreground hover:text-foreground">‹ Étape précédente</button>
+                  <button type="button" onClick={ignoreOffer} className="text-muted-foreground hover:text-foreground">Ignorer l'offre</button>
                 </div>
-              </button>
-              <button
-                type="button"
-                className="rounded-3xl border border-border bg-card px-4 py-5 text-left text-sm font-semibold text-brand-cyan-dark hover:border-brand-cyan"
-                onClick={() => confirmContractChoice("both")}
-              >
-                <div className="text-lg font-semibold">Les deux Monsieur !</div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  Contrat + état des lieux ensemble, prêt à être envoyé.
+              </div>
+            )}
+
+            {/* ---------- ETAPE 2 : contenu + prix ---------- */}
+            {contractStep === "contenu" && (
+              <div className="mt-6 space-y-3">
+                <div className="text-sm font-semibold">{isEdlOnly ? "Ta prestation" : "Ce que comprend ton contrat"}</div>
+                {!isEdlOnly && clauses.map((clause) => (
+                  <div key={clause.titre} className="flex items-start gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+                    <input type="checkbox" checked disabled className="mt-1" />
+                    <div>
+                      <div className="text-sm font-medium">{clause.titre}</div>
+                      <div className="text-xs text-muted-foreground">{clause.description}</div>
+                    </div>
+                  </div>
+                ))}
+
+                {!isEdlOnly && (
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-brand-olive/40 bg-brand-olive/10 px-4 py-3">
+                    <input type="checkbox" className="mt-1" checked={wantEdl} onChange={(e) => setWantEdl(e.target.checked)} />
+                    <div>
+                      <div className="text-sm font-medium">
+                        Document d'état des lieux (entrée/sortie)
+                        <span className="ml-2 rounded-full bg-brand-olive/30 px-2 py-0.5 text-xs font-semibold">+ {fmtAr(activeEdlPrix)} Ar</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">Constat contradictoire à l'entrée et à la sortie du logement.</div>
+                    </div>
+                  </label>
+                )}
+
+                {isEdlOnly && (
+                  <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+                    Document d'état des lieux (entrée/sortie) — constat contradictoire à l'entrée et à la sortie du logement.
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between rounded-2xl bg-muted/40 px-4 py-3 text-sm">
+                  <span className="text-muted-foreground">{priceLabel}</span>
+                  <span className="bebas text-xl text-brand-cyan-dark">{fmtAr(previewTotal)} Ar</span>
                 </div>
-              </button>
-            </div>
+
+                <p className="rounded-2xl border border-border bg-brand-cyan-light/40 px-4 py-3 text-xs text-muted-foreground">
+                  {renderTemplate(isEdlOnly ? activeMailNote.edl : activeMailNote.contrat, { email: userEmail })}
+                </p>
+
+                <div className="text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Paiement — Orange Money / MVOLA</div>
+                <button type="button" onClick={goPaiement} disabled={contractSubmitting} className="w-full rounded-xl bg-[#CD6CA8] px-5 py-3.5 text-sm font-bold text-white hover:bg-[#bb5b96] disabled:opacity-60">
+                  {contractSubmitting ? "Création du contrat…" : "Régler ma commande"}
+                </button>
+                <div className="flex items-center justify-between text-xs">
+                  <button type="button" onClick={() => setContractStep(isEdlOnly ? "offer" : "bail")} className="text-muted-foreground hover:text-foreground">‹ Étape précédente</button>
+                  <button type="button" onClick={ignoreOffer} className="text-muted-foreground hover:text-foreground">Ignorer l'offre</button>
+                </div>
+              </div>
+            )}
+
+            {/* ---------- ETAPE 3 : paiement Mobile Money ---------- */}
+            {contractStep === "paiement" && (
+              <div className="mt-6 space-y-4">
+                <div className="text-sm font-semibold">Choix du mode de règlement</div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {mobileMoneyList.map((m) => (
+                    <button
+                      key={m.nom}
+                      type="button"
+                      onClick={() => setMoyenPaiement(m.nom)}
+                      className={`rounded-3xl border px-4 py-4 text-left ${moyenPaiement === m.nom ? "border-brand-cyan bg-brand-cyan-light" : "border-border bg-card hover:border-brand-cyan"}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold" style={{ color: m.couleur }}>{m.nom}</span>
+                        <span className="grid h-16 w-16 place-items-center rounded-lg border border-border bg-white text-[9px] text-muted-foreground">QR</span>
+                      </div>
+                      <div className="mt-2 font-mono text-sm">{m.numero}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">{m.hint}</div>
+                    </button>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-center text-sm font-medium">Référence de paiement Mobile money *</label>
+                  <div className="mb-2 text-center text-xs text-muted-foreground">Les frais de l'opérateur sont à la charge de l'acheteur.</div>
+                  <input
+                    className="input"
+                    value={payRef}
+                    onChange={(e) => setPayRef(e.target.value)}
+                    placeholder="Ex : MP240607.1234.A56789"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between rounded-2xl bg-muted/40 px-4 py-3 text-sm">
+                  <span className="text-muted-foreground">{priceLabel}</span>
+                  <span className="bebas text-xl text-brand-cyan-dark">{fmtAr(orderTotal || previewTotal)} Ar</span>
+                </div>
+
+                <button type="button" onClick={confirmPayment} disabled={contractSubmitting} className="w-full rounded-xl bg-[#CD6CA8] px-5 py-3.5 text-sm font-bold text-white hover:bg-[#bb5b96] disabled:opacity-60">
+                  {contractSubmitting ? "Enregistrement…" : "Valider ma commande"}
+                </button>
+                <div className="flex items-center justify-between text-xs">
+                  <button type="button" onClick={() => setContractStep("contenu")} className="text-muted-foreground hover:text-foreground">‹ Étape précédente</button>
+                  <button type="button" onClick={ignoreOffer} className="text-muted-foreground hover:text-foreground">Ignorer l'offre</button>
+                </div>
+              </div>
+            )}
+
+            {/* ---------- ETAPE 4 : confirmation ---------- */}
+            {contractStep === "done" && (
+              <div className="mt-6 space-y-4 text-center">
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-green/15 text-brand-green">
+                  <Sparkles className="h-7 w-7" />
+                </div>
+                <div className="bebas text-2xl">Paiement enregistré</div>
+                <p className="text-sm text-muted-foreground">
+                  Ton paiement <b>{paymentInfo?.reference}</b> de <b>{fmtAr(paymentInfo?.montant || 0)} Ar</b> a bien été enregistré.
+                  Il sera <b>vérifié par notre équipe</b>, puis ton document te sera envoyé par e-mail à <b>{userEmail}</b>.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setContractModalOpen(false); setCelebrateOpen(true); }}
+                  className="w-full rounded-3xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark"
+                >
+                  Terminer
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ===== MODAL DE DISCUSSION ===== */}
       {chatModalOpen && selectedCandidate && (
