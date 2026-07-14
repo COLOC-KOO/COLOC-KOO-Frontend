@@ -45,6 +45,24 @@ type Team = {
 
 type NotificationMode = "indiv" | "group";
 
+// ===== NOUVEAU TYPE POUR LES ÉQUIPES RÉELLES =====
+type EquipeReelle = {
+  id_equipe: number;
+  id_annonce: number;
+  nom: string;
+  ambiance: string | null;
+  statut: 'forming' | 'selected' | 'rejected' | 'complete';
+  date_creation: string;
+  membres: {
+    id_utilisateur: number;
+    nom: string;
+    prenom: string;
+    email: string;
+    statut: 'pending' | 'accepted' | 'refused' | 'owner';
+    initials: string;
+  }[];
+};
+
 const MOVEIN = "1er juillet 2026";
 const PROP_ADDR = "Analakely, Antananarivo (T4 · 95 m²)";
 const FEE_TOTAL = 350000;
@@ -73,7 +91,7 @@ export default function Candidatures() {
     [user],
   );
 
-  // 🔥 Extraire annonceId de l'URL si useParams ne fonctionne pas
+  //Extraire annonceId de l'URL si useParams ne fonctionne pas
   const getAnnonceIdFromUrl = () => {
     if (paramsAnnonceId) return paramsAnnonceId;
 
@@ -101,6 +119,13 @@ export default function Candidatures() {
   const [completedMembers, setCompletedMembers] = useState<Array<{ nom: string; initiales?: string; statut?: string }>>([]);
   const [annonceData, setAnnonceData] = useState<ApiAnnonce | null>(null);
   const TARGET = annonceData?.total_colocataires ?? 3;
+
+  // ===== NOUVEAUX ÉTATS POUR LES ÉQUIPES =====
+  const [equipesReelles, setEquipesReelles] = useState<EquipeReelle[]>([]);
+  const [loadingEquipes, setLoadingEquipes] = useState(false);
+  const [showCreateEquipe, setShowCreateEquipe] = useState(false);
+  const [newEquipeNom, setNewEquipeNom] = useState('');
+  const [newEquipeAmbiance, setNewEquipeAmbiance] = useState('');
 
   // États UI existants
   const [activeView, setActiveView] = useState<
@@ -236,6 +261,102 @@ export default function Candidatures() {
       console.error("❌ Erreur chargement candidatures:", error);
     } finally {
       setLoadingCandidatures(false);
+    }
+  };
+
+  // ===== CHARGEMENT DES ÉQUIPES =====
+  const loadEquipes = async () => {
+    if (!annonceId) return;
+    try {
+      setLoadingEquipes(true);
+      console.log('🔍 Chargement des équipes pour l\'annonce:', annonceId);
+
+      const data = await api.getEquipesByAnnonce(parseInt(annonceId));
+      console.log('📊 Équipes reçues:', data);
+      setEquipesReelles(data);
+      
+      // Mettre à jour le state teams pour l'UI existante
+      if (data.length > 0) {
+        const formattedTeams: Team[] = data.map((equipe: EquipeReelle) => ({
+          id: String(equipe.id_equipe),
+          title: equipe.nom,
+          mood: equipe.ambiance || 'Ambiance à définir',
+          members: equipe.membres.map(m => {
+            const fullName = `${m.prenom} ${m.nom}`.trim() || m.email || 'Membre';
+            return fullName;
+          }),
+          chat: equipe.membres.map(m => ({
+            who: `${m.prenom} ${m.nom}`.trim() || m.email || 'Membre',
+            txt: `${m.statut === 'owner' ? '👑 Créateur' : m.statut === 'accepted' ? '✅ Membre' : '⏳ En attente'}`
+          }))
+        }));
+        setTeams(formattedTeams);
+      }
+    } catch (error) {
+      console.error('❌ Erreur chargement équipes:', error);
+    } finally {
+      setLoadingEquipes(false);
+    }
+  };
+
+  // ===== GESTION DES ÉQUIPES =====
+  const handleCreateEquipe = async () => {
+    if (!annonceId || !newEquipeNom.trim()) {
+      alert('Veuillez saisir un nom pour l\'équipe.');
+      return;
+    }
+
+    try {
+      const data = await api.createEquipe({
+        id_annonce: parseInt(annonceId),
+        nom: newEquipeNom.trim(),
+        ambiance: newEquipeAmbiance.trim() || null,
+        statut: 'forming'
+      });
+
+      console.log('✅ Équipe créée:', data);
+      setShowCreateEquipe(false);
+      setNewEquipeNom('');
+      setNewEquipeAmbiance('');
+      await loadEquipes();
+      alert('✅ Équipe créée avec succès !');
+    } catch (error: any) {
+      console.error('❌ Erreur création équipe:', error);
+      alert(error?.message || 'Erreur lors de la création de l\'équipe.');
+    }
+  };
+
+  const handleJoinEquipe = async (equipeId: number) => {
+    if (!user) {
+      alert('Veuillez vous connecter pour rejoindre une équipe.');
+      return;
+    }
+
+    try {
+      await api.addMemberToEquipe(equipeId, user.id);
+      await loadEquipes();
+      alert('✅ Vous avez rejoint l\'équipe !');
+    } catch (error: any) {
+      console.error('❌ Erreur:', error);
+      alert(error?.message || 'Erreur lors de l\'inscription à l\'équipe.');
+    }
+  };
+
+  const handleLeaveEquipe = async (equipeId: number) => {
+    if (!user) {
+      alert('Veuillez vous connecter.');
+      return;
+    }
+
+    if (!confirm('Voulez-vous vraiment quitter cette équipe ?')) return;
+    
+    try {
+      await api.removeMemberFromEquipe(equipeId, user.id);
+      await loadEquipes();
+      alert('✅ Vous avez quitté l\'équipe.');
+    } catch (error: any) {
+      console.error('❌ Erreur:', error);
+      alert(error?.message || 'Erreur lors du retrait de l\'équipe.');
     }
   };
 
@@ -459,13 +580,21 @@ export default function Candidatures() {
     );
   }, [waitDeadline]);
 
-  // 🔥 CHARGER LES DONNÉES AU MONTAGE
+  // ===== CHARGER LES DONNÉES AU MONTAGE =====
   useEffect(() => {
     console.log("🔄 [1] useEffect chargement - annonceId:", annonceId, "userId:", user?.id, "authLoading:", authLoading);
     console.log("🔄 [1] URL actuelle:", location.pathname);
 
     if (!annonceId || authLoading) return;
-    loadRealCandidatures();
+    
+    const loadAllData = async () => {
+      await Promise.all([
+        loadRealCandidatures(),
+        loadEquipes()
+      ]);
+    };
+    
+    loadAllData();
   }, [annonceId, user?.id, authLoading]);
 
   // 🔥 VÉRIFIER SI L'UTILISATEUR A POSTULÉ
@@ -1110,6 +1239,227 @@ export default function Candidatures() {
 
               {/* AFFICHER LES CANDIDATURES SEULEMENT SI annonceId EXISTE */}
               {annonceId && renderRealCandidatures()}
+            </div>
+
+            {/* ===== SECTION ÉQUIPES RÉELLES ===== */}
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+              <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+                <h2 className="bebas text-2xl">Équipes en formation</h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowCreateEquipe(!showCreateEquipe)}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-brand-cyan px-4 py-2 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Créer une équipe
+                  </button>
+                </div>
+              </div>
+
+              {loadingEquipes ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-cyan"></div>
+                </div>
+              ) : equipesReelles.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  🏠 Aucune équipe pour le moment. Soyez le premier à créer une équipe !
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {equipesReelles.map((equipe) => {
+                    const membres = equipe.membres || [];
+                    const totalPlaces = annonceData?.total_colocataires || 3;
+                    const isFull = membres.length >= totalPlaces;
+                    const isCurrentUserInTeam = membres.some(m => m.id_utilisateur === user?.id);
+                    const isOwner = membres.some(m => m.id_utilisateur === user?.id && m.statut === 'owner');
+                    
+                    return (
+                      <div
+                        key={equipe.id_equipe}
+                        className={`rounded-3xl border p-5 ${
+                          isCurrentUserInTeam ? 'border-brand-green bg-brand-green-light/20' : 'border-border bg-card'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <h3 className="bebas text-xl">{equipe.nom}</h3>
+                            <div className="text-sm text-muted-foreground">
+                              {membres.length}/{totalPlaces} membres
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                              equipe.statut === 'complete' 
+                                ? 'bg-green-100 text-green-700' 
+                                : equipe.statut === 'selected'
+                                ? 'bg-blue-100 text-blue-700'
+                                : equipe.statut === 'rejected'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {equipe.statut === 'complete' ? '✅ Complète' : 
+                               equipe.statut === 'selected' ? '🔵 Sélectionnée' :
+                               equipe.statut === 'rejected' ? '❌ Rejetée' : 
+                               '⏳ En formation'}
+                            </span>
+                            {isOwner && (
+                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                                👑 Créateur
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {equipe.ambiance && (
+                          <div className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
+                            {equipe.ambiance}
+                          </div>
+                        )}
+                        
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          {membres.map((membre, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ring-2 ring-white ${
+                                membre.statut === 'owner' 
+                                  ? 'bg-amber-500 text-white' 
+                                  : membre.statut === 'accepted'
+                                  ? 'bg-brand-green text-white'
+                                  : 'bg-brand-cyan text-white'
+                              }`}>
+                                {membre.initials || '?'}
+                              </div>
+                              <span className="text-xs truncate max-w-[80px]">
+                                {membre.prenom || membre.nom || membre.email?.split('@')[0] || 'Membre'}
+                                {membre.statut === 'owner' && ' 👑'}
+                              </span>
+                            </div>
+                          ))}
+                          {Array.from({ length: Math.max(0, totalPlaces - membres.length) }).map((_, idx) => (
+                            <div
+                              key={`empty-${idx}`}
+                              className="h-10 w-10 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground text-sm ring-2 ring-white"
+                            >
+                              +
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {!isCurrentUserInTeam && equipe.statut !== 'complete' && equipe.statut !== 'selected' && (
+                            <button
+                              onClick={() => handleJoinEquipe(equipe.id_equipe)}
+                              className="rounded-2xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark transition-colors"
+                            >
+                              Rejoindre
+                            </button>
+                          )}
+                          {isCurrentUserInTeam && !isOwner && (
+                            <button
+                              onClick={() => handleLeaveEquipe(equipe.id_equipe)}
+                              className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
+                            >
+                              Quitter
+                            </button>
+                          )}
+                          {isOwner && (
+                            <button
+                              onClick={() => {
+                                if (confirm('Voulez-vous vraiment supprimer cette équipe ?')) {
+                                  api.deleteEquipe(equipe.id_equipe)
+                                    .then(() => loadEquipes())
+                                    .catch((error) => {
+                                      console.error('❌ Erreur:', error);
+                                      alert('Erreur lors de la suppression de l\'équipe.');
+                                    });
+                                }
+                              }}
+                              className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                          {equipe.statut === 'complete' && (
+                            <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                              <Check className="h-4 w-4" />
+                              Équipe complète !
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Modal de création d'équipe */}
+              {showCreateEquipe && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                  <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-semibold">🏆 Créer une équipe</h3>
+                      <button
+                        onClick={() => {
+                          setShowCreateEquipe(false);
+                          setNewEquipeNom('');
+                          setNewEquipeAmbiance('');
+                        }}
+                        className="rounded-full p-2 hover:bg-gray-100 transition-colors"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-semibold block mb-1">
+                          Nom de l'équipe *
+                        </label>
+                        <input
+                          type="text"
+                          value={newEquipeNom}
+                          onChange={(e) => setNewEquipeNom(e.target.value)}
+                          placeholder="Ex: Les lève-tôt studieux"
+                          className="w-full rounded-2xl border border-border px-4 py-2.5 text-sm outline-none focus:border-brand-cyan transition-colors"
+                          maxLength={255}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-semibold block mb-1">
+                          Ambiance (optionnel)
+                        </label>
+                        <textarea
+                          value={newEquipeAmbiance}
+                          onChange={(e) => setNewEquipeAmbiance(e.target.value)}
+                          placeholder="Décrivez l'esprit de votre équipe..."
+                          className="w-full rounded-2xl border border-border px-4 py-2.5 text-sm outline-none focus:border-brand-cyan min-h-[100px] resize-none transition-colors"
+                          maxLength={500}
+                        />
+                      </div>
+
+                      <div className="flex gap-3 mt-4">
+                        <button
+                          onClick={() => {
+                            setShowCreateEquipe(false);
+                            setNewEquipeNom('');
+                            setNewEquipeAmbiance('');
+                          }}
+                          className="flex-1 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          onClick={handleCreateEquipe}
+                          disabled={!newEquipeNom.trim()}
+                          className="flex-1 rounded-2xl bg-brand-cyan px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Créer l'équipe
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ===== VUE FLUX ===== */}
