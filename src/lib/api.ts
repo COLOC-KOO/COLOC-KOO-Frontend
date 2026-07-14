@@ -286,6 +286,8 @@ export interface ApiBackofficeContrat {
   id_contrat: number
   reference?: string | null
   type: 'contrat' | 'edl'
+  type_bail?: 'individuel' | 'collectif' | null
+  clause_solidarite?: 'avec' | 'sans' | null
   statut: 'a-emettre' | 'a-planifier' | 'brouillon' | 'emis' | 'envoye' | 'signe' | 'annule'
   montant_total: number | null
   date_creation: string
@@ -639,11 +641,37 @@ export const api = {
       method: 'POST',
     })
   },
-  createContracts(annonceId: string | number, mode: 'contrat' | 'edl' | 'both') {
+  createContracts(
+    annonceId: string | number,
+    mode: 'contrat' | 'edl' | 'both',
+    options: { type_bail?: 'individuel' | 'collectif' | null; clause_solidarite?: 'avec' | 'sans' | null } = {},
+  ) {
     return request<{ contratIds: number[]; contracts: ApiBackofficeContratDetails[] }>(`/candidatures/annonce/${annonceId}/contrats`, {
       method: 'POST',
-      body: JSON.stringify({ mode }),
+      body: JSON.stringify({ mode, ...options }),
     })
+  },
+  contractConfig() {
+    return request<{
+      tiers: { maxLoyer: number | null; prix: number }[]
+      edlPrix: number
+      mobileMoney: { nom: string; numero: string; couleur: string; hint: string }[]
+      clauses: { titre: string; description: string }[]
+      offer: { titre: string; texte: string }
+      body: { titre: string; intro: string; corps: string }
+      bail: { cle: string; titre: string; description: string }[]
+      solidarite: { cle: string; titre: string; description: string }[]
+      mailNote: { contrat: string; edl: string }
+    }>(`/meta/contract-config`)
+  },
+  submitContractPayment(
+    contratId: string | number,
+    payload: { moyen_paiement: 'MVOLA' | 'Orange Money'; reference_operateur: string; montant?: number },
+  ) {
+    return request<{ message: string; id_paiement: number; reference: string; statut: string }>(
+      `/candidatures/contrats/${contratId}/paiement`,
+      { method: 'POST', body: JSON.stringify(payload) },
+    )
   },
 
   // ===== GESTION DES ÉQUIPES =====
