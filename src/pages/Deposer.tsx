@@ -68,6 +68,8 @@ export default function Deposer() {
     titre: '',
     description: '',
     type_propriete: 'appartement',
+    type_bail: 'collectif',
+    clause_solidarite: 'sans',
     type_bailleur: 'membre',
     id_ville: 1,
     quartier: '',
@@ -166,6 +168,8 @@ export default function Deposer() {
         type_bailleur: form.type_bailleur,
         type_annonce: user.poste === 'proprietaire' ? 'creation' : 'existante',
         type_propriete: form.type_propriete,
+        type_bail: form.type_bail,
+        clause_solidarite: form.clause_solidarite,
         total_colocataires: form.total_colocataires ? Number(form.total_colocataires) : null,
         surface_totale: form.surface_totale ? Number(form.surface_totale) : null,
         adresse_exacte: form.adresse_exacte || null,
@@ -192,6 +196,8 @@ export default function Deposer() {
           titre: '',
           description: '',
           type_propriete: 'appartement',
+          type_bail: 'collectif',
+          clause_solidarite: 'sans',
           type_bailleur: 'membre',
           id_ville: form.id_ville,
           quartier: '',
@@ -701,6 +707,18 @@ export default function Deposer() {
                     </Field>
                     <Field label="Règles" help="Séparées par des virgules">
                       <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.regles} onChange={(e) => update('regles', e.target.value)} placeholder="Non fumeur, Animaux acceptés" />
+                    </Field>
+                    <Field label="Type de bail" help="Sera affiché sur la fiche et repris dans le contrat">
+                      <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.type_bail} onChange={(e) => update('type_bail', e.target.value)}>
+                        <option value="collectif">Bail collectif — un seul contrat signé par tous</option>
+                        <option value="individuel">Bail individuel — chacun signe son contrat</option>
+                      </select>
+                    </Field>
+                    <Field label="Clause de solidarité">
+                      <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.clause_solidarite} onChange={(e) => update('clause_solidarite', e.target.value)}>
+                        <option value="sans">Sans clause de solidarité — chacun responsable de sa part</option>
+                        <option value="avec">Avec clause de solidarité — tous solidaires du loyer</option>
+                      </select>
                     </Field>
                   </div>
 

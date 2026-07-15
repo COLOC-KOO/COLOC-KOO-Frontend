@@ -293,6 +293,9 @@ function StatusBadge({ status }: { status: ApiAnnonce['statut'] }) {
     rejected: ['Rejetee', 'text-brand-magenta border-brand-magenta/30 bg-brand-magenta/10'],
     archived: ['Archivee', 'text-white/60 border-white/20 bg-white/5'],
     expired: ['Expiree', 'text-white/60 border-white/20 bg-white/5'],
+    en_attente: ['En attente', 'text-brand-yellow border-brand-yellow/30 bg-brand-yellow/10'],
+    refusee: ['Refusee', 'text-brand-magenta border-brand-magenta/30 bg-brand-magenta/10'],
+    terminee: ['Terminee', 'text-brand-green border-brand-green/30 bg-brand-green/10'],
   } as const
   const [text, className] = config[status] || config.pending
   return <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${className}`}>{text}</span>
