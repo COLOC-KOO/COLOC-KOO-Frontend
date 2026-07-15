@@ -18,20 +18,34 @@ function normalizePhotos(value: unknown): string[] {
   return []
 }
 
+function normalizeDateInputValue(value: unknown) {
+  if (typeof value !== 'string' || !value.trim()) return ''
+  const trimmed = value.trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+  const compact = trimmed.split('T')[0].split(' ')[0]
+  return /^\d{4}-\d{2}-\d{2}$/.test(compact) ? compact : ''
+}
+
 function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user']; onSave: (payload: Record<string, unknown>) => Promise<unknown> }) {
   const [form, setForm] = useState({
     prenom: user?.prenom || '',
     nom: user?.nom || '',
     email: user?.email || '',
     telephone: user?.telephone || '',
-    dateNaissance: user?.dateNaissance || '',
+    dateNaissance: normalizeDateInputValue(user?.dateNaissance),
     profession: user?.profession || '',
     bio: user?.bio || '',
     languePreferee: user?.languePreferee || '',
+    profilePicture: user?.profilePicture || '',
+    villeActuelle: typeof user?.villeActuelle === 'string' ? user.villeActuelle : (user?.villeActuelle ? String(user.villeActuelle) : ''),
+    villeOrigine: typeof user?.villeOrigine === 'string' ? user.villeOrigine : (user?.villeOrigine ? String(user.villeOrigine) : ''),
   })
   const [langues, setLangues] = useState<Langue[]>([])
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [selectedProfileFile, setSelectedProfileFile] = useState<File | null>(null)
+  const [uploadingProfile, setUploadingProfile] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setForm({
@@ -39,10 +53,13 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
       nom: user?.nom || '',
       email: user?.email || '',
       telephone: user?.telephone || '',
-      dateNaissance: user?.dateNaissance || '',
+      dateNaissance: normalizeDateInputValue(user?.dateNaissance),
       profession: user?.profession || '',
       bio: user?.bio || '',
       languePreferee: user?.languePreferee || '',
+      profilePicture: user?.profilePicture || '',
+      villeActuelle: typeof user?.villeActuelle === 'string' ? user.villeActuelle : (user?.villeActuelle ? String(user.villeActuelle) : ''),
+      villeOrigine: typeof user?.villeOrigine === 'string' ? user.villeOrigine : (user?.villeOrigine ? String(user.villeOrigine) : ''),
     })
   }, [user])
 
@@ -56,30 +73,73 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
     setSaving(true)
     setMessage('')
     try {
+      let profilePicture = form.profilePicture || null
+      if (selectedProfileFile) {
+        setUploadingProfile(true)
+        const formData = new FormData()
+        formData.append('photo', selectedProfileFile)
+        const uploaded = await api.uploadProfilePicture(formData)
+        profilePicture = uploaded.profilePicture || null
+        setForm((prev) => ({ ...prev, profilePicture: profilePicture || '' }))
+      }
+
       const birthDate = form.dateNaissance || null
-      const age = birthDate ? new Date().getFullYear() - new Date(birthDate).getFullYear() : null
+      const age = birthDate ? (() => {
+        const today = new Date()
+        const birth = new Date(birthDate)
+        let computedAge = today.getFullYear() - birth.getFullYear()
+        const monthDiff = today.getMonth() - birth.getMonth()
+        const dayDiff = today.getDate() - birth.getDate()
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+          computedAge -= 1
+        }
+        return Math.max(0, computedAge)
+      })() : null
       await onSave({
-        prenom: form.prenom,
-        nom: form.nom,
-        email: form.email,
-        telephone: form.telephone,
-        bio: form.bio,
+        prenom: form.prenom || null,
+        nom: form.nom || null,
+        email: form.email || null,
+        telephone: form.telephone || null,
+        bio: form.bio || null,
         date_naissance: birthDate,
         age,
-        profession: form.profession,
+        profession: form.profession || null,
         langue_preferee: form.languePreferee ? Number(form.languePreferee) : null,
+        profile_picture: profilePicture,
+        ville_actuelle: form.villeActuelle || null,
+        ville_origine: form.villeOrigine || null,
       })
+      setSelectedProfileFile(null)
       setMessage('Profil mis à jour avec succès.')
     } catch {
       setMessage('Impossible de mettre à jour le profil.')
     } finally {
       setSaving(false)
+      setUploadingProfile(false)
     }
   }
+
+  const initials = `${(form.prenom || user?.prenom || '').charAt(0)}${(form.nom || user?.nom || '').charAt(0)}`.toUpperCase() || 'U'
 
   return (
     <div>
       <h2 className="bebas text-2xl">Informations personnelles</h2>
+      <div className="mt-5 rounded-2xl border border-border bg-muted/40 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-lg font-semibold text-white">
+            {form.profilePicture ? <img src={form.profilePicture} alt="Profil" className="h-full w-full rounded-full object-cover" /> : initials}
+          </div>
+          <div>
+            <div className="font-semibold text-foreground">{[form.prenom, form.nom].filter(Boolean).join(' ') || 'Profil utilisateur'}</div>
+            <div className="text-sm text-muted-foreground">
+              {user?.verification ? 'Compte vérifié' : 'Compte non vérifié'} • {user?.statut || 'active'}
+            </div>
+          </div>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {user?.createdAt ? `Membre depuis ${new Date(user.createdAt).toLocaleDateString('fr-FR')}` : 'Profil en cours de mise à jour'}
+        </div>
+      </div>
       <div className="mt-5 grid md:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Prénom</label>
@@ -121,13 +181,46 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
           </select>
         </div>
         <div className="md:col-span-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Photo de profil</label>
+          <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-border bg-muted/30 p-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-lg font-semibold text-white">
+                {form.profilePicture ? <img src={form.profilePicture} alt="Profil" className="h-full w-full object-cover" /> : <span>{initials}</span>}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {selectedProfileFile ? `Fichier prêt à être envoyé : ${selectedProfileFile.name}` : 'Choisissez une image de profil à télécharger.'}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => setSelectedProfileFile(e.target.files?.[0] || null)}
+              />
+              <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" /> Choisir une image
+              </Button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Ville actuelle</label>
+          <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.villeActuelle} onChange={(e) => setForm((prev) => ({ ...prev, villeActuelle: e.target.value }))} placeholder="Antananarivo" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Ville d’origine</label>
+          <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.villeOrigine} onChange={(e) => setForm((prev) => ({ ...prev, villeOrigine: e.target.value }))} placeholder="Fianarantsoa" />
+        </div>
+        <div className="md:col-span-2">
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Biographie</label>
           <textarea rows={4} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.bio} onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))} />
         </div>
       </div>
       {message ? <p className="mt-4 text-sm text-brand-cyan-dark">{message}</p> : null}
-      <Button className="mt-6 bg-brand-cyan text-white hover:bg-brand-cyan-dark" onClick={handleSave} disabled={saving}>
-        {saving ? 'Enregistrement...' : 'Enregistrer'}
+      <Button className="mt-6 bg-brand-cyan text-white hover:bg-brand-cyan-dark" onClick={handleSave} disabled={saving || uploadingProfile}>
+        {saving || uploadingProfile ? 'Enregistrement...' : 'Enregistrer'}
       </Button>
     </div>
   )
