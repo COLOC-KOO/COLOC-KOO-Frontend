@@ -95,7 +95,7 @@ export interface ApiCandidature {
   utilisateur_id?: number
 }
 
-// ===== NOUVEAUX TYPES POUR LES ÉQUIPES =====
+// ===== TYPES POUR LES ÉQUIPES =====
 export interface ApiEquipe {
   id_equipe: number
   id_annonce: number
@@ -113,6 +113,22 @@ export interface ApiMembreEquipe {
   email: string
   statut: 'pending' | 'accepted' | 'refused' | 'owner'
   initials: string
+}
+
+// ===== TYPE POUR LES CAMPAGNES =====
+export interface Campagne {
+  id_campagne: number
+  id_partenaire: number
+  titre: string
+  description: string | null
+  emplacement: 'carte' | 'fil_annonces' | 'bandeau_regional' | 'page_partenaire'
+  visuel: string | null
+  date_debut: string
+  date_fin: string | null
+  statut: 'active' | 'programmee' | 'suspendue' | 'terminee'
+  date_creation: string
+  partenaire_nom?: string
+  partenaire_niveau?: string
 }
 
 export interface ApiPartenaire {
@@ -593,12 +609,10 @@ export const api = {
   },
   
   // ===== CANDIDATURES =====
-  // Récupérer toutes les candidatures pour une annonce spécifique
   getCandidaturesByAnnonce(annonceId: string | number) {
     return request<ApiCandidature[]>(`/candidatures/annonce/${annonceId}`)
   },
   
-  // Vérifier si l'utilisateur a déjà postulé à une annonce
   checkUserApplied(annonceId: string | number, userId: string | number) {
     const token = getToken();
     const headers: HeadersInit = {
@@ -681,18 +695,12 @@ export const api = {
   },
 
   // ===== GESTION DES ÉQUIPES =====
-  
-  // Récupérer toutes les équipes d'une annonce
   getEquipesByAnnonce(annonceId: string | number): Promise<ApiEquipe[]> {
     return request<ApiEquipe[]>(`/equipes/annonces/${annonceId}`)
   },
-
-  // Récupérer une équipe par son ID
   getEquipe(id: string | number): Promise<ApiEquipe> {
     return request<ApiEquipe>(`/equipes/${id}`)
   },
-
-  // Créer une équipe
   createEquipe(data: { 
     id_annonce: number; 
     nom: string; 
@@ -704,8 +712,6 @@ export const api = {
       body: JSON.stringify(data),
     })
   },
-
-  // Mettre à jour une équipe
   updateEquipe(id: string | number, data: { 
     nom?: string; 
     ambiance?: string | null; 
@@ -716,23 +722,17 @@ export const api = {
       body: JSON.stringify(data),
     })
   },
-
-  // Supprimer une équipe
   deleteEquipe(id: string | number): Promise<{ message: string }> {
     return request<{ message: string }>(`/equipes/${id}`, {
       method: 'DELETE',
     })
   },
-
-  // Ajouter un membre à une équipe
   addMemberToEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
     return request<{ message: string }>(`/equipes/${equipeId}/membres`, {
       method: 'POST',
       body: JSON.stringify({ id_utilisateur: userId }),
     })
   },
-
-  // Retirer un membre d'une équipe
   removeMemberFromEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
     return request<{ message: string }>(`/equipes/${equipeId}/membres/${userId}`, {
       method: 'DELETE',
@@ -928,7 +928,72 @@ export const api = {
       body: JSON.stringify(payload),
     })
   },
+
+  // ================================================================
+  // ===== CAMPAGNES DE PUBLICITÉS NATIVES =====
+  // ================================================================
   
+  // Récupérer toutes les campagnes
+  campagnes() {
+    return request<Campagne[]>('/backoffice/campagnes')
+  },
+
+  // Récupérer une campagne par son ID
+  campagne(id: string | number) {
+    return request<Campagne>(`/backoffice/campagnes/${id}`)
+  },
+
+  // Créer une campagne
+  createCampagne(payload: {
+    id_partenaire: number
+    titre: string
+    description?: string | null
+    emplacement: string
+    visuel?: string | null
+    date_debut: string
+    date_fin?: string | null
+    statut?: string
+  }) {
+    return request<{ id_campagne: number; message: string; campagne?: Campagne }>('/backoffice/campagnes', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  // Mettre à jour une campagne
+  updateCampagne(id: string | number, payload: Partial<{
+    id_partenaire: number
+    titre: string
+    description: string | null
+    emplacement: string
+    visuel: string | null
+    date_debut: string
+    date_fin: string | null
+    statut: string
+  }>) {
+    return request<{ message: string; campagne?: Campagne }>(`/backoffice/campagnes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  // Supprimer une campagne
+  deleteCampagne(id: string | number) {
+    return request<{ message: string }>(`/backoffice/campagnes/${id}`, {
+      method: 'DELETE',
+    })
+  },
+
+  // Uploader un visuel de campagne
+  uploadCampagneVisuel(file: File) {
+    const formData = new FormData()
+    formData.append('visuel', file)
+    return request<{ url: string; filename: string; message: string }>('/backoffice/campagnes/upload', {
+      method: 'POST',
+      body: formData,
+    })
+  },
+  // ================================================================
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
