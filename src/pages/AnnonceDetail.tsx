@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, BedDouble, Calendar, Check, Eye, Heart, MessageSquare, MapPin, Send, Share2, Shield, Users } from 'lucide-react'
+import { ArrowLeft, BedDouble, Calendar, Check, ChevronDown, Eye, Heart, MessageSquare, MapPin, Send, Share2, Shield, Users, Building2, X } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { annonceToListing, api } from '../lib/api'
@@ -40,11 +40,14 @@ export default function AnnonceDetail() {
   const [contactSuccess, setContactSuccess] = useState('')
   const [hasApplied, setHasApplied] = useState(false)
   const [myCandidature, setMyCandidature] = useState<null | { id_candidature: number; statut: string; message: string | null }>(null)
-  const [ownerCandidates, setOwnerCandidates] = useState<Array<{ id_candidature: number; id_utilisateur: number; statut: string; message: string | null; nom?: string; prenom?: string; email?: string; telephone?: string }>>([])
+  const [ownerCandidates, setOwnerCandidates] = useState<Array<{ id_candidature: number; id_utilisateur: number; statut: string; message: string | null; nom?: string; prenom?: string; email?: string; telephone?: string; profession?: string | null; age?: number | null; profile_picture?: string | null; ville_actuelle?: string | null; ville_origine?: string | null; bio?: string | null }>>([])
   const [candidateActionLoading, setCandidateActionLoading] = useState<number | null>(null)
+  const [expandedCandidateId, setExpandedCandidateId] = useState<number | null>(null)
   const [launchLoading, setLaunchLoading] = useState(false)
   const [launchMessage, setLaunchMessage] = useState('')
   const [showMyCandidature, setShowMyCandidature] = useState(false)
+  const [messageToCandidate, setMessageToCandidate] = useState<Record<number, string>>({})
+  const [messageModalCandidate, setMessageModalCandidate] = useState<null | { id: number; userId: number; name: string }>(null)
 
   useEffect(() => {
     if (!id) return
@@ -55,15 +58,16 @@ export default function AnnonceDetail() {
           setNotFound(true)
           return
         }
-        setListing(annonceToListing(annonce))
+        const mappedListing = annonceToListing(annonce)
+        setListing(mappedListing)
+        const [applied, candidates] = await Promise.all([
+          user?.id ? api.checkUserApplied(id, user.id) : Promise.resolve({ hasApplied: false }),
+          api.getCandidaturesByAnnonce(id).catch(() => []),
+        ])
+        setOwnerCandidates(candidates)
         if (user?.id) {
-          const [applied, candidates] = await Promise.all([
-            api.checkUserApplied(id, user.id),
-            api.getCandidaturesByAnnonce(id),
-          ])
           setHasApplied(Boolean(applied?.hasApplied))
           setMyCandidature(applied?.hasApplied ? (candidates.find((item) => Number(item.id_utilisateur) === Number(user.id)) || null) as any : null)
-          setOwnerCandidates(candidates)
         }
       } catch {
         setNotFound(true)
@@ -187,6 +191,79 @@ export default function AnnonceDetail() {
     }
   }
 
+  const handleSendMessageToCandidate = async (candidateId: number, candidateUserId: number) => {
+    if (!id || !user) {
+      navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
+      return
+    }
+    const messageText = (messageToCandidate[candidateId] || '').trim()
+    if (!messageText) {
+      setContactError('Le message est requis pour contacter ce colocataire.')
+      return
+    }
+
+    setContactSubmitting(true)
+    setContactError('')
+    setContactSuccess('')
+    try {
+      await api.sendMessage({
+        id_destinataire: candidateUserId,
+        id_annonce: Number(id),
+        sujet: `Contact à propos de l'annonce ${id}`,
+        contenu: messageText,
+      })
+      setContactSuccess('Message envoyé au colocataire.')
+      setMessageToCandidate((prev) => ({ ...prev, [candidateId]: '' }))
+    } catch (error) {
+      setContactError(error instanceof Error ? error.message : 'Impossible d’envoyer le message au colocataire.')
+    } finally {
+      setContactSubmitting(false)
+    }
+  }
+
+  const handleSendMessageToOwner = async (candidateId: number) => {
+    if (!id || !listing?.owner?.id || !user) {
+      navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
+      return
+    }
+    const messageText = (messageToCandidate[candidateId] || '').trim()
+    if (!messageText) {
+      setContactError('Le message est requis pour contacter le propriétaire.')
+      return
+    }
+
+    setContactSubmitting(true)
+    setContactError('')
+    setContactSuccess('')
+    try {
+      await api.sendMessage({
+        id_destinataire: listing.owner.id,
+        id_annonce: Number(id),
+        sujet: `Message depuis votre profil pour l'annonce ${id}`,
+        contenu: messageText,
+      })
+      setContactSuccess('Message envoyé au propriétaire.')
+      setMessageToCandidate((prev) => ({ ...prev, [candidateId]: '' }))
+    } catch (error) {
+      setContactError(error instanceof Error ? error.message : 'Impossible d’envoyer le message au propriétaire.')
+    } finally {
+      setContactSubmitting(false)
+    }
+  }
+
+  const openMessageModal = (candidate: { id_candidature: number; id_utilisateur: number; prenom?: string; nom?: string }) => {
+    const fullName = [candidate.prenom, candidate.nom].filter(Boolean).join(' ').trim() || 'Candidat'
+    setMessageModalCandidate({
+      id: candidate.id_candidature,
+      userId: Number(candidate.id_utilisateur),
+      name: fullName,
+    })
+  }
+
+  const toggleCandidateCard = (candidateId: number) => {
+    setExpandedCandidateId((current) => (current === candidateId ? null : candidateId))
+  }
+
   if (loading) {
     return (
       <SiteLayout>
@@ -216,6 +293,53 @@ export default function AnnonceDetail() {
           </div>
         </div>
       </div>
+
+      {messageModalCandidate ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-lg font-semibold text-foreground">Message à {messageModalCandidate.name}</div>
+                <p className="mt-1 text-sm text-muted-foreground">Écris un message court et clair pour cette personne.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMessageModalCandidate(null)}
+                className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              <textarea
+                rows={5}
+                value={messageToCandidate[messageModalCandidate.id] || ''}
+                onChange={(event) => setMessageToCandidate((prev) => ({ ...prev, [messageModalCandidate.id]: event.target.value }))}
+                placeholder={`Écris un message à ${messageModalCandidate.name}...`}
+                className="w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
+              />
+              {contactError ? <p className="text-sm text-red-600">{contactError}</p> : null}
+              {contactSuccess ? <p className="text-sm text-brand-cyan-dark">{contactSuccess}</p> : null}
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setMessageModalCandidate(null)}>
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                className="bg-brand-cyan text-white hover:bg-brand-cyan-dark"
+                onClick={() => {
+                  void handleSendMessageToCandidate(messageModalCandidate.id, messageModalCandidate.userId)
+                  setMessageModalCandidate(null)
+                }}
+                disabled={contactSubmitting}
+              >
+                <Send className="mr-2 h-4 w-4" /> Envoyer
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="max-w-7xl mx-auto px-6 py-10 grid lg:grid-cols-[1fr_380px] gap-10">
         <div>
@@ -265,6 +389,124 @@ export default function AnnonceDetail() {
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className="mt-8 rounded-2xl border border-cyan-200 bg-cyan-50/70 p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-cyan-900">
+              <Building2 className="h-5 w-5" />
+              <h2 className="bebas text-2xl">Colocataires liés à cette annonce</h2>
+            </div>
+            <p className="mt-2 text-sm text-cyan-800">
+              Cette section affiche les candidatures réellement enregistrées dans la base pour cette annonce.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-cyan-200 bg-white px-3 py-1 text-sm text-cyan-700">
+                {ownerCandidates.length} candidature{ownerCandidates.length > 1 ? 's' : ''} enregistrée{ownerCandidates.length > 1 ? 's' : ''}
+              </span>
+            </div>
+            {ownerCandidates.length > 0 ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {ownerCandidates.map((candidate) => {
+                  const fullName = [candidate.prenom, candidate.nom].filter(Boolean).join(' ').trim() || 'Candidat'
+                  const isCurrentUserCard = Boolean(user?.id && Number(candidate.id_utilisateur) === Number(user.id))
+                  const initials = `${(candidate.prenom || '').charAt(0)}${(candidate.nom || '').charAt(0)}`.toUpperCase() || 'C'
+                  const isExpanded = expandedCandidateId === candidate.id_candidature
+                  return (
+                    <article key={candidate.id_candidature} className={`overflow-hidden rounded-2xl border border-cyan-200 bg-white/95 p-3 shadow-sm transition-all duration-200 ${isExpanded ? 'shadow-lg ring-1 ring-cyan-200' : 'shadow-sm'}`}>
+                      <div className="flex items-start gap-3">
+                        <button type="button" onClick={() => toggleCandidateCard(candidate.id_candidature)} className="flex-1 text-left">
+                          <div className="flex items-start gap-3">
+                            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-emerald-50">
+                              {candidate.profile_picture ? (
+                                <img src={candidate.profile_picture} alt={fullName} className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-cyan to-brand-green text-sm font-semibold text-white">
+                                  {initials}
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <h3 className="truncate text-sm font-semibold text-slate-900">{fullName}</h3>
+                                <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-700">
+                                  {candidate.statut || 'en_attente'}
+                                </span>
+                              </div>
+                              <p className="mt-1 truncate text-sm text-slate-600">
+                                {candidate.profession || 'Profil à compléter'}
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {typeof candidate.age === 'number' ? (
+                                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">{candidate.age} ans</span>
+                                ) : null}
+                                {candidate.ville_actuelle ? (
+                                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">{candidate.ville_actuelle}</span>
+                                ) : null}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                            <span>{isExpanded ? 'Réduire le profil' : 'Voir le profil complet'}</span>
+                            <ChevronDown className={`h-4 w-4 text-cyan-700 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </div>
+                        </button>
+                        {!isCurrentUserCard ? (
+                          <button
+                            type="button"
+                            onClick={() => openMessageModal(candidate as any)}
+                            title={`Envoyer un message à ${fullName}`}
+                            className="rounded-full border border-cyan-200 bg-cyan-50 p-2 text-cyan-700 transition hover:bg-cyan-100"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </button>
+                        ) : null}
+                      </div>
+                      {isExpanded ? (
+                        <div className="mt-3 space-y-3 border-t border-cyan-100 pt-3">
+                          <div className="rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
+                            {candidate.message || 'Aucun message supplémentaire fourni.'}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {candidate.profession ? (
+                              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">{candidate.profession}</span>
+                            ) : null}
+                            {candidate.ville_actuelle ? (
+                              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">Ville actuelle : {candidate.ville_actuelle}</span>
+                            ) : null}
+                            {candidate.ville_origine ? (
+                              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">Origine : {candidate.ville_origine}</span>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {candidate.email ? (
+                              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">{candidate.email}</span>
+                            ) : null}
+                            {candidate.telephone ? (
+                              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">{candidate.telephone}</span>
+                            ) : null}
+                          </div>
+                          {candidate.bio ? (
+                            <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                              {candidate.bio}
+                            </div>
+                          ) : null}
+                          {isCurrentUserCard ? (
+                            <div className="rounded-xl border border-brand-cyan/20 bg-brand-cyan-light/50 p-3">
+                              <div className="text-sm font-semibold text-brand-cyan-dark">Vous êtes déjà dans cette liste de colocataires.</div>
+                              <p className="mt-1 text-sm text-cyan-800">Vous pouvez discuter de votre place dans cette annonce directement depuis votre espace de candidature ou votre messagerie.</p>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </article>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-2xl border border-dashed border-cyan-200 bg-white/70 p-6 text-center text-sm text-cyan-700">
+                Aucune candidature n’est encore enregistrée pour cette annonce.
+              </div>
+            )}
           </section>
         </div>
 
