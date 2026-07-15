@@ -780,6 +780,65 @@ export const api = {
     })
   },
 
+  // ===== GESTION DES ÉQUIPES =====
+  
+  // Récupérer toutes les équipes d'une annonce
+  getEquipesByAnnonce(annonceId: string | number): Promise<ApiEquipe[]> {
+    return request<ApiEquipe[]>(`/equipes/annonces/${annonceId}`)
+  },
+
+  // Récupérer une équipe par son ID
+  getEquipe(id: string | number): Promise<ApiEquipe> {
+    return request<ApiEquipe>(`/equipes/${id}`)
+  },
+
+  // Créer une équipe
+  createEquipe(data: { 
+    id_annonce: number; 
+    nom: string; 
+    ambiance?: string | null; 
+    statut?: 'forming' | 'selected' | 'rejected' | 'complete' 
+  }): Promise<{ id_equipe: number; message?: string }> {
+    return request<{ id_equipe: number; message?: string }>('/equipes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  },
+
+  // Mettre à jour une équipe
+  updateEquipe(id: string | number, data: { 
+    nom?: string; 
+    ambiance?: string | null; 
+    statut?: 'forming' | 'selected' | 'rejected' | 'complete' 
+  }): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  },
+
+  // Supprimer une équipe
+  deleteEquipe(id: string | number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${id}`, {
+      method: 'DELETE',
+    })
+  },
+
+  // Ajouter un membre à une équipe
+  addMemberToEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${equipeId}/membres`, {
+      method: 'POST',
+      body: JSON.stringify({ id_utilisateur: userId }),
+    })
+  },
+
+  // Retirer un membre d'une équipe
+  removeMemberFromEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${equipeId}/membres/${userId}`, {
+      method: 'DELETE',
+    })
+  },
+
   contact(payload: { nom: string; email: string; sujet: string; message: string }) {
     return request<{ id_message: number }>('/contact', {
       method: 'POST',

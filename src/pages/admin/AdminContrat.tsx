@@ -38,10 +38,13 @@ import {
   FileCheck,
   FileX,
   ClipboardCheck,
-  ClipboardX
+  ClipboardX,
+  Tag,
+  Package,
+  Trash2
 } from 'lucide-react'
 
-// Types
+// ===== TYPES =====
 interface DocumentDemande {
   id: string
   type: 'contrat' | 'edl'
@@ -65,6 +68,14 @@ interface Partie {
   telephone?: string
   email?: string
   comment?: string
+}
+
+interface OffreCommerciale {
+  id: string
+  nom: string
+  prix: number
+  type: 'contrat' | 'edl'
+  description?: string
 }
 
 interface ApiBackofficeContratRow {
@@ -95,6 +106,15 @@ interface ApiBackofficeContratDetails extends ApiBackofficeContratRow {
   }>
 }
 
+// ===== DONNÉES MOCKÉES POUR LES OFFRES =====
+const MOCK_OFFRES: OffreCommerciale[] = [
+  { id: 'offre-1', nom: 'Contrat de colocation', prix: 120000, type: 'contrat', description: 'Contrat standard conforme à la législation' },
+  { id: 'offre-2', nom: "État des lieux d'entrée", prix: 80000, type: 'edl', description: 'Constat contradictoire à l\'entrée' },
+  { id: 'offre-3', nom: "État des lieux de sortie", prix: 80000, type: 'edl', description: 'Constat contradictoire à la sortie' },
+  { id: 'offre-4', nom: 'Avenant au contrat', prix: 50000, type: 'contrat', description: 'Modification du contrat existant' },
+]
+
+// ===== FONCTIONS DE MAPPING =====
 function mapApiContratRow(row: ApiBackofficeContratRow): DocumentDemande {
   const bien = [row.titre, row.quartier, row.nom_ville].filter(Boolean).join(' — ')
   return {
@@ -130,147 +150,9 @@ function mapApiContratDetails(row: ApiBackofficeContratDetails): DocumentDemande
   }
 }
 
-// Données mockées
-const MOCK_DOCUMENTS: DocumentDemande[] = [
-  {
-    id: 'CTR-0142',
-    type: 'contrat',
-    sousType: 'Contrat de colocation',
-    bien: 'Coloc 3 ch. — Analakely',
-    dateCreation: '2026-06-15',
-    dateDemande: 'il y a 2 h',
-    statut: 'a-emettre',
-    montant: 120000,
-    parties: [
-      { 
-        nom: 'Naina B.', 
-        role: 'Propriétaire', 
-        cin: '201 012 345 678', 
-        telephone: '+261 34 12 345 67', 
-        email: 'naina.b@email.mg' 
-      },
-      { 
-        nom: 'Rivo A.', 
-        role: 'Colocataire', 
-        cin: '', 
-        telephone: '+261 33 98 765 43', 
-        email: '' 
-      },
-      { 
-        nom: 'Tahiana R.', 
-        role: 'Colocataire', 
-        cin: '', 
-        telephone: '', 
-        email: 'tahiana.r@email.mg' 
-      }
-    ],
-    note: 'En attente des CIN des colocataires'
-  },
-  {
-    id: 'EDL-0098',
-    type: 'edl',
-    sousType: "État des lieux d'entrée",
-    bien: 'Coloc 2 ch. — Ivandry',
-    dateCreation: '2026-06-14',
-    dateDemande: 'hier',
-    statut: 'a-planifier',
-    montant: 80000,
-    parties: [
-      { 
-        nom: 'Rivo A.', 
-        role: 'Colocataire', 
-        cin: '201 099 887 766', 
-        telephone: '+261 33 98 765 43', 
-        email: 'rivo.a@email.mg' 
-      },
-      { 
-        nom: 'Mamy C.', 
-        role: 'Colocataire', 
-        cin: '', 
-        telephone: '', 
-        email: '' 
-      }
-    ],
-    note: 'Visite à planifier avec le propriétaire'
-  },
-  {
-    id: 'CTR-0140',
-    type: 'contrat',
-    sousType: 'Contrat de colocation',
-    bien: 'Coloc 4 ch. — Ankorondrano',
-    dateCreation: '2026-06-12',
-    dateDemande: 'il y a 3 j',
-    statut: 'emis',
-    montant: 150000,
-    dateEmission: '2026-06-13',
-    parties: [
-      { 
-        nom: 'Faniry T.', 
-        role: 'Propriétaire', 
-        cin: '201 055 443 322', 
-        telephone: '+261 32 11 223 34', 
-        email: 'faniry.t@email.mg' 
-      },
-      { 
-        nom: 'Hery R.', 
-        role: 'Colocataire', 
-        cin: '201 088 776 655', 
-        telephone: '+261 34 44 556 67', 
-        email: 'hery.r@email.mg' 
-      }
-    ]
-  },
-  {
-    id: 'EDL-0095',
-    type: 'edl',
-    sousType: "État des lieux de sortie",
-    bien: 'Coloc 3 ch. — 67 Ha',
-    dateCreation: '2026-06-10',
-    dateDemande: 'il y a 5 j',
-    statut: 'signe',
-    montant: 80000,
-    dateEmission: '2026-06-11',
-    dateSignature: '2026-06-14',
-    parties: [
-      { 
-        nom: 'Tahiana R.', 
-        role: 'Propriétaire', 
-        cin: '201 033 221 144', 
-        telephone: '+261 34 55 667 78', 
-        email: 'tahiana.r@email.mg' 
-      },
-      { 
-        nom: 'Mamy C.', 
-        role: 'Colocataire', 
-        cin: '201 077 665 544', 
-        telephone: '+261 33 44 556 67', 
-        email: 'mamy.c@email.mg' 
-      }
-    ]
-  },
-  {
-    id: 'CTR-0138',
-    type: 'contrat',
-    sousType: 'Avenant au contrat',
-    bien: 'Coloc 2 ch. — Andoharanofotsy',
-    dateCreation: '2026-06-08',
-    dateDemande: 'il y a 7 j',
-    statut: 'en-attente',
-    montant: 50000,
-    parties: [
-      { 
-        nom: 'Rivo A.', 
-        role: 'Colocataire', 
-        cin: '201 099 887 766', 
-        telephone: '+261 33 98 765 43', 
-        email: 'rivo.a@email.mg' 
-      }
-    ],
-    note: "En attente de l'accord du propriétaire"
-  }
-]
+// ===== COMPOSANTS =====
 
-// Composant de badge de statut
+// Badge de statut
 const StatusBadge = ({ statut }: { statut: DocumentDemande['statut'] }) => {
   const config: Record<DocumentDemande['statut'], { label: string; className: string; icon: typeof FileX }> = {
     'a-emettre': { label: 'À émettre', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: FileX },
@@ -292,7 +174,7 @@ const StatusBadge = ({ statut }: { statut: DocumentDemande['statut'] }) => {
   )
 }
 
-// Composant de badge de type
+// Badge de type
 const TypeBadge = ({ type }: { type: DocumentDemande['type'] }) => {
   const config = {
     'contrat': { label: 'Contrat', className: 'bg-purple-500/15 text-purple-400 border-purple-500/30', icon: FileSignature },
@@ -308,7 +190,7 @@ const TypeBadge = ({ type }: { type: DocumentDemande['type'] }) => {
   )
 }
 
-// Composant de modale de détails
+// ===== MODALE DE DÉTAILS =====
 const DocumentDetailsModal = ({
   document,
   onClose,
@@ -320,7 +202,6 @@ const DocumentDetailsModal = ({
 }) => {
   const [note, setNote] = useState(document.note || '')
 
-  // Vérifier si toutes les coordonnées sont renseignées
   const getCoordonneesManquantes = () => {
     const manquantes: { nom: string; champ: string }[] = []
     document.parties.forEach(p => {
@@ -518,9 +399,11 @@ const DocumentDetailsModal = ({
   )
 }
 
-// Composant principal
+// ===== COMPOSANT PRINCIPAL =====
 export default function AdminContratsEDL() {
+  const [activeTab, setActiveTab] = useState<'demandes' | 'offres'>('demandes')
   const [documents, setDocuments] = useState<DocumentDemande[]>([])
+  const [offres, setOffres] = useState<OffreCommerciale[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<string>('tous')
   const [filterStatut, setFilterStatut] = useState<string>('tous')
@@ -530,6 +413,13 @@ export default function AdminContratsEDL() {
   const [loading, setLoading] = useState(false)
   const [sortField, setSortField] = useState<'dateCreation' | 'id' | 'montant'>('dateCreation')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  
+  // État pour l'ajout d'offre
+  const [showAddOffre, setShowAddOffre] = useState(false)
+  const [newOffreNom, setNewOffreNom] = useState('')
+  const [newOffrePrix, setNewOffrePrix] = useState('')
+  const [newOffreType, setNewOffreType] = useState<'contrat' | 'edl'>('contrat')
+  const [newOffreDescription, setNewOffreDescription] = useState('')
 
   // Types et statuts pour les filtres
   const types = useMemo(() => {
@@ -585,6 +475,7 @@ export default function AdminContratsEDL() {
 
   useEffect(() => {
     loadDocuments()
+    loadOffres()
   }, [])
 
   // Statistiques
@@ -613,6 +504,7 @@ export default function AdminContratsEDL() {
     }
   }, [documents])
 
+  // Charger les documents
   const loadDocuments = async () => {
     setLoading(true)
     setError(null)
@@ -628,6 +520,35 @@ export default function AdminContratsEDL() {
     }
   }
 
+  // Charger les offres
+  const loadOffres = async () => {
+    try {
+      // Essayer de charger depuis l'API
+      const services = await api.backofficeServicesCkoo()
+      // Filtrer les services de type contrat/edl
+      const offresData = services
+        .filter((s: any) => s.cle_service?.startsWith('contrat_') || s.cle_service?.startsWith('edl_'))
+        .map((s: any) => ({
+          id: String(s.id_service),
+          nom: s.nom,
+          prix: s.prix,
+          type: s.cle_service?.startsWith('contrat_') ? 'contrat' : 'edl',
+          description: s.description || undefined
+        }))
+      
+      if (offresData.length > 0) {
+        setOffres(offresData)
+      } else {
+        // Sinon utiliser les données mockées
+        setOffres(MOCK_OFFRES)
+      }
+    } catch (err) {
+      // En cas d'erreur, utiliser les données mockées
+      setOffres(MOCK_OFFRES)
+    }
+  }
+
+  // Ouvrir les détails d'un document
   const openDocumentDetails = async (id: string) => {
     setLoading(true)
     setError(null)
@@ -710,26 +631,81 @@ export default function AdminContratsEDL() {
     setLoading(false)
   }
 
+  // Gérer l'ajout d'une offre
+  const handleAddOffre = async () => {
+    if (!newOffreNom.trim() || !newOffrePrix) {
+      alert('Veuillez remplir tous les champs obligatoires.')
+      return
+    }
+
+    const prix = parseInt(newOffrePrix)
+    if (isNaN(prix) || prix <= 0) {
+      alert('Le prix doit être un nombre valide.')
+      return
+    }
+
+    try {
+      // Essayer de créer via l'API
+      const result = await api.createServiceCkoo({
+        cle_service: `${newOffreType}_${Date.now()}`,
+        nom: newOffreNom.trim(),
+        description: newOffreDescription.trim() || undefined,
+        prix: prix,
+        unite: 'forfait',
+        est_actif: 1
+      })
+      
+      // Recharger les offres
+      await loadOffres()
+      
+      setShowAddOffre(false)
+      setNewOffreNom('')
+      setNewOffrePrix('')
+      setNewOffreType('contrat')
+      setNewOffreDescription('')
+      setSuccessMessage('Offre ajoutée avec succès')
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      // En cas d'erreur, ajouter localement
+      const newOffre: OffreCommerciale = {
+        id: `offre-${Date.now()}`,
+        nom: newOffreNom.trim(),
+        prix: prix,
+        type: newOffreType,
+        description: newOffreDescription.trim() || undefined
+      }
+      setOffres([...offres, newOffre])
+      setShowAddOffre(false)
+      setNewOffreNom('')
+      setNewOffrePrix('')
+      setNewOffreType('contrat')
+      setNewOffreDescription('')
+      setSuccessMessage('Offre ajoutée localement')
+      setTimeout(() => setSuccessMessage(null), 3000)
+    }
+  }
+
+  // Supprimer une offre
+  const handleDeleteOffre = async (id: string) => {
+    if (!confirm('Voulez-vous vraiment supprimer cette offre ?')) return
+    
+    try {
+      await api.deleteServiceCkoo(id)
+      await loadOffres()
+      setSuccessMessage('Offre supprimée avec succès')
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      // Si l'API échoue, supprimer localement
+      setOffres(offres.filter(o => o.id !== id))
+      setSuccessMessage('Offre supprimée localement')
+      setTimeout(() => setSuccessMessage(null), 3000)
+    }
+  }
+
   // Actualiser les données
   const handleRefresh = () => {
     loadDocuments()
-  }
-
-  // Traduire le type
-  const translateType = (type: string) => {
-    return type === 'contrat' ? 'Contrat' : 'État des lieux'
-  }
-
-  // Traduire le statut
-  const translateStatut = (statut: string) => {
-    const labels = {
-      'a-emettre': 'À émettre',
-      'a-planifier': 'À planifier',
-      'emis': 'Émis',
-      'signe': 'Signé',
-      'en-attente': 'En attente'
-    }
-    return labels[statut as keyof typeof labels] || statut
+    loadOffres()
   }
 
   return (
@@ -747,7 +723,7 @@ export default function AdminContratsEDL() {
             onClick={handleRefresh}
             className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm hover:bg-white/10 transition text-white/60"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Actualiser
           </button>
         </div>
@@ -759,197 +735,398 @@ export default function AdminContratsEDL() {
           </div>
         )}
 
-        {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-brand-cyan">{stats.total}</div>
-            <div className="text-xs text-white/40">Total</div>
+        {/* Message d'erreur */}
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-2 rounded-lg text-sm">
+            {error}
           </div>
-          <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-purple-400">{stats.contrats}</div>
-            <div className="text-xs text-white/40">Contrats</div>
-          </div>
-          <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-green-400">{stats.edl}</div>
-            <div className="text-xs text-white/40">EDL</div>
-          </div>
-          <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-amber-400">{stats.aEmettre + stats.aPlanifier}</div>
-            <div className="text-xs text-white/40">À traiter</div>
-          </div>
-          <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-brand-green">{stats.signe}</div>
-            <div className="text-xs text-white/40">Signés</div>
-          </div>
-          <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-brand-cyan">{stats.totalMontant.toLocaleString('fr-FR')}</div>
-            <div className="text-xs text-white/40">Montant total</div>
+        )}
+
+        {/* Onglets */}
+        <div className="border-b border-white/10">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setActiveTab('demandes')}
+              className={`px-4 py-2 text-sm font-medium transition ${
+                activeTab === 'demandes'
+                  ? 'text-brand-cyan border-b-2 border-brand-cyan'
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              Demandes
+            </button>
+            <button
+              onClick={() => setActiveTab('offres')}
+              className={`px-4 py-2 text-sm font-medium transition ${
+                activeTab === 'offres'
+                  ? 'text-brand-cyan border-b-2 border-brand-cyan'
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              Offres commerciales
+            </button>
           </div>
         </div>
 
-        {/* Filtres et recherche */}
-        <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
-          <div className="p-4 border-b border-white/10">
-            <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
-                <Search className="w-4 h-4 text-white/40" />
-                <input
-                  placeholder="Rechercher un document..."
-                  className="flex-1 bg-transparent outline-none text-sm"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="text-white/40 hover:text-white/70 text-xs p-1"
-                  >
-                    ✕
-                  </button>
+        {/* ===== ONGLET DEMANDES ===== */}
+        {activeTab === 'demandes' && (
+          <>
+            {/* KPIs */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-brand-cyan">{stats.total}</div>
+                <div className="text-xs text-white/40">Total</div>
+              </div>
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-purple-400">{stats.contrats}</div>
+                <div className="text-xs text-white/40">Contrats</div>
+              </div>
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-green-400">{stats.edl}</div>
+                <div className="text-xs text-white/40">EDL</div>
+              </div>
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-amber-400">{stats.aEmettre + stats.aPlanifier}</div>
+                <div className="text-xs text-white/40">À traiter</div>
+              </div>
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-brand-green">{stats.signe}</div>
+                <div className="text-xs text-white/40">Signés</div>
+              </div>
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-brand-cyan">{stats.totalMontant.toLocaleString('fr-FR')}</div>
+                <div className="text-xs text-white/40">Montant total</div>
+              </div>
+            </div>
+
+            {/* Filtres et recherche */}
+            <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10">
+                <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+                    <Search className="w-4 h-4 text-white/40" />
+                    <input
+                      placeholder="Rechercher un document..."
+                      className="flex-1 bg-transparent outline-none text-sm"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery('')}
+                        className="text-white/40 hover:text-white/70 text-xs p-1"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 flex-wrap ml-auto">
+                    <select
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
+                    >
+                      <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Tous les types</option>
+                      <option value="contrat" className="bg-[oklch(0.22_0.005_260)]">Contrats</option>
+                      <option value="edl" className="bg-[oklch(0.22_0.005_260)]">États des lieux</option>
+                    </select>
+
+                    <select
+                      value={filterStatut}
+                      onChange={(e) => setFilterStatut(e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
+                    >
+                      <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Tous les statuts</option>
+                      <option value="a-emettre" className="bg-[oklch(0.22_0.005_260)]">À émettre</option>
+                      <option value="a-planifier" className="bg-[oklch(0.22_0.005_260)]">À planifier</option>
+                      <option value="emis" className="bg-[oklch(0.22_0.005_260)]">Émis</option>
+                      <option value="signe" className="bg-[oklch(0.22_0.005_260)]">Signé</option>
+                      <option value="en-attente" className="bg-[oklch(0.22_0.005_260)]">En attente</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Liste des documents */}
+              <div className="divide-y divide-white/5">
+                {loading ? (
+                  <div className="text-center py-12 text-white/40">
+                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                    <p>Chargement des documents...</p>
+                  </div>
+                ) : filteredDocuments.length === 0 ? (
+                  <div className="text-center py-12 text-white/40">
+                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                    <p>Aucun document trouvé</p>
+                  </div>
+                ) : (
+                  filteredDocuments.map((doc) => (
+                    <div 
+                      key={doc.id}
+                      className="p-4 hover:bg-white/5 transition cursor-pointer"
+                      onClick={() => openDocumentDetails(doc.id)}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                        {/* Icône */}
+                        <div className={`w-10 h-10 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                          doc.type === 'contrat' 
+                            ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' 
+                            : 'bg-green-500/10 border-green-500/20 text-green-400'
+                        }`}>
+                          {doc.type === 'contrat' ? (
+                            <FileSignature className="w-4 h-4" />
+                          ) : (
+                            <ClipboardCheck className="w-4 h-4" />
+                          )}
+                        </div>
+
+                        {/* Contenu */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <h3 className="font-semibold">{doc.id}</h3>
+                            <span className="text-white/30 text-xs">·</span>
+                            <span className="text-white/50 text-sm">{doc.sousType}</span>
+                            <TypeBadge type={doc.type} />
+                            <StatusBadge statut={doc.statut} />
+                          </div>
+                          <p className="text-sm text-white/60 mt-1">{doc.bien}</p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-white/40 flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <CalendarIcon className="w-3 h-3" />
+                              {doc.dateCreation}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {doc.partiesCount ?? doc.parties?.length ?? 0} partie(s)
+                            </span>
+                            <span className="flex items-center gap-1 text-brand-cyan">
+                              <DollarSign className="w-3 h-3" />
+                              {doc.montant.toLocaleString('fr-FR')} MGA
+                            </span>
+                            {doc.dateEmission && (
+                              <span className="flex items-center gap-1 text-purple-400">
+                                <Send className="w-3 h-3" />
+                                Émis le {doc.dateEmission}
+                              </span>
+                            )}
+                            {doc.dateSignature && (
+                              <span className="flex items-center gap-1 text-green-400">
+                                <UserCheck className="w-3 h-3" />
+                                Signé le {doc.dateSignature}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Badge coordonnées */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {doc.parties.some(p => !p.cin || !p.telephone || !p.email) ? (
+                            <span className="text-[10px] text-red-400 font-medium px-2 py-1 rounded-full border border-red-500/30 bg-red-500/10">
+                              <AlertCircle className="w-3 h-3 inline mr-1" />
+                              Données manquantes
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-green-400 font-medium px-2 py-1 rounded-full border border-green-500/30 bg-green-500/10">
+                              <CheckCircle className="w-3 h-3 inline mr-1" />
+                              Complet
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
 
-              <div className="flex gap-2 flex-wrap ml-auto">
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
-                >
-                  <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Tous les types</option>
-                  <option value="contrat" className="bg-[oklch(0.22_0.005_260)]">Contrats</option>
-                  <option value="edl" className="bg-[oklch(0.22_0.005_260)]">États des lieux</option>
-                </select>
-
-                <select
-                  value={filterStatut}
-                  onChange={(e) => setFilterStatut(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
-                >
-                  <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Tous les statuts</option>
-                  <option value="a-emettre" className="bg-[oklch(0.22_0.005_260)]">À émettre</option>
-                  <option value="a-planifier" className="bg-[oklch(0.22_0.005_260)]">À planifier</option>
-                  <option value="emis" className="bg-[oklch(0.22_0.005_260)]">Émis</option>
-                  <option value="signe" className="bg-[oklch(0.22_0.005_260)]">Signé</option>
-                  <option value="en-attente" className="bg-[oklch(0.22_0.005_260)]">En attente</option>
-                </select>
+              {/* Pied de tableau */}
+              <div className="p-4 border-t border-white/10 flex flex-wrap items-center gap-4 text-xs text-white/40">
+                <span>{filteredDocuments.length} documents</span>
+                <span>·</span>
+                <span className="text-purple-400">{filteredDocuments.filter(d => d.type === 'contrat').length} contrats</span>
+                <span>·</span>
+                <span className="text-green-400">{filteredDocuments.filter(d => d.type === 'edl').length} EDL</span>
+                <span>·</span>
+                <span className="text-amber-400">{filteredDocuments.filter(d => d.statut === 'a-emettre' || d.statut === 'a-planifier').length} à traiter</span>
+                <span>·</span>
+                <span className="text-brand-green">{filteredDocuments.filter(d => d.statut === 'signe').length} signés</span>
+                <span className="ml-auto">
+                  Montant total: <b className="text-brand-cyan">{stats.totalMontant.toLocaleString('fr-FR')} MGA</b>
+                </span>
               </div>
             </div>
-          </div>
 
-          {/* Liste des documents */}
-          <div className="divide-y divide-white/5">
-            {filteredDocuments.length === 0 ? (
-              <div className="text-center py-12 text-white/40">
-                <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p>Aucun document trouvé</p>
-              </div>
-            ) : (
-              filteredDocuments.map((doc) => (
-                <div 
-                  key={doc.id}
-                  className="p-4 hover:bg-white/5 transition cursor-pointer"
-                  onClick={() => openDocumentDetails(doc.id)}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                    {/* Icône */}
-                    <div className={`w-10 h-10 rounded-full border flex items-center justify-center flex-shrink-0 ${
-                      doc.type === 'contrat' 
-                        ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' 
-                        : 'bg-green-500/10 border-green-500/20 text-green-400'
-                    }`}>
-                      {doc.type === 'contrat' ? (
-                        <FileSignature className="w-4 h-4" />
-                      ) : (
-                        <ClipboardCheck className="w-4 h-4" />
-                      )}
-                    </div>
-
-                    {/* Contenu */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className="font-semibold">{doc.id}</h3>
-                        <span className="text-white/30 text-xs">·</span>
-                        <span className="text-white/50 text-sm">{doc.sousType}</span>
-                        <TypeBadge type={doc.type} />
-                        <StatusBadge statut={doc.statut} />
-                      </div>
-                      <p className="text-sm text-white/60 mt-1">{doc.bien}</p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-white/40 flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <CalendarIcon className="w-3 h-3" />
-                          {doc.dateCreation}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          {doc.partiesCount ?? doc.parties?.length ?? 0} partie(s)
-                        </span>
-                        <span className="flex items-center gap-1 text-brand-cyan">
-                          <DollarSign className="w-3 h-3" />
-                          {doc.montant.toLocaleString('fr-FR')} MGA
-                        </span>
-                        {doc.dateEmission && (
-                          <span className="flex items-center gap-1 text-purple-400">
-                            <Send className="w-3 h-3" />
-                            Émis le {doc.dateEmission}
-                          </span>
-                        )}
-                        {doc.dateSignature && (
-                          <span className="flex items-center gap-1 text-green-400">
-                            <UserCheck className="w-3 h-3" />
-                            Signé le {doc.dateSignature}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Badge coordonnées */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {doc.parties.some(p => !p.cin || !p.telephone || !p.email) ? (
-                        <span className="text-[10px] text-red-400 font-medium px-2 py-1 rounded-full border border-red-500/30 bg-red-500/10">
-                          <AlertCircle className="w-3 h-3 inline mr-1" />
-                          Données manquantes
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-green-400 font-medium px-2 py-1 rounded-full border border-green-500/30 bg-green-500/10">
-                          <CheckCircle className="w-3 h-3 inline mr-1" />
-                          Complet
-                        </span>
-                      )}
-                    </div>
-                  </div>
+            {/* Note */}
+            <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <Info className="w-4 h-4 text-white/40 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-white/40">
+                  Certaines données (noms, N° CIN, coordonnées) sont à récupérer dans la messagerie échangée avec les parties. 
+                  Une coordonnée manquante bloque l'émission du document. Cliquez sur un document pour voir les détails.
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+            </div>
+          </>
+        )}
 
-          {/* Pied de tableau */}
-          <div className="p-4 border-t border-white/10 flex flex-wrap items-center gap-4 text-xs text-white/40">
-            <span>{filteredDocuments.length} documents</span>
-            <span>·</span>
-            <span className="text-purple-400">{filteredDocuments.filter(d => d.type === 'contrat').length} contrats</span>
-            <span>·</span>
-            <span className="text-green-400">{filteredDocuments.filter(d => d.type === 'edl').length} EDL</span>
-            <span>·</span>
-            <span className="text-amber-400">{filteredDocuments.filter(d => d.statut === 'a-emettre' || d.statut === 'a-planifier').length} à traiter</span>
-            <span>·</span>
-            <span className="text-brand-green">{filteredDocuments.filter(d => d.statut === 'signe').length} signés</span>
-            <span className="ml-auto">
-              Montant total: <b className="text-brand-cyan">{stats.totalMontant.toLocaleString('fr-FR')} MGA</b>
-            </span>
-          </div>
-        </div>
+        {/* ===== ONGLET OFFRES COMMERCIALES ===== */}
+        {activeTab === 'offres' && (
+          <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="font-semibold flex items-center gap-2">
+                  <Package className="w-4 h-4 text-brand-cyan" />
+                  Offres commerciales — contrats &amp; états des lieux
+                </h2>
+                <p className="text-white/40 text-xs mt-1">
+                  Catalogue piloté par le super admin. Ces tarifs alimentent le montant des demandes de contrats et d'états des lieux.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddOffre(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-brand-cyan text-[oklch(0.15_0_0)] font-bold rounded-lg hover:opacity-80 transition"
+              >
+                <Plus className="w-4 h-4" />
+                Ajouter une offre
+              </button>
+            </div>
 
-        {/* Note */}
-        <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <Info className="w-4 h-4 text-white/40 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-white/40">
-              Certaines données (noms, N° CIN, coordonnées) sont à récupérer dans la messagerie échangée avec les parties. 
-              Une coordonnée manquante bloque l'émission du document. Cliquez sur un document pour voir les détails.
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-white/5">
+                  <tr>
+                    <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Offre</th>
+                    <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Type</th>
+                    <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Description</th>
+                    <th className="text-right p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Prix (MGA)</th>
+                    <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {offres.map((offre) => (
+                    <tr key={offre.id} className="hover:bg-white/5 transition">
+                      <td className="p-3 font-medium">{offre.nom}</td>
+                      <td className="p-3">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full border ${
+                          offre.type === 'contrat'
+                            ? 'bg-purple-500/15 text-purple-400 border-purple-500/30'
+                            : 'bg-green-500/15 text-green-400 border-green-500/30'
+                        }`}>
+                          {offre.type === 'contrat' ? (
+                            <FileSignature className="w-3 h-3" />
+                          ) : (
+                            <ClipboardCheck className="w-3 h-3" />
+                          )}
+                          {offre.type === 'contrat' ? 'Contrat' : 'EDL'}
+                        </span>
+                      </td>
+                      <td className="p-3 text-white/60 text-sm">{offre.description || '—'}</td>
+                      <td className="p-3 text-right font-bold text-brand-cyan">
+                        {offre.prix.toLocaleString('fr-FR')} MGA
+                      </td>
+                      <td className="p-3 text-center">
+                        <button
+                          onClick={() => handleDeleteOffre(offre.id)}
+                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-4 border-t border-white/10">
+              <div className="text-xs text-white/40">
+                <Info className="w-3 h-3 inline mr-1" />
+                Catalogue des offres commerciales. Modifications enregistrées automatiquement.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ===== MODALE D'AJOUT D'OFFRE ===== */}
+      {showAddOffre && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowAddOffre(false)}>
+          <div 
+            className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Ajouter une offre</h3>
+              <button onClick={() => setShowAddOffre(false)} className="p-1 hover:bg-white/10 rounded-lg transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-white/60 block mb-1">Nom de l'offre *</label>
+                <input
+                  type="text"
+                  value={newOffreNom}
+                  onChange={(e) => setNewOffreNom(e.target.value)}
+                  placeholder="Ex: Contrat de colocation"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-white/60 block mb-1">Type *</label>
+                <select
+                  value={newOffreType}
+                  onChange={(e) => setNewOffreType(e.target.value as 'contrat' | 'edl')}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
+                >
+                  <option value="contrat" className="bg-[oklch(0.22_0.005_260)]">Contrat</option>
+                  <option value="edl" className="bg-[oklch(0.22_0.005_260)]">État des lieux</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-white/60 block mb-1">Prix (MGA) *</label>
+                <input
+                  type="number"
+                  value={newOffrePrix}
+                  onChange={(e) => setNewOffrePrix(e.target.value)}
+                  placeholder="Ex: 120000"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-white/60 block mb-1">Description (optionnel)</label>
+                <textarea
+                  value={newOffreDescription}
+                  onChange={(e) => setNewOffreDescription(e.target.value)}
+                  placeholder="Description de l'offre..."
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50 resize-none"
+                  rows={2}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowAddOffre(false)}
+                  className="flex-1 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition text-white/60"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleAddOffre}
+                  className="flex-1 px-4 py-2 bg-brand-cyan text-[oklch(0.15_0_0)] font-bold rounded-lg hover:opacity-80 transition"
+                >
+                  Ajouter
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Modale de détails */}
       {selectedDocument && (
