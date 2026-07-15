@@ -37,8 +37,6 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
     bio: user?.bio || '',
     languePreferee: user?.languePreferee || '',
     profilePicture: user?.profilePicture || '',
-    villeActuelle: typeof user?.villeActuelle === 'string' ? user.villeActuelle : (user?.villeActuelle ? String(user.villeActuelle) : ''),
-    villeOrigine: typeof user?.villeOrigine === 'string' ? user.villeOrigine : (user?.villeOrigine ? String(user.villeOrigine) : ''),
   })
   const [langues, setLangues] = useState<Langue[]>([])
   const [saving, setSaving] = useState(false)
@@ -58,8 +56,6 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
       bio: user?.bio || '',
       languePreferee: user?.languePreferee || '',
       profilePicture: user?.profilePicture || '',
-      villeActuelle: typeof user?.villeActuelle === 'string' ? user.villeActuelle : (user?.villeActuelle ? String(user.villeActuelle) : ''),
-      villeOrigine: typeof user?.villeOrigine === 'string' ? user.villeOrigine : (user?.villeOrigine ? String(user.villeOrigine) : ''),
     })
   }, [user])
 
@@ -106,8 +102,6 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
         profession: form.profession || null,
         langue_preferee: form.languePreferee ? Number(form.languePreferee) : null,
         profile_picture: profilePicture,
-        ville_actuelle: form.villeActuelle || null,
-        ville_origine: form.villeOrigine || null,
       })
       setSelectedProfileFile(null)
       setMessage('Profil mis à jour avec succès.')
@@ -205,17 +199,16 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
             </div>
           </div>
         </div>
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Ville actuelle</label>
-          <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.villeActuelle} onChange={(e) => setForm((prev) => ({ ...prev, villeActuelle: e.target.value }))} placeholder="Antananarivo" />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Ville d’origine</label>
-          <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.villeOrigine} onChange={(e) => setForm((prev) => ({ ...prev, villeOrigine: e.target.value }))} placeholder="Fianarantsoa" />
-        </div>
         <div className="md:col-span-2">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Biographie</label>
-          <textarea rows={4} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.bio} onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))} />
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Ce que l’utilisateur adore</label>
+          <textarea
+            rows={4}
+            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
+            value={form.bio}
+            onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
+            placeholder="Voyages, musique, sport, cuisine, lecture..."
+          />
+          <p className="mt-1 text-xs text-muted-foreground">Ce champ est libre et optionnel.</p>
         </div>
       </div>
       {message ? <p className="mt-4 text-sm text-brand-cyan-dark">{message}</p> : null}
