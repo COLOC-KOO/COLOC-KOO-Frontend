@@ -42,10 +42,12 @@ export interface ApiAnnonce {
   reference: string
   titre: string
   description: string | null
-  statut: 'pending' | 'active' | 'rejected' | 'archived' | 'expired'
+  statut: 'pending' | 'active' | 'rejected' | 'archived' | 'expired' | 'en_attente' | 'refusee' | 'terminee'
   type_bailleur: string
   type_annonce: string
   type_propriete: 'appartement' | 'maison' | 'autre'
+  type_bail?: 'individuel' | 'collectif' | null
+  clause_solidarite?: 'avec' | 'sans' | null
   total_colocataires: number | null
   candidature_count?: number
   surface_totale: number | null
@@ -650,7 +652,12 @@ export const api = {
   createContracts(
     annonceId: string | number,
     mode: 'contrat' | 'edl' | 'both',
-    options: { type_bail?: 'individuel' | 'collectif' | null; clause_solidarite?: 'avec' | 'sans' | null } = {},
+    options: {
+      type_bail?: 'individuel' | 'collectif' | null
+      clause_solidarite?: 'avec' | 'sans' | null
+      contrat_service_id?: number | null
+      edl_service_id?: number | null
+    } = {},
   ) {
     return request<{ contratIds: number[]; contracts: ApiBackofficeContratDetails[] }>(`/candidatures/annonce/${annonceId}/contrats`, {
       method: 'POST',
@@ -668,16 +675,109 @@ export const api = {
       bail: { cle: string; titre: string; description: string }[]
       solidarite: { cle: string; titre: string; description: string }[]
       mailNote: { contrat: string; edl: string }
+      contratOffers: { id: number; nom: string; description: string | null; prix: number }[]
+      edlOffers: { id: number; nom: string; description: string | null; prix: number }[]
     }>(`/meta/contract-config`)
+  },
+  lancerColocationOfficielle(annonceId: string | number) {
+    return request<{ message: string; statut: string }>(`/candidatures/annonce/${annonceId}/lancer-officiel`, {
+      method: 'POST',
+    })
+  },
+  myContractsForAnnonce(annonceId: string | number) {
+    return request<Array<{
+      id_contrat: number
+      reference: string | null
+      type: 'contrat' | 'edl'
+      montant_total: number
+      ma_part: number
+      deja_paye: boolean
+      paidCount: number
+      total: number
+      peut_payer: boolean
+    }>>(`/candidatures/annonce/${annonceId}/mes-contrats`)
+  },
+  async getContractDocument(contratId: string | number) {
+    const token = getToken()
+    const res = await fetch(`${API_URL}/candidatures/contrats/${contratId}/document`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) throw new Error('Impossible de générer le document du contrat.')
+    return res.text()
   },
   submitContractPayment(
     contratId: string | number,
     payload: { moyen_paiement: 'MVOLA' | 'Orange Money'; reference_operateur: string; montant?: number },
   ) {
-    return request<{ message: string; id_paiement: number; reference: string; statut: string }>(
-      `/candidatures/contrats/${contratId}/paiement`,
-      { method: 'POST', body: JSON.stringify(payload) },
-    )
+    return request<{
+      message: string
+      id_paiement: number
+      reference: string
+      statut: string
+      montant: number
+      paidCount: number
+      total: number
+      allPaid: boolean
+    }>(`/candidatures/contrats/${contratId}/paiement`, { method: 'POST', body: JSON.stringify(payload) })
+  },
+
+  // ===== GESTION DES ÉQUIPES =====
+  
+  // Récupérer toutes les équipes d'une annonce
+  getEquipesByAnnonce(annonceId: string | number): Promise<ApiEquipe[]> {
+    return request<ApiEquipe[]>(`/equipes/annonces/${annonceId}`)
+  },
+
+  // Récupérer une équipe par son ID
+  getEquipe(id: string | number): Promise<ApiEquipe> {
+    return request<ApiEquipe>(`/equipes/${id}`)
+  },
+
+  // Créer une équipe
+  createEquipe(data: { 
+    id_annonce: number; 
+    nom: string; 
+    ambiance?: string | null; 
+    statut?: 'forming' | 'selected' | 'rejected' | 'complete' 
+  }): Promise<{ id_equipe: number; message?: string }> {
+    return request<{ id_equipe: number; message?: string }>('/equipes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  },
+
+  // Mettre à jour une équipe
+  updateEquipe(id: string | number, data: { 
+    nom?: string; 
+    ambiance?: string | null; 
+    statut?: 'forming' | 'selected' | 'rejected' | 'complete' 
+  }): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  },
+
+  // Supprimer une équipe
+  deleteEquipe(id: string | number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${id}`, {
+      method: 'DELETE',
+    })
+  },
+
+  // Ajouter un membre à une équipe
+  addMemberToEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${equipeId}/membres`, {
+      method: 'POST',
+      body: JSON.stringify({ id_utilisateur: userId }),
+    })
+  },
+
+  // Retirer un membre d'une équipe
+  removeMemberFromEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/equipes/${equipeId}/membres/${userId}`, {
+      method: 'DELETE',
+    })
   },
 
   // ===== GESTION DES ÉQUIPES =====
@@ -977,6 +1077,8 @@ export function annonceToListing(a: ApiAnnonce): Listing {
     },
     tags: a.statut === 'active' ? ['verifie'] : [],
     annonceType: a.type_annonce || 'existante',
+    typeBail: a.type_bail ?? null,
+    clauseSolidarite: a.clause_solidarite ?? null,
     candidatureCount: a.candidature_count != null ? Number(a.candidature_count) : undefined,
   }
 }

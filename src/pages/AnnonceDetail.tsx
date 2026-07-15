@@ -508,6 +508,28 @@ export default function AnnonceDetail() {
               </div>
             )}
           </section>
+
+          {listing.typeBail && (
+            <section className="mt-8">
+              <h2 className="bebas text-2xl">Type de bail</h2>
+              <div className="mt-3 rounded-2xl border border-border bg-card p-4">
+                <div className="font-semibold text-brand-cyan-dark">
+                  {listing.typeBail === 'collectif' ? 'Contrat collectif' : 'Bail individuel'}
+                  {listing.clauseSolidarite ? ` ${listing.clauseSolidarite === 'avec' ? 'avec' : 'sans'} clause de solidarité` : ''}
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  {listing.typeBail === 'collectif'
+                    ? 'Un seul contrat signé par tous.'
+                    : 'Chaque colocataire signe son propre contrat avec le propriétaire.'}
+                  {listing.clauseSolidarite === 'avec'
+                    ? ' Tous les colocataires sont solidaires du loyer.'
+                    : listing.clauseSolidarite === 'sans'
+                      ? ' Chaque colocataire reste responsable de sa part.'
+                      : ''}
+                </div>
+              </div>
+            </section>
+          )}
         </div>
 
         <aside className="lg:sticky lg:top-24 h-fit space-y-4">

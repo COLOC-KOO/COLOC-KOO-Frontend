@@ -28,6 +28,8 @@ export interface Listing {
   available: string
   type: ListingType
   annonceType?: string
+  typeBail?: 'individuel' | 'collectif' | null
+  clauseSolidarite?: 'avec' | 'sans' | null
   candidatureCount?: number
   image: string
   address?: string
