@@ -426,6 +426,12 @@ export const api = {
       body: JSON.stringify(payload),
     })
   },
+  uploadProfilePicture(formData: FormData) {
+    return request<{ profilePicture: string; user: AuthUser }>('/auth/me/upload', {
+      method: 'POST',
+      body: formData,
+    })
+  },
   changePassword(payload: { mot_de_passe_actuel: string; nouveau_mot_de_passe: string }) {
     return request<{ message: string }>('/auth/me/password', {
       method: 'PATCH',
