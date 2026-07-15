@@ -30,7 +30,15 @@ import {
   Users,
   Award,
   Star,
-  StarOff
+  StarOff,
+  User,
+  Mail,
+  Phone,
+  Home,
+  Shield,
+  Lock,
+  Info,      // ← AJOUTER ICI
+  FileText   // ← AJOUTER SI UTILISÉ AUSSI
 } from 'lucide-react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api } from '../../lib/api'
@@ -46,13 +54,20 @@ interface Partenaire {
   logo: string
   actif: boolean
   dateCreation: string
-  contact?: {
+}
+
+interface PartenaireComplet extends Partenaire {
+  contact: {
     ref: string
     fonction: string
     telephone: string
     email: string
     adresse: string
   }
+  famille: string
+  tier: string
+  visibilite: number
+  statut: 'actif' | 'attente' | 'suspendu'
 }
 
 interface Campagne {
@@ -80,12 +95,174 @@ interface ApiPartenaire {
   logo?: string | null
   actif: 0 | 1
   date_creation: string
+  famille?: string | null
+  tier?: string | null
+  visibilite?: number | null
+  statut?: 'actif' | 'attente' | 'suspendu' | null
   contact_ref?: string | null
   contact_fonction?: string | null
   contact_telephone?: string | null
   contact_email?: string | null
   contact_adresse?: string | null
 }
+
+// ===== DONNÉES MOCKÉES POUR LES COMPTES PARTENAIRES =====
+const MOCK_COMPTES: PartenaireComplet[] = [
+  {
+    id: 'PRT-051',
+    nom: 'Quincaillerie Soa',
+    secteur: 'Entreprise générale',
+    niveau: 'Bronze',
+    remise: '5%',
+    engagement: 'Aucun engagement',
+    logo: '',
+    actif: true,
+    dateCreation: '2026-01-15',
+    famille: 'Entreprise générale',
+    tier: 'PME · Bronze',
+    visibilite: 0,
+    statut: 'actif',
+    contact: {
+      ref: 'Mme Soa Raharimanana',
+      fonction: 'Gérante',
+      telephone: '+261 34 05 112 23',
+      email: 'contact@quincaillerie-soa.mg',
+      adresse: 'Lot II A Antanimena, Antananarivo'
+    }
+  },
+  {
+    id: 'PRT-049',
+    nom: 'Jirama Services+',
+    secteur: 'Entreprise générale',
+    niveau: 'Argent',
+    remise: '10%',
+    engagement: 'Engagement 6 mois',
+    logo: '',
+    actif: true,
+    dateCreation: '2026-02-20',
+    famille: 'Entreprise générale',
+    tier: 'Entreprise · Argent',
+    visibilite: 1,
+    statut: 'actif',
+    contact: {
+      ref: 'M. Hery Rakoto',
+      fonction: 'Resp. partenariats',
+      telephone: '+261 32 11 445 67',
+      email: 'partenariats@jiramaplus.mg',
+      adresse: 'Ambohijatovo, Antananarivo'
+    }
+  },
+  {
+    id: 'PRT-047',
+    nom: 'Telma Madagascar',
+    secteur: 'Entreprise générale',
+    niveau: 'Or',
+    remise: '15%',
+    engagement: 'Engagement 12 mois',
+    logo: '',
+    actif: true,
+    dateCreation: '2026-03-10',
+    famille: 'Entreprise générale',
+    tier: 'Grande entreprise · Or',
+    visibilite: 2,
+    statut: 'actif',
+    contact: {
+      ref: 'Mme Lanto Andriana',
+      fonction: 'Brand manager',
+      telephone: '+261 34 01 234 56',
+      email: 'l.andriana@telma.mg',
+      adresse: 'Tour Zital, Ankorondrano, Antananarivo'
+    }
+  },
+  {
+    id: 'PRT-045',
+    nom: 'Réseau Tana Immo',
+    secteur: 'Immobilier',
+    niveau: 'Diamant',
+    remise: '20%',
+    engagement: 'Engagement 24 mois',
+    logo: '',
+    actif: true,
+    dateCreation: '2026-04-01',
+    famille: 'Immobilier',
+    tier: 'Réseau d\'agences',
+    visibilite: 3,
+    statut: 'actif',
+    contact: {
+      ref: 'M. Tiana Rabe',
+      fonction: 'Directeur réseau',
+      telephone: '+261 33 22 778 90',
+      email: 'direction@tana-immo.mg',
+      adresse: 'Analakely, Antananarivo'
+    }
+  },
+  {
+    id: 'PRT-044',
+    nom: 'Agence Lalana',
+    secteur: 'Immobilier',
+    niveau: 'Bronze',
+    remise: '5%',
+    engagement: 'Aucun engagement',
+    logo: '',
+    actif: false,
+    dateCreation: '2026-04-15',
+    famille: 'Immobilier',
+    tier: 'Agence',
+    visibilite: 0,
+    statut: 'attente',
+    contact: {
+      ref: 'Mme Vola Ranaivo',
+      fonction: 'Responsable agence',
+      telephone: '+261 34 88 990 12',
+      email: 'contact@agence-lalana.mg',
+      adresse: 'Ivandry, Antananarivo'
+    }
+  },
+  {
+    id: 'PRT-042',
+    nom: 'Fondation Aina',
+    secteur: 'Institution publique',
+    niveau: 'Or',
+    remise: '10%',
+    engagement: 'Engagement 12 mois',
+    logo: '',
+    actif: true,
+    dateCreation: '2026-05-01',
+    famille: 'Institution publique',
+    tier: 'Mécène Or',
+    visibilite: 1,
+    statut: 'attente',
+    contact: {
+      ref: 'M. Naivo Andrianjafy',
+      fonction: 'Secrétaire général',
+      telephone: '+261 32 44 556 78',
+      email: 'sg@fondation-aina.mg',
+      adresse: 'Isoraka, Antananarivo'
+    }
+  },
+  {
+    id: 'PRT-039',
+    nom: 'BTP Vato SA',
+    secteur: 'Entreprise générale',
+    niveau: 'Diamant',
+    remise: '20%',
+    engagement: 'Engagement 24 mois',
+    logo: '',
+    actif: false,
+    dateCreation: '2026-05-20',
+    famille: 'Entreprise générale',
+    tier: 'Grande entreprise · Platine',
+    visibilite: 3,
+    statut: 'suspendu',
+    contact: {
+      ref: 'M. Fidy Rakotoarisoa',
+      fonction: 'Resp. communication',
+      telephone: '+261 34 77 001 23',
+      email: 'com@btpvato.mg',
+      adresse: 'Antsirabe, Vakinankaratra'
+    }
+  }
+]
 
 // ===== FONCTIONS DE MAPPING =====
 function mapPartenaire(row: ApiPartenaire): Partenaire {
@@ -99,13 +276,24 @@ function mapPartenaire(row: ApiPartenaire): Partenaire {
     logo: row.logo || '',
     actif: row.actif === 1,
     dateCreation: row.date_creation ? new Date(row.date_creation).toLocaleDateString('fr-FR') : '-',
+  }
+}
+
+function mapPartenaireComplet(row: ApiPartenaire): PartenaireComplet {
+  const base = mapPartenaire(row)
+  return {
+    ...base,
     contact: {
       ref: row.contact_ref || 'Non renseigné',
       fonction: row.contact_fonction || 'Non renseigné',
       telephone: row.contact_telephone || 'Non renseigné',
       email: row.contact_email || 'Non renseigné',
       adresse: row.contact_adresse || 'Non renseigné',
-    }
+    },
+    famille: row.famille || 'Entreprise générale',
+    tier: row.tier || base.niveau,
+    visibilite: row.visibilite || 0,
+    statut: row.statut || 'actif',
   }
 }
 
@@ -164,7 +352,23 @@ const EmplacementBadge = ({ emplacement }: { emplacement: Campagne['emplacement'
   )
 }
 
-// ===== MODALE PARTENAIRE =====
+// Badge de statut pour les comptes partenaires
+const PartenaireStatutBadge = ({ statut }: { statut: PartenaireComplet['statut'] }) => {
+  const config = {
+    'actif': { label: 'Actif', className: 'bg-green-500/15 text-green-400 border-green-500/30' },
+    'attente': { label: 'En attente', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+    'suspendu': { label: 'Suspendu', className: 'bg-red-500/15 text-red-400 border-red-500/30' },
+  }
+  const { label, className } = config[statut]
+  
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full border ${className}`}>
+      {label}
+    </span>
+  )
+}
+
+// ===== MODALE PARTENAIRE (GESTION) =====
 function PartnerModal({
   partner,
   onClose,
@@ -184,11 +388,6 @@ function PartnerModal({
   const [preview, setPreview] = useState(partner?.logo || '')
   const [actif, setActif] = useState(partner?.actif ?? true)
   const [submitting, setSubmitting] = useState(false)
-  const [contactRef, setContactRef] = useState(partner?.contact?.ref || '')
-  const [contactFonction, setContactFonction] = useState(partner?.contact?.fonction || '')
-  const [contactTelephone, setContactTelephone] = useState(partner?.contact?.telephone || '')
-  const [contactEmail, setContactEmail] = useState(partner?.contact?.email || '')
-  const [contactAdresse, setContactAdresse] = useState(partner?.contact?.adresse || '')
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -219,8 +418,8 @@ function PartnerModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="p-5 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[oklch(0.22_0.005_260)] z-10">
+      <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-3xl w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="p-5 border-b border-white/10 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold">{partner ? 'Modifier un partenaire' : 'Ajouter un partenaire'}</h2>
             <p className="text-white/50 text-sm">Remplissez les informations du partenaire.</p>
@@ -254,33 +453,6 @@ function PartnerModal({
             <label className="text-xs text-white/40 uppercase">Engagement</label>
             <textarea value={engagement} onChange={(e) => setEngagement(e.target.value)} rows={2} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50 resize-none" />
           </div>
-          
-          <div className="border-t border-white/10 pt-4">
-            <h3 className="text-sm font-medium text-white/60 mb-3">Contact référent</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-white/40 uppercase">Nom du référent</label>
-                <input value={contactRef} onChange={(e) => setContactRef(e.target.value)} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
-              </div>
-              <div>
-                <label className="text-xs text-white/40 uppercase">Fonction</label>
-                <input value={contactFonction} onChange={(e) => setContactFonction(e.target.value)} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
-              </div>
-              <div>
-                <label className="text-xs text-white/40 uppercase">Téléphone</label>
-                <input value={contactTelephone} onChange={(e) => setContactTelephone(e.target.value)} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
-              </div>
-              <div>
-                <label className="text-xs text-white/40 uppercase">Email</label>
-                <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-xs text-white/40 uppercase">Adresse</label>
-                <input value={contactAdresse} onChange={(e) => setContactAdresse(e.target.value)} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
-              </div>
-            </div>
-          </div>
-
           <div>
             <label className="text-xs text-white/40 uppercase">Logo</label>
             <div className="mt-2 flex items-center gap-3">
@@ -304,14 +476,12 @@ function PartnerModal({
               </div>
             )}
           </div>
-
           <div className="flex items-center gap-3">
             <label className="inline-flex items-center gap-2 text-sm text-white/70">
               <input type="checkbox" checked={actif} onChange={(e) => setActif(e.target.checked)} className="rounded border-white/20 bg-white/5 text-brand-cyan" />
               Partenaire actif
             </label>
           </div>
-
           <div className="flex justify-end gap-3 pt-2 border-t border-white/10">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm">
               Annuler
@@ -498,8 +668,9 @@ function CampagneModal({
 
 // ===== COMPOSANT PRINCIPAL =====
 export default function AdminPartenaires() {
-  const [activeTab, setActiveTab] = useState<'comptes' | 'campagnes'>('comptes')
+  const [activeTab, setActiveTab] = useState<'gestion' | 'comptes' | 'campagnes'>('gestion')
   const [partenaires, setPartenaires] = useState<Partenaire[]>([])
+  const [comptes, setComptes] = useState<PartenaireComplet[]>([])
   const [campagnes, setCampagnes] = useState<Campagne[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -508,11 +679,12 @@ export default function AdminPartenaires() {
   const [showCampagneModal, setShowCampagneModal] = useState(false)
   const [editingPartner, setEditingPartner] = useState<Partenaire | null>(null)
   const [editingCampagne, setEditingCampagne] = useState<Campagne | null>(null)
+  
+  // Filtres pour les comptes
   const [searchQuery, setSearchQuery] = useState('')
+  const [filterFamille, setFilterFamille] = useState<string>('tous')
   const [filterStatut, setFilterStatut] = useState<string>('tous')
-  const [filterEmplacement, setFilterEmplacement] = useState<string>('tous')
-  const [sortField, setSortField] = useState<'nom' | 'date' | 'niveau'>('nom')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [filterVisibilite, setFilterVisibilite] = useState<string>('tous')
 
   // Statistiques
   const stats = useMemo(() => {
@@ -526,6 +698,18 @@ export default function AdminPartenaires() {
     return { total, actifs, inactifs, niveaux }
   }, [partenaires])
 
+  const compteStats = useMemo(() => {
+    const total = comptes.length
+    const actifs = comptes.filter(c => c.statut === 'actif').length
+    const attente = comptes.filter(c => c.statut === 'attente').length
+    const suspendus = comptes.filter(c => c.statut === 'suspendu').length
+    const familles = comptes.reduce((acc, c) => {
+      acc[c.famille] = (acc[c.famille] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+    return { total, actifs, attente, suspendus, familles }
+  }, [comptes])
+
   const campagneStats = useMemo(() => {
     const total = campagnes.length
     const actives = campagnes.filter(c => c.statut === 'active').length
@@ -535,19 +719,29 @@ export default function AdminPartenaires() {
     return { total, actives, programmees, suspendues, terminees }
   }, [campagnes])
 
-  // Filtrer les partenaires
-  const filteredPartenaires = useMemo(() => {
-    let filtered = partenaires
+  // Filtrer les comptes
+  const filteredComptes = useMemo(() => {
+    let filtered = comptes
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      filtered = filtered.filter(p => 
-        p.nom.toLowerCase().includes(q) || 
-        p.secteur.toLowerCase().includes(q) ||
-        p.niveau.toLowerCase().includes(q)
+      filtered = filtered.filter(c => 
+        c.nom.toLowerCase().includes(q) || 
+        c.id.toLowerCase().includes(q) ||
+        c.famille.toLowerCase().includes(q) ||
+        c.tier.toLowerCase().includes(q)
       )
     }
+    if (filterFamille !== 'tous') {
+      filtered = filtered.filter(c => c.famille === filterFamille)
+    }
+    if (filterStatut !== 'tous') {
+      filtered = filtered.filter(c => c.statut === filterStatut)
+    }
+    if (filterVisibilite !== 'tous') {
+      filtered = filtered.filter(c => c.visibilite === parseInt(filterVisibilite))
+    }
     return filtered
-  }, [partenaires, searchQuery])
+  }, [comptes, searchQuery, filterFamille, filterStatut, filterVisibilite])
 
   // Filtrer les campagnes
   const filteredCampagnes = useMemo(() => {
@@ -559,14 +753,8 @@ export default function AdminPartenaires() {
         (c.partenaire_nom || '').toLowerCase().includes(q)
       )
     }
-    if (filterStatut !== 'tous') {
-      filtered = filtered.filter(c => c.statut === filterStatut)
-    }
-    if (filterEmplacement !== 'tous') {
-      filtered = filtered.filter(c => c.emplacement === filterEmplacement)
-    }
     return filtered
-  }, [campagnes, searchQuery, filterStatut, filterEmplacement])
+  }, [campagnes, searchQuery])
 
   const loadData = async () => {
     setLoading(true)
@@ -577,6 +765,7 @@ export default function AdminPartenaires() {
         api.campagnes ? api.campagnes() : Promise.resolve([])
       ])
       setPartenaires(partenairesData.map(mapPartenaire))
+      setComptes(partenairesData.map(mapPartenaireComplet))
       setCampagnes((campagnesData || []).map(mapCampagne))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger les données')
@@ -724,6 +913,17 @@ export default function AdminPartenaires() {
     }
   }
 
+  // Traduire la visibilité
+  const getVisibiliteLabel = (visibilite: number) => {
+    const labels = [
+      'Logo + page Partenaires',
+      '+ Point d\'intérêt sur la carte',
+      '+ Encarts natifs (fil d\'annonces)',
+      '+ Bandeau régional exclusif'
+    ]
+    return labels[visibilite] || labels[0]
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-5">
@@ -760,6 +960,16 @@ export default function AdminPartenaires() {
         <div className="border-b border-white/10">
           <div className="flex gap-1">
             <button
+              onClick={() => setActiveTab('gestion')}
+              className={`px-4 py-2 text-sm font-medium transition ${
+                activeTab === 'gestion'
+                  ? 'text-brand-cyan border-b-2 border-brand-cyan'
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              Gestion partenaires
+            </button>
+            <button
               onClick={() => setActiveTab('comptes')}
               className={`px-4 py-2 text-sm font-medium transition ${
                 activeTab === 'comptes'
@@ -782,8 +992,8 @@ export default function AdminPartenaires() {
           </div>
         </div>
 
-        {/* ===== ONGLET COMPTES PARTENAIRES ===== */}
-        {activeTab === 'comptes' && (
+        {/* ===== ONGLET GESTION PARTENAIRES (EXISTANT) ===== */}
+        {activeTab === 'gestion' && (
           <>
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -833,7 +1043,7 @@ export default function AdminPartenaires() {
 
             {/* Liste des partenaires */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredPartenaires.map((partner) => (
+              {partenaires.map((partner) => (
                 <div key={partner.id} className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl p-5 flex flex-col gap-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -873,12 +1083,277 @@ export default function AdminPartenaires() {
               ))}
             </div>
 
-            {filteredPartenaires.length === 0 && !loading && (
+            {partenaires.length === 0 && !loading && (
               <div className="text-center py-12 text-white/40">
                 <Building2 className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p>Aucun partenaire trouvé</p>
               </div>
             )}
+          </>
+        )}
+
+        {/* ===== ONGLET COMPTES PARTENAIRES (COMME DANS LE HTML) ===== */}
+        {activeTab === 'comptes' && (
+          <>
+            {/* KPIs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-brand-cyan">{compteStats.total}</div>
+                <div className="text-xs text-white/40">Total comptes</div>
+              </div>
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-green-400">{compteStats.actifs}</div>
+                <div className="text-xs text-white/40">Actifs</div>
+              </div>
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-amber-400">{compteStats.attente}</div>
+                <div className="text-xs text-white/40">En attente</div>
+              </div>
+              <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
+                <div className="text-2xl font-bold text-red-400">{compteStats.suspendus}</div>
+                <div className="text-xs text-white/40">Suspendus</div>
+              </div>
+            </div>
+
+            {/* Filtres et recherche */}
+            <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10">
+                <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+                    <Search className="w-4 h-4 text-white/40" />
+                    <input
+                      placeholder="Rechercher un partenaire..."
+                      className="flex-1 bg-transparent outline-none text-sm"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery('')} className="text-white/40 hover:text-white/70 text-xs p-1">
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 flex-wrap ml-auto">
+                    <select
+                      value={filterFamille}
+                      onChange={(e) => setFilterFamille(e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
+                    >
+                      <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Toutes les familles</option>
+                      {Object.keys(compteStats.familles).map(famille => (
+                        <option key={famille} value={famille} className="bg-[oklch(0.22_0.005_260)]">{famille}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={filterStatut}
+                      onChange={(e) => setFilterStatut(e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
+                    >
+                      <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Tous les statuts</option>
+                      <option value="actif" className="bg-[oklch(0.22_0.005_260)]">Actif</option>
+                      <option value="attente" className="bg-[oklch(0.22_0.005_260)]">En attente</option>
+                      <option value="suspendu" className="bg-[oklch(0.22_0.005_260)]">Suspendu</option>
+                    </select>
+
+                    <select
+                      value={filterVisibilite}
+                      onChange={(e) => setFilterVisibilite(e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
+                    >
+                      <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Toutes les visibilités</option>
+                      <option value="0" className="bg-[oklch(0.22_0.005_260)]">Palier 1</option>
+                      <option value="1" className="bg-[oklch(0.22_0.005_260)]">Palier 2</option>
+                      <option value="2" className="bg-[oklch(0.22_0.005_260)]">Palier 3</option>
+                      <option value="3" className="bg-[oklch(0.22_0.005_260)]">Palier 4</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tableau des comptes */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Partenaire</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Famille / Niveau</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Statut</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Visibilité</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Référent</th>
+                      <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Actions</th>
+                    </tr>
+                    <tr className="bg-white/3">
+                      <th className="p-2">
+                        <input 
+                          placeholder="Rechercher..." 
+                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </th>
+                      <th className="p-2">
+                        <input 
+                          placeholder="Famille..." 
+                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
+                          onChange={(e) => setFilterFamille(e.target.value)}
+                        />
+                      </th>
+                      <th className="p-2">
+                        <input 
+                          placeholder="Statut..." 
+                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
+                          onChange={(e) => setFilterStatut(e.target.value)}
+                        />
+                      </th>
+                      <th className="p-2">
+                        <input 
+                          placeholder="Visibilité..." 
+                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
+                          onChange={(e) => setFilterVisibilite(e.target.value)}
+                        />
+                      </th>
+                      <th className="p-2"></th>
+                      <th className="p-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-12 text-white/40">
+                          <RefreshCw className="w-8 h-8 mx-auto mb-3 animate-spin opacity-40" />
+                          Chargement des comptes...
+                        </td>
+                      </tr>
+                    ) : filteredComptes.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-12 text-white/40">
+                          <Building2 className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                          <p>Aucun compte trouvé</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredComptes.map((compte) => (
+                        <tr key={compte.id} className="hover:bg-white/5 transition">
+                          <td className="p-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded bg-brand-cyan/10 text-brand-cyan flex items-center justify-center text-xs font-bold overflow-hidden">
+                                {compte.logo ? (
+                                  <img src={compte.logo} alt={compte.nom} className="h-full w-full object-cover" />
+                                ) : (
+                                  compte.nom.charAt(0)
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm">{compte.nom}</div>
+                                <div className="text-xs text-white/40">{compte.id}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <div className="text-sm">{compte.famille}</div>
+                            <div className="text-xs text-white/40">{compte.tier}</div>
+                          </td>
+                          <td className="p-3">
+                            <PartenaireStatutBadge statut={compte.statut} />
+                          </td>
+                          <td className="p-3">
+                            <div className="text-xs text-white/60 max-w-[180px]">
+                              {getVisibiliteLabel(compte.visibilite)}
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <div className="text-xs">
+                              <div className="text-white/80">{compte.contact.ref}</div>
+                              <div className="text-white/40">{compte.contact.fonction}</div>
+                              <div className="text-white/40 text-[10px]">{compte.contact.telephone}</div>
+                            </div>
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition"
+                                title="Modifier"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pied de tableau */}
+              <div className="p-4 border-t border-white/10 flex flex-wrap items-center gap-4 text-xs text-white/40">
+                <span>{filteredComptes.length} comptes</span>
+                <span>·</span>
+                <span className="text-green-400">{filteredComptes.filter(c => c.statut === 'actif').length} actifs</span>
+                <span>·</span>
+                <span className="text-amber-400">{filteredComptes.filter(c => c.statut === 'attente').length} en attente</span>
+                <span>·</span>
+                <span className="text-red-400">{filteredComptes.filter(c => c.statut === 'suspendu').length} suspendus</span>
+                <span className="ml-auto">
+                  <Shield className="w-3 h-3 inline mr-1" />
+                  Qualification réservée au super admin
+                </span>
+              </div>
+            </div>
+
+            {/* Répertoire de contacts */}
+            <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Users className="w-4 h-4 text-pink-400" />
+                    Répertoire de contacts partenaires
+                  </h3>
+                  <p className="text-white/40 text-xs">Coordonnées des référents — réservé super admin</p>
+                </div>
+                <Lock className="w-4 h-4 text-white/40" />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Partenaire</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Contact référent</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Fonction</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Téléphone</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Email</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Adresse</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {comptes.map((compte) => (
+                      <tr key={`contact-${compte.id}`} className="hover:bg-white/5 transition">
+                        <td className="p-3">
+                          <div className="font-medium">{compte.nom}</div>
+                          <div className="text-xs text-white/40">{compte.id} · {compte.tier}</div>
+                        </td>
+                        <td className="p-3">{compte.contact.ref}</td>
+                        <td className="p-3 text-white/60">{compte.contact.fonction}</td>
+                        <td className="p-3">{compte.contact.telephone}</td>
+                        <td className="p-3">{compte.contact.email}</td>
+                        <td className="p-3 text-white/60 text-xs">{compte.contact.adresse}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="p-4 border-t border-white/10 text-xs text-white/40">
+                <Info className="w-3 h-3 inline mr-1" />
+                Coordonnées des référents de l'ensemble des comptes partenaires, tous statuts confondus. Données confidentielles à usage interne.
+              </div>
+            </div>
           </>
         )}
 
@@ -926,38 +1401,16 @@ export default function AdminPartenaires() {
                 )}
               </div>
               <div className="flex gap-2 flex-wrap">
-                <select
-                  value={filterStatut}
-                  onChange={(e) => setFilterStatut(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
-                >
-                  <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Tous les statuts</option>
-                  <option value="active" className="bg-[oklch(0.22_0.005_260)]">Active</option>
-                  <option value="programmee" className="bg-[oklch(0.22_0.005_260)]">Programmée</option>
-                  <option value="suspendue" className="bg-[oklch(0.22_0.005_260)]">Suspendue</option>
-                  <option value="terminee" className="bg-[oklch(0.22_0.005_260)]">Terminée</option>
-                </select>
-                <select
-                  value={filterEmplacement}
-                  onChange={(e) => setFilterEmplacement(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
-                >
-                  <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Tous les emplacements</option>
-                  <option value="carte" className="bg-[oklch(0.22_0.005_260)]">Carte</option>
-                  <option value="fil_annonces" className="bg-[oklch(0.22_0.005_260)]">Fil d'annonces</option>
-                  <option value="bandeau_regional" className="bg-[oklch(0.22_0.005_260)]">Bandeau régional</option>
-                  <option value="page_partenaire" className="bg-[oklch(0.22_0.005_260)]">Page partenaire</option>
-                </select>
                 <button
                   onClick={handleOpenAddCampagne}
                   className="flex items-center gap-2 px-4 py-2 bg-brand-cyan text-[oklch(0.15_0_0)] rounded-lg hover:opacity-90 transition whitespace-nowrap"
                 >
-                  <Plus className="w-4 h-4" /> Nouvelle campagne
+                  <Plus className="w-4 h-4" /> Charger une campagne
                 </button>
               </div>
             </div>
 
-            {/* Liste des campagnes */}
+            {/* Tableau des campagnes */}
             <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -969,6 +1422,44 @@ export default function AdminPartenaires() {
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Période</th>
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Statut</th>
                       <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Actions</th>
+                    </tr>
+                    <tr className="bg-white/3">
+                      <th className="p-2">
+                        <input 
+                          placeholder="Campagne..." 
+                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </th>
+                      <th className="p-2">
+                        <input 
+                          placeholder="Partenaire..." 
+                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </th>
+                      <th className="p-2">
+                        <input 
+                          placeholder="Emplacement..." 
+                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </th>
+                      <th className="p-2">
+                        <input 
+                          placeholder="Période..." 
+                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </th>
+                      <th className="p-2">
+                        <input 
+                          placeholder="Statut..." 
+                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </th>
+                      <th className="p-2"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -1063,7 +1554,7 @@ export default function AdminPartenaires() {
         )}
       </div>
 
-      {/* Modale Partenaire */}
+      {/* Modale Partenaire (Gestion) */}
       {showPartnerModal && (
         <PartnerModal
           partner={editingPartner}
