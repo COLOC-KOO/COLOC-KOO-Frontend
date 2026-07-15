@@ -60,6 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           bio: typeof payload.bio === 'string' ? payload.bio : updated.bio ?? null,
           profilePicture: typeof payload.profile_picture === 'string' ? payload.profile_picture : updated.profilePicture ?? null,
           dateNaissance: typeof payload.date_naissance === 'string' ? payload.date_naissance : updated.dateNaissance ?? null,
+          villeActuelle: typeof payload.ville_actuelle === 'string' ? payload.ville_actuelle : updated.villeActuelle ?? null,
+          villeOrigine: typeof payload.ville_origine === 'string' ? payload.ville_origine : updated.villeOrigine ?? null,
+          profession: typeof payload.profession === 'string' ? payload.profession : updated.profession ?? undefined,
         }
         saveSession(mergedUser, getToken() || '')
         setUser(mergedUser)
