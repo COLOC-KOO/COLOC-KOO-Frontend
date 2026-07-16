@@ -1,7 +1,7 @@
 // components/SiteHeader.tsx
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, User, X, ChevronDown, Home, Search, Plus, Users, Phone, Globe, LogOut, UserCircle, Settings, HelpCircle } from 'lucide-react'
+import { Menu, User, X, ChevronDown, Home, Search, Plus, Users, Phone, Globe, LogOut, UserCircle, Settings, HelpCircle, ConciergeBell } from 'lucide-react'
 import { Logo } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
@@ -15,7 +15,8 @@ const navItems = [
   { to: '/annonces', label: 'Annonces', icon: Search },
   { to: '/deposer', label: 'Déposer', icon: Plus },
   { to: '/partenaires', label: 'Partenaires', icon: Users },
-  { to: '/contact', label: 'Contact', icon: Phone }
+  { to: '/contact', label: 'Contact', icon: Phone },
+  { to: '/services', label: 'Service', icon: ConciergeBell }
 ]
 
 const languageOptions = [
