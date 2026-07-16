@@ -6,6 +6,7 @@ import AnnonceDetail from './pages/AnnonceDetail'
 import Deposer from './pages/Deposer'
 import Partenaires from './pages/Partenaires'
 import Contact from './pages/Contact'
+import Services from './pages/Services'
 import Auth from './pages/Auth'
 import Compte from './pages/Compte'
 import Candidatures from './pages/Candidatures'
@@ -51,6 +52,7 @@ export default function App() {
       <Route path="/deposer" element={<Deposer />} />
       <Route path="/partenaires" element={<Partenaires />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/services" element={<Services />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/compte" element={<Compte />} />
       <Route path="/candidatures" element={<Candidatures />} />
