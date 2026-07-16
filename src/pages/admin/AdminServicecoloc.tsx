@@ -68,26 +68,30 @@ interface OffreService {
   actif: boolean
 }
 
+// ✅ CORRECTION : Sécuriser la fonction mapDemandeService
 function mapDemandeService(d: DemandeServiceStaffItem): ServiceDemande {
+  // ✅ Sécuriser le nom du demandeur
+  const demandeur = d.demandeur || d.nom || d.prenom || 'Utilisateur'
+  
   return {
     reference: d.reference,
     idUtilisateur: d.id_utilisateur,
-    demandeur: d.demandeur || 'Utilisateur',
-    telephone: d.telephone,
-    email: d.email,
-    message: d.message,
-    services: d.services,
+    demandeur: demandeur,
+    telephone: d.telephone || null,
+    email: d.email || null,
+    message: d.message || null,
+    services: d.services || [],
     lignes: (d.lignes || []).map((l) => ({
-      nom: l.nom,
-      quantite: l.quantite,
-      prix_unitaire: l.prix_unitaire,
-      sous_total: l.sous_total,
+      nom: l.nom || 'Service',
+      quantite: l.quantite || 1,
+      prix_unitaire: l.prix_unitaire || 0,
+      sous_total: l.sous_total || 0,
     })),
-    total: d.total,
+    total: d.total || 0,
     dateCreation: d.date_creation
       ? new Date(d.date_creation).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
       : '',
-    statut: d.statut,
+    statut: d.statut || 'nouvelle',
   }
 }
 
@@ -101,7 +105,7 @@ function mapServiceCkooRow(service: ApiServiceCkooRow): OffreService | null {
   return {
     id: String(service.id_service),
     cle: service.cle_service || '',
-    nom: service.nom,
+    nom: service.nom || 'Service sans nom',
     prixParJour: Number(service.prix || 0),
     unite: service.unite || 'heure',
     description: service.description || undefined,
@@ -250,8 +254,15 @@ export default function AdminServicesColockoo() {
         api.backofficeServicesCkoo(),
       ])
 
-      setDemandes(demandesData.map(mapDemandeService))
-      setOffres(services.map(mapServiceCkooRow))
+      // ✅ Mapper les demandes avec sécurisation
+      setDemandes((demandesData || []).map(mapDemandeService))
+      
+      // ✅ Filtrer les services qui ont une clé commençant par "service_"
+      const filteredServices = (services || [])
+        .map(mapServiceCkooRow)
+        .filter((service): service is OffreService => service !== null)
+      
+      setOffres(filteredServices)
       setSuccessMessage('Données chargées depuis le backend')
       window.setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err) {
@@ -299,9 +310,9 @@ export default function AdminServicesColockoo() {
       if (!map.has(d.idUtilisateur)) {
         map.set(d.idUtilisateur, {
           idUtilisateur: d.idUtilisateur,
-          demandeur: d.demandeur,
-          email: d.email,
-          telephone: d.telephone,
+          demandeur: d.demandeur || 'Utilisateur',
+          email: d.email || null,
+          telephone: d.telephone || null,
           demandes: [],
           total: 0,
         })
@@ -310,6 +321,7 @@ export default function AdminServicesColockoo() {
       g.demandes.push(d)
       g.total += d.total
       if (!g.telephone && d.telephone) g.telephone = d.telephone
+      if (!g.email && d.email) g.email = d.email
     }
     return [...map.values()]
   }, [filteredDemandes])
@@ -571,7 +583,7 @@ export default function AdminServicesColockoo() {
                                     <StatusBadge statut={demande.statut} />
                                   </div>
                                   <div className="flex items-center gap-x-3 gap-y-1 mt-1 flex-wrap text-[11px] text-white/40">
-                                    {demande.services.map((s, i) => (
+                                    {demande.services && demande.services.map((s, i) => (
                                       <span key={i} className="inline-flex items-center font-medium bg-brand-cyan/10 text-brand-cyan rounded px-1.5 py-px">
                                         {s}
                                       </span>
@@ -622,9 +634,9 @@ export default function AdminServicesColockoo() {
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-white/5">
-                                        {demande.lignes.map((l, idx) => (
+                                        {demande.lignes && demande.lignes.map((l, idx) => (
                                           <tr key={idx} className="text-white/80">
-                                            <td className="p-2.5">{l.nom}</td>
+                                            <td className="p-2.5">{l.nom || 'Service'}</td>
                                             <td className="p-2.5 text-right tabular-nums">{l.prix_unitaire.toLocaleString('fr-FR')} Ar</td>
                                             <td className="p-2.5 text-right tabular-nums">{l.sous_total.toLocaleString('fr-FR')} Ar</td>
                                           </tr>
@@ -680,9 +692,6 @@ export default function AdminServicesColockoo() {
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
                         Offre
                       </th>
-                      {/* <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
-                        Clé
-                      </th> */}
                       <th className="text-right p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
                         Prix / jour (MGA)
                       </th>
@@ -706,9 +715,6 @@ export default function AdminServicesColockoo() {
                             <div className="text-xs text-white/40">{offre.description}</div>
                           )}
                         </td>
-                        {/* <td className="p-3">
-                          <span className="text-xs font-mono text-white/40">{offre.cle}</span>
-                        </td> */}
                         <td className="p-3 text-right font-bold text-brand-cyan">
                           {offre.prixParJour.toLocaleString('fr-FR')} MGA
                         </td>
