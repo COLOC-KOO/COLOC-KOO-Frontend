@@ -1,80 +1,51 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
-import { api } from '../../lib/api'
+import { api, type DemandeServiceStaffItem } from '../../lib/api'
 import {
-  Wrench,
   Search,
-  ChevronDown,
-  ChevronUp,
-  Phone,
-  Mail,
-  Calendar,
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle,
-  Eye,
-  Edit,
   Trash2,
   RefreshCw,
-  UserPlus,
   Users,
-  Building2,
+  Briefcase,
   DollarSign,
-  TrendingUp,
-  TrendingDown,
-  ArrowUpDown,
   Info,
   MessageCircle,
-  FileText,
-  Briefcase,
-  Home,
+  Phone,
+  Mail,
   Calendar as CalendarIcon,
-  User,
-  MapPin,
   Plus,
-  Save,
-  X
+  X,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 
-// Types
-interface ServiceDemande {
-  id: string
+// ============================================================================
+//  Onglet « Demandes de services » = table demandes_service (cle_service = service_%)
+//  Onglet « Offres commerciales » = catalogue services_ckoo (inchangé)
+// ============================================================================
+
+interface ServiceLigne {
   nom: string
-  annonce: string
-  telephone: string
-  email: string
+  quantite: number
+  prix_unitaire: number
+  sous_total: number
+}
+
+interface ServiceDemande {
+  reference: string
+  idUtilisateur: number
+  demandeur: string
+  telephone: string | null
+  email: string | null
+  message: string | null
+  services: string[]
+  lignes: ServiceLigne[]
+  total: number
   dateCreation: string
-  statut: 'a-contacter' | 'en-cours' | 'valide' | 'annule'
-  contact?: string
-  relance?: string
-  synth?: string
-  rdv?: {
-    date: string
-    note: string
-  }
-  devis: DevisItem[]
-}
-
-interface DevisItem {
-  offre: string
-  jours: number
-  pu: number
-}
-
-interface ApiBackofficeSuiviMissionDemande {
-  id_demande: number
-  id_annonce: number
-  id_utilisateur: number
-  statut: 'a-contacter' | 'en-cours' | 'valide' | 'annule'
-  historique_contact: string | null
-  synthese: string | null
-  date_rendez_vous: string | null
-  note_rendez_vous: string | null
-  date_creation: string
-  titre: string | null
-  nom: string | null
-  prenom: string | null
+  statut: 'nouvelle' | 'en-cours' | 'traitee' | 'annulee'
 }
 
 interface ApiServiceCkooRow {
@@ -97,29 +68,26 @@ interface OffreService {
   actif: boolean
 }
 
-function mapSuiviMissionDemande(demande: ApiBackofficeSuiviMissionDemande): ServiceDemande {
-  const nom = [demande.prenom, demande.nom].filter(Boolean).join(' ') || `Client #${demande.id_utilisateur}`
+function mapDemandeService(d: DemandeServiceStaffItem): ServiceDemande {
   return {
-    id: String(demande.id_demande),
-    nom,
-    annonce: demande.titre || 'Annonce inconnue',
-    telephone: '-',
-    email: '-',
-    dateCreation: demande.date_creation ? new Date(demande.date_creation).toLocaleDateString('fr-FR') : '',
-    statut: demande.statut,
-    contact: demande.historique_contact || 'Aucun contact',
-    relance: demande.note_rendez_vous || '—',
-    synth: demande.synthese || '',
-    rdv: demande.date_rendez_vous
-      ? {
-          date: new Date(demande.date_rendez_vous).toLocaleString('fr-FR', {
-            dateStyle: 'short',
-            timeStyle: 'short',
-          }),
-          note: demande.note_rendez_vous || '',
-        }
-      : undefined,
-    devis: [],
+    reference: d.reference,
+    idUtilisateur: d.id_utilisateur,
+    demandeur: d.demandeur || 'Utilisateur',
+    telephone: d.telephone,
+    email: d.email,
+    message: d.message,
+    services: d.services,
+    lignes: (d.lignes || []).map((l) => ({
+      nom: l.nom,
+      quantite: l.quantite,
+      prix_unitaire: l.prix_unitaire,
+      sous_total: l.sous_total,
+    })),
+    total: d.total,
+    dateCreation: d.date_creation
+      ? new Date(d.date_creation).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+      : '',
+    statut: d.statut,
   }
 }
 
@@ -141,196 +109,21 @@ function mapServiceCkooRow(service: ApiServiceCkooRow): OffreService | null {
   }
 }
 
+const STATUT_CONFIG: Record<ServiceDemande['statut'], { label: string; className: string; accent: string; icon: React.ElementType }> = {
+  'nouvelle': { label: 'Nouvelle', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30', accent: 'border-l-amber-400', icon: Clock },
+  'en-cours': { label: 'En cours', className: 'bg-blue-500/15 text-blue-400 border-blue-500/30', accent: 'border-l-blue-400', icon: MessageCircle },
+  'traitee': { label: 'Traitée', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', accent: 'border-l-emerald-400', icon: CheckCircle },
+  'annulee': { label: 'Annulée', className: 'bg-red-500/15 text-red-400 border-red-500/30', accent: 'border-l-red-400', icon: XCircle },
+}
+
 // Composant de badge de statut
 const StatusBadge = ({ statut }: { statut: ServiceDemande['statut'] }) => {
-  const config = {
-    'a-contacter': { label: 'À contacter', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30', icon: Clock },
-    'en-cours': { label: 'Échange en cours', className: 'bg-blue-500/15 text-blue-400 border-blue-500/30', icon: MessageCircle },
-    'valide': { label: 'Validé', className: 'bg-green-500/15 text-green-400 border-green-500/30', icon: CheckCircle },
-    'annule': { label: 'Annulé', className: 'bg-red-500/15 text-red-400 border-red-500/30', icon: XCircle }
-  }
-  const { label, className, icon: Icon } = config[statut]
-  
+  const { label, className, icon: Icon } = STATUT_CONFIG[statut]
   return (
     <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-full border ${className}`}>
       <Icon className="w-3 h-3" />
       {label}
     </span>
-  )
-}
-
-// Composant de modale de détails
-const DemandeDetailsModal = ({
-  demande,
-  onClose,
-  onUpdate
-}: {
-  demande: ServiceDemande
-  onClose: () => void
-  onUpdate: (id: string, updates: Partial<ServiceDemande>) => void
-}) => {
-  const [synth, setSynth] = useState(demande.synth || '')
-  const [rdvDate, setRdvDate] = useState(demande.rdv?.date || '')
-  const [rdvNote, setRdvNote] = useState(demande.rdv?.note || '')
-
-  const handleSave = () => {
-    const updates: Partial<ServiceDemande> = {
-      synth,
-      rdv: rdvDate ? { date: rdvDate, note: rdvNote } : undefined
-    }
-    onUpdate(demande.id, updates)
-    onClose()
-  }
-
-  const totalDevis = demande.devis.reduce((sum, item) => sum + item.jours * item.pu, 0)
-
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div 
-        className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="p-4 border-b border-white/10 flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h3 className="text-xl font-bold">{demande.nom}</h3>
-              <StatusBadge statut={demande.statut} />
-            </div>
-            <p className="text-white/50 text-sm mt-1">{demande.id} · {demande.annonce}</p>
-          </div>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-lg transition">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="text-white/40 text-xs uppercase tracking-wider">Contact</div>
-              <div className="flex items-center gap-2 mt-1">
-                <Phone className="w-4 h-4 text-white/40" />
-                <span>{demande.telephone}</span>
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <Mail className="w-4 h-4 text-white/40" />
-                <span>{demande.email}</span>
-              </div>
-            </div>
-            <div>
-              <div className="text-white/40 text-xs uppercase tracking-wider">Informations</div>
-              <div className="flex items-center gap-2 mt-1">
-                <CalendarIcon className="w-4 h-4 text-white/40" />
-                <span>Créé le {demande.dateCreation}</span>
-              </div>
-              {demande.contact && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Clock className="w-4 h-4 text-white/40" />
-                  <span>{demande.contact}</span>
-                </div>
-              )}
-              {demande.relance && demande.relance !== '—' && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Clock className="w-4 h-4 text-white/40" />
-                  <span>{demande.relance}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Devis</div>
-            <div className="bg-white/5 rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-white/5">
-                  <tr>
-                    <th className="text-left p-2 text-white/40 font-medium text-xs">Offre</th>
-                    <th className="text-center p-2 text-white/40 font-medium text-xs">Jours</th>
-                    <th className="text-right p-2 text-white/40 font-medium text-xs">Prix/jour</th>
-                    <th className="text-right p-2 text-white/40 font-medium text-xs">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {demande.devis.map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="p-2">{item.offre}</td>
-                      <td className="p-2 text-center">{item.jours}</td>
-                      <td className="p-2 text-right">{item.pu.toLocaleString('fr-FR')} MGA</td>
-                      <td className="p-2 text-right">{(item.jours * item.pu).toLocaleString('fr-FR')} MGA</td>
-                    </tr>
-                  ))}
-                  <tr className="bg-white/5">
-                    <td colSpan={3} className="p-2 text-right font-bold">Total devis</td>
-                    <td className="p-2 text-right font-bold text-brand-cyan">{totalDevis.toLocaleString('fr-FR')} MGA</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {demande.rdv && (
-            <div className="bg-brand-cyan/10 border border-brand-cyan/30 rounded-lg p-3">
-              <div className="text-white/40 text-xs uppercase tracking-wider">RDV téléphonique</div>
-              <div className="flex items-center gap-2 mt-1">
-                <CalendarIcon className="w-4 h-4 text-brand-cyan" />
-                <span className="font-medium">{demande.rdv.date}</span>
-              </div>
-              {demande.rdv.note && (
-                <div className="text-sm text-white/60 mt-1">{demande.rdv.note}</div>
-              )}
-            </div>
-          )}
-
-          <div>
-            <div className="text-white/40 text-xs uppercase tracking-wider mb-1">Synthèse</div>
-            <textarea
-              value={synth}
-              onChange={(e) => setSynth(e.target.value)}
-              placeholder="Synthèse des échanges..."
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50 resize-none"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-white/40 text-xs uppercase tracking-wider mb-1">RDV date</div>
-              <input
-                type="datetime-local"
-                value={rdvDate}
-                onChange={(e) => setRdvDate(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
-              />
-            </div>
-            <div>
-              <div className="text-white/40 text-xs uppercase tracking-wider mb-1">Note RDV</div>
-              <input
-                type="text"
-                value={rdvNote}
-                onChange={(e) => setRdvNote(e.target.value)}
-                placeholder="Note..."
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 border-t border-white/10 flex gap-2">
-          <button 
-            onClick={handleSave}
-            className="flex-1 bg-brand-cyan text-[oklch(0.15_0_0)] font-bold px-4 py-2 rounded-lg hover:opacity-80 transition"
-          >
-            <Save className="w-4 h-4 inline mr-2" />
-            Enregistrer
-          </button>
-          <button 
-            onClick={onClose}
-            className="flex-1 bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 transition text-white/60"
-          >
-            Fermer
-          </button>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -365,7 +158,7 @@ const OffreModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div 
+      <div
         className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full"
         onClick={e => e.stopPropagation()}
       >
@@ -441,32 +234,24 @@ export default function AdminServicesColockoo() {
   const [offres, setOffres] = useState<OffreService[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatut, setFilterStatut] = useState<string>('tous')
-  const [selectedDemande, setSelectedDemande] = useState<ServiceDemande | null>(null)
   const [showOffreModal, setShowOffreModal] = useState(false)
+  const [expandedRef, setExpandedRef] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'demandes' | 'offres'>('demandes')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [sortField, setSortField] = useState<'dateCreation' | 'nom' | 'statut'>('dateCreation')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const loadAdminServiceData = async () => {
     setLoading(true)
     setError(null)
     try {
-      const [missionsResponse, services] = await Promise.all([
-        api.backofficeSuiviMissions(),
+      const [demandesData, services] = await Promise.all([
+        api.backofficeDemandesService(),
         api.backofficeServicesCkoo(),
       ])
 
-      setDemandes(missionsResponse.demandes.map(mapSuiviMissionDemande))
-      
-      // ✅ CORRECTION : Filtrer les services qui ont une clé commençant par "service_"
-      const filteredServices = services
-        .map(mapServiceCkooRow)
-        .filter((service): service is OffreService => service !== null)
-      
-      setOffres(filteredServices)
+      setDemandes(demandesData.map(mapDemandeService))
+      setOffres(services.map(mapServiceCkooRow))
       setSuccessMessage('Données chargées depuis le backend')
       window.setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err) {
@@ -480,23 +265,16 @@ export default function AdminServicesColockoo() {
     loadAdminServiceData()
   }, [])
 
-  // Statuts uniques pour le filtre
-  const statuts = useMemo(() => {
-    const unique = new Set(demandes.map(d => d.statut))
-    return ['tous', ...Array.from(unique)]
-  }, [demandes])
-
-  // Filtrer et trier les demandes
+  // Filtrer les demandes (l'ordre vient déjà du backend : plus récentes d'abord)
   const filteredDemandes = useMemo(() => {
     let filtered = demandes
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(d =>
-        d.nom.toLowerCase().includes(query) ||
-        d.annonce.toLowerCase().includes(query) ||
-        d.id.toLowerCase().includes(query) ||
-        d.email.toLowerCase().includes(query)
+        d.demandeur.toLowerCase().includes(query) ||
+        d.reference.toLowerCase().includes(query) ||
+        d.services.join(' ').toLowerCase().includes(query)
       )
     }
 
@@ -504,100 +282,61 @@ export default function AdminServicesColockoo() {
       filtered = filtered.filter(d => d.statut === filterStatut)
     }
 
-    filtered = filtered.sort((a, b) => {
-      let aVal: any = a[sortField]
-      let bVal: any = b[sortField]
-      
-      if (sortField === 'dateCreation') {
-        aVal = new Date(aVal).getTime()
-        bVal = new Date(bVal).getTime()
-      }
-      
-      if (typeof aVal === 'string') {
-        return sortOrder === 'desc' ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal)
-      }
-      
-      return sortOrder === 'desc' ? bVal - aVal : aVal - bVal
-    })
-
     return filtered
-  }, [demandes, searchQuery, filterStatut, sortField, sortOrder])
+  }, [demandes, searchQuery, filterStatut])
+
+  // Regroupement par personne (id_utilisateur)
+  const groupesParPersonne = useMemo(() => {
+    const map = new Map<number, {
+      idUtilisateur: number
+      demandeur: string
+      email: string | null
+      telephone: string | null
+      demandes: ServiceDemande[]
+      total: number
+    }>()
+    for (const d of filteredDemandes) {
+      if (!map.has(d.idUtilisateur)) {
+        map.set(d.idUtilisateur, {
+          idUtilisateur: d.idUtilisateur,
+          demandeur: d.demandeur,
+          email: d.email,
+          telephone: d.telephone,
+          demandes: [],
+          total: 0,
+        })
+      }
+      const g = map.get(d.idUtilisateur)!
+      g.demandes.push(d)
+      g.total += d.total
+      if (!g.telephone && d.telephone) g.telephone = d.telephone
+    }
+    return [...map.values()]
+  }, [filteredDemandes])
 
   // Statistiques
-  const stats = useMemo(() => {
-    const total = demandes.length
-    const aContacter = demandes.filter(d => d.statut === 'a-contacter').length
-    const enCours = demandes.filter(d => d.statut === 'en-cours').length
-    const valide = demandes.filter(d => d.statut === 'valide').length
-    const annule = demandes.filter(d => d.statut === 'annule').length
-    
-    const totalDevis = demandes.reduce((sum, d) => {
-      const total = d.devis.reduce((s, item) => s + item.jours * item.pu, 0)
-      return sum + total
-    }, 0)
-    
-    return {
-      total,
-      aContacter,
-      enCours,
-      valide,
-      annule,
-      totalDevis
-    }
-  }, [demandes])
+  const stats = useMemo(() => ({
+    total: demandes.length,
+    nouvelle: demandes.filter(d => d.statut === 'nouvelle').length,
+    enCours: demandes.filter(d => d.statut === 'en-cours').length,
+    traitee: demandes.filter(d => d.statut === 'traitee').length,
+    annulee: demandes.filter(d => d.statut === 'annulee').length,
+    totalMontant: demandes.reduce((sum, d) => sum + d.total, 0),
+  }), [demandes])
 
-  // Toggle de tri
-  const handleSort = (field: 'dateCreation' | 'nom' | 'statut') => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')
-    } else {
-      setSortField(field)
-      setSortOrder('desc')
+  // Changer le statut d'une demande (persisté en base)
+  const handleChangeStatut = async (reference: string, statut: ServiceDemande['statut']) => {
+    const previous = demandes
+    setDemandes(demandes.map(d => (d.reference === reference ? { ...d, statut } : d)))
+    try {
+      await api.updateDemandeServiceStatut(reference, statut)
+      setSuccessMessage(`Statut changé en "${STATUT_CONFIG[statut].label}"`)
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setDemandes(previous)
+      setError(err instanceof Error ? err.message : 'Impossible de changer le statut')
+      setTimeout(() => setError(null), 3000)
     }
-  }
-
-  // Obtenir l'icône de tri
-  const getSortIcon = (field: 'dateCreation' | 'nom' | 'statut') => {
-    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 opacity-40" />
-    return sortOrder === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
-  }
-
-  // Mettre à jour une demande
-  const handleUpdateDemande = (id: string, updates: Partial<ServiceDemande>) => {
-    const index = demandes.findIndex(d => d.id === id)
-    if (index === -1) return
-    
-    const updatedDemandes = [...demandes]
-    updatedDemandes[index] = {
-      ...updatedDemandes[index],
-      ...updates
-    }
-    setDemandes(updatedDemandes)
-    setSuccessMessage('Demande mise à jour avec succès')
-    setTimeout(() => setSuccessMessage(null), 3000)
-  }
-
-  // Changer le statut d'une demande
-  const handleChangeStatut = (id: string, statut: ServiceDemande['statut']) => {
-    const index = demandes.findIndex(d => d.id === id)
-    if (index === -1) return
-    
-    const updatedDemandes = [...demandes]
-    updatedDemandes[index] = {
-      ...updatedDemandes[index],
-      statut
-    }
-    setDemandes(updatedDemandes)
-    
-    const label = {
-      'a-contacter': 'À contacter',
-      'en-cours': 'Échange en cours',
-      'valide': 'Validé',
-      'annule': 'Annulé'
-    }[statut]
-    
-    setSuccessMessage(`Statut changé en "${label}"`)
-    setTimeout(() => setSuccessMessage(null), 3000)
   }
 
   // Ajouter une offre
@@ -663,7 +402,6 @@ export default function AdminServicesColockoo() {
     }
   }
 
-  // Actualiser les données
   const handleRefresh = () => {
     loadAdminServiceData()
   }
@@ -676,7 +414,7 @@ export default function AdminServicesColockoo() {
           <div>
             <h1 className="bebas text-3xl text-white">Services Coloc'KOO</h1>
             <p className="text-white/50 text-sm">
-              {stats.total} demandes · {stats.aContacter} à contacter · {stats.enCours} en cours · {stats.valide} validées
+              {stats.total} demandes · {stats.nouvelle} nouvelles · {stats.enCours} en cours · {stats.traitee} traitées
             </p>
           </div>
           <button
@@ -735,7 +473,7 @@ export default function AdminServicesColockoo() {
 
         {/* Contenu */}
         <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
-          
+
           {/* TAB: Demandes */}
           {activeTab === 'demandes' && (
             <>
@@ -750,7 +488,7 @@ export default function AdminServicesColockoo() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     {searchQuery && (
-                      <button 
+                      <button
                         onClick={() => setSearchQuery('')}
                         className="text-white/40 hover:text-white/70 text-xs p-1"
                       >
@@ -766,104 +504,155 @@ export default function AdminServicesColockoo() {
                       className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
                     >
                       <option value="tous" className="bg-[oklch(0.22_0.005_260)]">Tous les statuts</option>
-                      <option value="a-contacter" className="bg-[oklch(0.22_0.005_260)]">À contacter</option>
-                      <option value="en-cours" className="bg-[oklch(0.22_0.005_260)]">Échange en cours</option>
-                      <option value="valide" className="bg-[oklch(0.22_0.005_260)]">Validé</option>
-                      <option value="annule" className="bg-[oklch(0.22_0.005_260)]">Annulé</option>
+                      <option value="nouvelle" className="bg-[oklch(0.22_0.005_260)]">Nouvelle</option>
+                      <option value="en-cours" className="bg-[oklch(0.22_0.005_260)]">En cours</option>
+                      <option value="traitee" className="bg-[oklch(0.22_0.005_260)]">Traitée</option>
+                      <option value="annulee" className="bg-[oklch(0.22_0.005_260)]">Annulée</option>
                     </select>
                   </div>
                 </div>
               </div>
 
-              {/* Liste des demandes */}
-              <div className="divide-y divide-white/5">
-                {filteredDemandes.length === 0 ? (
-                  <div className="text-center py-12 text-white/40">
-                    <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p>Aucune demande trouvée</p>
-                  </div>
-                ) : (
-                  filteredDemandes.map((demande) => {
-                    const totalDevis = demande.devis.reduce((sum, item) => sum + item.jours * item.pu, 0)
-                    
-                    return (
-                      <div 
-                        key={demande.id}
-                        className="p-4 hover:bg-white/5 transition"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                          {/* Avatar */}
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-[oklch(0.15_0_0)] text-xs font-bold flex-shrink-0">
-                            {demande.nom[0]}
-                          </div>
-
-                          {/* Contenu */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <h3 className="font-semibold">{demande.nom}</h3>
-                              <span className="text-white/30 text-xs">·</span>
-                              <span className="text-white/50 text-sm">{demande.id}</span>
-                              <span className="text-white/30 text-xs">·</span>
-                              <span className="text-white/50 text-sm">{demande.annonce}</span>
-                              <StatusBadge statut={demande.statut} />
-                            </div>
-                            
-                            <div className="flex items-center gap-4 mt-2 text-xs text-white/40 flex-wrap">
-                              <span className="flex items-center gap-1">
-                                <CalendarIcon className="w-3 h-3" />
-                                {demande.dateCreation}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Phone className="w-3 h-3" />
-                                {demande.telephone}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Mail className="w-3 h-3" />
-                                {demande.email}
-                              </span>
-                              {demande.rdv && (
-                                <span className="flex items-center gap-1 text-brand-cyan">
-                                  <CalendarIcon className="w-3 h-3" />
-                                  RDV: {demande.rdv.date}
-                                </span>
-                              )}
-                              <span className="flex items-center gap-1 text-brand-cyan">
-                                <DollarSign className="w-3 h-3" />
-                                {totalDevis.toLocaleString('fr-FR')} MGA
-                              </span>
-                            </div>
-
-                            {demande.synth && (
-                              <p className="text-sm text-white/60 mt-1">{demande.synth}</p>
+              {/* Liste groupée par personne */}
+              {filteredDemandes.length === 0 ? (
+                <div className="text-center py-16 text-white/40">
+                  <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p className="text-sm">Aucune demande trouvée</p>
+                </div>
+              ) : (
+                <div className="p-2.5 space-y-3">
+                  {groupesParPersonne.map((personne) => (
+                    <div
+                      key={personne.idUtilisateur}
+                      className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden"
+                    >
+                      {/* En-tête personne */}
+                      <div className="flex items-center gap-3 px-3 py-2.5 bg-white/[0.04] border-b border-white/10">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-[oklch(0.15_0_0)] text-sm font-bold flex-shrink-0">
+                          {personne.demandeur[0]?.toUpperCase() || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-white text-sm truncate">{personne.demandeur}</div>
+                          <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-[11px] text-white/40 mt-0.5">
+                            {personne.email && (
+                              <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3" />{personne.email}</span>
+                            )}
+                            {personne.telephone && (
+                              <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{personne.telephone}</span>
                             )}
                           </div>
-
-                          {/* Actions */}
-                          <div className="flex flex-wrap gap-2 flex-shrink-0">
-                            <button
-                              onClick={() => setSelectedDemande(demande)}
-                              className="p-1.5 hover:bg-white/10 rounded-lg transition"
-                              title="Détails"
-                            >
-                              <Eye className="w-4 h-4 text-white/40" />
-                            </button>
-                            <select
-                              value={demande.statut}
-                              onChange={(e) => handleChangeStatut(demande.id, e.target.value as ServiceDemande['statut'])}
-                              className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
-                            >
-                              <option value="a-contacter" className="bg-[oklch(0.22_0.005_260)]">À contacter</option>
-                              <option value="en-cours" className="bg-[oklch(0.22_0.005_260)]">En cours</option>
-                              <option value="valide" className="bg-[oklch(0.22_0.005_260)]">Validé</option>
-                              <option value="annule" className="bg-[oklch(0.22_0.005_260)]">Annulé</option>
-                            </select>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-[11px] text-white/40">
+                            {personne.demandes.length} demande{personne.demandes.length > 1 ? 's' : ''}
+                          </div>
+                          <div className="text-sm font-bold text-brand-green tabular-nums">
+                            {personne.total.toLocaleString('fr-FR')} <span className="text-[9px] text-white/40">MGA</span>
                           </div>
                         </div>
                       </div>
-                    )
-                  })
-                )}
-              </div>
+
+                      {/* Demandes de la personne */}
+                      <div className="divide-y divide-white/5">
+                        {personne.demandes.map((demande) => {
+                          const cfg = STATUT_CONFIG[demande.statut]
+                          const open = expandedRef === demande.reference
+                          return (
+                            <div key={demande.reference} className={`border-l-[3px] ${cfg.accent}`}>
+                              {/* Ligne compacte (sans le nom, déjà dans l'en-tête) */}
+                              <div className="flex items-center gap-3 px-3 py-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedRef(open ? null : demande.reference)}
+                                  className="flex-1 min-w-0 text-left"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-[10px] font-mono text-white/45 flex-shrink-0">{demande.reference}</span>
+                                    <StatusBadge statut={demande.statut} />
+                                  </div>
+                                  <div className="flex items-center gap-x-3 gap-y-1 mt-1 flex-wrap text-[11px] text-white/40">
+                                    {demande.services.map((s, i) => (
+                                      <span key={i} className="inline-flex items-center font-medium bg-brand-cyan/10 text-brand-cyan rounded px-1.5 py-px">
+                                        {s}
+                                      </span>
+                                    ))}
+                                    <span className="inline-flex items-center gap-1">
+                                      <CalendarIcon className="w-3 h-3" />{demande.dateCreation}
+                                    </span>
+                                  </div>
+                                </button>
+
+                                {/* Droite : montant + statut + chevron */}
+                                <div className="flex items-center gap-3 flex-shrink-0">
+                                  <div className="text-right leading-none">
+                                    <span className="text-sm font-bold text-brand-green tabular-nums">{demande.total.toLocaleString('fr-FR')}</span>
+                                    <span className="block text-[9px] text-white/40 mt-0.5">MGA</span>
+                                  </div>
+                                  <select
+                                    value={demande.statut}
+                                    onChange={(e) => handleChangeStatut(demande.reference, e.target.value as ServiceDemande['statut'])}
+                                    className="bg-white/5 border border-white/10 rounded-md px-2 py-1 text-xs text-white/80 outline-none focus:border-brand-cyan/50 hover:bg-white/10 transition cursor-pointer"
+                                  >
+                                    <option value="nouvelle" className="bg-[oklch(0.22_0.005_260)]">Nouvelle</option>
+                                    <option value="en-cours" className="bg-[oklch(0.22_0.005_260)]">En cours</option>
+                                    <option value="traitee" className="bg-[oklch(0.22_0.005_260)]">Traitée</option>
+                                    <option value="annulee" className="bg-[oklch(0.22_0.005_260)]">Annulée</option>
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedRef(open ? null : demande.reference)}
+                                    className="p-1.5 rounded-md hover:bg-white/10 text-white/50 hover:text-white transition"
+                                    title={open ? 'Réduire' : 'Voir le détail'}
+                                  >
+                                    {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Détail déplié */}
+                              {open && (
+                                <div className="px-4 pb-4 pt-3 border-t border-white/10">
+                                  <div className="rounded-lg border border-white/10 overflow-hidden">
+                                    <table className="w-full text-sm">
+                                      <thead className="bg-white/5">
+                                        <tr className="text-white/40 text-[11px] uppercase tracking-wider">
+                                          <th className="text-left p-2.5 font-medium">Service</th>
+                                          <th className="text-right p-2.5 font-medium">Prix</th>
+                                          <th className="text-right p-2.5 font-medium">Total</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-white/5">
+                                        {demande.lignes.map((l, idx) => (
+                                          <tr key={idx} className="text-white/80">
+                                            <td className="p-2.5">{l.nom}</td>
+                                            <td className="p-2.5 text-right tabular-nums">{l.prix_unitaire.toLocaleString('fr-FR')} Ar</td>
+                                            <td className="p-2.5 text-right tabular-nums">{l.sous_total.toLocaleString('fr-FR')} Ar</td>
+                                          </tr>
+                                        ))}
+                                        <tr className="bg-white/5">
+                                          <td className="p-2.5 text-right font-bold text-white" colSpan={2}>Total</td>
+                                          <td className="p-2.5 text-right font-bold text-brand-cyan tabular-nums">{demande.total.toLocaleString('fr-FR')} MGA</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+
+                                  {demande.message && (
+                                    <div className="mt-3">
+                                      <div className="text-white/35 text-[10px] uppercase tracking-wider mb-1">Message du demandeur</div>
+                                      <p className="text-sm text-white/70 italic bg-white/5 rounded-lg p-3">« {demande.message} »</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
 
@@ -928,8 +717,8 @@ export default function AdminServicesColockoo() {
                         </td>
                         <td className="p-3 text-center">
                           <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
-                            offre.actif 
-                              ? 'bg-green-500/15 text-green-400 border-green-500/30' 
+                            offre.actif
+                              ? 'bg-green-500/15 text-green-400 border-green-500/30'
                               : 'bg-red-500/15 text-red-400 border-red-500/30'
                           }`}>
                             {offre.actif ? 'Actif' : 'Inactif'}
@@ -940,8 +729,8 @@ export default function AdminServicesColockoo() {
                             <button
                               onClick={() => handleToggleOffre(offre.id)}
                               className={`p-1.5 rounded-lg transition ${
-                                offre.actif 
-                                  ? 'hover:bg-red-500/20 text-red-400/60' 
+                                offre.actif
+                                  ? 'hover:bg-red-500/20 text-red-400/60'
                                   : 'hover:bg-green-500/20 text-green-400/60'
                               }`}
                               title={offre.actif ? 'Désactiver' : 'Activer'}
@@ -971,15 +760,15 @@ export default function AdminServicesColockoo() {
               <>
                 <span>{filteredDemandes.length} demandes</span>
                 <span>·</span>
-                <span className="text-amber-400">{filteredDemandes.filter(d => d.statut === 'a-contacter').length} à contacter</span>
+                <span className="text-amber-400">{filteredDemandes.filter(d => d.statut === 'nouvelle').length} nouvelles</span>
                 <span>·</span>
                 <span className="text-blue-400">{filteredDemandes.filter(d => d.statut === 'en-cours').length} en cours</span>
                 <span>·</span>
-                <span className="text-brand-green">{filteredDemandes.filter(d => d.statut === 'valide').length} validées</span>
+                <span className="text-brand-green">{filteredDemandes.filter(d => d.statut === 'traitee').length} traitées</span>
                 <span>·</span>
-                <span className="text-red-400">{filteredDemandes.filter(d => d.statut === 'annule').length} annulées</span>
+                <span className="text-red-400">{filteredDemandes.filter(d => d.statut === 'annulee').length} annulées</span>
                 <span className="ml-auto">
-                  Montant total devis: <b className="text-brand-cyan">{stats.totalDevis.toLocaleString('fr-FR')} MGA</b>
+                  Montant total: <b className="text-brand-cyan">{stats.totalMontant.toLocaleString('fr-FR')} MGA</b>
                 </span>
               </>
             ) : (
@@ -1002,23 +791,13 @@ export default function AdminServicesColockoo() {
           <div className="flex items-start gap-3">
             <Info className="w-4 h-4 text-white/40 flex-shrink-0 mt-0.5" />
             <div className="text-xs text-white/40">
-              Prix des services en Ariary <b>en attente de confirmation</b> par l'équipe Coloc'KOO. 
-              Mention légale CNAPS / OSTIE rappelée à la validation. Les offres commerciales sont 
-              modifiables par le super admin. <br />
-              <span className="text-white/30">Seuls les services avec une clé commençant par "service_" sont affichés.</span>
+              Prix des services en Ariary <b>en attente de confirmation</b> par l'équipe Coloc'KOO.
+              Mention légale CNAPS / OSTIE rappelée à la validation. Les offres commerciales sont
+              modifiables par le super admin. Seuls les services avec une clé commençant par <b>"service_"</b> sont affichés.
             </div>
           </div>
         </div>
       </div>
-
-      {/* Modale de détails */}
-      {selectedDemande && (
-        <DemandeDetailsModal
-          demande={selectedDemande}
-          onClose={() => setSelectedDemande(null)}
-          onUpdate={handleUpdateDemande}
-        />
-      )}
 
       {/* Modale d'ajout d'offre */}
       {showOffreModal && (

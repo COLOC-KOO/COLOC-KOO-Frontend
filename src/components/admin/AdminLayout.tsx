@@ -26,11 +26,12 @@ import {
   Activity,
   BarChart,
   Code,
-  Trash2
+  Trash2,
+  EyeOff
 } from 'lucide-react'
 import { Logo } from '../Logo'
 import { roleLevel, useAuth } from '../../lib/auth'
-import { api, type ApiPartenaireRequest, type BackofficeMember } from '../../lib/api'
+import { api, type ApiPartenaireRequest, type BackofficeMember, type DemandeServiceStaffItem } from '../../lib/api'
 
 interface ContactMessageItem {
   id_message: number
@@ -210,6 +211,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [searchResults, setSearchResults] = useState<BackofficeMember[]>([])
   const [partnerRequests, setPartnerRequests] = useState<ApiPartenaireRequest[]>([])
   const [contactMessages, setContactMessages] = useState<ContactMessageItem[]>([])
+  const [serviceDemandes, setServiceDemandes] = useState<DemandeServiceStaffItem[]>([])
   const [loadingSearch, setLoadingSearch] = useState(false)
   const [loadingNotifications, setLoadingNotifications] = useState(false)
   const { user, logout } = useAuth()
@@ -246,6 +248,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         }
       } finally {
         if (active) setLoadingNotifications(false)
+      }
+      // Demandes de service : chargées à part pour ne pas impacter les autres
+      // sources si l'appel échoue (ex. rôle sans accès).
+      try {
+        const demandes = await api.backofficeDemandesService()
+        if (active) setServiceDemandes(demandes)
+      } catch {
+        if (active) setServiceDemandes([])
       }
     }
 
@@ -286,7 +296,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }, [searchQuery])
 
   const pendingPartnerRequests = partnerRequests.filter((item) => item.statut === 'en_attente')
-  const notificationCount = pendingPartnerRequests.length + contactMessages.filter((item) => item.statut === 'new').length
+  const pendingServiceDemandes = serviceDemandes.filter((item) => item.statut === 'nouvelle')
+  const notificationCount =
+    pendingPartnerRequests.length +
+    contactMessages.filter((item) => item.statut === 'new').length +
+    pendingServiceDemandes.length
 
   const openPartnerRequestsModal = () => {
     setNotificationOpen(false)
@@ -313,6 +327,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     } finally {
       setLoadingNotifications(false)
     }
+    try {
+      setServiceDemandes(await api.backofficeDemandesService())
+    } catch {
+      setServiceDemandes([])
+    }
   }
 
   const handleDeleteContactMessage = async (id: number) => {
@@ -330,6 +349,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       await refreshNotifications()
     } catch {
       // ignore
+    }
+  }
+
+  // Masquer une demande de service de la cloche : on la passe en « en-cours »
+  // (prise en compte) — elle disparaît des notifications « à vérifier ».
+  const handleHideServiceDemande = async (reference: string) => {
+    setServiceDemandes((prev) =>
+      prev.map((item) => (item.reference === reference ? { ...item, statut: 'en-cours' } : item)),
+    )
+    try {
+      await api.updateDemandeServiceStatut(reference, 'en-cours')
+    } catch {
+      await refreshNotifications()
     }
   }
 
@@ -528,7 +560,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <div className="max-h-80 overflow-y-auto">
                     {loadingNotifications ? (
                       <div className="px-4 py-4 text-sm text-white/60">Chargement des notifications...</div>
-                    ) : partnerRequests.length === 0 && contactMessages.length === 0 ? (
+                    ) : partnerRequests.length === 0 && contactMessages.length === 0 && pendingServiceDemandes.length === 0 ? (
                       <div className="px-4 py-4 text-sm text-white/60">Aucune notification pour le moment.</div>
                     ) : (
                       <>
@@ -569,6 +601,36 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                               <span className={`rounded-full px-2 py-0.5 ${item.statut === 'new' ? 'bg-brand-cyan/15 text-brand-cyan' : 'bg-white/10 text-white/70'}`}>
                                 {item.statut === 'new' ? 'Nouveau' : item.statut}
                               </span>
+                            </div>
+                          </div>
+                        ))}
+                        {pendingServiceDemandes.map((item) => (
+                          <div key={item.reference} className="w-full px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5">
+                            <button
+                              type="button"
+                              onClick={() => { handleHideServiceDemande(item.reference); setNotificationOpen(false); navigate('/admin/services-colockoo') }}
+                              className="w-full text-left"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="text-sm font-medium text-white">Demande de service · {item.demandeur}</div>
+                                  <p className="mt-1 text-xs text-white/60 line-clamp-2">{item.services.join(', ')}</p>
+                                </div>
+                                <span className="text-[10px] uppercase tracking-wider text-brand-green whitespace-nowrap">{item.total.toLocaleString('fr-FR')} Ar</span>
+                              </div>
+                              <div className="mt-2 text-[11px] text-white/40">
+                                {new Date(item.date_creation).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}
+                              </div>
+                            </button>
+                            <div className="mt-2 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleHideServiceDemande(item.reference)}
+                                className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] text-white/50 hover:bg-white/10 hover:text-white"
+                                title="Masquer cette notification"
+                              >
+                                <EyeOff className="w-3.5 h-3.5" /> Masquer
+                              </button>
                             </div>
                           </div>
                         ))}
