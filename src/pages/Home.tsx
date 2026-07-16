@@ -117,11 +117,11 @@ export default function Home() {
           dynamicCities.length > 0
             ? dynamicCities
             : villes.slice(0, 6).map((v) => ({
-              name: v.nom_ville,
-              count: 0,
-              image:
-                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
-            })),
+                name: v.nom_ville,
+                count: 0,
+                image:
+                  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+              })),
         );
         setPartners(partenaires);
       })
@@ -305,8 +305,9 @@ export default function Home() {
           {/* En-tête style Airbnb */}
           <div className="flex items-end justify-between mb-6">
             <div>
-              <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
-                Annonces vedettes
+              <h2 className="bebas text-3xl">
+                <span className="text-[--brand-cyan-dark]">Annonces </span>
+                <span className="text-[--brand-green-dark]">vedettes</span>
               </h2>
               <p className="text-gray-500 text-sm mt-1">
                 Sélection de la semaine, vérifiée par notre équipe
@@ -317,20 +318,22 @@ export default function Home() {
             <div className="flex gap-1 bg-gray-100/80 p-1 rounded-xl">
               <button
                 onClick={() => setViewMode("list")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "list"
-                  ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                  }`}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  viewMode === "list"
+                    ? "bg-white shadow-sm text-gray-900"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                }`}
               >
                 <List className="w-4 h-4" />
                 <span className="hidden sm:inline">Liste</span>
               </button>
               <button
                 onClick={() => setViewMode("map")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "map"
-                  ? "bg-white shadow-sm text-gray-900"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                  }`}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  viewMode === "map"
+                    ? "bg-white shadow-sm text-gray-900"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                }`}
               >
                 <Map className="w-4 h-4" />
                 <span className="hidden sm:inline">Carte</span>
@@ -356,7 +359,11 @@ export default function Home() {
             viewMode === "list" ? (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {featuredListings.map((l) => (
-                  <div key={l.id} className="group cursor-pointer" onClick={() => navigate(`/annonces/${l.id}`)}>
+                  <div
+                    key={l.id}
+                    className="group cursor-pointer"
+                    onClick={() => navigate(`/annonces/${l.id}`)}
+                  >
                     <div className="relative rounded-2xl overflow-hidden bg-gray-100">
                       {/* Image */}
                       {l.image ? (
@@ -379,10 +386,14 @@ export default function Home() {
                       {/* PRIX SUR LA CARTE - Style Airbnb */}
                       <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm px-3.5 py-1.5 rounded-xl shadow-md">
                         <span className="text-sm font-bold text-gray-900">
-                          {l.price ? `${(l.price / 1000).toFixed(0)}k Ar` : "Prix sur demande"}
+                          {l.price
+                            ? `${(l.price / 1000).toFixed(0)}k Ar`
+                            : "Prix sur demande"}
                         </span>
                         {l.price && (
-                          <span className="text-[10px] text-gray-500 ml-1">/mois</span>
+                          <span className="text-[10px] text-gray-500 ml-1">
+                            /mois
+                          </span>
                         )}
                       </div>
                     </div>
@@ -422,7 +433,11 @@ export default function Home() {
                 </div>
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                   {featuredListings.map((l) => (
-                    <div key={l.id} className="group cursor-pointer flex gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors" onClick={() => navigate(`/annonces/${l.id}`)}>
+                    <div
+                      key={l.id}
+                      className="group cursor-pointer flex gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                      onClick={() => navigate(`/annonces/${l.id}`)}
+                    >
                       <div className="relative flex-shrink-0 w-32 h-24 rounded-xl overflow-hidden bg-gray-100">
                         {l.image ? (
                           <img
@@ -438,7 +453,9 @@ export default function Home() {
                         {/* PRIX SUR LA CARTE (vue carte) */}
                         <div className="absolute bottom-1.5 right-1.5 bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-lg shadow-sm">
                           <span className="text-xs font-bold text-gray-900">
-                            {l.price ? `${(l.price / 1000).toFixed(0)}k Ar` : "—"}
+                            {l.price
+                              ? `${(l.price / 1000).toFixed(0)}k Ar`
+                              : "—"}
                           </span>
                         </div>
                       </div>
@@ -462,7 +479,9 @@ export default function Home() {
           ) : (
             <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-12 text-center">
               <div className="text-4xl mb-3">🏠</div>
-              <h3 className="text-lg font-medium text-gray-700">Aucune annonce disponible</h3>
+              <h3 className="text-lg font-medium text-gray-700">
+                Aucune annonce disponible
+              </h3>
               <p className="text-gray-500 text-sm mt-1">
                 Revenez plus tard pour découvrir les nouvelles annonces
               </p>
@@ -477,8 +496,9 @@ export default function Home() {
         <div className="w-full max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-6">
             <div>
-              <h2 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-                Explorez par ville
+              <h2 className="bebas text-3xl">
+                <span className="text-[--brand-cyan-dark]">Explorez </span>
+                <span className="text-[--brand-green-dark]">par ville</span>
               </h2>
               <p className="text-muted-foreground text-sm mt-1">
                 {summaryText}
@@ -761,10 +781,11 @@ export default function Home() {
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`transition-all duration-300 rounded-full ${index === Math.floor(currentPartnerIndex)
-                        ? "w-6 h-1.5 bg-brand-cyan"
-                        : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
-                        }`}
+                      className={`transition-all duration-300 rounded-full ${
+                        index === Math.floor(currentPartnerIndex)
+                          ? "w-6 h-1.5 bg-brand-cyan"
+                          : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
+                      }`}
                       aria-label={`Aller à la slide ${index + 1}`}
                     />
                   ),

@@ -28,6 +28,21 @@ import {
 } from 'lucide-react'
 
 // ===== TYPES =====
+// interface ServiceDemande {
+//   id_demande: number
+//   id_annonce: number
+//   id_utilisateur: number
+//   statut: 'a-contacter' | 'en-cours' | 'valide' | 'annule'
+//   historique_contact: string | null
+//   synthese: string | null
+//   date_rendez_vous: string | null
+//   note_rendez_vous: string | null
+//   date_creation: string
+//   nom?: string
+//   prenom?: string
+//   annonce_titre?: string
+// }
+
 interface ServiceDemande {
   id_demande: number
   id_annonce: number
@@ -38,21 +53,26 @@ interface ServiceDemande {
   date_rendez_vous: string | null
   note_rendez_vous: string | null
   date_creation: string
-  nom?: string
-  prenom?: string
-  annonce_titre?: string
+  nom?: string | null      // ← Ajoutez | null
+  prenom?: string | null   // ← Ajoutez | null
+  annonce_titre?: string | null  // ← Ajoutez | null
 }
 
 interface Contrat {
-  id_contrat: number
-  reference: string
-  id_annonce: number
+  id_contrat: number          // ← Utilisez id_contrat au lieu de id
+  id_annonce?: number         // ← Rendez-le optionnel car il n'existe pas dans ApiBackofficeContrat
+  reference?: string | null
   type: 'contrat' | 'edl'
-  statut: 'a-emettre' | 'a-planifier' | 'emis' | 'annule'
+  type_bail?: 'individuel' | 'collectif' | null
+  clause_solidarite?: 'avec' | 'sans' | null
+  statut: 'a-emettre' | 'a-planifier' | 'brouillon' | 'emis' | 'envoye' | 'signe' | 'annule'
   montant_total: number | null
   date_creation: string
-  date_emission: string | null
-  annonce_titre?: string
+  date_emission?: string | null
+  date_signature?: string | null
+  titre?: string | null
+  quartier?: string | null
+  nom_ville?: string | null
 }
 
 interface Paiement {
