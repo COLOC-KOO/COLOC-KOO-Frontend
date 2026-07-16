@@ -242,6 +242,51 @@ export interface ApiJournalEntry {
   email: string | null
 }
 
+export interface ServiceCatalogueItem {
+  id: number
+  cle: string
+  nom: string
+  description: string | null
+  prix: number
+  unite: 'heure' | 'forfait' | 'jour' | 'mois' | 'an' | 'stere' | string
+}
+
+export interface DemandeServiceGroup {
+  reference: string
+  statut: 'nouvelle' | 'en-cours' | 'traitee' | 'annulee'
+  message: string | null
+  telephone: string | null
+  date_creation: string
+  total: number
+  lignes: Array<{
+    nom: string
+    unite: string
+    quantite: number
+    prix_unitaire: number
+    sous_total: number
+  }>
+}
+
+export interface DemandeServiceStaffItem {
+  reference: string
+  statut: 'nouvelle' | 'en-cours' | 'traitee' | 'annulee'
+  message: string | null
+  telephone: string | null
+  email: string | null
+  id_utilisateur: number
+  date_creation: string
+  demandeur: string
+  total: number
+  services: string[]
+  lignes: Array<{
+    nom: string
+    unite: string
+    quantite: number
+    prix_unitaire: number
+    sous_total: number
+  }>
+}
+
 export interface ApiServiceCkoo {
   id_service: number
   cle_service?: string | null
@@ -539,6 +584,36 @@ export const api = {
   },
   services() {
     return request<ApiServiceCkoo[]>('/meta/services')
+  },
+  // Catalogue des « autres services » (cle_service = service_%) — public.
+  serviceCatalogue() {
+    return request<ServiceCatalogueItem[]>('/demandes-service/catalogue')
+  },
+  // Soumission d'une demande de service — connexion requise.
+  createDemandeService(payload: {
+    services: Array<{ id_service: number }>
+    message?: string
+    telephone?: string
+  }) {
+    return request<{ reference: string; total: number; lignes: number; message: string }>(
+      '/demandes-service',
+      { method: 'POST', body: JSON.stringify(payload) },
+    )
+  },
+  // Historique des demandes de l'utilisateur connecté.
+  myDemandesService() {
+    return request<DemandeServiceGroup[]>('/demandes-service/mine')
+  },
+  // Back-office : toutes les demandes de service (staff).
+  backofficeDemandesService() {
+    return request<DemandeServiceStaffItem[]>('/demandes-service/admin')
+  },
+  // Back-office : change le statut d'une demande (dont « masquer » = en-cours).
+  updateDemandeServiceStatut(reference: string, statut: 'nouvelle' | 'en-cours' | 'traitee' | 'annulee') {
+    return request<{ message: string; reference: string; statut: string }>(
+      `/demandes-service/${encodeURIComponent(reference)}/statut`,
+      { method: 'PATCH', body: JSON.stringify({ statut }) },
+    )
   },
   partenaires() {
     return request<ApiPartenaire[]>('/partenaires')
