@@ -42,6 +42,8 @@ import {
   Tag,
   Package,
   Trash2,
+  CreditCard,
+  Receipt,
 } from "lucide-react";
 
 // ===== TYPES =====
@@ -84,6 +86,18 @@ interface OffreCommerciale {
   prix: number;
   type: "contrat" | "edl";
   description?: string;
+}
+
+interface Versement {
+  id: string;
+  emetteur: string;
+  associe: string;
+  ref: string;
+  canal: string;
+  date: string;
+  du: number;
+  recu: number;
+  statut: "a-verifier" | "conforme" | "non-conforme" | "en-attente" | "valide" | "echoue";
 }
 
 interface ApiBackofficeContratRow {
@@ -153,6 +167,43 @@ const MOCK_OFFRES: OffreCommerciale[] = [
   },
 ];
 
+// ===== DONNÉES MOCKÉES POUR LES VERSEMENTS =====
+const MOCK_VERSEMENTS: Versement[] = [
+  {
+    id: "VST-0312",
+    emetteur: "Naina B.",
+    associe: "CTR-0142 (Contrat)",
+    ref: "CTR-0142",
+    canal: "MVOLA",
+    date: "2026-06-15",
+    du: 120000,
+    recu: 120000,
+    statut: "a-verifier",
+  },
+  {
+    id: "VST-0310",
+    emetteur: "Naina B.",
+    associe: "SVC-217 (Services Coloc'KOO)",
+    ref: "SVC-217",
+    canal: "MVOLA",
+    date: "2026-06-14",
+    du: 26400,
+    recu: 26400,
+    statut: "a-verifier",
+  },
+  {
+    id: "VST-0309",
+    emetteur: "Faniry T.",
+    associe: "CTR-0140 (Contrat)",
+    ref: "CTR-0140",
+    canal: "MVOLA",
+    date: "2026-06-12",
+    du: 150000,
+    recu: 150000,
+    statut: "conforme",
+  },
+];
+
 // ===== FONCTIONS DE MAPPING =====
 function mapApiContratRow(row: ApiBackofficeContratRow): DocumentDemande {
   const bien = [row.titre, row.quartier, row.nom_ville]
@@ -199,6 +250,20 @@ function mapApiContratDetails(
     dateSignature: row.date_signature
       ? new Date(row.date_signature).toLocaleDateString("fr-FR")
       : undefined,
+  };
+}
+
+function mapVersement(row: any): Versement {
+  return {
+    id: row.reference || `VST-${row.id_paiement}`,
+    emetteur: row.nom || row.prenom || "Client",
+    associe: row.annonce_titre || `Contrat #${row.id_contrat}`,
+    ref: String(row.id_contrat || row.id_annonce || ''),
+    canal: row.moyen_paiement || "MVOLA",
+    date: row.date_paiement || row.date_creation,
+    du: row.montant_du || 0,
+    recu: row.montant_recu || 0,
+    statut: row.statut || "a-verifier",
   };
 }
 
@@ -263,6 +328,27 @@ const StatusBadge = ({ statut }: { statut: DocumentDemande["statut"] }) => {
   );
 };
 
+// Badge de statut pour les versements
+const VersementStatusBadge = ({ statut }: { statut: Versement["statut"] }) => {
+  const config: Record<Versement["statut"], { label: string; className: string }> = {
+    "a-verifier": { label: "À vérifier", className: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+    "conforme": { label: "Conforme", className: "bg-green-500/15 text-green-400 border-green-500/30" },
+    "non-conforme": { label: "Non conforme", className: "bg-red-500/15 text-red-400 border-red-500/30" },
+    "en-attente": { label: "En attente", className: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+    "valide": { label: "Validé", className: "bg-green-500/15 text-green-400 border-green-500/30" },
+    "echoue": { label: "Échoué", className: "bg-red-500/15 text-red-400 border-red-500/30" },
+  };
+  const { label, className } = config[statut] || config["a-verifier"];
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-full border ${className}`}
+    >
+      {label}
+    </span>
+  );
+};
+
 // Badge de type
 const TypeBadge = ({ type }: { type: DocumentDemande["type"] }) => {
   const config = {
@@ -292,14 +378,20 @@ const TypeBadge = ({ type }: { type: DocumentDemande["type"] }) => {
 // ===== MODALE DE DÉTAILS =====
 const DocumentDetailsModal = ({
   document,
+  versements,
   onClose,
   onUpdate,
+  onRefresh,
 }: {
   document: DocumentDemande;
+  versements: Versement[];
   onClose: () => void;
   onUpdate: (id: string, updates: Partial<DocumentDemande>) => Promise<void>;
+  onRefresh: () => Promise<void>;
 }) => {
   const [note, setNote] = useState(document.note || "");
+  const [updating, setUpdating] = useState(false);
+  const [versementsLoading, setVersementsLoading] = useState(false);
 
   const getCoordonneesManquantes = () => {
     const manquantes: { nom: string; champ: string }[] = [];
@@ -314,9 +406,52 @@ const DocumentDetailsModal = ({
   const manquantes = getCoordonneesManquantes();
   const estComplet = manquantes.length === 0;
 
+  // Calcul des totaux des versements
+  const versementsDuTotal = versements.reduce((sum, v) => sum + v.du, 0);
+  const versementsRecuTotal = versements.reduce((sum, v) => sum + v.recu, 0);
+
   const handleSave = async () => {
     await onUpdate(document.id, { note });
     onClose();
+  };
+
+  const handleMarkAsEmitted = async () => {
+    setUpdating(true);
+    await onUpdate(document.id, {
+      statut: document.type === "contrat" ? "emis" : "a-planifier",
+      dateEmission: new Date().toISOString().split("T")[0],
+    });
+    setUpdating(false);
+    onClose();
+  };
+
+  const handleMarkAsSigned = async () => {
+    setUpdating(true);
+    await onUpdate(document.id, {
+      statut: "signe",
+      dateSignature: new Date().toISOString().split("T")[0],
+    });
+    setUpdating(false);
+    onClose();
+  };
+
+  const handleSendToAll = () => {
+    const emails = document.parties.filter(p => p.email).map(p => p.email);
+    alert(
+      `Envoi du document ${document.id} à tous les destinataires (${emails.length} email(s))`
+    );
+  };
+
+  const handleUpdateVersement = async (versementId: string, newStatut: Versement["statut"]) => {
+    setVersementsLoading(true);
+    try {
+      await api.updatePaiementStatus(versementId, { statut: newStatut });
+      await onRefresh();
+    } catch (err) {
+      alert("Erreur lors de la mise à jour du versement");
+    } finally {
+      setVersementsLoading(false);
+    }
   };
 
   return (
@@ -325,10 +460,10 @@ const DocumentDetailsModal = ({
       onClick={onClose}
     >
       <div
-        className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-white/10 flex items-start justify-between">
+        <div className="p-4 border-b border-white/10 flex items-start justify-between sticky top-0 bg-[oklch(0.22_0.005_260)] z-10">
           <div>
             <div className="flex items-center gap-3 flex-wrap">
               <h3 className="text-xl font-bold">{document.id}</h3>
@@ -348,6 +483,7 @@ const DocumentDetailsModal = ({
         </div>
 
         <div className="p-4 space-y-4 overflow-y-auto max-h-[60vh]">
+          {/* Informations générales */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-white/5 rounded-lg p-3">
             <div>
               <div className="text-white/40 text-xs uppercase tracking-wider">
@@ -389,6 +525,7 @@ const DocumentDetailsModal = ({
             </div>
           )}
 
+          {/* Parties */}
           <div>
             <div className="text-white/40 text-xs uppercase tracking-wider mb-2">
               Parties
@@ -471,6 +608,124 @@ const DocumentDetailsModal = ({
             )}
           </div>
 
+          {/* ===== ÉTAT FINANCIER (VERSEMENTS ASSOCIÉS) ===== */}
+          <div>
+            <div className="text-white/40 text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
+              <CreditCard className="w-3 h-3" />
+              État financier (versements associés)
+            </div>
+
+            {versements.length === 0 ? (
+              <div className="text-xs text-amber-400 flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                <AlertCircle className="w-3 h-3" />
+                Aucun versement enregistré pour cette demande
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th className="text-left p-2 text-white/40 font-medium text-xs">
+                        Réf.
+                      </th>
+                      <th className="text-left p-2 text-white/40 font-medium text-xs">
+                        Émetteur
+                      </th>
+                      <th className="text-left p-2 text-white/40 font-medium text-xs">
+                        Canal
+                      </th>
+                      <th className="text-left p-2 text-white/40 font-medium text-xs">
+                        Date paiement
+                      </th>
+                      <th className="text-right p-2 text-white/40 font-medium text-xs">
+                        À payer (MGA)
+                      </th>
+                      <th className="text-right p-2 text-white/40 font-medium text-xs">
+                        Reçu (MGA)
+                      </th>
+                      <th className="text-left p-2 text-white/40 font-medium text-xs">
+                        Statut
+                      </th>
+                      <th className="text-center p-2 text-white/40 font-medium text-xs">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {versements.map((v) => {
+                      const estPartiel = v.recu < v.du;
+                      const estDepasse = v.recu > v.du;
+                      
+                      return (
+                        <tr key={v.id} className="hover:bg-white/5 transition">
+                          <td className="p-2 font-mono text-xs">{v.id}</td>
+                          <td className="p-2">{v.emetteur}</td>
+                          <td className="p-2">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                              {v.canal}
+                            </span>
+                          </td>
+                          <td className="p-2 text-white/60">{v.date}</td>
+                          <td className="p-2 text-right">{v.du.toLocaleString("fr-FR")}</td>
+                          <td className={`p-2 text-right ${estPartiel ? 'text-red-400' : estDepasse ? 'text-amber-400' : 'text-green-400'}`}>
+                            {v.recu.toLocaleString("fr-FR")}
+                            {estPartiel && <span className="text-[10px] text-red-400 block">(partiel)</span>}
+                          </td>
+                          <td className="p-2">
+                            <VersementStatusBadge statut={v.statut} />
+                          </td>
+                          <td className="p-2 text-center">
+                            {v.statut === "a-verifier" && (
+                              <div className="flex items-center justify-center gap-1">
+                                <button
+                                  onClick={() => handleUpdateVersement(v.id, "conforme")}
+                                  disabled={versementsLoading}
+                                  className="p-1 rounded hover:bg-green-500/20 text-green-400 transition"
+                                  title="Marquer conforme"
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateVersement(v.id, "non-conforme")}
+                                  disabled={versementsLoading}
+                                  className="p-1 rounded hover:bg-red-500/20 text-red-400 transition"
+                                  title="Marquer non conforme"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                            {v.statut === "conforme" && (
+                              <span className="text-[10px] text-green-400">✓ Validé</span>
+                            )}
+                            {v.statut === "non-conforme" && (
+                              <span className="text-[10px] text-red-400">✗ Rejeté</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot className="bg-white/5 border-t border-white/10">
+                    <tr>
+                      <td colSpan={4} className="p-2 text-right font-semibold">
+                        Totaux
+                      </td>
+                      <td className="p-2 text-right font-semibold text-amber-400">
+                        {versementsDuTotal.toLocaleString("fr-FR")}
+                      </td>
+                      <td className="p-2 text-right font-semibold text-brand-cyan">
+                        {versementsRecuTotal.toLocaleString("fr-FR")}
+                      </td>
+                      <td colSpan={2} className="p-2"></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Note de suivi */}
           <div>
             <div className="text-white/40 text-xs uppercase tracking-wider mb-1">
               Note de suivi
@@ -493,19 +748,14 @@ const DocumentDetailsModal = ({
             <Save className="w-4 h-4" />
             Enregistrer
           </button>
+          
           {document.statut !== "emis" &&
             document.statut !== "signe" &&
             estComplet && (
               <button
-                onClick={() => {
-                  onUpdate(document.id, {
-                    statut:
-                      document.type === "contrat" ? "emis" : "a-planifier",
-                    dateEmission: new Date().toISOString().split("T")[0],
-                  });
-                  onClose();
-                }}
-                className="px-4 py-2 bg-brand-green/15 text-brand-green border border-brand-green/30 rounded-lg hover:bg-brand-green/25 transition flex items-center gap-2"
+                onClick={handleMarkAsEmitted}
+                disabled={updating}
+                className="px-4 py-2 bg-brand-green/15 text-brand-green border border-brand-green/30 rounded-lg hover:bg-brand-green/25 transition flex items-center gap-2 disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
                 {document.type === "contrat"
@@ -513,32 +763,26 @@ const DocumentDetailsModal = ({
                   : "Planifier EDL"}
               </button>
             )}
+          
           {document.statut === "emis" && (
             <button
-              onClick={() => {
-                onUpdate(document.id, {
-                  statut: "signe",
-                  dateSignature: new Date().toISOString().split("T")[0],
-                });
-                onClose();
-              }}
-              className="px-4 py-2 bg-brand-green/15 text-brand-green border border-brand-green/30 rounded-lg hover:bg-brand-green/25 transition flex items-center gap-2"
+              onClick={handleMarkAsSigned}
+              disabled={updating}
+              className="px-4 py-2 bg-brand-green/15 text-brand-green border border-brand-green/30 rounded-lg hover:bg-brand-green/25 transition flex items-center gap-2 disabled:opacity-50"
             >
               <FileCheck className="w-4 h-4" />
               Marquer comme signé
             </button>
           )}
+          
           <button
-            onClick={() => {
-              alert(
-                `Envoi du document ${document.id} à tous les destinataires (${document.parties.filter((p) => p.email).length} email(s))`,
-              );
-            }}
+            onClick={handleSendToAll}
             className="px-4 py-2 bg-blue-500/15 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/25 transition flex items-center gap-2"
           >
             <Mail className="w-4 h-4" />
             Envoyer à tous
           </button>
+          
           <button
             onClick={onClose}
             className="px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition text-white/60 flex items-center gap-2"
@@ -557,6 +801,7 @@ export default function AdminContratsEDL() {
   const [activeTab, setActiveTab] = useState<"demandes" | "offres">("demandes");
   const [documents, setDocuments] = useState<DocumentDemande[]>([]);
   const [offres, setOffres] = useState<OffreCommerciale[]>([]);
+  const [versements, setVersements] = useState<Versement[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("tous");
   const [filterStatut, setFilterStatut] = useState<string>("tous");
@@ -637,6 +882,7 @@ export default function AdminContratsEDL() {
   useEffect(() => {
     loadDocuments();
     loadOffres();
+    loadVersements();
   }, []);
 
   // Statistiques
@@ -674,8 +920,6 @@ export default function AdminContratsEDL() {
     try {
       const rows = await api.backofficeContrats();
       setDocuments(rows.map(mapApiContratRow));
-      setSuccessMessage("Données de contrats chargées");
-      window.setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       setError(
         err instanceof Error
@@ -688,12 +932,9 @@ export default function AdminContratsEDL() {
   };
 
   // Charger les offres
-  // Dans AdminContrat.tsx, corrigez la fonction loadOffres
   const loadOffres = async () => {
     try {
-      // Essayer de charger depuis l'API
       const services = await api.backofficeServicesCkoo();
-      // Filtrer les services de type contrat/edl
       const offresData = services
         .filter(
           (s: any) =>
@@ -704,44 +945,64 @@ export default function AdminContratsEDL() {
           id: String(s.id_service),
           nom: s.nom,
           prix: s.prix,
-          type: s.cle_service?.startsWith("contrat_") ? "contrat" : "edl", // ✅ Ceci est déjà correct
+          type: s.cle_service?.startsWith("contrat_") ? "contrat" : "edl",
           description: s.description || undefined,
         }));
 
-      // ✅ SOLUTION 1 : Typer explicitement le résultat
       const typedOffres: OffreCommerciale[] = offresData.map((item) => ({
         id: item.id,
         nom: item.nom,
         prix: item.prix,
-        type: item.type as "contrat" | "edl", // ← Forcer le typage
+        type: item.type as "contrat" | "edl",
         description: item.description,
       }));
 
       if (typedOffres.length > 0) {
         setOffres(typedOffres);
       } else {
-        // Sinon utiliser les données mockées
         setOffres(MOCK_OFFRES);
       }
     } catch (err) {
-      // En cas d'erreur, utiliser les données mockées
       setOffres(MOCK_OFFRES);
     }
   };
 
-  // Ouvrir les détails d'un document
+  // Charger les versements
+  const loadVersements = async () => {
+    try {
+      const rows = await api.backofficePaiements();
+      setVersements(rows.map(mapVersement));
+    } catch (err) {
+      setVersements(MOCK_VERSEMENTS);
+    }
+  };
+
+  // Ouvrir les détails d'un document avec ses versements
   const openDocumentDetails = async (id: string) => {
     setLoading(true);
     setError(null);
     try {
-      const detail = await api.backofficeContratDetails(id);
+      const [detail, paiements] = await Promise.all([
+        api.backofficeContratDetails(id),
+        api.backofficePaiements()
+      ]);
+      
+      // Filtrer les paiements liés à ce contrat
+      const contratPaiements = paiements
+        .filter((p: any) => String(p.id_contrat) === id)
+        .map(mapVersement);
+      
       setSelectedDocument(mapApiContratDetails(detail));
+      setVersements(contratPaiements.length > 0 ? contratPaiements : MOCK_VERSEMENTS);
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : "Impossible de charger le document",
       );
+      // Fallback avec des données mockées
+      setSelectedDocument(null);
+      setVersements(MOCK_VERSEMENTS);
     } finally {
       setLoading(false);
     }
@@ -833,6 +1094,17 @@ export default function AdminContratsEDL() {
     setLoading(false);
   };
 
+  // Rafraîchir toutes les données
+  const handleRefresh = async () => {
+    await Promise.all([
+      loadDocuments(),
+      loadOffres(),
+      loadVersements()
+    ]);
+    setSuccessMessage("Données actualisées");
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
   // Gérer l'ajout d'une offre
   const handleAddOffre = async () => {
     if (!newOffreNom.trim() || !newOffrePrix) {
@@ -847,8 +1119,7 @@ export default function AdminContratsEDL() {
     }
 
     try {
-      // Essayer de créer via l'API
-      const result = await api.createServiceCkoo({
+      await api.createServiceCkoo({
         cle_service: `${newOffreType}_${Date.now()}`,
         nom: newOffreNom.trim(),
         description: newOffreDescription.trim() || undefined,
@@ -857,9 +1128,7 @@ export default function AdminContratsEDL() {
         est_actif: 1,
       });
 
-      // Recharger les offres
       await loadOffres();
-
       setShowAddOffre(false);
       setNewOffreNom("");
       setNewOffrePrix("");
@@ -868,7 +1137,6 @@ export default function AdminContratsEDL() {
       setSuccessMessage("Offre ajoutée avec succès");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      // En cas d'erreur, ajouter localement
       const newOffre: OffreCommerciale = {
         id: `offre-${Date.now()}`,
         nom: newOffreNom.trim(),
@@ -897,17 +1165,10 @@ export default function AdminContratsEDL() {
       setSuccessMessage("Offre supprimée avec succès");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      // Si l'API échoue, supprimer localement
       setOffres(offres.filter((o) => o.id !== id));
       setSuccessMessage("Offre supprimée localement");
       setTimeout(() => setSuccessMessage(null), 3000);
     }
-  };
-
-  // Actualiser les données
-  const handleRefresh = () => {
-    loadDocuments();
-    loadOffres();
   };
 
   return (
@@ -933,14 +1194,12 @@ export default function AdminContratsEDL() {
           </button>
         </div>
 
-        {/* Message de succès */}
+        {/* Messages */}
         {successMessage && (
           <div className="bg-brand-green/20 border border-brand-green/30 text-brand-green px-4 py-2 rounded-lg text-sm animate-in slide-in-from-top-2">
             {successMessage}
           </div>
         )}
-
-        {/* Message d'erreur */}
         {error && (
           <div className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-2 rounded-lg text-sm">
             {error}
@@ -1465,8 +1724,13 @@ export default function AdminContratsEDL() {
       {selectedDocument && (
         <DocumentDetailsModal
           document={selectedDocument}
-          onClose={() => setSelectedDocument(null)}
+          versements={versements}
+          onClose={() => {
+            setSelectedDocument(null);
+            loadVersements();
+          }}
           onUpdate={handleUpdateDocument}
+          onRefresh={loadVersements}
         />
       )}
     </AdminLayout>
