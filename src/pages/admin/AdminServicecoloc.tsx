@@ -60,8 +60,11 @@ interface ApiServiceCkooRow {
 
 interface OffreService {
   id: string
+  cle: string
   nom: string
   prixParJour: number
+  unite: string
+  description?: string
   actif: boolean
 }
 
@@ -88,11 +91,20 @@ function mapDemandeService(d: DemandeServiceStaffItem): ServiceDemande {
   }
 }
 
-function mapServiceCkooRow(service: ApiServiceCkooRow): OffreService {
+// ✅ CORRECTION : Ne garder que les services avec cle_service commençant par "service_"
+function mapServiceCkooRow(service: ApiServiceCkooRow): OffreService | null {
+  // Filtrer uniquement les services qui ont une clé commençant par "service_"
+  if (!service.cle_service || !service.cle_service.startsWith('service_')) {
+    return null
+  }
+  
   return {
     id: String(service.id_service),
+    cle: service.cle_service || '',
     nom: service.nom,
     prixParJour: Number(service.prix || 0),
+    unite: service.unite || 'heure',
+    description: service.description || undefined,
     actif: Boolean(service.est_actif),
   }
 }
@@ -121,10 +133,12 @@ const OffreModal = ({
   onSave
 }: {
   onClose: () => void
-  onSave: (offre: Omit<OffreService, 'id'>) => void
+  onSave: (offre: Omit<OffreService, 'id' | 'cle'>) => void
 }) => {
   const [nom, setNom] = useState('')
   const [prixParJour, setPrixParJour] = useState(8800)
+  const [unite, setUnite] = useState('heure')
+  const [description, setDescription] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -132,7 +146,13 @@ const OffreModal = ({
       alert('Veuillez saisir un nom pour l\'offre')
       return
     }
-    onSave({ nom, prixParJour, actif: true })
+    onSave({ 
+      nom: nom.trim(), 
+      prixParJour, 
+      unite,
+      description: description.trim() || undefined,
+      actif: true 
+    })
     onClose()
   }
 
@@ -168,6 +188,29 @@ const OffreModal = ({
               value={prixParJour}
               onChange={(e) => setPrixParJour(parseInt(e.target.value) || 0)}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-white/60 mb-1">Unité</label>
+            <select
+              value={unite}
+              onChange={(e) => setUnite(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
+            >
+              <option value="heure" className="bg-[oklch(0.22_0.005_260)]">Heure</option>
+              <option value="jour" className="bg-[oklch(0.22_0.005_260)]">Jour</option>
+              <option value="forfait" className="bg-[oklch(0.22_0.005_260)]">Forfait</option>
+              <option value="mois" className="bg-[oklch(0.22_0.005_260)]">Mois</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-white/60 mb-1">Description</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
+              placeholder="Description de l'offre..."
             />
           </div>
           <div className="flex gap-3 pt-2">
@@ -297,14 +340,19 @@ export default function AdminServicesColockoo() {
   }
 
   // Ajouter une offre
-  const handleAddOffre = async (offre: Omit<OffreService, 'id'>) => {
+  const handleAddOffre = async (offre: Omit<OffreService, 'id' | 'cle'>) => {
     setLoading(true)
     setError(null)
     try {
+      // Générer une clé unique commençant par "service_"
+      const cleService = `service_${Date.now()}`
+      
       await api.createServiceCkoo({
+        cle_service: cleService,
         nom: offre.nom,
+        description: offre.description || '',
         prix: offre.prixParJour,
-        unite: 'heure',
+        unite: offre.unite || 'heure',
         est_actif: offre.actif ? 1 : 0,
       })
       await loadAdminServiceData()
@@ -612,7 +660,10 @@ export default function AdminServicesColockoo() {
           {activeTab === 'offres' && (
             <div>
               <div className="p-4 border-b border-white/10 flex items-center justify-between">
-                <span className="text-sm text-white/40">Catalogue des offres commerciales</span>
+                <span className="text-sm text-white/40">
+                  Catalogue des offres commerciales 
+                  <span className="ml-2 text-xs bg-white/10 px-2 py-0.5 rounded-full">{offres.length} offres</span>
+                </span>
                 <button
                   onClick={() => setShowOffreModal(true)}
                   className="flex items-center gap-2 px-3 py-1.5 bg-brand-cyan text-[oklch(0.15_0_0)] font-medium rounded-lg text-sm hover:opacity-80 transition"
@@ -629,8 +680,14 @@ export default function AdminServicesColockoo() {
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
                         Offre
                       </th>
+                      {/* <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
+                        Clé
+                      </th> */}
                       <th className="text-right p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
                         Prix / jour (MGA)
+                      </th>
+                      <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
+                        Unité
                       </th>
                       <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
                         Statut
@@ -643,9 +700,20 @@ export default function AdminServicesColockoo() {
                   <tbody className="divide-y divide-white/5">
                     {offres.map((offre) => (
                       <tr key={offre.id} className="hover:bg-white/5 transition">
-                        <td className="p-3 font-medium">{offre.nom}</td>
+                        <td className="p-3 font-medium">
+                          {offre.nom}
+                          {offre.description && (
+                            <div className="text-xs text-white/40">{offre.description}</div>
+                          )}
+                        </td>
+                        {/* <td className="p-3">
+                          <span className="text-xs font-mono text-white/40">{offre.cle}</span>
+                        </td> */}
                         <td className="p-3 text-right font-bold text-brand-cyan">
                           {offre.prixParJour.toLocaleString('fr-FR')} MGA
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className="text-xs text-white/60">{offre.unite}</span>
                         </td>
                         <td className="p-3 text-center">
                           <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
@@ -710,11 +778,11 @@ export default function AdminServicesColockoo() {
                 <span className="text-brand-green">{offres.filter(o => o.actif).length} actives</span>
                 <span>·</span>
                 <span className="text-red-400">{offres.filter(o => !o.actif).length} inactives</span>
+                <span className="ml-auto">
+                  Dernière mise à jour: {new Date().toLocaleString('fr-FR')}
+                </span>
               </>
             )}
-            <span className="ml-auto">
-              Dernière mise à jour: {new Date().toLocaleString('fr-FR')}
-            </span>
           </div>
         </div>
 
