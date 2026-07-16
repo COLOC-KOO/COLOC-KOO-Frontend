@@ -520,6 +520,8 @@ const ContactSection: React.FC = () => {
     email: '',
     phoneCC: '+261',
     phone: '',
+    secteur: '',
+    niveauSouhaite: '',
     activity: '',
     wantCallback: false,
     callbackDate: '',
@@ -552,12 +554,15 @@ const ContactSection: React.FC = () => {
         email: formData.email,
         phone: formData.phone,
         phoneCC: formData.phoneCC,
+        secteur: formData.secteur,
+        niveau_souhaite: formData.niveauSouhaite,
         message: formData.activity,
         wantCallback: formData.wantCallback,
         callbackDate: formData.callbackDate,
         callbackSlot: formData.callbackSlot,
         wantBrochure: formData.wantBrochure,
       })
+
       setShowOk(true)
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Impossible d’envoyer votre demande.')
@@ -579,6 +584,22 @@ const ContactSection: React.FC = () => {
     { value: 'morning', label: t.slotMorning },
     { value: 'early_afternoon', label: t.slotEarlyAfternoon },
     { value: 'late_afternoon', label: t.slotLateAfternoon },
+  ]
+
+  const secteurOptions = [
+    { value: '', label: 'Sélectionner un secteur' },
+    { value: 'Entreprise générale', label: 'Entreprise générale' },
+    { value: 'Immobilier', label: 'Immobilier' },
+    { value: 'Institution publique', label: 'Institution publique' },
+    { value: 'Autre', label: 'Autre' },
+  ]
+
+  const niveauOptions = [
+    { value: '', label: 'Sélectionner un niveau souhaité' },
+    { value: 'Bronze', label: 'Bronze' },
+    { value: 'Argent', label: 'Argent' },
+    { value: 'Or', label: 'Or' },
+    { value: 'Diamant', label: 'Diamant' },
   ]
 
   return (
@@ -653,6 +674,36 @@ const ContactSection: React.FC = () => {
                     onChange={handleInputChange}
                   />
                 </div>
+              </div>
+
+              {/* Secteur */}
+              <div>
+                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">Secteur</label>
+                <select
+                  name="secteur"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 [&>option]:text-[#1a1a2e]"
+                  value={formData.secteur}
+                  onChange={handleInputChange}
+                >
+                  {secteurOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Niveau souhaité */}
+              <div>
+                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">Niveau souhaité</label>
+                <select
+                  name="niveauSouhaite"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 [&>option]:text-[#1a1a2e]"
+                  value={formData.niveauSouhaite}
+                  onChange={handleInputChange}
+                >
+                  {niveauOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Activité */}

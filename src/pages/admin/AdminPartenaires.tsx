@@ -41,7 +41,7 @@ import {
   FileText   // ← AJOUTER SI UTILISÉ AUSSI
 } from 'lucide-react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
-import { api } from '../../lib/api'
+import { api, type ApiPartenaireRequest } from '../../lib/api'
 
 // ===== TYPES =====
 interface Partenaire {
@@ -672,6 +672,7 @@ export default function AdminPartenaires() {
   const [partenaires, setPartenaires] = useState<Partenaire[]>([])
   const [comptes, setComptes] = useState<PartenaireComplet[]>([])
   const [campagnes, setCampagnes] = useState<Campagne[]>([])
+  const [partnerRequests, setPartnerRequests] = useState<ApiPartenaireRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -760,13 +761,15 @@ export default function AdminPartenaires() {
     setLoading(true)
     setError(null)
     try {
-      const [partenairesData, campagnesData] = await Promise.all([
+      const [partenairesData, campagnesData, requestsData] = await Promise.all([
         api.backofficePartenaires(),
-        api.campagnes ? api.campagnes() : Promise.resolve([])
+        api.campagnes ? api.campagnes() : Promise.resolve([]),
+        api.backofficePartenaireRequests()
       ])
       setPartenaires(partenairesData.map(mapPartenaire))
       setComptes(partenairesData.map(mapPartenaireComplet))
       setCampagnes((campagnesData || []).map(mapCampagne))
+      setPartnerRequests(requestsData || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger les données')
     } finally {
@@ -782,6 +785,47 @@ export default function AdminPartenaires() {
   const handleOpenAddPartner = () => {
     setEditingPartner(null)
     setShowPartnerModal(true)
+  }
+
+  const handleValidatePartnerRequest = async (requestItem: ApiPartenaireRequest) => {
+    if (!confirm(`Valider la demande de ${requestItem.nom_entreprise || requestItem.nom_contact || 'ce partenaire'} ?`)) return
+    setLoading(true)
+    setError(null)
+    try {
+      await api.createPartenaire({
+        nom: (requestItem.nom_entreprise || requestItem.nom_contact || 'Partenaire').trim(),
+        secteur: requestItem.secteur || '',
+        niveau: requestItem.niveau_souhaite || 'Bronze',
+        remise: '',
+        engagement: requestItem.message || '',
+        logo: '',
+        actif: 1,
+      })
+      await api.deleteBackofficePartenaireRequest(requestItem.id_demande)
+      setSuccessMessage('Demande de partenaire validée')
+      await loadData()
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de valider la demande')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeletePartnerRequest = async (id: number) => {
+    if (!confirm('Supprimer cette demande de partenaire ?')) return
+    setLoading(true)
+    setError(null)
+    try {
+      await api.deleteBackofficePartenaireRequest(id)
+      setSuccessMessage('Demande supprimée')
+      await loadData()
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de supprimer la demande')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSavePartner = async (payload: Omit<Partenaire, 'id' | 'dateCreation'> & { logoFile?: File | null }) => {
@@ -1039,6 +1083,102 @@ export default function AdminPartenaires() {
               >
                 <Plus className="w-4 h-4" /> Ajouter un partenaire
               </button>
+            </div>
+
+            {/* Demandes de partenariat */}
+            <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-white flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-brand-cyan" />
+                    Demandes de partenariat
+                  </h3>
+                  <p className="text-white/40 text-xs">Liste des formulaires reçus avec leurs informations et actions</p>
+                </div>
+                <div className="text-xs px-2.5 py-1 rounded-full border border-brand-cyan/20 bg-brand-cyan/10 text-brand-cyan">
+                  {partnerRequests.length} demande{partnerRequests.length > 1 ? 's' : ''}
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Structure / contact</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Coordonnées</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Secteur / niveau</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Message / options</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Date</th>
+                      <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-10 text-white/40">
+                          <RefreshCw className="w-6 h-6 mx-auto mb-2 animate-spin opacity-40" />
+                          Chargement des demandes...
+                        </td>
+                      </tr>
+                    ) : partnerRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-10 text-white/40">
+                          Aucune demande reçue pour le moment.
+                        </td>
+                      </tr>
+                    ) : (
+                      partnerRequests.map((request) => (
+                        <tr key={request.id_demande} className="hover:bg-white/5 transition">
+                          <td className="p-3">
+                            <div className="font-medium text-white">{request.nom_entreprise || request.nom_contact || '—'}</div>
+                            <div className="text-xs text-white/40">{request.nom_contact || '—'}</div>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex items-center gap-1.5 text-sm">
+                              <Mail className="w-3.5 h-3.5 text-white/40" />
+                              <span>{request.email || '—'}</span>
+                            </div>
+                            <div className="mt-1 flex items-center gap-1.5 text-xs text-white/40">
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>{request.telephone ? `${request.telephone_code || ''} ${request.telephone}`.trim() : '—'}</span>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <div className="text-sm text-white/80">{request.secteur || '—'}</div>
+                            <div className="text-xs text-white/40">{request.niveau_souhaite || '—'}</div>
+                          </td>
+                          <td className="p-3 max-w-[260px]">
+                            <div className="text-sm text-white/70 break-words">{request.message || 'Aucun message'}</div>
+                            <div className="mt-1 text-[11px] text-white/40">
+                              {request.souhaite_rappel ? 'Rappel demandé' : 'Sans rappel'}
+                              {request.souhaite_plaquette ? ' · Plaquette demandée' : ''}
+                            </div>
+                          </td>
+                          <td className="p-3 text-xs text-white/40">
+                            {request.date_creation ? new Date(request.date_creation).toLocaleString('fr-FR') : '—'}
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleValidatePartnerRequest(request)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-green-500/30 bg-green-500/10 px-2.5 py-1.5 text-xs text-green-300 hover:bg-green-500/20 transition"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" /> Valider
+                              </button>
+                              <button
+                                onClick={() => handleDeletePartnerRequest(request.id_demande)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs text-red-300 hover:bg-red-500/20 transition"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Supprimer
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Liste des partenaires */}
