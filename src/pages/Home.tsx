@@ -21,12 +21,23 @@ import { SiteLayout } from "../components/site/SiteLayout";
 import { ListingCard } from "../components/site/ListingCard";
 import { Button } from "../components/ui/Button";
 import { MapView } from "../components/MapView";
-import { api, annonceToListing, ApiPartenaire } from "../lib/api";
+import { api, annonceToListing, type ApiPartenaireCampagne } from "../lib/api";
 import { CityInfo, Listing } from "../types";
 import { motion } from "framer-motion";
 
 const heroImage =
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80";
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:4000/api").replace(/\/api\/?$/, "");
+
+function normalizeImageUrl(value: string | null | undefined) {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("/")) return `${API_BASE_URL}${trimmed}`;
+  if (trimmed.startsWith("uploads/")) return `${API_BASE_URL}/${trimmed}`;
+  return `${API_BASE_URL}/${trimmed}`;
+}
 
 const steps = [
   {
@@ -53,7 +64,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [cityCards, setCityCards] = useState<CityInfo[]>([]);
-  const [partners, setPartners] = useState<ApiPartenaire[]>([]);
+  const [partners, setPartners] = useState<ApiPartenaireCampagne[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
@@ -90,9 +101,9 @@ export default function Home() {
     Promise.all([
       api.annonces({ statut: "active" }),
       api.villes().catch(() => []),
-      api.partenaires().catch(() => []),
+      api.partenairesCampagnes().catch(() => []),
     ])
-      .then(([annonces, villes, partenaires]) => {
+      .then(([annonces, villes, campagnes]) => {
         if (cancelled) return;
 
         const mapped = annonces.map(annonceToListing);
@@ -112,6 +123,13 @@ export default function Home() {
           .sort((a, b) => b.count - a.count)
           .slice(0, 6);
 
+        const dedupedCampaignPartners = Array.isArray(campagnes)
+          ? campagnes.filter((item, index, array) => {
+              const firstIndex = array.findIndex((candidate) => candidate.id_partenaire === item.id_partenaire);
+              return firstIndex === index;
+            })
+          : [];
+
         setFeaturedListings(mapped.slice(0, 6));
         setCityCards(
           dynamicCities.length > 0
@@ -123,7 +141,7 @@ export default function Home() {
                   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
               })),
         );
-        setPartners(partenaires);
+        setPartners(dedupedCampaignPartners);
       })
       .catch((err) => {
         if (!cancelled) {
@@ -699,17 +717,15 @@ export default function Home() {
                     <div className="group relative rounded-2xl border border-border/60 bg-white p-6 transition-all duration-300 hover:shadow-xl hover:border-brand-cyan/30 hover:-translate-y-2 min-h-[180px] flex flex-col justify-between">
                       <div className="flex items-center gap-4 mb-3">
                         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-cyan-light/40 to-brand-cyan/10 flex items-center justify-center overflow-hidden shrink-0">
-                          {partner.logo ? (
+                          {partner.logo || partner.visuel ? (
                             <img
-                              src={partner.logo}
-                              alt={partner.nom}
+                              src={normalizeImageUrl(partner.logo || partner.visuel)}
+                              alt={partner.partenaire_nom || partner.titre || "Partenaire"}
                               className="h-full w-full object-cover"
                               onError={(e) => {
-                                const target =
-                                  e.currentTarget as HTMLImageElement;
+                                const target = e.currentTarget as HTMLImageElement;
                                 target.style.display = "none";
-                                const fallback =
-                                  target.nextElementSibling as HTMLElement | null;
+                                const fallback = target.nextElementSibling as HTMLElement | null;
                                 if (fallback) fallback.style.display = "flex";
                               }}
                             />
@@ -718,35 +734,44 @@ export default function Home() {
                             className="hidden h-full w-full items-center justify-center text-2xl font-bold text-brand-cyan-dark"
                             data-fallback
                           >
-                            {partner.nom.charAt(0)}
+                            {(partner.partenaire_nom || partner.titre || "P").charAt(0)}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-base font-semibold truncate">
-                            {partner.nom}
+                            {partner.partenaire_nom || partner.titre || "Partenaire"}
                           </div>
                           <div className="text-sm text-muted-foreground truncate">
-                            {partner.secteur || "Partenaire"}
+                            {partner.secteur || partner.emplacement || "Partenaire"}
                           </div>
                         </div>
                       </div>
 
-                      {partner.remise && (
-                        <div className="inline-flex items-center gap-1 rounded-full bg-brand-green-light/30 px-3 py-1 text-xs font-medium text-brand-green-dark w-fit">
-                          <Award className="w-3 h-3" />
-                          {partner.remise}
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        {partner.titre && (
+                          <div className="inline-flex items-center gap-1 rounded-full bg-brand-cyan-light/50 px-3 py-1 text-xs font-medium text-brand-cyan-dark w-fit">
+                            <Briefcase className="w-3 h-3" />
+                            {partner.titre}
+                          </div>
+                        )}
 
-                      {partner.engagement && (
-                        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                          {partner.engagement}
-                        </p>
-                      )}
+                        {partner.remise && (
+                          <div className="inline-flex items-center gap-1 rounded-full bg-brand-green-light/30 px-3 py-1 text-xs font-medium text-brand-green-dark w-fit">
+                            <Award className="w-3 h-3" />
+                            {partner.remise}
+                          </div>
+                        )}
+
+                        {(partner.description || partner.engagement) && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {partner.description || partner.engagement}
+                          </p>
+                        )}
+                      </div>
 
                       <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <span className="text-[10px] font-medium text-brand-cyan-dark bg-brand-cyan-light/50 px-2.5 py-0.5 rounded-full">
-                          {partner.niveau || "Partenaire"}
+                          {partner.partenaire_niveau || partner.niveau || "Partenaire"}
                         </span>
                       </div>
                     </div>

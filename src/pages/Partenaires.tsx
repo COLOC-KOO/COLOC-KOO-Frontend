@@ -1,11 +1,12 @@
 // pages/Partenaires.tsx
 import React, { useState, useEffect, useRef } from 'react'
+import emailjs from '@emailjs/browser'
 import { Link } from 'react-router-dom'
-import { 
-  Building2, Check, Send, Gift, Handshake, ListChecks, 
-  Lightbulb, Users, HeartHandshake, MapPin, ChartNoAxesCombined, 
-  Rocket, Award, Store, Home, Landmark, Flag, ArrowUpRight, 
-  Feather, CircleCheck, Sparkles, TrendingUp, Shield, 
+import {
+  Building2, Check, Send, Gift, Handshake, ListChecks,
+  Lightbulb, Users, HeartHandshake, MapPin, ChartNoAxesCombined,
+  Rocket, Award, Store, Home, Landmark, Flag, ArrowUpRight,
+  Feather, CircleCheck, Sparkles, TrendingUp, Shield,
   Zap, Crown, Briefcase, Target, Layers, Eye, BarChart3, ChevronLeft, ChevronRight,
   Compass,
 } from 'lucide-react'
@@ -129,8 +130,8 @@ const t = {
 // =============================================
 // COMPOSANT HERO - AVEC IMAGE DE FOND
 // =============================================
-const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }> = ({ 
-  onContactClick, onStatutsClick 
+const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }> = ({
+  onContactClick, onStatutsClick
 }) => {
   return (
     <section className="relative overflow-hidden min-h-[400px] sm:min-h-[450px] flex items-center">
@@ -165,7 +166,7 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
             <button
               onClick={onContactClick}
               className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-white text-xs sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
-              style={{ 
+              style={{
                 backgroundColor: 'oklch(66% 0.11 210)',
                 boxShadow: '0 8px 25px rgba(0, 150, 200, 0.35)'
               }}
@@ -176,7 +177,7 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
             <button
               onClick={onStatutsClick}
               className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-white text-xs sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
-              style={{ 
+              style={{
                 backgroundColor: 'oklch(78% 0.16 130)',
                 boxShadow: '0 8px 25px rgba(80, 200, 80, 0.35)'
               }}
@@ -234,20 +235,20 @@ const WhySection: React.FC = () => {
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {cards.map((card, idx) => (
-            <motion.div 
-              key={idx} 
+            <motion.div
+              key={idx}
               className="group relative bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 text-center transition-all duration-500 cursor-pointer overflow-hidden shadow-sm hover:shadow-2xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1, duration: 0.5 }}
-              whileHover={{ 
+              whileHover={{
                 scale: 1.05,
                 transition: { duration: 0.3 }
               }}
             >
               {/* Fond dégradé qui apparaît au hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#99CC33] to-[#46BDD6] opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
-              
+
               {/* Effet de brillance au hover */}
               <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
@@ -355,18 +356,18 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
   }
 
   return (
-    <motion.div 
+    <motion.div
       className="group relative bg-gradient-to-br from-[#99CC33] to-[#46BDD6] rounded-2xl p-[2px] shadow-lg hover:shadow-2xl transition-all duration-500"
       initial={{ opacity: 0, y: 50, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ 
-        delay: index * 0.15, 
+      transition={{
+        delay: index * 0.15,
         duration: 0.6,
         type: "spring",
         stiffness: 100,
         damping: 15
       }}
-      whileHover={{ 
+      whileHover={{
         scale: 1.03,
         rotateY: 2,
         rotateX: 2,
@@ -407,13 +408,13 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
 
         <ul className="list-none flex flex-col gap-1.5 sm:gap-2 p-0 m-0 flex-1">
           {benefits.map((b, idx) => (
-            <motion.li 
-              key={idx} 
+            <motion.li
+              key={idx}
               className={`text-xs sm:text-sm leading-relaxed flex gap-2 sm:gap-2.5 items-start ${b.isHead ? 'font-semibold text-[#2C2C2C]' : 'text-[#555]'}`}
               initial={{ opacity: 0, x: -15 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ 
-                delay: index * 0.15 + idx * 0.06, 
+              transition={{
+                delay: index * 0.15 + idx * 0.06,
                 duration: 0.4,
                 type: "spring",
                 stiffness: 200
@@ -428,7 +429,7 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
         </ul>
 
         {tier.popular && (
-          <motion.div 
+          <motion.div
             className="mt-3 pt-3 border-t border-[#e8e8e8]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -474,7 +475,7 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
   }
 
   return (
-    <motion.div 
+    <motion.div
       className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-5 md:p-6 transition-all duration-200 hover:shadow-lg"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -491,13 +492,12 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
           <p className="text-xs sm:text-sm md:text-base text-[#666] leading-relaxed mt-0.5">{section.subtitle}</p>
         </div>
       </div>
-   
+
       <div
-        className={`grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 ${
-          section.id === 'entreprise-generale'
+        className={`grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 ${section.id === 'entreprise-generale'
             ? 'xl:grid-cols-4'
             : 'xl:grid-cols-3'
-        }`}
+          }`}
       >
         {section.tiers.map((tier, idx) => (
           <TierCard key={idx} tier={tier} index={idx} />
@@ -515,6 +515,7 @@ const ContactSection: React.FC = () => {
   const [showOk, setShowOk] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -528,6 +529,13 @@ const ContactSection: React.FC = () => {
     callbackSlot: '',
     wantBrochure: false
   })
+
+  useEffect(() => {
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim()
+    if (publicKey) {
+      emailjs.init(publicKey)
+    }
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -548,24 +556,105 @@ const ContactSection: React.FC = () => {
     setSubmitting(true)
     setSubmitError(null)
 
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID?.trim()
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID?.trim()
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim()
+
+    if (!serviceId || !templateId || !publicKey) {
+      setSubmitError('Les identifiants EmailJS ne sont pas encore configurés. Veuillez les définir dans l’environnement du projet.')
+      setSubmitting(false)
+      return
+    }
+
     try {
-      await api.createPartenaireRequest({
-        nom: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        phoneCC: formData.phoneCC,
-        secteur: formData.secteur,
-        niveau_souhaite: formData.niveauSouhaite,
-        message: formData.activity,
-        wantCallback: formData.wantCallback,
-        callbackDate: formData.callbackDate,
-        callbackSlot: formData.callbackSlot,
-        wantBrochure: formData.wantBrochure,
-      })
+      const phoneValue = `${formData.phoneCC} ${formData.phone}`.trim()
+      const fullDetails = `
+╔═══════════════════════════════════════════════════════════╗
+║           📌 INFORMATIONS DU CONTACT                     ║
+╠═══════════════════════════════════════════════════════════╣
+║  Nom / structure    : ${formData.name || 'Non renseigné'} ║
+║  Email              : ${formData.email || 'Non renseigné'} ║
+║  Téléphone          : ${phoneValue || 'Non renseigné'}    ║
+║  Secteur            : ${formData.secteur || 'Non renseigné'} ║
+║  Niveau souhaité    : ${formData.niveauSouhaite || 'Non renseigné'} ║
+╠═══════════════════════════════════════════════════════════╣
+║           📋 DÉTAILS DE LA DEMANDE                       ║
+╠═══════════════════════════════════════════════════════════╣
+║  Activité / message : ${formData.activity || 'Aucun message complémentaire'} ║
+║  Souhaite un rappel : ${formData.wantCallback ? '✅ Oui' : '❌ Non'} ║
+║  Date de rappel     : ${formData.callbackDate || 'Non renseignée'} ║
+║  Créneau            : ${formData.callbackSlot || 'Non renseignée'} ║
+║  Souhaite plaquette : ${formData.wantBrochure ? '✅ Oui' : '❌ Non'} ║
+╚═══════════════════════════════════════════════════════════╝
+`;
+
+      const templateParams = {
+        from_name: formData.name || 'Partenaire',
+        name: formData.name || 'Partenaire',
+        from_email: formData.email || '',
+        email: formData.email || '',
+        reply_to: formData.email || '',
+        phone: phoneValue,
+        phone_number: phoneValue,
+        secteur: formData.secteur || 'Non renseigné',
+        niveau_souhaite: formData.niveauSouhaite || 'Non renseigné',
+        niveau: formData.niveauSouhaite || 'Non renseigné',
+        message: fullDetails,
+        activity: formData.activity || 'Aucun message complémentaire',
+        want_callback: formData.wantCallback ? 'Oui' : 'Non',
+        callback_date: formData.callbackDate || 'Non renseignée',
+        callback_slot: formData.callbackSlot || 'Non renseignée',
+        want_brochure: formData.wantBrochure ? 'Oui' : 'Non',
+        brochure: formData.wantBrochure ? 'Oui' : 'Non',
+        to_email: 'contact@colockoo.com',
+        to_name: "Sarintany'COLOC",
+        subject: 'Nouvelle demande de partenaire',
+        details: fullDetails,
+        body: fullDetails,
+      }
+
+      await emailjs.send(serviceId, templateId, templateParams, publicKey)
+
+      try {
+        await api.createPartenaireRequest({
+          nom: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          phoneCC: formData.phoneCC,
+          secteur: formData.secteur,
+          niveau_souhaite: formData.niveauSouhaite,
+          message: formData.activity,
+          wantCallback: formData.wantCallback,
+          callbackDate: formData.callbackDate,
+          callbackSlot: formData.callbackSlot,
+          wantBrochure: formData.wantBrochure,
+        })
+      } catch {
+        // Silence: l’e-mail a déjà été envoyé, la sauvegarde backend est optionnelle.
+      }
 
       setShowOk(true)
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Impossible d’envoyer votre demande.')
+      setFormData({
+        name: '',
+        email: '',
+        phoneCC: '+261',
+        phone: '',
+        secteur: '',
+        niveauSouhaite: '',
+        activity: '',
+        wantCallback: false,
+        callbackDate: '',
+        callbackSlot: '',
+        wantBrochure: false,
+      })
+      setShowCallback(false)
+      if (formRef.current) {
+        formRef.current.reset()
+      }
+    } catch (error: unknown) {
+      const emailError = error as { text?: string; status?: number; message?: string }
+      const detail = emailError?.text || emailError?.message || 'Erreur inconnue'
+      setSubmitError(`Échec d’envoi EmailJS${emailError?.status ? ` (${emailError.status})` : ''}: ${detail}`)
     } finally {
       setSubmitting(false)
     }
@@ -621,7 +710,7 @@ const ContactSection: React.FC = () => {
         {/* Carte noire */}
         <div className="bg-[#1a1a2e] rounded-2xl shadow-2xl shadow-black/20 border border-white/10 p-4 sm:p-6 md:p-8">
           {!showOk ? (
-            <form className="flex flex-col gap-3 sm:gap-4" onSubmit={handleSubmit}>
+            <form ref={formRef} className="flex flex-col gap-3 sm:gap-4" onSubmit={handleSubmit}>
               {/* Nom & Structure */}
               <div>
                 <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">Nom & Structure</label>
@@ -1122,7 +1211,7 @@ export default function Partenaires() {
   return (
     <SiteLayout>
       <div className="partenaires-page bg-[#f5f7f2] min-h-screen font-sans text-[#2C2C2C]">
-        <Hero 
+        <Hero
           onContactClick={scrollToContact}
           onStatutsClick={scrollToStatuts}
         />
@@ -1148,11 +1237,10 @@ export default function Partenaires() {
                 {partnerSections.map((_, idx) => (
                   <div
                     key={idx}
-                    className={`h-1.5 rounded-full transition-all duration-500 ${
-                      idx === currentSection 
-                        ? 'w-6 sm:w-8 bg-[#99CC33]' 
+                    className={`h-1.5 rounded-full transition-all duration-500 ${idx === currentSection
+                        ? 'w-6 sm:w-8 bg-[#99CC33]'
                         : 'w-1.5 bg-[#d0d5c8]'
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -1180,8 +1268,8 @@ export default function Partenaires() {
                     bg-white border border-[#e8e8e8]
                     text-xs sm:text-sm font-medium text-[#555]
                     transition-all duration-200
-                    ${!isFirst && !isTransitioning 
-                      ? 'hover:border-[#99CC33] hover:text-[#99CC33] hover:shadow-md' 
+                    ${!isFirst && !isTransitioning
+                      ? 'hover:border-[#99CC33] hover:text-[#99CC33] hover:shadow-md'
                       : 'opacity-40 cursor-not-allowed'
                     }
                   `}
@@ -1202,8 +1290,8 @@ export default function Partenaires() {
                     bg-white border border-[#e8e8e8]
                     text-xs sm:text-sm font-medium text-[#555]
                     transition-all duration-200
-                    ${!isLast && !isTransitioning 
-                      ? 'hover:border-[#99CC33] hover:text-[#99CC33] hover:shadow-md' 
+                    ${!isLast && !isTransitioning
+                      ? 'hover:border-[#99CC33] hover:text-[#99CC33] hover:shadow-md'
                       : 'opacity-40 cursor-not-allowed'
                     }
                   `}
@@ -1215,7 +1303,7 @@ export default function Partenaires() {
 
               {/* Barre de progression */}
               <div className="w-full h-1 rounded-full bg-[#e0e5da] overflow-hidden mt-3 sm:mt-4">
-                <div 
+                <div
                   className="h-full bg-[#99CC33] rounded-full transition-all duration-700"
                   style={{ width: `${((currentSection + 1) / totalSections) * 100}%` }}
                 />
@@ -1236,24 +1324,24 @@ export default function Partenaires() {
               <h3 className="font-['Bebas_Neue'] text-xl sm:text-2xl text-[#2C2C2C] mb-2">{t.lightpopH}</h3>
               <p className="text-xs sm:text-sm leading-relaxed text-[#666] mb-5 sm:mb-6">{t.lightpopP}</p>
               <div className="flex flex-col gap-2.5">
-                <button 
-                  className="px-4 py-2.5 sm:py-3 rounded-xl border-none bg-[#99CC33] text-white text-xs sm:text-sm font-semibold hover:bg-[#88bb2e] transition-colors duration-200" 
+                <button
+                  className="px-4 py-2.5 sm:py-3 rounded-xl border-none bg-[#99CC33] text-white text-xs sm:text-sm font-semibold hover:bg-[#88bb2e] transition-colors duration-200"
                   onClick={handleEnableLight}
                 >
                   {t.lightpopYes}
                 </button>
-                <button 
-                  className="px-4 py-2.5 sm:py-3 rounded-xl border border-[#e8e8e8] bg-transparent text-[#666] text-xs sm:text-sm font-semibold hover:bg-[#f5f5f5] transition-colors duration-200" 
+                <button
+                  className="px-4 py-2.5 sm:py-3 rounded-xl border border-[#e8e8e8] bg-transparent text-[#666] text-xs sm:text-sm font-semibold hover:bg-[#f5f5f5] transition-colors duration-200"
                   onClick={handleCloseLightPopup}
                 >
                   {t.lightpopNo}
                 </button>
               </div>
               <label className="flex items-center justify-center gap-2 mt-4 text-[10px] sm:text-xs text-[#999] cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="accent-[#99CC33] cursor-pointer" 
-                  onChange={(e) => handleDontRemind(e.target.checked)} 
+                <input
+                  type="checkbox"
+                  className="accent-[#99CC33] cursor-pointer"
+                  onChange={(e) => handleDontRemind(e.target.checked)}
                 />
                 <span>{t.lightpopRemind}</span>
               </label>
