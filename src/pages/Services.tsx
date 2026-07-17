@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -38,13 +39,6 @@ const UNITE_LABEL: Record<string, string> = {
   stere: '/ stère',
 }
 
-const STATUT_LABEL: Record<string, { label: string; cls: string }> = {
-  nouvelle: { label: 'Nouvelle', cls: 'bg-brand-cyan/10 text-brand-cyan-dark' },
-  'en-cours': { label: 'En cours', cls: 'bg-amber-100 text-amber-700' },
-  traitee: { label: 'Traitée', cls: 'bg-brand-green/10 text-brand-green-dark' },
-  annulee: { label: 'Annulée', cls: 'bg-red-100 text-red-600' },
-}
-
 function formatAr(n: number) {
   return `${(n || 0).toLocaleString('fr-FR')} Ar`
 }
@@ -56,6 +50,7 @@ const fadeInUp = {
 }
 
 export default function Services() {
+  const { t } = useTranslation(['services', 'common'])
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -76,9 +71,9 @@ export default function Services() {
     api
       .serviceCatalogue()
       .then(setCatalogue)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Impossible de charger les services.'))
+      .catch((e) => setError(e instanceof Error ? e.message : t('services:errors.load')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (user?.telephone) setTelephone((prev) => prev || user.telephone || '')
@@ -125,10 +120,17 @@ export default function Services() {
       clearCart()
       setMessage('')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Impossible d’envoyer la demande.')
+      setError(e instanceof Error ? e.message : t('services:errors.submit'))
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const STATUT_LABEL: Record<string, { label: string; cls: string }> = {
+    nouvelle: { label: t('services:status.new'), cls: 'bg-brand-cyan/10 text-brand-cyan-dark' },
+    'en-cours': { label: t('services:status.inProgress'), cls: 'bg-amber-100 text-amber-700' },
+    traitee: { label: t('services:status.processed'), cls: 'bg-brand-green/10 text-brand-green-dark' },
+    annulee: { label: t('services:status.canceled'), cls: 'bg-red-100 text-red-600' },
   }
 
   return (
@@ -142,14 +144,13 @@ export default function Services() {
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24 text-white">
           <motion.div {...fadeInUp} className="max-w-2xl">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-sm font-medium mb-5">
-              <ConciergeBell className="w-4 h-4" /> Services Coloc'KOO
+              <ConciergeBell className="w-4 h-4" /> {t('services:hero.badge')}
             </span>
             <h1 className="text-3xl md:text-5xl font-extrabold leading-tight mb-4">
-              Demandez un service, on s'occupe du reste
+              {t('services:hero.title')}
             </h1>
             <p className="text-white/90 text-base md:text-lg">
-              Ménage, jardinage, petites prestations du quotidien… Sélectionnez ce dont vous avez
-              besoin et envoyez votre demande. Un conseiller Coloc'KOO vous recontacte.
+              {t('services:hero.subtitle')}
             </p>
           </motion.div>
         </div>
@@ -165,7 +166,7 @@ export default function Services() {
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-foreground text-sm leading-tight truncate">
-                  {`${user.prenom || ''} ${user.nom || ''}`.trim() || 'Mon compte'}
+                  {`${user.prenom || ''} ${user.nom || ''}`.trim() || t('services:user.myAccount')}
                 </p>
                 <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-xs text-muted-foreground mt-0.5">
                   <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3" />{user.email}</span>
@@ -173,7 +174,7 @@ export default function Services() {
                   {user.villeActuelle && <span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" />{user.villeActuelle}</span>}
                 </div>
               </div>
-              <span className="ml-auto text-[11px] text-muted-foreground hidden md:block">Demande au nom de ce compte</span>
+              <span className="ml-auto text-[11px] text-muted-foreground hidden md:block">{t('services:user.accountLabel')}</span>
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-brand-cyan/40 bg-brand-cyan/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -182,13 +183,13 @@ export default function Services() {
                   <UserCircle className="w-5 h-5 text-brand-cyan-dark" />
                 </div>
                 <p className="text-sm text-foreground">
-                  <span className="font-semibold">Non connecté</span>
-                  <span className="text-muted-foreground"> — parcourez librement, connectez-vous pour envoyer une demande.</span>
+                  <span className="font-semibold">{t('services:user.notConnected')}</span>
+                  <span className="text-muted-foreground"> — {t('services:user.notConnectedDesc')}</span>
                 </p>
               </div>
               <Link to="/auth?mode=signin&redirect=/services" className="sm:ml-auto">
                 <Button size="sm" className="rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white">
-                  Se connecter <ArrowRight className="w-4 h-4 ml-1" />
+                  {t('common:common.login')} <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>
             </div>
@@ -202,7 +203,7 @@ export default function Services() {
             <div className="mb-5">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-brand-green" />
-                <h2 className="text-2xl font-extrabold text-foreground">Services disponibles</h2>
+                <h2 className="text-2xl font-extrabold text-foreground">{t('services:catalogue.title')}</h2>
                 {!loading && (
                   <span className="text-sm font-semibold text-brand-cyan-dark bg-brand-cyan/10 rounded-full px-2.5 py-0.5">
                     {catalogue.length}
@@ -210,7 +211,7 @@ export default function Services() {
                 )}
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Cochez une ou plusieurs prestations, puis envoyez votre demande.
+                {t('services:catalogue.subtitle')}
               </p>
             </div>
 
@@ -224,12 +225,13 @@ export default function Services() {
               <p className="text-red-600">{error}</p>
             ) : catalogue.length === 0 ? (
               <div className="rounded-2xl border border-border/60 bg-white p-8 text-center text-muted-foreground">
-                Aucun service disponible pour le moment.
+                {t('services:catalogue.empty')}
               </div>
             ) : (
               <div className="space-y-3">
                 {catalogue.map((s, i) => {
                   const active = selected.has(s.id)
+                  const Icon = getServiceIcon(s.nom)
                   return (
                     <motion.button
                       key={s.id}
@@ -246,11 +248,16 @@ export default function Services() {
                           : 'border-border/60 hover:border-brand-cyan/40',
                       )}
                     >
+                      {/* Icône */}
+                      <div className="w-9 h-9 rounded-xl bg-brand-cyan/10 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 text-brand-cyan-dark" />
+                      </div>
+
                       {/* Nom + description */}
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-foreground leading-snug truncate">{s.nom}</div>
                         <p className="text-sm text-muted-foreground line-clamp-1">
-                          {s.description || 'Prestation à la demande.'}
+                          {s.description || t('services:catalogue.defaultDesc')}
                         </p>
                       </div>
 
@@ -282,10 +289,10 @@ export default function Services() {
             <div className="rounded-3xl border border-border/60 bg-white shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-brand-cyan to-brand-green px-6 py-4 text-white flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5" />
-                <h2 className="font-semibold">Ma demande</h2>
+                <h2 className="font-semibold">{t('services:cart.title')}</h2>
                 {count > 0 && (
                   <span className="ml-auto text-xs font-bold bg-white/20 px-2 py-1 rounded-full">
-                    {count} article{count > 1 ? 's' : ''}
+                    {count} {count > 1 ? t('services:cart.items') : t('services:cart.item')}
                   </span>
                 )}
               </div>
@@ -293,7 +300,7 @@ export default function Services() {
               <div className="p-6">
                 {selectedLines.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-6">
-                    Sélectionnez un ou plusieurs services pour composer votre demande.
+                    {t('services:cart.empty')}
                   </p>
                 ) : (
                   <>
@@ -318,7 +325,7 @@ export default function Services() {
                     </ul>
 
                     <div className="flex items-center justify-between border-t border-border/60 pt-4 mb-4">
-                      <span className="font-semibold text-foreground">Total estimé</span>
+                      <span className="font-semibold text-foreground">{t('services:cart.total')}</span>
                       <span className="text-xl font-extrabold text-brand-cyan-dark">{formatAr(total)}</span>
                     </div>
 
@@ -327,14 +334,14 @@ export default function Services() {
                         type="tel"
                         value={telephone}
                         onChange={(e) => setTelephone(e.target.value)}
-                        placeholder="Téléphone de contact"
+                        placeholder={t('services:cart.phonePlaceholder')}
                         className="w-full rounded-xl border border-border/60 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
                       />
                       <textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         rows={3}
-                        placeholder="Précisez votre besoin (adresse, date souhaitée, détails…)"
+                        placeholder={t('services:cart.messagePlaceholder')}
                         className="w-full rounded-xl border border-border/60 px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
                       />
                     </div>
@@ -347,11 +354,11 @@ export default function Services() {
                       className="w-full rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white shadow-md"
                     >
                       {submitting ? (
-                        <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Envoi…</>
+                        <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> {t('common:common.loading')}</>
                       ) : user ? (
-                        <><Send className="w-4 h-4 mr-1" /> Envoyer la demande</>
+                        <><Send className="w-4 h-4 mr-1" /> {t('services:cart.submit')}</>
                       ) : (
-                        <><UserCircle className="w-4 h-4 mr-1" /> Se connecter pour demander</>
+                        <><UserCircle className="w-4 h-4 mr-1" /> {t('services:cart.loginToSubmit')}</>
                       )}
                     </Button>
 
@@ -360,7 +367,7 @@ export default function Services() {
                       onClick={clearCart}
                       className="w-full mt-2 inline-flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-red-600 transition-colors"
                     >
-                      <Trash2 className="w-3.5 h-3.5" /> Vider la sélection
+                      <Trash2 className="w-3.5 h-3.5" /> {t('services:cart.clear')}
                     </button>
                   </>
                 )}
@@ -368,7 +375,7 @@ export default function Services() {
             </div>
 
             <p className="text-xs text-muted-foreground text-center mt-3 px-4">
-              Montant indicatif. Le devis définitif est confirmé par Coloc'KOO, hors plateforme.
+              {t('services:cart.disclaimer')}
             </p>
           </div>
         </div>
@@ -378,7 +385,7 @@ export default function Services() {
           <motion.div {...fadeInUp} className="mt-14">
             <div className="flex items-center gap-2 mb-5">
               <ClipboardList className="w-5 h-5 text-brand-cyan-dark" />
-              <h2 className="text-xl font-bold text-foreground">Mes demandes</h2>
+              <h2 className="text-xl font-bold text-foreground">{t('services:history.title')}</h2>
             </div>
             <div className="space-y-4">
               {history.map((d) => {
@@ -431,22 +438,22 @@ export default function Services() {
               <div className="w-16 h-16 rounded-full bg-brand-green/15 grid place-items-center mx-auto mb-4">
                 <CheckCircle2 className="w-9 h-9 text-brand-green" />
               </div>
-              <h3 className="text-xl font-bold text-foreground mb-1">Demande envoyée !</h3>
+              <h3 className="text-xl font-bold text-foreground mb-1">{t('services:confirmation.title')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Un conseiller Coloc'KOO vous recontacte pour finaliser le devis.
+                {t('services:confirmation.subtitle')}
               </p>
               <div className="rounded-2xl bg-muted/60 px-4 py-3 mb-6">
-                <p className="text-xs text-muted-foreground">Référence</p>
+                <p className="text-xs text-muted-foreground">{t('services:confirmation.reference')}</p>
                 <p className="font-mono font-bold text-foreground">{confirmation.reference}</p>
                 <p className="text-sm mt-1">
-                  Total estimé : <span className="font-semibold">{formatAr(confirmation.total)}</span>
+                  {t('services:confirmation.total')} : <span className="font-semibold">{formatAr(confirmation.total)}</span>
                 </p>
               </div>
               <Button
                 onClick={() => setConfirmation(null)}
                 className="w-full rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white"
               >
-                Parfait
+                {t('services:confirmation.ok')}
               </Button>
             </motion.div>
           </motion.div>

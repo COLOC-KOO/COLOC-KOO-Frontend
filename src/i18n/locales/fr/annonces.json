@@ -1,0 +1,28 @@
+{
+  "title": "Annonces",
+  "results": "résultats",
+  "found": "trouvé(s)",
+  "search": "Où voulez-vous aller ?",
+  "loading": "Recherche en cours...",
+  "empty": "Aucune annonce trouvée",
+  "emptySub": "Essayez de modifier vos filtres de recherche",
+  "filters": {
+    "types": {
+      "all": "Tous types",
+      "room": "Chambre",
+      "apartment": "Appartement",
+      "house": "Maison"
+    },
+    "coloc": {
+      "all": "Tous",
+      "existing": "Colocataires existantes",
+      "create": "Colocataires à créer"
+    },
+    "budget": "Budget",
+    "services": "Services",
+    "noServices": "Aucun service actif",
+    "city": {
+      "all": "Toutes les villes"
+    }
+  }
+}

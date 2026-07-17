@@ -1,0 +1,53 @@
+{
+  "hero": {
+    "badge": "Contact us",
+    "title": "We're",
+    "highlight": "listening",
+    "subtitle": "A question, a partnership, an issue? Write to us. Our team is here to support you."
+  },
+  "infos": {
+    "email": {
+      "title": "Email",
+      "desc": "Reply within 24h"
+    },
+    "phone": {
+      "title": "Phone",
+      "desc": "Mon - Fri, 9am - 6pm"
+    },
+    "address": {
+      "title": "Office",
+      "value": "Isoraka, Antananarivo",
+      "desc": "Come meet us"
+    }
+  },
+  "stats": {
+    "colocataires": "Housemates",
+    "annonces": "Listings",
+    "satisfaction": "Satisfaction",
+    "partenaires": "Partners"
+  },
+  "sidebar": {
+    "title": "Send a message",
+    "subtitle": "Reply within 24 working hours. We're here to listen.",
+    "follow": "Follow us",
+    "features": {
+      "rapide": "Fast response",
+      "dediee": "Dedicated team",
+      "garantie": "Satisfaction guaranteed"
+    }
+  },
+  "form": {
+    "name": "Full name",
+    "namePlaceholder": "Jean Dupont",
+    "email": "Email",
+    "emailPlaceholder": "jean@example.com",
+    "subject": "Subject",
+    "subjectPlaceholder": "Information request",
+    "message": "Message",
+    "messagePlaceholder": "Describe your request in detail...",
+    "submit": "Send message",
+    "success": "Message sent successfully! We'll get back to you shortly.",
+    "error": "Unable to send message",
+    "privacy": "By submitting this form, you agree to our privacy policy."
+  }
+}

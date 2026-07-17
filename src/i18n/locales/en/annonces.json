@@ -1,0 +1,28 @@
+{
+  "title": "Listings",
+  "results": "results",
+  "found": "found",
+  "search": "Where do you want to go?",
+  "loading": "Searching...",
+  "empty": "No listings found",
+  "emptySub": "Try adjusting your search filters",
+  "filters": {
+    "types": {
+      "all": "All types",
+      "room": "Room",
+      "apartment": "Apartment",
+      "house": "House"
+    },
+    "coloc": {
+      "all": "All",
+      "existing": "Existing housemates",
+      "create": "Housemates to create"
+    },
+    "budget": "Budget",
+    "services": "Services",
+    "noServices": "No active services",
+    "city": {
+      "all": "All cities"
+    }
+  }
+}

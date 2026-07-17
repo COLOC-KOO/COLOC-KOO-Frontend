@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "home": "Home",
+    "annonces": "Listings",
+    "deposer": "Post",
+    "partenaires": "Partners",
+    "contact": "Contact",
+    "services": "Services",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "profile": "My profile",
+    "myListings": "My listings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "search": "Search",
+    "viewAll": "View all",
+    "back": "Back",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "filter": "Filter",
+    "apply": "Apply",
+    "reset": "Reset",
+    "previous": "Previous",
+    "next": "Next",
+    "submit": "Submit",
+    "success": "Operation successful"
+  },
+  "footer": {
+    "title": "SARINTANY'COLOC",
+    "subtitle": "A free service offered by Coloc'KOO SARL",
+    "address": "ARO Building Ampefiloha, 1st Floor Esc.B, Door B104, 101 Antananarivo, Madagascar",
+    "cgu": "Terms of use",
+    "privacy": "GDPR Privacy Policy",
+    "personalData": "Personal data",
+    "contact": "Contact"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "validated": "Validated",
+    "rejected": "Rejected",
+    "archived": "Archived",
+    "expired": "Expired",
+    "accepted": "Accepted",
+    "refused": "Refused"
+  },
+  "languages": {
+    "fr": "Français",
+    "mg": "Malagasy",
+    "en": "English"
+  }
+}

@@ -91,7 +91,7 @@ const navItems: NavSection[] = [
       },
       { 
         to: '/admin/utilisateurs', 
-        label: 'Utilisateurs', 
+        label: 'Comptes', 
         icon: Users, 
         minRole: 1,
         description: 'Gestion des utilisateurs'
