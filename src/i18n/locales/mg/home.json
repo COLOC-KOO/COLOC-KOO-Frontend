@@ -1,0 +1,72 @@
+{
+  "hero": {
+    "badge": "Fiarahamonina vaovao",
+    "title": "Tadiavo ny trano fiarahamonina, manerana an'i Madagasikara",
+    "subtitle": "Efitra, trano sy trano fonenana voamarina, rakitra an-tserasera, sonia notsorina.",
+    "search": "Mitady trano fiarahamonina aho",
+    "propose": "Manolotra trano fiarahamonina aho",
+    "placeholder": "Tanàna, faritra...",
+    "allTypes": "Karazana rehetra",
+    "room": "Efitra",
+    "apartment": "Trano",
+    "house": "Trano fonenana",
+    "verified": "Fanambarana voamarina",
+    "colocataires": "1 400+ mpiara-monina",
+    "satisfaction": "4,8/5 fahafaham-po"
+  },
+  "featured": {
+    "title": "Fanambarana malaza",
+    "subtitle": "Fifantenana amin'ity herinandro ity, nohamarinin'ny ekipanay",
+    "list": "Lisitra",
+    "map": "Sarintany",
+    "verified": "Voamarina",
+    "pricePerMonth": "/volana",
+    "empty": "Tsy misy fanambarana misy",
+    "emptySub": "Miverena rehefa afaka kelikely hahitana fanambarana vaovao"
+  },
+  "cities": {
+    "title": "Hijery araka ny tanàna",
+    "subtitle": "tanàna voarakotra, fanambarana voamarina",
+    "annonce": "fanambarana",
+    "annonces": "fanambarana",
+    "viewAll": "Fanambarana rehetra",
+    "explore": "Hijery",
+    "empty": "Tsy misy tanàna misy"
+  },
+  "howItWorks": {
+    "title": "Ahoana no fiasany",
+    "subtitle": "Dingana 3 tsotra hanombohana ny fiarahamonina",
+    "viewAll": "Hijery ny fanambarana",
+    "startSearch": "Hanomboka ny fikarohana",
+    "steps": [
+      {
+        "number": "01",
+        "title": "Tadiavo amin'ny tanàna misy anao",
+        "description": "Lazao ny tanàna na faritra misy anao. Ny sarintany mifandraika dia mampiseho ny trano fiarahamonina rehetra misy."
+      },
+      {
+        "number": "02",
+        "title": "Jereo ny fanambarana voamarina ary mihataka",
+        "description": "Sary, vidiny, tolotra, fitsipika — voasoritra tsara daholo. Ny fanambarana tsirairay dia nohamarinina alohan'ny famoahana."
+      },
+      {
+        "number": "03",
+        "title": "Mifandraisa mivantana",
+        "description": "Alefaso hafatra voaaro. Tsy misy saram-pandraharahana, 100% maimaim-poana."
+      }
+    ]
+  },
+  "partners": {
+    "title": "Ny Mpiara-miasa",
+    "subtitle": "Matoky anay izy ireo",
+    "viewAll": "Hijery rehetra",
+    "empty": "Tsy misy mpiara-miara",
+    "loading": "Entana..."
+  },
+  "cta": {
+    "title": "Tompon-trano na masoivoho ?",
+    "subtitle": "Avoahy ny fanambaranao ary karakarao ny mpiara-monina aminao mora foana.",
+    "deposer": "Hametraka fanambarana",
+    "partenaire": "Ho mpiara-miara"
+  }
+}

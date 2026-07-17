@@ -1,0 +1,193 @@
+{
+  "hero": {
+    "badge": "Lancement 2026",
+    "mission": "« Habiter autrement pour étudier, travailler et s'émanciper »",
+    "title": "Devenez partenaire",
+    "subtitle": "Associez votre marque à une solution malgache d'accès au logement et touchez une audience jeune, urbaine et active. Du statut indépendant aux grandes entreprises et réseaux immobiliers, il existe un statut adapté à chaque structure.",
+    "cta": "Devenir Partenaire",
+    "cta2": "Voir les offres"
+  },
+  "why": {
+    "title": "Pourquoi devenir partenaire ?",
+    "subtitle": "Sarintany'COLOC est le site de référence de la colocation à Madagascar.",
+    "launchText": "Lancement 2026 : plusieurs statuts offerts aux premiers partenaires. Contactez-nous pour découvrir les conditions.",
+    "cards": {
+      "audience": {
+        "title": "Audience ciblée",
+        "desc": "Étudiants, jeunes actifs et familles : une audience jeune, urbaine et active."
+      },
+      "rse": {
+        "title": "Engagement RSE",
+        "desc": "Affichez la signalétique « Partenaire engagé » et associez votre image au logement."
+      },
+      "visibility": {
+        "title": "Visibilité maximale",
+        "desc": "Votre logo et votre page partenaire visibles par tous les visiteurs."
+      },
+      "data": {
+        "title": "Données exclusives",
+        "desc": "Stats de fréquentation, personas, villes attractives et zones de tension."
+      }
+    }
+  },
+  "statuts": {
+    "title": "Les statuts partenaires",
+    "subtitle": "Quatre familles de partenaires, avec des niveaux et des avantages évolutifs."
+  },
+  "sections": {
+    "entreprise": {
+      "title": "Entreprise générale",
+      "subtitle": "De la PME à la grande entreprise, une visibilité croissante."
+    },
+    "realEstate": {
+      "title": "Immobilier",
+      "subtitle": "De l'agent indépendant au réseau national."
+    },
+    "public": {
+      "title": "Institution publique — mécénat",
+      "subtitle": "Soutenez une solution malgache d'accès au logement."
+    },
+    "addon": {
+      "title": "Option · Bandeau régional exclusif",
+      "subtitle": "Un bandeau exclusif pleine largeur en bas de carte, contextuel à la région affichée.",
+      "note": "1er bandeau inclus aux niveaux Platine et Réseau Platine · jusqu'à 5 régions au total."
+    }
+  },
+  "tiers": {
+    "popular": "Le plus populaire",
+    "bronze": {
+      "name": "PME · Bronze",
+      "arg": "Être référencé comme partenaire officiel du site et afficher son engagement RSE.",
+      "benefit1": "Logo + page « Partenaires »",
+      "benefit2": "Présence dans 1 newsletter / an",
+      "benefit3": "Signalétique « Partenaire engagé 2026 »"
+    },
+    "silver": {
+      "name": "Entreprise · Argent",
+      "arg": "Passer devant les autres PME, avec un lien direct vers votre point de vente.",
+      "benefit1": "Intègre toute l'offre précédente, plus :",
+      "benefit2": "Référencement prioritaire",
+      "benefit3": "Point d'intérêt sur la carte",
+      "benefit4": "Redirection vers vos liens web"
+    },
+    "gold": {
+      "name": "Grande entreprise · Or",
+      "arg": "Le bon profil au bon endroit, prouvé par la donnée.",
+      "benefit1": "Intègre toute l'offre précédente, plus :",
+      "benefit2": "Stats annuelles globales",
+      "benefit3": "Référencement prioritaire + présentation 3 lignes",
+      "benefit4": "Encarts natifs dans le fil d'annonces",
+      "benefit5": "Retour annuel d'audiences statistiques",
+      "benefit6": "Logo intégré aux campagnes de communication"
+    },
+    "platinum": {
+      "name": "Grande entreprise · Platine",
+      "arg": "Notoriété maximale et exclusivité géographique.",
+      "benefit1": "Intègre toute l'offre précédente, plus :",
+      "benefit2": "Partenaire mis en avant",
+      "benefit3": "Présence sur la page d'accueil",
+      "benefit4": "Intégration nationale d'une chaîne",
+      "benefit5": "Mise en avant dans les campagnes",
+      "benefit6": "Reporting semestriel personnalisé",
+      "benefit7": "1 bandeau régional exclusif compris"
+    },
+    "independent": {
+      "name": "Indépendant",
+      "launch": "Gratuit au lancement",
+      "arg": "Sans risque : 4 mois de visibilité, une seule colocation conclue rentabilise largement.",
+      "benefit1": "1 annonce à but commercial",
+      "benefit2": "Validité 4 mois",
+      "benefit3": "Les colocataires s'inscrivent puis confirment"
+    },
+    "agency": {
+      "name": "Agence",
+      "launch": "Annonces offertes",
+      "arg": "Un canal d'acquisition rentable, leads qualifiés et statut partenaire pour votre cabinet.",
+      "benefit1": "1 compte agence + 12 annonces/an",
+      "benefit2": "Logo + page « Partenaires »",
+      "benefit3": "1 newsletter par an + signalétique"
+    },
+    "network": {
+      "name": "Réseau d'agences",
+      "launch": "Annonces offertes",
+      "arg": "L'offre maximale réseau : couverture nationale et exclusivité régionale.",
+      "benefit1": "Intégration de tout le réseau",
+      "benefit2": "Publications illimitées",
+      "benefit3": "Visibilité maximale en page d'accueil",
+      "benefit4": "1 bandeau régional exclusif compris"
+    },
+    "publicSilver": {
+      "name": "Mécène Argent",
+      "arg": "Associez votre institution à l'émancipation des jeunes par le logement.",
+      "benefit1": "Logo + page « Partenaires » mécène",
+      "benefit2": "Présence dans 1 newsletter / an",
+      "benefit3": "Signalétique « Mécène engagé 2026 »",
+      "benefit4": "Visibilité équivalente au niveau Argent"
+    },
+    "publicGold": {
+      "name": "Mécène Or",
+      "arg": "Un mécénat valorisant, au plus près du développement du projet.",
+      "benefit1": "Intègre toute l'offre précédente, plus :",
+      "benefit2": "Référencement et présentation du mécène",
+      "benefit3": "Logo du mécène dans les campagnes",
+      "benefit4": "Visibilité équivalente au niveau Or"
+    },
+    "publicPlatinum": {
+      "name": "Mécène Platine",
+      "arg": "L'engagement de mécénat le plus fort, sur mesure.",
+      "benefit1": "Intègre toute l'offre précédente, plus :",
+      "benefit2": "Mise en avant en page d'accueil",
+      "benefit3": "Visibilité maximale équivalente Platine",
+      "benefit4": "Modalités définies ensemble"
+    }
+  },
+  "contact": {
+    "title": "Prêt à rejoindre Sarintany'COLOC ?",
+    "subtitle": "Dites-nous qui vous êtes : nous vous orientons vers le statut le plus adapté.",
+    "name": "Nom & Structure",
+    "namePlaceholder": "Nom et structure",
+    "email": "Email",
+    "emailPlaceholder": "Adresse e-mail",
+    "phone": "Téléphone",
+    "phonePlaceholder": "Numéro de téléphone",
+    "sector": "Secteur",
+    "sectorPlaceholder": "Sélectionner un secteur",
+    "sectorGeneral": "Entreprise générale",
+    "sectorRealEstate": "Immobilier",
+    "sectorPublic": "Institution publique",
+    "sectorOther": "Autre",
+    "level": "Niveau souhaité",
+    "levelPlaceholder": "Sélectionner un niveau souhaité",
+    "levelBronze": "Bronze",
+    "levelSilver": "Argent",
+    "levelGold": "Or",
+    "levelDiamond": "Diamant",
+    "activity": "Votre activité",
+    "activityPlaceholder": "Votre activité et le statut qui vous intéresse",
+    "callback": "Je souhaite être rappelé(e)",
+    "callbackDate": "Date souhaitée de rappel",
+    "slotPlaceholder": "Créneau horaire…",
+    "slotMorning": "Matinée (08h–12h)",
+    "slotEarlyAfternoon": "Début d'après-midi (12h–15h)",
+    "slotLateAfternoon": "Fin d'après-midi (15h–18h)",
+    "brochure": "Recevoir la plaquette des offres par e-mail",
+    "submit": "Nous contacter",
+    "thanks": "Merci !",
+    "thanksText": "Votre demande est notée — l'équipe Coloc'KOO revient vers vous très vite.",
+    "hours": "Lun-Ven 8h-18h",
+    "errors": {
+      "emailjs": "Les identifiants EmailJS ne sont pas encore configurés. Veuillez les définir dans l'environnement du projet."
+    }
+  },
+  "lightpop": {
+    "title": "Naviguer en mode allégé ?",
+    "desc": "Connexion lente ou data limitée ?",
+    "enable": "Activer le mode allégé",
+    "disable": "Continuer normalement",
+    "remind": "Ne plus me le rappeler"
+  },
+  "unavailable": {
+    "title": "Page partenaires indisponible",
+    "subtitle": "Cette fonctionnalité est actuellement désactivée par la configuration globale. Revenez plus tard."
+  }
+}

@@ -1,0 +1,193 @@
+{
+  "hero": {
+    "badge": "Famoahana 2026",
+    "mission": "« Mipetraka hafa mba hianatra, hiasa ary hivoatra »",
+    "title": "Maha-mpiara-miara",
+    "subtitle": "Ampifandraiso amin'ny vahaolana malagasy momba ny trano fiarahamonina ny marikao ary mahazoa mpijery tanora, an-tanàn-dehibe ary mavitrika. Avy amin'ny sata mahaleo tena ka hatramin'ny orinasa lehibe sy tambajotram-pananana, misy sata mifanaraka amin'ny firafitra tsirairay.",
+    "cta": "Maha-mpiara-miara",
+    "cta2": "Jereo ny tolotra"
+  },
+  "why": {
+    "title": "Nahoana no maha-mpiara-miara ?",
+    "subtitle": "Sarintany'COLOC no tranonkala ifotoran'ny trano fiarahamonina eto Madagasikara.",
+    "launchText": "Famoahana 2026 : sata maro atolotra maimaim-poana ho an'ny mpikambana voalohany. Mifandraisa aminay hahalala ny fepetra.",
+    "cards": {
+      "audience": {
+        "title": "Mpijery voatondro",
+        "desc": "Mpianatra, tanora mavitrika ary fianakaviana : mpijery tanora, an-tanàn-dehibe ary mavitrika."
+      },
+      "rse": {
+        "title": "Fanoloran-tena RSE",
+        "desc": "Aseho ny mari-pamantarana « Mpiara-miara manolo-tena » ary ampifandraiso amin'ny trano ny sarinao."
+      },
+      "visibility": {
+        "title": "Fahitana ambony indrindra",
+        "desc": "Ny logonao sy ny pejinao dia hita ho an'ny mpitsidika rehetra."
+      },
+      "data": {
+        "title": "Angona manokana",
+        "desc": "Antontan'isa momba ny fitsidihana, personas, tanàna manintona ary faritra misy olana."
+      }
+    }
+  },
+  "statuts": {
+    "title": "Ny sata mpiara-miara",
+    "subtitle": "Toko-mpanorina efatra misy mpiara-miara, misy ambaratonga sy tombontsoa miovaova."
+  },
+  "sections": {
+    "entreprise": {
+      "title": "Orinasa ankapobeny",
+      "subtitle": "Avy amin'ny orinasa madinika ka hatramin'ny orinasa lehibe, fahitana mitombo."
+    },
+    "realEstate": {
+      "title": "Trano sy tany",
+      "subtitle": "Avy amin'ny mpandraharaha mahaleo tena ka hatramin'ny tambajotram-pirenena."
+    },
+    "public": {
+      "title": "Andrim-panjakana — fanomezana",
+      "subtitle": "Tohano ny vahaolana malagasy momba ny trano fiarahamonina."
+    },
+    "addon": {
+      "title": "Safidy · Bandeau faritra manokana",
+      "subtitle": "Bandeau manokana mivelatra manontolo eo ambanin'ny sarintany, mifanaraka amin'ny faritra aseho.",
+      "note": "Bandeau voalohany tafiditra amin'ny ambaratonga Platine sy Tambajotra Platine · hatramin'ny faritra 5 amin'ny fitambarany."
+    }
+  },
+  "tiers": {
+    "popular": "Malaza indrindra",
+    "bronze": {
+      "name": "PME · Varahina",
+      "arg": "Ho fantatra ho mpiara-miara ofisialy amin'ny tranonkala ary hampiseho ny fanoloran-tena RSE.",
+      "benefit1": "Logo + pejy « Mpiara-miara »",
+      "benefit2": "Fisehoana ao amin'ny gazety 1 isan-taona",
+      "benefit3": "Mari-pamantarana « Mpiara-miara manolo-tena 2026 »"
+    },
+    "silver": {
+      "name": "Orinasa · Volafotsy",
+      "arg": "Mandroso eo anoloan'ny orinasa madinika hafa, miaraka amin'ny rohy mivantana mankany amin'ny toeram-pivarotanao.",
+      "benefit1": "Tafiditra ao ny tolotra rehetra teo aloha, miampy :",
+      "benefit2": "Filaharana manana laharam-pahamehana",
+      "benefit3": "Toerana mahaliana eo amin'ny sarintany",
+      "benefit4": "Fanatodihana any amin'ny rohy web anao"
+    },
+    "gold": {
+      "name": "Orinasa lehibe · Volamena",
+      "arg": "Ny mombamomba tsara amin'ny toerana mety, voaporofo amin'ny angona.",
+      "benefit1": "Tafiditra ao ny tolotra rehetra teo aloha, miampy :",
+      "benefit2": "Antontan'isa isan-taona manerantany",
+      "benefit3": "Filaharana manana laharam-pahamehana + fampisehoana andalana 3",
+      "benefit4": "Doka voajanahary ao amin'ny filaharan'ny fanambarana",
+      "benefit5": "Fiverenan'ny antontan'isa isan-taona",
+      "benefit6": "Logo tafiditra amin'ny fampielezam-peo"
+    },
+    "platinum": {
+      "name": "Orinasa lehibe · Platine",
+      "arg": "Laharam-boninahitra ambony indrindra sy fahafahana manokana ara-paritra.",
+      "benefit1": "Tafiditra ao ny tolotra rehetra teo aloha, miampy :",
+      "benefit2": "Mpiara-miara asongadina",
+      "benefit3": "Fisehoana eo amin'ny pejy fandraisana",
+      "benefit4": "Fampidirana nasionaly amin'ny rojo iray",
+      "benefit5": "Fampisehoana amin'ny fampielezam-peo",
+      "benefit6": "Tatitra isan-telozana manokana",
+      "benefit7": "Bandeau faritra manokana 1 tafiditra"
+    },
+    "independent": {
+      "name": "Mahaleo tena",
+      "launch": "Maimaim-poana amin'ny fanombohana",
+      "arg": "Tsy misy risika : 4 volana fahitana, trano fiarahamonina iray ihany no mahavita mamerina ny vidiny.",
+      "benefit1": "Fanambarana 1 ho an'ny varotra",
+      "benefit2": "Manan-kery 4 volana",
+      "benefit3": "Ny mpiara-monina dia misoratra anarana avy eo manamafy"
+    },
+    "agency": {
+      "name": "Masoinody",
+      "launch": "Fanambarana omena",
+      "arg": "Fomba fahazoana mpanjifa mahomby, leads mahafeno fepetra ary sata mpiara-miara ho an'ny biraonao.",
+      "benefit1": "Kaonty masoinody 1 + fanambarana 12 isan-taona",
+      "benefit2": "Logo + pejy « Mpiara-miara »",
+      "benefit3": "Gazety 1 isan-taona + mari-pamantarana"
+    },
+    "network": {
+      "name": "Tambajotram-pananana",
+      "launch": "Fanambarana omena",
+      "arg": "Tolotra ambony indrindra ho an'ny tambajotra : fandrakofana nasionaly sy fahafahana manokana isam-paritra.",
+      "benefit1": "Fampidirana ny tambajotra manontolo",
+      "benefit2": "Famoahana tsy misy fetra",
+      "benefit3": "Fahitana ambony indrindra eo amin'ny pejy fandraisana",
+      "benefit4": "Bandeau faritra manokana 1 tafiditra"
+    },
+    "publicSilver": {
+      "name": "Mpanohatra Volafotsy",
+      "arg": "Ampifandraiso amin'ny fahafahan'ny tanora amin'ny alalan'ny trano ny andrim-panjakanao.",
+      "benefit1": "Logo + pejy « Mpiara-miara » mpanohana",
+      "benefit2": "Fisehoana ao amin'ny gazety 1 isan-taona",
+      "benefit3": "Mari-pamantarana « Mpanohatra manolo-tena 2026 »",
+      "benefit4": "Fahitana mitovy amin'ny ambaratonga Volafotsy"
+    },
+    "publicGold": {
+      "name": "Mpanohatra Volamena",
+      "arg": "Fanohanana mampitombo lanja, akaiky indrindra amin'ny fivoaran'ny tetikasa.",
+      "benefit1": "Tafiditra ao ny tolotra rehetra teo aloha, miampy :",
+      "benefit2": "Filaharana sy fampisehoana ny mpanohana",
+      "benefit3": "Logon'ny mpanohana ao amin'ny fampielezam-peo",
+      "benefit4": "Fahitana mitovy amin'ny ambaratonga Volamena"
+    },
+    "publicPlatinum": {
+      "name": "Mpanohatra Platine",
+      "arg": "Fanoloran-tena ambony indrindra, namboarina manokana.",
+      "benefit1": "Tafiditra ao ny tolotra rehetra teo aloha, miampy :",
+      "benefit2": "Fampisehoana eo amin'ny pejy fandraisana",
+      "benefit3": "Fahitana ambony indrindra mitovy amin'ny Platine",
+      "benefit4": "Fepetra farany miaraka"
+    }
+  },
+  "contact": {
+    "title": "Vonona ny hiaraka amin'ny Sarintany'COLOC ?",
+    "subtitle": "Lazao izay anao : hanoroana anao ny sata mety indrindra izahay.",
+    "name": "Anarana sy rafitra",
+    "namePlaceholder": "Anarana sy rafitra",
+    "email": "Email",
+    "emailPlaceholder": "Adiresy mailaka",
+    "phone": "Telefaonina",
+    "phonePlaceholder": "Laharan-telefaonina",
+    "sector": "Sampana",
+    "sectorPlaceholder": "Mifidy sampana",
+    "sectorGeneral": "Orinasa ankapobeny",
+    "sectorRealEstate": "Trano sy tany",
+    "sectorPublic": "Andrim-panjakana",
+    "sectorOther": "Hafa",
+    "level": "Ambaratonga tiana",
+    "levelPlaceholder": "Mifidy ambaratonga tiana",
+    "levelBronze": "Varahina",
+    "levelSilver": "Volafotsy",
+    "levelGold": "Volamena",
+    "levelDiamond": "Diamant",
+    "activity": "Ny asanao",
+    "activityPlaceholder": "Ny asanao sy ny sata mahaliana anao",
+    "callback": "Mangataka antso aho",
+    "callbackDate": "Daty tiana hiantsoana",
+    "slotPlaceholder": "Fotoana mety...",
+    "slotMorning": "Maraina (08h–12h)",
+    "slotEarlyAfternoon": "Tohan'ny tolakandro (12h–15h)",
+    "slotLateAfternoon": "Farany tolakandro (15h–18h)",
+    "brochure": "Hahazo ny bokikely amin'ny alalan'ny mailaka",
+    "submit": "Mifandraisa aminay",
+    "thanks": "Misaotra !",
+    "thanksText": "Voaray ny fangatahanao — ny ekipan'ny Coloc'KOO hiverina aminao tsy ho ela.",
+    "hours": "Ala-ven 8h-18h",
+    "errors": {
+      "emailjs": "Ny famantarana EmailJS dia mbola tsy voarafitra. Amboary ao amin'ny tontolo iainana ny tetikasa."
+    }
+  },
+  "lightpop": {
+    "title": "Hivezivezy amin'ny fomba maivana ?",
+    "desc": "Fifandraisana miadana na voafetra ny angona ?",
+    "enable": "Ampandehano ny fomba maivana",
+    "disable": "Tohizo ara-dalàna",
+    "remind": "Aza mampahatsiahy ahy intsony"
+  },
+  "unavailable": {
+    "title": "Pejy mpiara-miara tsy misy",
+    "subtitle": "Ity endri-javatra ity dia najanon'ny fandrindrana manerantany. Miverena rehefa afaka kelikely."
+  }
+}

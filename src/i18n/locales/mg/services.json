@@ -1,0 +1,52 @@
+{
+  "hero": {
+    "badge": "Tolotra Coloc'KOO",
+    "title": "Mangataha tolotra, izahay no hikarakara ny ambiny",
+    "subtitle": "Fandresena, fambolena, tolotra madinika isan'andro… Safidio izay ilainao ary alefaso ny fangatahanao. Mpanolo-tsaina Coloc'KOO hiverina aminao."
+  },
+  "user": {
+    "myAccount": "Ny kaotiko",
+    "accountLabel": "Fangatahana amin'ny anaran'ity kaonty ity",
+    "notConnected": "Tsy tafiditra",
+    "notConnectedDesc": "mijery malalaka, miditra mba handefasana fangatahana."
+  },
+  "catalogue": {
+    "title": "Tolotra misy",
+    "subtitle": "Safidio iray na maromaro, ary alefaso ny fangatahanao.",
+    "defaultDesc": "Tolotra araka ny fangatahana.",
+    "empty": "Tsy misy tolotra misy amin'izao fotoana izao."
+  },
+  "cart": {
+    "title": "Ny fangatahako",
+    "item": "zavatra",
+    "items": "zavatra",
+    "empty": "Safidio tolotra iray na maromaro hamoronana ny fangatahanao.",
+    "total": "Tombantombana",
+    "phonePlaceholder": "Telefaonina ifandraisana",
+    "messagePlaceholder": "Mamariho ny filanao (adiresy, daty tiana, antsipirihany…)",
+    "submit": "Alefaso ny fangatahana",
+    "loginToSubmit": "Hiditra mba hangataka",
+    "clear": "Ariana ny fifantenana",
+    "disclaimer": "Sanda tombantombana. Ny vidiny farany dia nohamarinin'ny Coloc'KOO, ivelan'ny sehatra."
+  },
+  "history": {
+    "title": "Ny fangatahako"
+  },
+  "confirmation": {
+    "title": "Fangatahana alefa !",
+    "subtitle": "Mpanolo-tsaina Coloc'KOO hiverina aminao hamaranana ny fifanarahana.",
+    "reference": "Fanamarihana",
+    "total": "Tombantombana",
+    "ok": "Tsara"
+  },
+  "status": {
+    "new": "Vaovao",
+    "inProgress": "Mitohy",
+    "processed": "Vita",
+    "canceled": "Nafoana"
+  },
+  "errors": {
+    "load": "Tsy afaka namaky ny tolotra.",
+    "submit": "Tsy afaka nandefa ny fangatahana."
+  }
+}

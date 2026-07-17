@@ -1,6 +1,7 @@
 // components/SiteHeader.tsx
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Menu, User, X, ChevronDown, Home, Search, Plus, Users, Phone, Globe, LogOut, UserCircle, Settings, HelpCircle, ConciergeBell } from 'lucide-react'
 import { Logo } from '../Logo'
 import { Button } from '../ui/Button'
@@ -12,20 +13,22 @@ import { cn } from '../../lib/utils'
 const LANGUAGE_STORAGE_KEY = 'colockoo_language'
 
 const navItems = [
-  { to: '/annonces', label: 'Annonces', icon: Search },
-  { to: '/deposer', label: 'Déposer', icon: Plus },
-  { to: '/partenaires', label: 'Partenaires', icon: Users },
-  { to: '/contact', label: 'Contact', icon: Phone },
-  { to: '/services', label: 'Service', icon: ConciergeBell }
+  { to: '/annonces', label: 'announcements', icon: Search },
+  { to: '/deposer', label: 'post', icon: Plus },
+  { to: '/partenaires', label: 'partners', icon: Users },
+  { to: '/contact', label: 'contact', icon: Phone },
+  { to: '/services', label: 'services', icon: ConciergeBell }
 ]
 
+// Langues avec leurs informations complètes
 const languageOptions = [
-  { code: 'FR' as const, label: 'Français', visible: true },
-  { code: 'MG' as const, label: 'Malagasy', visible: false },
-  { code: 'EN' as const, label: 'English', visible: false }
+  { code: 'FR' as const, label: 'Français', nativeName: 'Français', flagCode: 'fr' },
+  { code: 'MG' as const, label: 'Malagasy', nativeName: 'Malagasy', flagCode: 'mg' },
+  { code: 'EN' as const, label: 'English', nativeName: 'English', flagCode: 'gb' }
 ]
 
 export function SiteHeader() {
+  const { t, i18n } = useTranslation(['header', 'common'])
   const [open, setOpen] = useState(false)
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -39,33 +42,26 @@ export function SiteHeader() {
 
   const partnerEnabled = config?.PARTENAIRE_VISIBILITY !== false
 
+  // TOUJOURS afficher les 3 langues
   const availableLanguages = useMemo(() => {
     return languageOptions
-      .map((item) => {
-        let visible = false
-        if (item.code === 'FR') {
-          visible = true
-        } else if (item.code === 'MG') {
-          visible = config?.I18N_MG === true
-        } else if (item.code === 'EN') {
-          visible = config?.I18N_EN === true
-        }
-        return { ...item, visible }
-      })
-      .filter((item) => item.visible)
-  }, [config])
+  }, [])
 
+  // INITIALISER la langue depuis localStorage ou i18n
   useEffect(() => {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as 'FR' | 'MG' | 'EN' | null
     if (stored && availableLanguages.some((item) => item.code === stored)) {
       setSelectedLanguage(stored)
+      i18n.changeLanguage(stored.toLowerCase())
       return
     }
 
     if (availableLanguages.length > 0 && !availableLanguages.some((item) => item.code === selectedLanguage)) {
-      setSelectedLanguage(availableLanguages[0]?.code ?? 'FR')
+      const defaultLang = availableLanguages[0]?.code ?? 'FR'
+      setSelectedLanguage(defaultLang)
+      i18n.changeLanguage(defaultLang.toLowerCase())
     }
-  }, [availableLanguages, selectedLanguage])
+  }, [availableLanguages, i18n, selectedLanguage])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,23 +84,24 @@ export function SiteHeader() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // CHANGER LA LANGUE
   const handleLanguageChange = (code: 'FR' | 'MG' | 'EN') => {
     setSelectedLanguage(code)
     localStorage.setItem(LANGUAGE_STORAGE_KEY, code)
+    i18n.changeLanguage(code.toLowerCase())
     setLanguageMenuOpen(false)
   }
 
-  const selectedLanguageOption = availableLanguages.find(
-    (item) => item.code === selectedLanguage
+  // Récupérer la langue actuelle pour l'affichage
+  const currentLanguage = availableLanguages.find(
+    (item) => item.code.toLowerCase() === i18n.language
   ) ?? availableLanguages[0]
+
+  const selectedLanguageOption = currentLanguage
 
   const visibleNavItems = navItems.filter(
     (item) => item.to !== '/partenaires' || partnerEnabled
   )
-
-  const handleLanguageMenuClose = () => {
-    setLanguageMenuOpen(false)
-  }
 
   const getUserInitials = () => {
     if (user?.prenom && user?.nom) {
@@ -115,6 +112,11 @@ export function SiteHeader() {
     return 'U'
   }
 
+  // Fonction pour obtenir le label traduit d'un item de navigation
+  const getNavLabel = (labelKey: string): string => {
+    return t(labelKey, { ns: 'header' })
+  }
+
   return (
     <header className={cn(
       'sticky top-0 z-50 transition-all duration-300 w-full',
@@ -122,7 +124,6 @@ export function SiteHeader() {
         ? 'bg-white/95 backdrop-blur-xl shadow-lg border-b border-border/50' 
         : 'bg-white/90 backdrop-blur-sm border-b border-border'
     )}>
-      {/* Changement: w-full au lieu de max-w-7xl, padding responsive */}
       <div className="w-full px-4 md:px-6 lg:px-8 h-16 md:h-20 flex items-center gap-4">
         {/* Logo */}
         <div className="flex-shrink-0">
@@ -133,6 +134,7 @@ export function SiteHeader() {
         <nav className="hidden lg:flex items-center gap-1 ml-6">
           {visibleNavItems.map((item) => {
             const isActive = location.pathname.startsWith(item.to)
+            const label = getNavLabel(item.label)
             return (
               <Link
                 key={item.to}
@@ -149,7 +151,7 @@ export function SiteHeader() {
                   isActive ? 'text-brand-cyan' : 'opacity-60 group-hover:opacity-100',
                   'group-hover:scale-110'
                 )} />
-                <span>{item.label}</span>
+                <span>{label}</span>
                 {isActive && (
                   <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-brand-cyan rounded-full" />
                 )}
@@ -162,7 +164,7 @@ export function SiteHeader() {
 
         {/* Actions Desktop */}
         <div className="hidden lg:flex items-center gap-3">
-          {/* Language Selector */}
+          {/* Language Selector avec les 3 langues */}
           <div className="relative" ref={languageMenuRef}>
             <button
               type="button"
@@ -179,8 +181,9 @@ export function SiteHeader() {
               )} />
             </button>
 
+            {/* Menu avec les 3 langues */}
             {languageMenuOpen && availableLanguages.length > 0 && (
-              <div className="absolute right-0 top-full mt-2 min-w-[200px] rounded-2xl border border-border/50 bg-white shadow-xl overflow-hidden z-20 animate-in fade-in-0 zoom-in-95 duration-150">
+              <div className="absolute right-0 top-full mt-2 min-w-[220px] rounded-2xl border border-border/50 bg-white shadow-xl overflow-hidden z-20 animate-in fade-in-0 zoom-in-95 duration-150">
                 <div className="p-1">
                   {availableLanguages.map((language) => (
                     <button
@@ -189,7 +192,7 @@ export function SiteHeader() {
                       onClick={() => handleLanguageChange(language.code)}
                       className={cn(
                         'w-full text-left px-4 py-2.5 text-sm transition-all duration-150 flex items-center gap-3 rounded-xl hover:bg-muted',
-                        language.code === selectedLanguage
+                        language.code.toLowerCase() === i18n.language
                           ? 'bg-brand-cyan/10 text-brand-cyan-dark font-semibold'
                           : 'text-foreground/80 hover:text-foreground'
                       )}
@@ -199,11 +202,16 @@ export function SiteHeader() {
                         size="md"
                         className={cn(
                           "transition-transform duration-200",
-                          language.code === selectedLanguage && "scale-110"
+                          language.code.toLowerCase() === i18n.language && "scale-110"
                         )}
                       />
-                      <span className="flex-1">{language.label}</span>
-                      {language.code === selectedLanguage && (
+                      <span className="flex-1">
+                        <span className="font-medium">{language.label}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {language.nativeName}
+                        </span>
+                      </span>
+                      {language.code.toLowerCase() === i18n.language && (
                         <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan" />
                       )}
                     </button>
@@ -238,7 +246,7 @@ export function SiteHeader() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold truncate">
-                          {user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.name || 'Utilisateur'}
+                          {user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.name || t('user', { ns: 'common' })}
                         </div>
                         <div className="text-xs text-muted-foreground truncate">
                           {user.email}
@@ -253,7 +261,7 @@ export function SiteHeader() {
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
                     >
                       <UserCircle className="w-4 h-4 text-muted-foreground" />
-                      <span>Mon profil</span>
+                      <span>{t('myProfile', { ns: 'header' })}</span>
                     </Link>
                     <Link
                       to="/compte?tab=dossier"
@@ -261,7 +269,7 @@ export function SiteHeader() {
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
                     >
                       <Home className="w-4 h-4 text-muted-foreground" />
-                      <span>Mes annonces</span>
+                      <span>{t('myAnnouncements', { ns: 'header' })}</span>
                     </Link>
                
                     
@@ -270,7 +278,7 @@ export function SiteHeader() {
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-red-50 text-red-600 transition-colors mt-1 border-t border-border/50 pt-2"
                     >
                       <LogOut className="w-4 h-4" />
-                      <span>Déconnexion</span>
+                      <span>{t('logout', { ns: 'header' })}</span>
                     </button>
                   </div>
                 </div>
@@ -280,12 +288,12 @@ export function SiteHeader() {
             <>
               <Link to="/auth">
                 <Button variant="outline" size="sm" className="rounded-xl border-2 hover:border-brand-cyan hover:bg-brand-cyan/5 transition-all duration-200">
-                  Se connecter
+                  {t('signin', { ns: 'header' })}
                 </Button>
               </Link>
               <Link to="/compte?tab=dossier">
                 <Button size="sm" className="rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200">
-                  <User className="w-4 h-4 mr-1" /> S'inscrire
+                  <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
                 </Button>
               </Link>
             </>
@@ -296,7 +304,7 @@ export function SiteHeader() {
         <button 
           className="lg:hidden p-2 hover:bg-muted/80 rounded-xl transition-colors relative"
           onClick={() => setOpen(!open)}
-          aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+          aria-label={open ? t('closeMenu', { ns: 'header' }) : t('openMenu', { ns: 'header' })}
         >
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           {user && !open && (
@@ -311,6 +319,7 @@ export function SiteHeader() {
           {/* Navigation Mobile */}
           {visibleNavItems.map((item) => {
             const isActive = location.pathname.startsWith(item.to)
+            const label = getNavLabel(item.label)
             return (
               <Link
                 key={item.to}
@@ -327,7 +336,7 @@ export function SiteHeader() {
                   'w-4 h-4',
                   isActive ? 'text-brand-cyan' : 'opacity-60'
                 )} />
-                {item.label}
+                {label}
                 {isActive && (
                   <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-cyan" />
                 )}
@@ -336,7 +345,7 @@ export function SiteHeader() {
           })}
           
           <div className="border-t border-border/50 mt-3 pt-3 flex flex-col gap-3">
-            {/* Mobile Language Selector */}
+            {/* Mobile Language Selector avec les 3 langues */}
             <div className="grid grid-cols-3 gap-2">
               {availableLanguages.map((language) => (
                 <button
@@ -347,8 +356,8 @@ export function SiteHeader() {
                     setOpen(false)
                   }}
                   className={cn(
-                    'flex flex-col items-center justify-center gap-2 px-3 py-3 rounded-xl border-2 transition-all duration-150',
-                    language.code === selectedLanguage
+                    'flex flex-col items-center justify-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all duration-150',
+                    language.code.toLowerCase() === i18n.language
                       ? 'border-brand-cyan bg-brand-cyan/10 shadow-sm'
                       : 'border-border/50 bg-white text-foreground/70 hover:border-brand-cyan/30 hover:bg-muted'
                   )}
@@ -356,6 +365,9 @@ export function SiteHeader() {
                   <FlagIcon code={language.code} size="lg" />
                   <span className="text-[10px] uppercase tracking-wider font-semibold">
                     {language.code}
+                  </span>
+                  <span className="text-[8px] text-muted-foreground truncate max-w-full">
+                    {language.nativeName}
                   </span>
                 </button>
               ))}
@@ -371,7 +383,7 @@ export function SiteHeader() {
                     </div>
                     <div className="flex-1 text-left">
                       <div className="text-sm font-semibold">
-                        {user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.name || 'Mon compte'}
+                        {user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.name || t('myAccount', { ns: 'header' })}
                       </div>
                       <div className="text-xs opacity-80 truncate">{user.email}</div>
                     </div>
@@ -385,19 +397,19 @@ export function SiteHeader() {
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-red-200 hover:border-red-300 hover:bg-red-50 text-red-600 transition-all duration-200"
                 >
                   <LogOut className="w-4 h-4" />
-                  Déconnexion
+                  {t('logout', { ns: 'header' })}
                 </button>
               </>
             ) : (
               <>
                 <Link to="/auth" className="w-full" onClick={() => setOpen(false)}>
                   <Button variant="outline" className="w-full rounded-xl border-2" size="sm">
-                    Se connecter
+                    {t('signin', { ns: 'header' })}
                   </Button>
                 </Link>
                 <Link to="/compte?tab=dossier" className="w-full" onClick={() => setOpen(false)}>
                   <Button className="w-full rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200" size="sm">
-                    <User className="w-4 h-4 mr-1" /> S'inscrire
+                    <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
                   </Button>
                 </Link>
               </>

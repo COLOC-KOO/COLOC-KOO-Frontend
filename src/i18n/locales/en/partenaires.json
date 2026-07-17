@@ -1,0 +1,193 @@
+{
+  "hero": {
+    "badge": "Launch 2026",
+    "mission": "« Living differently to study, work and grow »",
+    "title": "Become a partner",
+    "subtitle": "Associate your brand with a Malagasy housing solution and reach a young, urban and active audience. From independent status to large companies and real estate networks, there is a status adapted to each structure.",
+    "cta": "Become a Partner",
+    "cta2": "View offers"
+  },
+  "why": {
+    "title": "Why become a partner?",
+    "subtitle": "Sarintany'COLOC is the reference site for colocation in Madagascar.",
+    "launchText": "Launch 2026: several statuses offered to the first partners. Contact us to discover the conditions.",
+    "cards": {
+      "audience": {
+        "title": "Targeted audience",
+        "desc": "Students, young professionals and families: a young, urban and active audience."
+      },
+      "rse": {
+        "title": "CSR commitment",
+        "desc": "Display the « Committed Partner » signage and associate your image with housing."
+      },
+      "visibility": {
+        "title": "Maximum visibility",
+        "desc": "Your logo and partner page visible to all visitors."
+      },
+      "data": {
+        "title": "Exclusive data",
+        "desc": "Traffic statistics, personas, attractive cities and tension zones."
+      }
+    }
+  },
+  "statuts": {
+    "title": "Partner statuses",
+    "subtitle": "Four families of partners, with evolving levels and benefits."
+  },
+  "sections": {
+    "entreprise": {
+      "title": "General company",
+      "subtitle": "From SME to large enterprise, increasing visibility."
+    },
+    "realEstate": {
+      "title": "Real estate",
+      "subtitle": "From independent agent to national network."
+    },
+    "public": {
+      "title": "Public institution — sponsorship",
+      "subtitle": "Support a Malagasy housing solution."
+    },
+    "addon": {
+      "title": "Option · Exclusive regional banner",
+      "subtitle": "An exclusive full-width banner at the bottom of the map, contextual to the displayed region.",
+      "note": "1st banner included at Platinum and Network Platinum levels · up to 5 regions in total."
+    }
+  },
+  "tiers": {
+    "popular": "Most popular",
+    "bronze": {
+      "name": "SME · Bronze",
+      "arg": "Be referenced as an official partner of the site and display your CSR commitment.",
+      "benefit1": "Logo + « Partners » page",
+      "benefit2": "Presence in 1 newsletter / year",
+      "benefit3": "« Committed Partner 2026 » signage"
+    },
+    "silver": {
+      "name": "Company · Silver",
+      "arg": "Move ahead of other SMEs, with a direct link to your point of sale.",
+      "benefit1": "Includes all previous offers, plus:",
+      "benefit2": "Priority referencing",
+      "benefit3": "Point of interest on the map",
+      "benefit4": "Redirect to your web links"
+    },
+    "gold": {
+      "name": "Large company · Gold",
+      "arg": "The right profile in the right place, proven by data.",
+      "benefit1": "Includes all previous offers, plus:",
+      "benefit2": "Annual global statistics",
+      "benefit3": "Priority referencing + 3-line presentation",
+      "benefit4": "Native ads in the listings feed",
+      "benefit5": "Annual statistical audience return",
+      "benefit6": "Logo integrated into communication campaigns"
+    },
+    "platinum": {
+      "name": "Large company · Platinum",
+      "arg": "Maximum notoriety and geographic exclusivity.",
+      "benefit1": "Includes all previous offers, plus:",
+      "benefit2": "Partner highlighted",
+      "benefit3": "Presence on the homepage",
+      "benefit4": "National integration of a chain",
+      "benefit5": "Highlighted in campaigns",
+      "benefit6": "Semi-annual personalized reporting",
+      "benefit7": "1 exclusive regional banner included"
+    },
+    "independent": {
+      "name": "Independent",
+      "launch": "Free at launch",
+      "arg": "Risk-free: 4 months of visibility, one colocation concluded largely pays for itself.",
+      "benefit1": "1 commercial listing",
+      "benefit2": "Valid for 4 months",
+      "benefit3": "Housemates register then confirm"
+    },
+    "agency": {
+      "name": "Agency",
+      "launch": "Listings offered",
+      "arg": "A profitable acquisition channel, qualified leads and partner status for your office.",
+      "benefit1": "1 agency account + 12 listings/year",
+      "benefit2": "Logo + « Partners » page",
+      "benefit3": "1 newsletter/year + signage"
+    },
+    "network": {
+      "name": "Agency network",
+      "launch": "Listings offered",
+      "arg": "The maximum network offer: national coverage and regional exclusivity.",
+      "benefit1": "Integration of the entire network",
+      "benefit2": "Unlimited publications",
+      "benefit3": "Maximum visibility on the homepage",
+      "benefit4": "1 exclusive regional banner included"
+    },
+    "publicSilver": {
+      "name": "Silver Sponsor",
+      "arg": "Associate your institution with the emancipation of young people through housing.",
+      "benefit1": "Logo + « Partners » sponsor page",
+      "benefit2": "Presence in 1 newsletter / year",
+      "benefit3": "« Committed Sponsor 2026 » signage",
+      "benefit4": "Visibility equivalent to Silver level"
+    },
+    "publicGold": {
+      "name": "Gold Sponsor",
+      "arg": "A rewarding sponsorship, close to the project's development.",
+      "benefit1": "Includes all previous offers, plus:",
+      "benefit2": "Sponsor referencing and presentation",
+      "benefit3": "Sponsor logo in communication campaigns",
+      "benefit4": "Visibility equivalent to Gold level"
+    },
+    "publicPlatinum": {
+      "name": "Platinum Sponsor",
+      "arg": "The strongest sponsorship commitment, tailor-made.",
+      "benefit1": "Includes all previous offers, plus:",
+      "benefit2": "Highlighted on the homepage",
+      "benefit3": "Maximum visibility equivalent to Platinum",
+      "benefit4": "Terms defined together"
+    }
+  },
+  "contact": {
+    "title": "Ready to join Sarintany'COLOC?",
+    "subtitle": "Tell us who you are: we'll guide you to the most suitable status.",
+    "name": "Name & Structure",
+    "namePlaceholder": "Name and structure",
+    "email": "Email",
+    "emailPlaceholder": "Email address",
+    "phone": "Phone",
+    "phonePlaceholder": "Phone number",
+    "sector": "Sector",
+    "sectorPlaceholder": "Select a sector",
+    "sectorGeneral": "General company",
+    "sectorRealEstate": "Real estate",
+    "sectorPublic": "Public institution",
+    "sectorOther": "Other",
+    "level": "Desired level",
+    "levelPlaceholder": "Select a desired level",
+    "levelBronze": "Bronze",
+    "levelSilver": "Silver",
+    "levelGold": "Gold",
+    "levelDiamond": "Diamond",
+    "activity": "Your activity",
+    "activityPlaceholder": "Your activity and the status you're interested in",
+    "callback": "I would like to be called back",
+    "callbackDate": "Preferred callback date",
+    "slotPlaceholder": "Time slot...",
+    "slotMorning": "Morning (8am–12pm)",
+    "slotEarlyAfternoon": "Early afternoon (12pm–3pm)",
+    "slotLateAfternoon": "Late afternoon (3pm–6pm)",
+    "brochure": "Receive the brochure by email",
+    "submit": "Contact us",
+    "thanks": "Thank you!",
+    "thanksText": "Your request has been noted — the Coloc'KOO team will get back to you shortly.",
+    "hours": "Mon-Fri 8am-6pm",
+    "errors": {
+      "emailjs": "EmailJS credentials are not yet configured. Please set them in the project environment."
+    }
+  },
+  "lightpop": {
+    "title": "Browse in light mode?",
+    "desc": "Slow connection or limited data?",
+    "enable": "Enable light mode",
+    "disable": "Continue normally",
+    "remind": "Don't remind me again"
+  },
+  "unavailable": {
+    "title": "Partners page unavailable",
+    "subtitle": "This feature is currently disabled by the global configuration. Please come back later."
+  }
+}

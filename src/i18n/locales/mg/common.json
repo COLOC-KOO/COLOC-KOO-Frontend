@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "home": "Fandraisana",
+    "annonces": "Fanambarana",
+    "deposer": "Hametraka",
+    "partenaires": "Mpiara-miara",
+    "contact": "Ifandraisana",
+    "services": "Tolotra",
+    "login": "Hiditra",
+    "register": "Hisoratra anarana",
+    "logout": "Hivoaka",
+    "profile": "Momba ahy",
+    "myListings": "Ny fanambarako"
+  },
+  "common": {
+    "loading": "Entana...",
+    "error": "Nisy hadisoana",
+    "search": "Hikaroka",
+    "viewAll": "Hijery rehetra",
+    "back": "Hiverina",
+    "close": "Hidiana",
+    "save": "Tehirizina",
+    "cancel": "Afoina",
+    "delete": "Fafana",
+    "edit": "Ovaina",
+    "confirm": "Hamarina",
+    "yes": "Eny",
+    "no": "Tsia",
+    "all": "Rehetra",
+    "none": "Tsy misy",
+    "filter": "Hanivana",
+    "apply": "Ampiharo",
+    "reset": "Averina",
+    "previous": "Teo aloha",
+    "next": "Manaraka",
+    "submit": "Alefa",
+    "success": "Vita soa aman-tsara"
+  },
+  "footer": {
+    "title": "SARINTANY'COLOC",
+    "subtitle": "Tolotra maimaim-poana nataon'i Coloc'KOO SARL",
+    "address": "Trano ARO Ampefiloha, Étg.1 Esc.B, Varavarana B104, 101 Antananarivo, Madagasikara",
+    "cgu": "Fepetra fampiasana ankapobeny",
+    "privacy": "Politika momba ny tsiambaratelo RGPD",
+    "personalData": "Angona manokana",
+    "contact": "Ifandraisana"
+  },
+  "status": {
+    "active": "Miasa",
+    "inactive": "Tsy miasa",
+    "pending": "Miandry",
+    "validated": "Voamarina",
+    "rejected": "Nolavina",
+    "archived": "Tahirizina",
+    "expired": "Lany daty",
+    "accepted": "Ekena",
+    "refused": "Lavina"
+  },
+  "languages": {
+    "fr": "Français",
+    "mg": "Malagasy",
+    "en": "English"
+  }
+}

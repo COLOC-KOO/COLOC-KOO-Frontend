@@ -1,5 +1,6 @@
 // pages/Partenaires.tsx
 import React, { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import emailjs from '@emailjs/browser'
 import { Link } from 'react-router-dom'
 import {
@@ -51,96 +52,20 @@ interface WhyCard {
   stat?: string
 }
 
-// Données i18n
-const t = {
-  heroBadge: "Lancement 2026",
-  heroTitle: "Devenez partenaire",
-  heroDesc: "Associez votre marque à une solution malgache d'accès au logement et touchez une audience jeune, urbaine et active. Du statut indépendant aux grandes entreprises et réseaux immobiliers, il existe un statut adapté à chaque structure.",
-  heroMission: "« Habiter autrement pour étudier, travailler et s'émanciper »",
-  heroCta: "Devenir Partenaire",
-  heroCta2: "Voir les offres",
-  whyTitle: "Pourquoi devenir partenaire ?",
-  whySub: "Sarintany'COLOC est le site de référence de la colocation à Madagascar.",
-  whyReasons: "",
-  launchTxt: "Lancement 2026 : plusieurs statuts offerts aux premiers partenaires. Contactez-nous pour découvrir les conditions.",
-  statutsTitle: "Les statuts partenaires",
-  statutsSub: "Quatre familles de partenaires, avec des niveaux et des avantages évolutifs.",
-  secEnt: "Entreprise générale",
-  secImmo: "Immobilier",
-  secInst: "Institution publique — mécénat",
-  secAddon: "Option · Bandeau régional exclusif",
-  contactH: "Prêt à rejoindre Sarintany'COLOC ?",
-  contactP: "Dites-nous qui vous êtes : nous vous orientons vers le statut le plus adapté .",
-  contactCta: "Nous contacter",
-  // Benefits mapping...
-  b1: "Logo + page « Partenaires »",
-  b2: "Présence dans 1 newsletter / an",
-  b3: "Signalétique « Partenaire engagé 2026 »",
-  b4: "Intègre toute l'offre précédente, plus :",
-  b5: "Référencement prioritaire",
-  b6: "Point d'intérêt sur la carte",
-  b7: "Redirection vers vos liens web",
-  b8: "Stats annuelles globales",
-  b9: "Référencement prioritaire + présentation 3 lignes",
-  b10: "Encarts natifs dans le fil d'annonces",
-  b11: "Retour annuel d'audiences statistiques",
-  b12: "Logo intégré aux campagnes de communication",
-  b13: "Partenaire mis en avant",
-  b14: "Présence sur la page d'accueil",
-  b15: "Intégration nationale d'une chaîne",
-  b16: "Mise en avant dans les campagnes",
-  b17: "Reporting semestriel personnalisé",
-  b18: "1 bandeau régional exclusif compris",
-  b19: "1 annonce à but commercial",
-  b20: "Validité 4 mois",
-  b21: "Colocataires s'inscrivent puis confirment",
-  b22: "1 compte agence + 12 annonces/an",
-  b23: "Newsletter annuelle + signalétique",
-  b24: "Intégration de tout le réseau",
-  b25: "Publications illimitées",
-  b26: "Visibilité maximale en page d'accueil",
-  b27: "Logo + page « Partenaires » mécène",
-  b28: "Signalétique « Mécène engagé 2026 »",
-  b29: "Visibilité équivalente au niveau Argent",
-  b30: "Référencement et présentation du mécène",
-  b31: "Logo du mécène dans les campagnes",
-  b32: "Visibilité équivalente au niveau Or",
-  b33: "Mise en avant en page d'accueil",
-  b34: "Visibilité maximale équivalente Platine",
-  b35: "Modalités définies ensemble",
-  // Form
-  callMe: "Je souhaite être rappelé(e)",
-  receiveBrochure: "Recevoir la plaquette des offres par e-mail",
-  namePlaceholder: "Nom et structure",
-  emailPlaceholder: "Adresse e-mail",
-  phonePlaceholder: "Numéro de téléphone",
-  activityPlaceholder: "Votre activité et le statut qui vous intéresse",
-  datePlaceholder: "Date souhaitée de rappel",
-  slotPlaceholder: "Créneau horaire…",
-  slotMorning: "Matinée (08h–12h)",
-  slotEarlyAfternoon: "Début d'après-midi (12h–15h)",
-  slotLateAfternoon: "Fin d'après-midi (15h–18h)",
-  lightpopH: "Naviguer en mode allégé ?",
-  lightpopP: "Connexion lente ou data limitée ?",
-  lightpopYes: "Activer le mode allégé",
-  lightpopNo: "Continuer normalement",
-  lightpopRemind: "Ne plus me le rappeler",
-}
-
 // =============================================
 // COMPOSANT HERO - AVEC IMAGE DE FOND
 // =============================================
 const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }> = ({
   onContactClick, onStatutsClick
 }) => {
+  const { t } = useTranslation(['partenaires', 'common'])
+
   return (
     <section className="relative overflow-hidden min-h-[400px] sm:min-h-[450px] flex items-center">
       {/* Image de fond */}
       <div className="absolute inset-0">
         <img src={heroImage} alt="" className="w-full h-full object-cover" />
-        {/* Overlay plus foncé */}
         <div className="absolute inset-0 bg-gradient-to-br from-black/85 via-black/70 to-black/60" />
-        {/* Overlay de couleur pour harmoniser */}
         <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
       </div>
 
@@ -149,18 +74,24 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-yellow-300 text-[10px] sm:text-xs mb-2 sm:mb-3 shadow-lg">
             <Gift className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span>{t.heroBadge}</span>
+            <span>{t('partenaires:hero.badge')}</span>
           </div>
 
           {/* Mission */}
           <p className="font-['Bebas_Neue'] text-lg sm:text-xl md:text-2xl text-white/90 leading-tight mb-1 px-2 drop-shadow-lg">
-            {t.heroMission}
+            {t('partenaires:hero.mission')}
           </p>
 
           {/* Titre */}
           <h1 className="font-['Bebas_Neue'] text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-none tracking-wide drop-shadow-2xl">
-            <span className="text-white">{t.heroTitle}</span>
+            <span className="text-white">{t('partenaires:hero.title')}</span>
           </h1>
+
+          {/* Description */}
+          <p className="text-xs sm:text-sm md:text-base text-white/80 max-w-2xl mx-auto leading-relaxed mt-2 sm:mt-3 mb-4 sm:mb-5 px-2">
+            {t('partenaires:hero.subtitle')}
+          </p>
+
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 px-3">
             <button
@@ -172,7 +103,7 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
               }}
             >
               <Handshake className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              {t.heroCta}
+              {t('partenaires:hero.cta')}
             </button>
             <button
               onClick={onStatutsClick}
@@ -183,7 +114,7 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
               }}
             >
               <ListChecks className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              {t.heroCta2}
+              {t('partenaires:hero.cta2')}
             </button>
           </div>
         </div>
@@ -191,33 +122,36 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
     </section>
   )
 }
+
 // =============================================
 // COMPOSANT POURQUOI - CARTES BLANCHES AVEC ZOOM ET DÉGRADÉ AU HOVER
 // =============================================
 const WhySection: React.FC = () => {
+  const { t } = useTranslation(['partenaires'])
+
   const cards: WhyCard[] = [
     {
       icon: <Users className="w-5 h-5" />,
-      title: 'Audience ciblée',
-      desc: 'Étudiants, jeunes actifs et familles : une audience jeune, urbaine et active.',
+      title: t('partenaires:why.cards.audience.title'),
+      desc: t('partenaires:why.cards.audience.desc'),
       stat: '15k+'
     },
     {
       icon: <HeartHandshake className="w-5 h-5" />,
-      title: 'Engagement RSE',
-      desc: 'Affichez la signalétique « Partenaire engagé » et associez votre image au logement.',
+      title: t('partenaires:why.cards.rse.title'),
+      desc: t('partenaires:why.cards.rse.desc'),
       stat: '100%'
     },
     {
       icon: <Compass className="w-5 h-5" />,
-      title: 'Visibilité maximale',
-      desc: 'Votre logo et votre page partenaire visibles par tous les visiteurs.',
+      title: t('partenaires:why.cards.visibility.title'),
+      desc: t('partenaires:why.cards.visibility.desc'),
       stat: '50k+'
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
-      title: 'Données exclusives',
-      desc: 'Stats de fréquentation, personas, villes attractives et zones de tension.',
+      title: t('partenaires:why.cards.data.title'),
+      desc: t('partenaires:why.cards.data.desc'),
       stat: '365j'
     }
   ]
@@ -227,11 +161,11 @@ const WhySection: React.FC = () => {
       <div className="max-w-[1120px] mx-auto">
         <div className="flex flex-col items-center gap-2 mb-2">
           <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] text-center">
-            {t.whyTitle}
+            {t('partenaires:why.title')}
           </h2>
         </div>
         <p className="text-xs sm:text-sm md:text-base text-[#666] leading-relaxed max-w-3xl mx-auto text-center mb-3 sm:mb-4">
-          {t.whySub}
+          {t('partenaires:why.subtitle')}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {cards.map((card, idx) => (
@@ -246,15 +180,10 @@ const WhySection: React.FC = () => {
                 transition: { duration: 0.3 }
               }}
             >
-              {/* Fond dégradé qui apparaît au hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#99CC33] to-[#46BDD6] opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
-
-              {/* Effet de brillance au hover */}
               <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
               </div>
-
-              {/* Contenu de la carte */}
               <div className="relative z-10">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 transition-all duration-500 bg-[#F4F8E8] group-hover:bg-white/20 group-hover:scale-110">
                   <span className="text-[#99CC33] group-hover:text-white transition-colors duration-500">
@@ -280,7 +209,7 @@ const WhySection: React.FC = () => {
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#99CC33]/20 flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0">
             <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-[#99CC33]" />
           </div>
-          <p className="text-xs sm:text-sm md:text-base text-[#4d6b1a] leading-relaxed">{t.launchTxt}</p>
+          <p className="text-xs sm:text-sm md:text-base text-[#4d6b1a] leading-relaxed">{t('partenaires:why.launchText')}</p>
         </div>
       </div>
     </section>
@@ -291,59 +220,7 @@ const WhySection: React.FC = () => {
 // COMPOSANT TIER CARD AMÉLIORÉ AVEC DÉGRADÉ
 // =============================================
 const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index }) => {
-  const keyMap: Record<string, string> = {
-    'Logo + page « Partenaires »': t.b1,
-    'Présence dans 1 newsletter / an de Sarintany\'COLOC': t.b2,
-    'Signalétique « Partenaire engagé Sarintany\'COLOC 2026 »': t.b3,
-    'Intègre toute l\'offre précédente, plus :': t.b4,
-    'Référencement prioritaire par rapport au statut précédent': t.b5,
-    'Implantation de votre entreprise comme point d\'intérêt sur la carte': t.b6,
-    'Intégration et redirection vers vos liens web': t.b7,
-    'Stats annuelles globales (personas, villes attractives, zones de tension)': t.b8,
-    'Référencement prioritaire + présentation 3 lignes': t.b9,
-    'Encarts natifs dans le fil d\'annonces': t.b10,
-    'Retour annuel d\'audiences statistiques et visibilité': t.b11,
-    'Intégration du logo partenaires dans les campagnes de communication de Sarintany\'COLOC': t.b12,
-    'Partenaire mis en avant en « ils participent le plus »': t.b13,
-    'Présence sur la page d\'accueil du site': t.b14,
-    'Intégration nationale d\'une chaîne (tous les points de vente)': t.b15,
-    'Mise en avant dans les campagnes de communication': t.b16,
-    'Reporting semestriel personnalisé': t.b17,
-    '1 bandeau régional exclusif compris (hors Antananarivo, région d\'Analamanga)': t.b18,
-    '1 annonce à but commercial': t.b19,
-    'Validité 4 mois (identique à l\'offre Propriétaire)': t.b20,
-    'Les colocataires s\'inscrivent puis confirment': t.b21,
-    '1 compte agence + 12 annonces par an, puis tarif réduit': t.b22,
-    '1 newsletter par an + signalétique d\'engagement': t.b23,
-    'Intégration de tout le réseau (1 compte par agence)': t.b24,
-    'Publications illimitées': t.b25,
-    'Visibilité maximale : mise en avant en page d\'accueil et dans les campagnes de communication': t.b26,
-    'Logo + page « Partenaires » au titre de mécène': t.b27,
-    'Signalétique « Mécène engagé Sarintany\'COLOC 2026 »': t.b28,
-    'Visibilité équivalente au niveau Argent, sans logique commerciale': t.b29,
-    'Référencement et présentation du mécène mis en avant': t.b30,
-    'Logo du mécène dans les campagnes de communication de Sarintany\'COLOC': t.b31,
-    'Visibilité équivalente au niveau Or': t.b32,
-    'Mise en avant en page d\'accueil (« ils nous soutiennent »)': t.b33,
-    'Visibilité maximale, équivalente au niveau Platine': t.b34,
-    'Modalités définies ensemble (mécénat sur mesure)': t.b35,
-  }
-
-  const benefits = tier.benefits.map((b) => {
-    const translated = keyMap[b] || b
-    const isHead = b.startsWith('Intègre toute')
-    return { text: translated, isHead }
-  })
-
-  const getBadgeColor = (tierClass: string) => {
-    if (tierClass.includes('bronze')) return 'border-[#c8843c] text-[#c8843c] bg-[#c8843c]/10'
-    if (tierClass.includes('argent')) return 'border-[#9aa3ad] text-[#9aa3ad] bg-[#9aa3ad]/10'
-    if (tierClass.includes('or')) return 'border-[#d4af37] text-[#d4af37] bg-[#d4af37]/10'
-    if (tierClass.includes('platine')) return 'border-[#5a8aa0] text-[#5a8aa0] bg-[#5a8aa0]/10'
-    if (tierClass.includes('green')) return 'border-[#99CC33] text-[#99CC33] bg-[#99CC33]/10'
-    if (tierClass.includes('cy')) return 'border-[#46BDD6] text-[#46BDD6] bg-[#46BDD6]/10'
-    return 'border-[#e8e8e8] text-[#666] bg-[#f5f5f5]'
-  }
+  const { t } = useTranslation(['partenaires'])
 
   const getTierBorderColor = (tierClass: string) => {
     if (tierClass.includes('bronze')) return 'from-[#c8843c]/30 to-[#c8843c]/10'
@@ -374,14 +251,11 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
         transition: { duration: 0.3 }
       }}
     >
-      {/* Effet de brillance au survol */}
       <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
       </div>
 
-      {/* Contenu de la carte */}
       <div className="relative bg-white rounded-2xl p-4 sm:p-5 flex flex-col h-full transition-all duration-300">
-        {/* Bandeau de couleur en haut */}
         <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-gradient-to-r ${getTierBorderColor(tier.tierClass)}`} />
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-1 pt-1">
@@ -396,7 +270,7 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
             </span>
           </div>
           {tier.launch && (
-            <span className={`text-[8px] sm:text-[10px] font-bold border rounded-full px-2 sm:px-3 py-0.5 sm:py-1 whitespace-nowrap ${getBadgeColor(tier.tierClass)}`}>
+            <span className={`text-[8px] sm:text-[10px] font-bold border rounded-full px-2 sm:px-3 py-0.5 sm:py-1 whitespace-nowrap bg-[#99CC33]/10 text-[#99CC33] border-[#99CC33]/30`}>
               {tier.launch}
             </span>
           )}
@@ -407,25 +281,28 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
         </p>
 
         <ul className="list-none flex flex-col gap-1.5 sm:gap-2 p-0 m-0 flex-1">
-          {benefits.map((b, idx) => (
-            <motion.li
-              key={idx}
-              className={`text-xs sm:text-sm leading-relaxed flex gap-2 sm:gap-2.5 items-start ${b.isHead ? 'font-semibold text-[#2C2C2C]' : 'text-[#555]'}`}
-              initial={{ opacity: 0, x: -15 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{
-                delay: index * 0.15 + idx * 0.06,
-                duration: 0.4,
-                type: "spring",
-                stiffness: 200
-              }}
-            >
-              <span className={`flex-shrink-0 mt-0.5 transition-transform duration-300 group-hover:scale-110 ${b.isHead ? 'text-[#999]' : 'text-[#99CC33]'}`}>
-                {b.isHead ? <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <Check className="w-3 h-3 sm:w-4 sm:h-4" />}
-              </span>
-              <span>{b.text}</span>
-            </motion.li>
-          ))}
+          {tier.benefits.map((benefit, idx) => {
+            const isHead = benefit.startsWith('Intègre toute')
+            return (
+              <motion.li
+                key={idx}
+                className={`text-xs sm:text-sm leading-relaxed flex gap-2 sm:gap-2.5 items-start ${isHead ? 'font-semibold text-[#2C2C2C]' : 'text-[#555]'}`}
+                initial={{ opacity: 0, x: -15 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  delay: index * 0.15 + idx * 0.06,
+                  duration: 0.4,
+                  type: "spring",
+                  stiffness: 200
+                }}
+              >
+                <span className={`flex-shrink-0 mt-0.5 transition-transform duration-300 group-hover:scale-110 ${isHead ? 'text-[#999]' : 'text-[#99CC33]'}`}>
+                  {isHead ? <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <Check className="w-3 h-3 sm:w-4 sm:h-4" />}
+                </span>
+                <span>{benefit}</span>
+              </motion.li>
+            )
+          })}
         </ul>
 
         {tier.popular && (
@@ -437,12 +314,11 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
           >
             <span className="text-[10px] sm:text-xs font-semibold text-[#99CC33] bg-[#F4F8E8] px-3 py-1 rounded-full inline-flex items-center gap-1.5">
               <Sparkles className="w-3 h-3" />
-              Le plus populaire
+              {t('partenaires:tiers.popular')}
             </span>
           </motion.div>
         )}
 
-        {/* Effet de survol : bordure lumineuse */}
         <div className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#99CC33]/20 to-[#46BDD6]/20 blur-xl" />
         </div>
@@ -455,6 +331,7 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
 // COMPOSANT SECTION PARTENAIRE
 // =============================================
 const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ section }) => {
+  const { t } = useTranslation(['partenaires'])
   const isCyan = section.iconClass === 'cy'
 
   if (section.isAddon) {
@@ -511,6 +388,7 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
 // COMPOSANT CONTACT
 // =============================================
 const ContactSection: React.FC = () => {
+  const { t } = useTranslation(['partenaires', 'common'])
   const [showCallback, setShowCallback] = useState(false)
   const [showOk, setShowOk] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -561,7 +439,7 @@ const ContactSection: React.FC = () => {
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim()
 
     if (!serviceId || !templateId || !publicKey) {
-      setSubmitError('Les identifiants EmailJS ne sont pas encore configurés. Veuillez les définir dans l’environnement du projet.')
+      setSubmitError(t('partenaires:contact.errors.emailjs'))
       setSubmitting(false)
       return
     }
@@ -637,7 +515,7 @@ const ContactSection: React.FC = () => {
     } catch (error: unknown) {
       const emailError = error as { text?: string; status?: number; message?: string }
       const detail = emailError?.text || emailError?.message || 'Erreur inconnue'
-      setSubmitError(`Échec d’envoi EmailJS${emailError?.status ? ` (${emailError.status})` : ''}: ${detail}`)
+      setSubmitError(`${t('partenaires:contact.errors.emailjs')}${emailError?.status ? ` (${emailError.status})` : ''}: ${detail}`)
     } finally {
       setSubmitting(false)
     }
@@ -652,26 +530,26 @@ const ContactSection: React.FC = () => {
   ]
 
   const slotOptions = [
-    { value: '', label: t.slotPlaceholder },
-    { value: 'morning', label: t.slotMorning },
-    { value: 'early_afternoon', label: t.slotEarlyAfternoon },
-    { value: 'late_afternoon', label: t.slotLateAfternoon },
+    { value: '', label: t('partenaires:contact.slotPlaceholder') },
+    { value: 'morning', label: t('partenaires:contact.slotMorning') },
+    { value: 'early_afternoon', label: t('partenaires:contact.slotEarlyAfternoon') },
+    { value: 'late_afternoon', label: t('partenaires:contact.slotLateAfternoon') },
   ]
 
   const secteurOptions = [
-    { value: '', label: 'Sélectionner un secteur' },
-    { value: 'Entreprise générale', label: 'Entreprise générale' },
-    { value: 'Immobilier', label: 'Immobilier' },
-    { value: 'Institution publique', label: 'Institution publique' },
-    { value: 'Autre', label: 'Autre' },
+    { value: '', label: t('partenaires:contact.sectorPlaceholder') },
+    { value: 'Entreprise générale', label: t('partenaires:contact.sectorGeneral') },
+    { value: 'Immobilier', label: t('partenaires:contact.sectorRealEstate') },
+    { value: 'Institution publique', label: t('partenaires:contact.sectorPublic') },
+    { value: 'Autre', label: t('partenaires:contact.sectorOther') },
   ]
 
   const niveauOptions = [
-    { value: '', label: 'Sélectionner un niveau souhaité' },
-    { value: 'Bronze', label: 'Bronze' },
-    { value: 'Argent', label: 'Argent' },
-    { value: 'Or', label: 'Or' },
-    { value: 'Diamant', label: 'Diamant' },
+    { value: '', label: t('partenaires:contact.levelPlaceholder') },
+    { value: 'Bronze', label: t('partenaires:contact.levelBronze') },
+    { value: 'Argent', label: t('partenaires:contact.levelSilver') },
+    { value: 'Or', label: t('partenaires:contact.levelGold') },
+    { value: 'Diamant', label: t('partenaires:contact.levelDiamond') },
   ]
 
   return (
@@ -683,10 +561,10 @@ const ContactSection: React.FC = () => {
         {/* En-tête */}
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] mb-1 sm:mb-2">
-            {t.contactH}
+            {t('partenaires:contact.title')}
           </h2>
           <p className="text-[#666] text-xs sm:text-sm max-w-sm mx-auto px-2">
-            {t.contactP}
+            {t('partenaires:contact.subtitle')}
           </p>
         </div>
 
@@ -696,12 +574,12 @@ const ContactSection: React.FC = () => {
             <form ref={formRef} className="flex flex-col gap-3 sm:gap-4" onSubmit={handleSubmit}>
               {/* Nom & Structure */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">Nom & Structure</label>
+                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.name')}</label>
                 <input
                   type="text"
                   name="name"
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm placeholder:text-white/20 focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200"
-                  placeholder={t.namePlaceholder}
+                  placeholder={t('partenaires:contact.namePlaceholder')}
                   value={formData.name}
                   onChange={handleInputChange}
                   required
@@ -710,12 +588,12 @@ const ContactSection: React.FC = () => {
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">Email</label>
+                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.email')}</label>
                 <input
                   type="email"
                   name="email"
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm placeholder:text-white/20 focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200"
-                  placeholder={t.emailPlaceholder}
+                  placeholder={t('partenaires:contact.emailPlaceholder')}
                   value={formData.email}
                   onChange={handleInputChange}
                   required
@@ -724,7 +602,7 @@ const ContactSection: React.FC = () => {
 
               {/* Téléphone */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">Téléphone</label>
+                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.phone')}</label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <select
                     name="phoneCC"
@@ -741,7 +619,7 @@ const ContactSection: React.FC = () => {
                     name="phone"
                     inputMode="tel"
                     className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm placeholder:text-white/20 focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200"
-                    placeholder={t.phonePlaceholder}
+                    placeholder={t('partenaires:contact.phonePlaceholder')}
                     value={formData.phone}
                     onChange={handleInputChange}
                   />
@@ -750,7 +628,7 @@ const ContactSection: React.FC = () => {
 
               {/* Secteur */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">Secteur</label>
+                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.sector')}</label>
                 <select
                   name="secteur"
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 [&>option]:text-[#1a1a2e]"
@@ -765,7 +643,7 @@ const ContactSection: React.FC = () => {
 
               {/* Niveau souhaité */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">Niveau souhaité</label>
+                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.level')}</label>
                 <select
                   name="niveauSouhaite"
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 [&>option]:text-[#1a1a2e]"
@@ -780,11 +658,11 @@ const ContactSection: React.FC = () => {
 
               {/* Activité */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">Votre activité</label>
+                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.activity')}</label>
                 <textarea
                   name="activity"
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm placeholder:text-white/20 focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 resize-y min-h-[60px] sm:min-h-[70px]"
-                  placeholder={t.activityPlaceholder}
+                  placeholder={t('partenaires:contact.activityPlaceholder')}
                   value={formData.activity}
                   onChange={handleInputChange}
                 />
@@ -799,7 +677,7 @@ const ContactSection: React.FC = () => {
                     checked={formData.wantCallback}
                     onChange={(e) => handleCallbackToggle(e.target.checked)}
                   />
-                  {t.callMe}
+                  {t('partenaires:contact.callback')}
                 </label>
 
                 {showCallback && (
@@ -832,7 +710,7 @@ const ContactSection: React.FC = () => {
                     checked={formData.wantBrochure}
                     onChange={handleInputChange}
                   />
-                  {t.receiveBrochure}
+                  {t('partenaires:contact.brochure')}
                 </label>
               </div>
 
@@ -846,7 +724,7 @@ const ContactSection: React.FC = () => {
                 disabled={submitting}
                 className="w-full px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-[#99CC33] to-[#46BDD6] text-white text-xs sm:text-sm font-semibold hover:shadow-lg hover:shadow-[#99CC33]/25 transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-1"
               >
-                {submitting ? 'Envoi en cours...' : t.contactCta}
+                {submitting ? t('common:common.loading') : t('partenaires:contact.submit')}
               </button>
             </form>
           ) : (
@@ -854,8 +732,8 @@ const ContactSection: React.FC = () => {
               <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#99CC33]/20 flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <CircleCheck className="w-7 h-7 sm:w-8 sm:h-8 text-[#99CC33]" />
               </div>
-              <h3 className="font-['Bebas_Neue'] text-xl sm:text-2xl text-white mb-1">Merci !</h3>
-              <p className="text-white/50 text-xs sm:text-sm">Votre demande est notée — l'équipe Coloc'KOO revient vers vous très vite.</p>
+              <h3 className="font-['Bebas_Neue'] text-xl sm:text-2xl text-white mb-1">{t('partenaires:contact.thanks')}</h3>
+              <p className="text-white/50 text-xs sm:text-sm">{t('partenaires:contact.thanksText')}</p>
             </div>
           )}
         </div>
@@ -866,7 +744,7 @@ const ContactSection: React.FC = () => {
           <span className="hidden sm:inline text-[#d0d5c8]">•</span>
           <span>📱 +261 34 00 000 00</span>
           <span className="hidden sm:inline text-[#d0d5c8]">•</span>
-          <span>🕐 Lun-Ven 8h-18h</span>
+          <span>🕐 {t('partenaires:contact.hours')}</span>
         </div>
       </div>
     </section>
@@ -874,66 +752,66 @@ const ContactSection: React.FC = () => {
 }
 
 // =============================================
-// DONNÉES DES SECTIONS PARTENAIRES
+// DONNÉES DES SECTIONS PARTENAIRES - AVEC CLÉS DE TRADUCTION
 // =============================================
 const partnerSections: PartnerSection[] = [
   {
     id: 'entreprise-generale',
     icon: <Store className="w-5 h-5 sm:w-6 sm:h-6" />,
     iconClass: 'cy',
-    title: 'Entreprise générale',
-    subtitle: 'De la PME à la grande entreprise, une visibilité croissante.',
+    title: 'partenaires:sections.entreprise.title',
+    subtitle: 'partenaires:sections.entreprise.subtitle',
     tiers: [
       {
-        name: 'PME · Bronze',
+        name: 'partenaires:tiers.bronze.name',
         icon: <Shield className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'Être référencé comme partenaire officiel du site et afficher son engagement RSE.',
+        arg: 'partenaires:tiers.bronze.arg',
         benefits: [
-          'Logo + page « Partenaires »',
-          'Présence dans 1 newsletter / an',
-          'Signalétique « Partenaire engagé 2026 »'
+          'partenaires:tiers.bronze.benefit1',
+          'partenaires:tiers.bronze.benefit2',
+          'partenaires:tiers.bronze.benefit3'
         ],
         tierClass: 'bronze'
       },
       {
-        name: 'Entreprise · Argent',
+        name: 'partenaires:tiers.silver.name',
         icon: <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'Passer devant les autres PME, avec un lien direct vers votre point de vente.',
+        arg: 'partenaires:tiers.silver.arg',
         benefits: [
-          'Intègre toute l\'offre précédente, plus :',
-          'Référencement prioritaire',
-          'Point d\'intérêt sur la carte',
-          'Redirection vers vos liens web'
+          'partenaires:tiers.silver.benefit1',
+          'partenaires:tiers.silver.benefit2',
+          'partenaires:tiers.silver.benefit3',
+          'partenaires:tiers.silver.benefit4'
         ],
         tierClass: 'argent',
         popular: true
       },
       {
-        name: 'Grande entreprise · Or',
+        name: 'partenaires:tiers.gold.name',
         icon: <Crown className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'Le bon profil au bon endroit, prouvé par la donnée.',
+        arg: 'partenaires:tiers.gold.arg',
         benefits: [
-          'Intègre toute l\'offre précédente, plus :',
-          'Stats annuelles globales',
-          'Référencement prioritaire + présentation 3 lignes',
-          'Encarts natifs dans le fil d\'annonces',
-          'Retour annuel d\'audiences statistiques',
-          'Logo intégré aux campagnes de communication'
+          'partenaires:tiers.gold.benefit1',
+          'partenaires:tiers.gold.benefit2',
+          'partenaires:tiers.gold.benefit3',
+          'partenaires:tiers.gold.benefit4',
+          'partenaires:tiers.gold.benefit5',
+          'partenaires:tiers.gold.benefit6'
         ],
         tierClass: 'or'
       },
       {
-        name: 'Grande entreprise · Platine',
+        name: 'partenaires:tiers.platinum.name',
         icon: <Layers className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'Notoriété maximale et exclusivité géographique.',
+        arg: 'partenaires:tiers.platinum.arg',
         benefits: [
-          'Intègre toute l\'offre précédente, plus :',
-          'Partenaire mis en avant',
-          'Présence sur la page d\'accueil',
-          'Intégration nationale d\'une chaîne',
-          'Mise en avant dans les campagnes',
-          'Reporting semestriel personnalisé',
-          '1 bandeau régional exclusif compris'
+          'partenaires:tiers.platinum.benefit1',
+          'partenaires:tiers.platinum.benefit2',
+          'partenaires:tiers.platinum.benefit3',
+          'partenaires:tiers.platinum.benefit4',
+          'partenaires:tiers.platinum.benefit5',
+          'partenaires:tiers.platinum.benefit6',
+          'partenaires:tiers.platinum.benefit7'
         ],
         tierClass: 'platine'
       }
@@ -943,44 +821,44 @@ const partnerSections: PartnerSection[] = [
     id: 'immobilier',
     icon: <Home className="w-5 h-5 sm:w-6 sm:h-6" />,
     iconClass: '',
-    title: 'Immobilier',
-    subtitle: 'De l\'agent indépendant au réseau national.',
+    title: 'partenaires:sections.realEstate.title',
+    subtitle: 'partenaires:sections.realEstate.subtitle',
     tiers: [
       {
-        name: 'Indépendant',
-        launch: 'Gratuit au lancement',
+        name: 'partenaires:tiers.independent.name',
+        launch: 'partenaires:tiers.independent.launch',
         icon: <Target className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'Sans risque : 4 mois de visibilité, une seule colocation conclue rentabilise largement.',
+        arg: 'partenaires:tiers.independent.arg',
         benefits: [
-          '1 annonce à but commercial',
-          'Validité 4 mois',
-          'Les colocataires s\'inscrivent puis confirment'
+          'partenaires:tiers.independent.benefit1',
+          'partenaires:tiers.independent.benefit2',
+          'partenaires:tiers.independent.benefit3'
         ],
         tierClass: 'green'
       },
       {
-        name: 'Agence',
-        launch: 'Annonces offertes',
+        name: 'partenaires:tiers.agency.name',
+        launch: 'partenaires:tiers.agency.launch',
         icon: <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'Un canal d\'acquisition rentable, leads qualifiés et statut partenaire pour votre cabinet.',
+        arg: 'partenaires:tiers.agency.arg',
         benefits: [
-          '1 compte agence + 12 annonces/an',
-          'Logo + page « Partenaires »',
-          '1 newsletter par an + signalétique'
+          'partenaires:tiers.agency.benefit1',
+          'partenaires:tiers.agency.benefit2',
+          'partenaires:tiers.agency.benefit3'
         ],
         tierClass: 'green',
         popular: true
       },
       {
-        name: 'Réseau d\'agences',
-        launch: 'Annonces offertes',
+        name: 'partenaires:tiers.network.name',
+        launch: 'partenaires:tiers.network.launch',
         icon: <Layers className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'L\'offre maximale réseau : couverture nationale et exclusivité régionale.',
+        arg: 'partenaires:tiers.network.arg',
         benefits: [
-          'Intégration de tout le réseau',
-          'Publications illimitées',
-          'Visibilité maximale en page d\'accueil',
-          '1 bandeau régional exclusif compris'
+          'partenaires:tiers.network.benefit1',
+          'partenaires:tiers.network.benefit2',
+          'partenaires:tiers.network.benefit3',
+          'partenaires:tiers.network.benefit4'
         ],
         tierClass: 'green'
       }
@@ -990,43 +868,43 @@ const partnerSections: PartnerSection[] = [
     id: 'institution',
     icon: <Landmark className="w-5 h-5 sm:w-6 sm:h-6" />,
     iconClass: 'cy',
-    title: 'Institution publique — mécénat',
-    subtitle: 'Soutenez une solution malgache d\'accès au logement.',
+    title: 'partenaires:sections.public.title',
+    subtitle: 'partenaires:sections.public.subtitle',
     tiers: [
       {
-        name: 'Mécène Argent',
+        name: 'partenaires:tiers.publicSilver.name',
         icon: <Shield className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'Associez votre institution à l\'émancipation des jeunes par le logement.',
+        arg: 'partenaires:tiers.publicSilver.arg',
         benefits: [
-          'Logo + page « Partenaires » mécène',
-          'Présence dans 1 newsletter / an',
-          'Signalétique « Mécène engagé 2026 »',
-          'Visibilité équivalente au niveau Argent'
+          'partenaires:tiers.publicSilver.benefit1',
+          'partenaires:tiers.publicSilver.benefit2',
+          'partenaires:tiers.publicSilver.benefit3',
+          'partenaires:tiers.publicSilver.benefit4'
         ],
         tierClass: 'cy'
       },
       {
-        name: 'Mécène Or',
+        name: 'partenaires:tiers.publicGold.name',
         icon: <Crown className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'Un mécénat valorisant, au plus près du développement du projet.',
+        arg: 'partenaires:tiers.publicGold.arg',
         benefits: [
-          'Intègre toute l\'offre précédente, plus :',
-          'Référencement et présentation du mécène',
-          'Logo du mécène dans les campagnes',
-          'Visibilité équivalente au niveau Or'
+          'partenaires:tiers.publicGold.benefit1',
+          'partenaires:tiers.publicGold.benefit2',
+          'partenaires:tiers.publicGold.benefit3',
+          'partenaires:tiers.publicGold.benefit4'
         ],
         tierClass: 'cy',
         popular: true
       },
       {
-        name: 'Mécène Platine',
+        name: 'partenaires:tiers.publicPlatinum.name',
         icon: <Layers className="w-4 h-4 sm:w-5 sm:h-5" />,
-        arg: 'L\'engagement de mécénat le plus fort, sur mesure.',
+        arg: 'partenaires:tiers.publicPlatinum.arg',
         benefits: [
-          'Intègre toute l\'offre précédente, plus :',
-          'Mise en avant en page d\'accueil',
-          'Visibilité maximale équivalente Platine',
-          'Modalités définies ensemble'
+          'partenaires:tiers.publicPlatinum.benefit1',
+          'partenaires:tiers.publicPlatinum.benefit2',
+          'partenaires:tiers.publicPlatinum.benefit3',
+          'partenaires:tiers.publicPlatinum.benefit4'
         ],
         tierClass: 'cy'
       }
@@ -1035,10 +913,10 @@ const partnerSections: PartnerSection[] = [
   {
     id: 'addon',
     icon: <Flag className="w-5 h-5 sm:w-6 sm:h-6" />,
-    title: 'Option · Bandeau régional exclusif',
-    subtitle: 'Un bandeau exclusif pleine largeur en bas de carte, contextuel à la région affichée.',
+    title: 'partenaires:sections.addon.title',
+    subtitle: 'partenaires:sections.addon.subtitle',
     isAddon: true,
-    addonNote: '1er bandeau inclus aux niveaux Platine et Réseau Platine · jusqu\'à 5 régions au total.',
+    addonNote: 'partenaires:sections.addon.note',
     tiers: []
   }
 ]
@@ -1047,13 +925,13 @@ const partnerSections: PartnerSection[] = [
 // COMPOSANT PRINCIPAL
 // =============================================
 export default function Partenaires() {
+  const { t } = useTranslation(['partenaires', 'common'])
   const { config } = useConfig()
   const [lightOn, setLightOn] = useState(false)
   const [showLightPopup, setShowLightPopup] = useState(false)
 
   const [currentSection, setCurrentSection] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const lastScrollRef = useRef(0)
   const transitionTimeoutRef = useRef<number | null>(null)
 
   const partnerVisibility = config.PARTENAIRE_VISIBILITY !== false
@@ -1175,19 +1053,46 @@ export default function Partenaires() {
     return (
       <SiteLayout>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
-          <h1 className="font-['Bebas_Neue'] text-3xl sm:text-4xl">Page partenaires indisponible</h1>
+          <h1 className="font-['Bebas_Neue'] text-3xl sm:text-4xl">{t('partenaires:unavailable.title')}</h1>
           <p className="mt-4 text-muted-foreground text-sm sm:text-base">
-            Cette fonctionnalité est actuellement désactivée par la configuration globale. Revenez plus tard.
+            {t('partenaires:unavailable.subtitle')}
           </p>
           <Link to="/">
-            <Button className="mt-6 sm:mt-8 bg-[#46BDD6] hover:bg-[#3aadca] text-white">Retour à l'accueil</Button>
+            <Button className="mt-6 sm:mt-8 bg-[#46BDD6] hover:bg-[#3aadca] text-white">{t('common:common.back')}</Button>
           </Link>
         </div>
       </SiteLayout>
     )
   }
 
-  const currentSectionData = partnerSections[currentSection]
+  // Fonction pour obtenir les traductions des sections
+  const getTranslatedSections = () => {
+    return partnerSections.map(section => {
+      if (section.isAddon) {
+        return {
+          ...section,
+          title: t(section.title),
+          subtitle: t(section.subtitle),
+          addonNote: t(section.addonNote || '')
+        }
+      }
+      return {
+        ...section,
+        title: t(section.title),
+        subtitle: t(section.subtitle),
+        tiers: section.tiers.map(tier => ({
+          ...tier,
+          name: t(tier.name),
+          arg: t(tier.arg),
+          launch: tier.launch ? t(tier.launch) : undefined,
+          benefits: tier.benefits.map(b => t(b))
+        }))
+      }
+    })
+  }
+
+  const translatedSections = getTranslatedSections()
+  const currentSectionData = translatedSections[currentSection]
   const isFirst = currentSection === 0
   const isLast = currentSection === totalSections - 1
 
@@ -1206,18 +1111,18 @@ export default function Partenaires() {
           <div className="max-w-[1120px] mx-auto">
             <div className="flex justify-center mb-2">
               <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] text-center">
-                {t.statutsTitle}
+                {t('partenaires:statuts.title')}
               </h2>
             </div>
             <p className="text-xs sm:text-sm md:text-base text-[#666] leading-relaxed max-w-3xl mx-auto mb-4 sm:mb-6 text-center">
-              {t.statutsSub}
+              {t('partenaires:statuts.subtitle')}
             </p>
 
             {/* CARROUSEL */}
             <div className="relative">
               {/* Dots */}
               <div className="flex justify-center gap-1.5 mb-3 sm:mb-4">
-                {partnerSections.map((_, idx) => (
+                {translatedSections.map((_, idx) => (
                   <div
                     key={idx}
                     className={`h-1.5 rounded-full transition-all duration-500 ${idx === currentSection
@@ -1258,7 +1163,7 @@ export default function Partenaires() {
                   `}
                 >
                   <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Précédent</span>
+                  <span className="hidden sm:inline">{t('common:common.previous')}</span>
                 </button>
 
                 <span className="text-xs sm:text-sm text-[#888] font-medium order-first sm:order-none">
@@ -1279,7 +1184,7 @@ export default function Partenaires() {
                     }
                   `}
                 >
-                  <span className="hidden sm:inline">Suivant</span>
+                  <span className="hidden sm:inline">{t('common:common.next')}</span>
                   <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               </div>
@@ -1304,20 +1209,20 @@ export default function Partenaires() {
               <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#F4F8E8] flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <Feather className="w-6 h-6 sm:w-7 sm:h-7 text-[#99CC33]" />
               </div>
-              <h3 className="font-['Bebas_Neue'] text-xl sm:text-2xl text-[#2C2C2C] mb-2">{t.lightpopH}</h3>
-              <p className="text-xs sm:text-sm leading-relaxed text-[#666] mb-5 sm:mb-6">{t.lightpopP}</p>
+              <h3 className="font-['Bebas_Neue'] text-xl sm:text-2xl text-[#2C2C2C] mb-2">{t('partenaires:lightpop.title')}</h3>
+              <p className="text-xs sm:text-sm leading-relaxed text-[#666] mb-5 sm:mb-6">{t('partenaires:lightpop.desc')}</p>
               <div className="flex flex-col gap-2.5">
                 <button
                   className="px-4 py-2.5 sm:py-3 rounded-xl border-none bg-[#99CC33] text-white text-xs sm:text-sm font-semibold hover:bg-[#88bb2e] transition-colors duration-200"
                   onClick={handleEnableLight}
                 >
-                  {t.lightpopYes}
+                  {t('partenaires:lightpop.enable')}
                 </button>
                 <button
                   className="px-4 py-2.5 sm:py-3 rounded-xl border border-[#e8e8e8] bg-transparent text-[#666] text-xs sm:text-sm font-semibold hover:bg-[#f5f5f5] transition-colors duration-200"
                   onClick={handleCloseLightPopup}
                 >
-                  {t.lightpopNo}
+                  {t('partenaires:lightpop.disable')}
                 </button>
               </div>
               <label className="flex items-center justify-center gap-2 mt-4 text-[10px] sm:text-xs text-[#999] cursor-pointer">
@@ -1326,7 +1231,7 @@ export default function Partenaires() {
                   className="accent-[#99CC33] cursor-pointer"
                   onChange={(e) => handleDontRemind(e.target.checked)}
                 />
-                <span>{t.lightpopRemind}</span>
+                <span>{t('partenaires:lightpop.remind')}</span>
               </label>
             </div>
           </div>

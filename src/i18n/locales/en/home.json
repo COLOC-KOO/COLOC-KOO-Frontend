@@ -1,0 +1,72 @@
+{
+  "hero": {
+    "badge": "New generation colocation",
+    "title": "Find your colocation, everywhere in Madagascar",
+    "subtitle": "Rooms, apartments and houses verified, online files, simplified signature.",
+    "search": "I'm looking for a colocation",
+    "propose": "I'm offering a colocation",
+    "placeholder": "City, district...",
+    "allTypes": "All types",
+    "room": "Room",
+    "apartment": "Apartment",
+    "house": "House",
+    "verified": "Verified listings",
+    "colocataires": "1,400+ housemates",
+    "satisfaction": "4.8/5 satisfaction"
+  },
+  "featured": {
+    "title": "Featured listings",
+    "subtitle": "This week's selection, verified by our team",
+    "list": "List",
+    "map": "Map",
+    "verified": "Verified",
+    "pricePerMonth": "/month",
+    "empty": "No listings available",
+    "emptySub": "Come back later to discover new listings"
+  },
+  "cities": {
+    "title": "Explore by city",
+    "subtitle": "cities covered, listings verified",
+    "annonce": "listing",
+    "annonces": "listings",
+    "viewAll": "All listings",
+    "explore": "Explore",
+    "empty": "No cities available"
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "subtitle": "3 simple steps to join your colocation",
+    "viewAll": "View listings",
+    "startSearch": "Start searching",
+    "steps": [
+      {
+        "number": "01",
+        "title": "Search in your city",
+        "description": "Enter your city or region. The interactive map shows all available colocations."
+      },
+      {
+        "number": "02",
+        "title": "Browse verified listings and Apply",
+        "description": "Photos, prices, services, rules — everything is detailed. Each listing is verified before publication."
+      },
+      {
+        "number": "03",
+        "title": "Contact directly",
+        "description": "Send a secure message. No commission, 100% free."
+      }
+    ]
+  },
+  "partners": {
+    "title": "Our Partners",
+    "subtitle": "They trust us",
+    "viewAll": "View all",
+    "empty": "No partners available",
+    "loading": "Loading..."
+  },
+  "cta": {
+    "title": "Owner or agency?",
+    "subtitle": "Publish your listing and manage your housemates with ease.",
+    "deposer": "Post a listing",
+    "partenaire": "Become a partner"
+  }
+}
