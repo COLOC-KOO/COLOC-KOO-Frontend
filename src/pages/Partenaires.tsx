@@ -568,25 +568,6 @@ const ContactSection: React.FC = () => {
 
     try {
       const phoneValue = `${formData.phoneCC} ${formData.phone}`.trim()
-      const fullDetails = `
-╔═══════════════════════════════════════════════════════════╗
-║           📌 INFORMATIONS DU CONTACT                     ║
-╠═══════════════════════════════════════════════════════════╣
-║  Nom / structure    : ${formData.name || 'Non renseigné'} ║
-║  Email              : ${formData.email || 'Non renseigné'} ║
-║  Téléphone          : ${phoneValue || 'Non renseigné'}    ║
-║  Secteur            : ${formData.secteur || 'Non renseigné'} ║
-║  Niveau souhaité    : ${formData.niveauSouhaite || 'Non renseigné'} ║
-╠═══════════════════════════════════════════════════════════╣
-║           📋 DÉTAILS DE LA DEMANDE                       ║
-╠═══════════════════════════════════════════════════════════╣
-║  Activité / message : ${formData.activity || 'Aucun message complémentaire'} ║
-║  Souhaite un rappel : ${formData.wantCallback ? '✅ Oui' : '❌ Non'} ║
-║  Date de rappel     : ${formData.callbackDate || 'Non renseignée'} ║
-║  Créneau            : ${formData.callbackSlot || 'Non renseignée'} ║
-║  Souhaite plaquette : ${formData.wantBrochure ? '✅ Oui' : '❌ Non'} ║
-╚═══════════════════════════════════════════════════════════╝
-`;
 
       const templateParams = {
         from_name: formData.name || 'Partenaire',
@@ -594,23 +575,25 @@ const ContactSection: React.FC = () => {
         from_email: formData.email || '',
         email: formData.email || '',
         reply_to: formData.email || '',
-        phone: phoneValue,
-        phone_number: phoneValue,
+        phone: phoneValue || 'Non renseigné',
+        phone_number: phoneValue || 'Non renseigné',
         secteur: formData.secteur || 'Non renseigné',
         niveau_souhaite: formData.niveauSouhaite || 'Non renseigné',
         niveau: formData.niveauSouhaite || 'Non renseigné',
-        message: fullDetails,
+        message: formData.activity || 'Aucun message complémentaire',
         activity: formData.activity || 'Aucun message complémentaire',
         want_callback: formData.wantCallback ? 'Oui' : 'Non',
         callback_date: formData.callbackDate || 'Non renseignée',
         callback_slot: formData.callbackSlot || 'Non renseignée',
         want_brochure: formData.wantBrochure ? 'Oui' : 'Non',
         brochure: formData.wantBrochure ? 'Oui' : 'Non',
+        time: new Date().toLocaleString('fr-FR', {
+          dateStyle: 'full',
+          timeStyle: 'short',
+        }),
         to_email: 'contact@colockoo.com',
         to_name: "Sarintany'COLOC",
         subject: 'Nouvelle demande de partenaire',
-        details: fullDetails,
-        body: fullDetails,
       }
 
       await emailjs.send(serviceId, templateId, templateParams, publicKey)
