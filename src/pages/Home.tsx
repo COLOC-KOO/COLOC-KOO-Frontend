@@ -490,7 +490,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Explore par ville - Sans image, fond bleu */}
       {/* Explore par ville - Sans espaces sur les côtés, taille des cards inchangée */}
       <section className="bg-gray-50/50 border-y border-border py-10 w-full px-4 md:px-6 lg:px-8">
         <div className="w-full max-w-7xl mx-auto">
@@ -575,8 +574,9 @@ export default function Home() {
         <div className="w-full max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-6">
             <div>
-              <h2 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
-                Comment ça marche
+              <h2 className="bebas text-3xl">
+                <span className="text-[--brand-cyan-dark]">Comment </span>
+                <span className="text-[--brand-green-dark]">ça marche</span>
               </h2>
               <p className="text-muted-foreground text-sm mt-1">
                 3 étapes simples pour rejoindre ta coloc
