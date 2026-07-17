@@ -100,6 +100,7 @@ export default function AdminUtilisateurs() {
                   <th className="text-left font-medium">Role</th>
                   <th className="text-left font-medium">Statut</th>
                   <th className="text-left font-medium">Annonces</th>
+                  <th className="text-left font-medium">Signalements</th>
                   <th className="text-left font-medium">Inscription</th>
                   <th className="text-right p-4 font-medium">Actions</th>
                 </tr>
@@ -123,6 +124,12 @@ export default function AdminUtilisateurs() {
                       <StatusBadge statut={u.statut} verified={u.verification} />
                     </td>
                     <td className="text-white/60">{u.annoncesCount}</td>
+                    <td className="text-white/60">
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-sm">
+                        <Shield className="w-3.5 h-3.5 text-brand-magenta" />
+                        {u.signalementsCount ?? 0}
+                      </span>
+                    </td>
                     <td className="text-white/60">{u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '-'}</td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-1">
@@ -138,12 +145,12 @@ export default function AdminUtilisateurs() {
                 ))}
                 {!loading && filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-white/40">Aucun utilisateur trouve</td>
+                    <td colSpan={7} className="text-center py-8 text-white/40">Aucun utilisateur trouve</td>
                   </tr>
                 )}
                 {loading && (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-white/40">Chargement...</td>
+                    <td colSpan={7} className="text-center py-8 text-white/40">Chargement...</td>
                   </tr>
                 )}
               </tbody>
