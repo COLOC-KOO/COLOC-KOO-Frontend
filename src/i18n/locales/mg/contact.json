@@ -1,0 +1,53 @@
+{
+  "hero": {
+    "badge": "Mifandraisa aminay",
+    "title": "Mihaino",
+    "highlight": "anareo",
+    "subtitle": "Fanontaniana, fiaraha-miasa, olana ? Soraty aminay. Ny ekipanay dia eto hanampy anareo."
+  },
+  "infos": {
+    "email": {
+      "title": "Mailaka",
+      "desc": "Valiny ao anatin'ny 24h"
+    },
+    "phone": {
+      "title": "Telefaonina",
+      "desc": "Alats - Zom, 9h - 18h"
+    },
+    "address": {
+      "title": "Birao",
+      "value": "Isoraka, Antananarivo",
+      "desc": "Mankanesa hihaona aminay"
+    }
+  },
+  "stats": {
+    "colocataires": "Mpiara-monina",
+    "annonces": "Fanambarana",
+    "satisfaction": "Fahafaham-po",
+    "partenaires": "Mpiara-miara"
+  },
+  "sidebar": {
+    "title": "Handefa hafatra",
+    "subtitle": "Valiny ao anatin'ny 24h. Vonona hanampy anareo izahay.",
+    "follow": "Araho izahay",
+    "features": {
+      "rapide": "Valiny haingana",
+      "dediee": "Ekipa manokana",
+      "garantie": "Fahafaham-po antoka"
+    }
+  },
+  "form": {
+    "name": "Anarana feno",
+    "namePlaceholder": "Jean Dupont",
+    "email": "Mailaka",
+    "emailPlaceholder": "jean@exemple.com",
+    "subject": "Lohahevitra",
+    "subjectPlaceholder": "Fangatahana fampahalalana",
+    "message": "Hafatra",
+    "messagePlaceholder": "Lazao amin'ny antsipirihany ny fangatahanao...",
+    "submit": "Handefa ny hafatra",
+    "success": "Hafatra alefa soa aman-tsara ! Hiverina aminareo haingana izahay.",
+    "error": "Tsy afaka nandefa ny hafatra",
+    "privacy": "Amin'ny fandefasana ity taratasy ity, dia ekenao ny politikan'ny tsiambaratelo."
+  }
+}
