@@ -1,0 +1,111 @@
+{
+  "hero": {
+    "badge": "Publication après validation admin",
+    "title": "Dépose ton",
+    "highlight": "annonce",
+    "subtitle": "Remplis le formulaire ci-dessous pour publier ton annonce. Notre équipe la validera dans les plus brefs délais."
+  },
+  "auth": {
+    "required": "Connecte-toi pour envoyer une annonce.",
+    "login": "Se connecter"
+  },
+  "steps": {
+    "1": {
+      "label": "Type",
+      "description": "Type de bien"
+    },
+    "2": {
+      "label": "Localisation",
+      "description": "Où se situe-t-il ?"
+    },
+    "3": {
+      "label": "Détails",
+      "description": "Caractéristiques"
+    },
+    "4": {
+      "label": "Photos",
+      "description": "Images du bien"
+    },
+    "5": {
+      "label": "Tarifs",
+      "description": "Prix et conditions"
+    }
+  },
+  "step1": {
+    "title": "Type de bien",
+    "subtitle": "Quel type de logement proposes-tu ?",
+    "titleField": "Titre de l'annonce",
+    "titleHelp": "Un titre accrocheur pour attirer les colocataires",
+    "titlePlaceholder": "Ex: Chambre lumineuse à Isoraka"
+  },
+  "step2": {
+    "title": "Localisation",
+    "subtitle": "Où se trouve ton logement ?",
+    "city": "Ville",
+    "district": "Quartier",
+    "districtPlaceholder": "Ex: Isoraka, Analakely...",
+    "address": "Adresse exacte",
+    "addressHelp": "Optionnel - visible seulement après validation",
+    "addressPlaceholder": "12 Rue de la Liberté"
+  },
+  "step3": {
+    "title": "Détails du logement",
+    "subtitle": "Les caractéristiques de ton bien",
+    "surface": "Surface totale (m²)",
+    "colocataires": "Nombre de colocataires",
+    "roomSurface": "Surface chambre (m²)",
+    "furnished": "Meublé",
+    "furnishedYes": "Oui",
+    "furnishedPartial": "Partiellement",
+    "furnishedNo": "Non",
+    "furnishedBuyout": "Rachat possible",
+    "availability": "Disponibilité",
+    "services": "Équipements",
+    "servicesHelp": "Séparés par des virgules",
+    "servicesPlaceholder": "Wi-Fi, Cuisine équipée, Lave-linge",
+    "description": "Description",
+    "descriptionPlaceholder": "Décris ton logement en détail..."
+  },
+  "step4": {
+    "title": "Photos",
+    "subtitle": "Ajoute des photos pour mettre en valeur ton bien",
+    "drop": "Relâche pour téléverser !",
+    "drag": "Glisse tes photos ici",
+    "click": "ou clique pour parcourir",
+    "formats": "JPG, PNG, WEBP jusqu'à 10MB",
+    "uploading": "Téléversement en cours..."
+  },
+  "step5": {
+    "title": "Tarifs et conditions",
+    "subtitle": "Définis le prix et les règles",
+    "rent": "Loyer mensuel (Ar)",
+    "charges": "Charges mensuelles (Ar)",
+    "deposit": "Caution (Ar)",
+    "rules": "Règles",
+    "rulesHelp": "Séparées par des virgules",
+    "rulesPlaceholder": "Non fumeur, Animaux acceptés",
+    "leaseType": "Type de bail",
+    "leaseHelp": "Sera affiché sur la fiche et repris dans le contrat",
+    "leaseCollective": "Bail collectif — un seul contrat signé par tous",
+    "leaseIndividual": "Bail individuel — chacun signe son contrat",
+    "solidarity": "Clause de solidarité",
+    "solidarityWithout": "Sans clause de solidarité — chacun responsable de sa part",
+    "solidarityWith": "Avec clause de solidarité — tous solidaires du loyer",
+    "summary": "Résumé de l'annonce",
+    "summaryTitle": "Titre",
+    "summaryLocation": "Localisation",
+    "summaryPrice": "Loyer",
+    "summaryType": "Type",
+    "summaryPhotos": "photos",
+    "summaryPhotosLabel": "photo(s)",
+    "summaryAvailability": "Disponibilité",
+    "submit": "Envoyer à l'admin"
+  },
+  "success": {
+    "message": "🎉 Annonce envoyée avec succès ! Elle sera visible après validation par l'admin."
+  },
+  "errors": {
+    "upload": "Impossible de téléverser les photos",
+    "submit": "Impossible d'envoyer l'annonce"
+  }
+}

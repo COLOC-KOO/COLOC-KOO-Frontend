@@ -1,0 +1,109 @@
+{
+  "back": "Retour aux annonces",
+  "verified": "Annonce validée",
+  "perMonth": "/ mois",
+  "noDescription": "Aucune description.",
+  "noAmenities": "À préciser",
+  "stats": {
+    "surface": "Surface",
+    "housemates": "Colocataires",
+    "colocs": "Colocs",
+    "existing": "Existants",
+    "toCreate": "À créer",
+    "none": "Aucune",
+    "applications": "Candidatures"
+  },
+  "sections": {
+    "description": "Description",
+    "amenities": "Équipements",
+    "candidatesTitle": "Colocataires liés à cette annonce",
+    "candidatesSubtitle": "Cette section affiche les candidatures réellement enregistrées dans la base pour cette annonce.",
+    "candidatesSingular": "candidature enregistrée",
+    "candidatesPlural": "candidatures enregistrées",
+    "noCandidates": "Aucune candidature n’est encore enregistrée pour cette annonce.",
+    "leaseType": "Type de bail"
+  },
+  "lease": {
+    "collective": "Contrat collectif",
+    "individual": "Bail individuel",
+    "withSolidarity": "avec clause de solidarité",
+    "withoutSolidarity": "sans clause de solidarité",
+    "collectiveDesc": "Un seul contrat signé par tous.",
+    "individualDesc": "Chaque colocataire signe son propre contrat avec le propriétaire.",
+    "withSolidarityDesc": " Tous les colocataires sont solidaires du loyer.",
+    "withoutSolidarityDesc": " Chaque colocataire reste responsable de sa part."
+  },
+  "candidates": {
+    "defaultName": "Candidat",
+    "statusPending": "en_attente",
+    "noProfession": "Profil à compléter",
+    "age": "ans",
+    "expand": "Voir le profil complet",
+    "collapse": "Réduire le profil",
+    "sendMessage": "Envoyer un message",
+    "noMessage": "Aucun message supplémentaire fourni.",
+    "currentCity": "Ville actuelle :",
+    "originCity": "Origine :",
+    "youAreCandidate": "Vous êtes déjà dans cette liste de colocataires.",
+    "youAreCandidateDesc": "Vous pouvez discuter de votre place dans cette annonce directement depuis votre espace de candidature ou votre messagerie.",
+    "discussSuccess": "Conversation ouverte avec le candidat.",
+    "acceptSuccess": "Candidature acceptée.",
+    "refuseSuccess": "Candidature refusée.",
+    "actionError": "Impossible de traiter la candidature."
+  },
+  "apply": {
+    "placeholder": "Présentez-vous et ajoutez un message pour le propriétaire...",
+    "submit": "Postuler à cette coloc",
+    "loginToApply": "Se connecter pour postuler",
+    "error": "Impossible d’envoyer la candidature."
+  },
+  "contact": {
+    "defaultSubject": "Demande à propos de votre annonce",
+    "subject": "Sujet",
+    "subjectPlaceholder": "Sujet du message",
+    "message": "Message",
+    "messagePlaceholder": "Écris ton message pour le propriétaire...",
+    "submit": "Contacter le propriétaire",
+    "loginToContact": "Se connecter pour envoyer un message",
+    "selfError": "Vous ne pouvez pas vous envoyer un message à vous-même.",
+    "messageRequired": "Le message est requis.",
+    "success": "Message envoyé au propriétaire.",
+    "error": "Impossible d'envoyer le message.",
+    "candidateSubject": "Contact à propos de l'annonce {id}",
+    "ownerSubject": "Message depuis votre profil pour l'annonce {id}"
+  },
+  "modal": {
+    "title": "Message à {name}",
+    "subtitle": "Écris un message court et clair pour cette personne.",
+    "placeholder": "Écris un message à {name}..."
+  },
+  "actions": {
+    "viewApplication": "Voir ma candidature",
+    "share": "Partager"
+  },
+  "owner": {
+    "title": "Propriétaire",
+    "verified": "Annonce vérifiée par modération",
+    "self": "Vous êtes le propriétaire de cette annonce.",
+    "unavailable": "Le propriétaire n'est pas disponible pour le moment."
+  },
+  "launch": {
+    "success": "La colocation a été lancée avec succès.",
+    "error": "Impossible de lancer la colocation."
+  },
+  "user": {
+    "connected": "Connecté en tant que {name}",
+    "connectedDesc": "Tu peux envoyer ta candidature directement depuis cette page.",
+    "ownerTitle": "Gestion des candidatures",
+    "ownerDesc": "La gestion des candidatures se fait depuis la page dédiée.",
+    "applied": "Votre candidature a bien été enregistrée.",
+    "appliedDesc": "Vous pouvez suivre l’avancement et voir les autres candidats de cette annonce.",
+    "viewApplication": "Voir ma candidature",
+    "myApplication": "Ma candidature",
+    "status": "Statut actuel :",
+    "statusPending": "en_attente",
+    "noMessage": "Aucun message ajouté.",
+    "otherCandidates": "Autres candidats",
+    "noOtherCandidates": "Aucun autre candidat pour l’instant."
+  }
+}

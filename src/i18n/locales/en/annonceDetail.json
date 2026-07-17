@@ -1,0 +1,109 @@
+{
+  "back": "Back to listings",
+  "verified": "Verified listing",
+  "perMonth": "/ month",
+  "noDescription": "No description.",
+  "noAmenities": "To be specified",
+  "stats": {
+    "surface": "Surface",
+    "housemates": "Housemates",
+    "colocs": "Housemates",
+    "existing": "Existing",
+    "toCreate": "To create",
+    "none": "None",
+    "applications": "Applications"
+  },
+  "sections": {
+    "description": "Description",
+    "amenities": "Amenities",
+    "candidatesTitle": "Housemates linked to this listing",
+    "candidatesSubtitle": "This section displays the applications actually recorded in the database for this listing.",
+    "candidatesSingular": "application recorded",
+    "candidatesPlural": "applications recorded",
+    "noCandidates": "No applications have been recorded for this listing yet.",
+    "leaseType": "Lease type"
+  },
+  "lease": {
+    "collective": "Collective lease",
+    "individual": "Individual lease",
+    "withSolidarity": "with solidarity clause",
+    "withoutSolidarity": "without solidarity clause",
+    "collectiveDesc": "One contract signed by all.",
+    "individualDesc": "Each housemate signs their own contract with the landlord.",
+    "withSolidarityDesc": " All housemates are jointly liable for the rent.",
+    "withoutSolidarityDesc": " Each housemate remains responsible for their share."
+  },
+  "candidates": {
+    "defaultName": "Candidate",
+    "statusPending": "pending",
+    "noProfession": "Profile to complete",
+    "age": "years",
+    "expand": "View full profile",
+    "collapse": "Collapse profile",
+    "sendMessage": "Send a message",
+    "noMessage": "No additional message provided.",
+    "currentCity": "Current city:",
+    "originCity": "Origin:",
+    "youAreCandidate": "You are already on this housemate list.",
+    "youAreCandidateDesc": "You can discuss your place in this listing directly from your application space or your messaging.",
+    "discussSuccess": "Conversation opened with candidate.",
+    "acceptSuccess": "Application accepted.",
+    "refuseSuccess": "Application rejected.",
+    "actionError": "Unable to process application."
+  },
+  "apply": {
+    "placeholder": "Introduce yourself and add a message for the landlord...",
+    "submit": "Apply to this colocation",
+    "loginToApply": "Log in to apply",
+    "error": "Unable to send application."
+  },
+  "contact": {
+    "defaultSubject": "Inquiry about your listing",
+    "subject": "Subject",
+    "subjectPlaceholder": "Message subject",
+    "message": "Message",
+    "messagePlaceholder": "Write your message for the landlord...",
+    "submit": "Contact the landlord",
+    "loginToContact": "Log in to send a message",
+    "selfError": "You cannot send a message to yourself.",
+    "messageRequired": "Message is required.",
+    "success": "Message sent to landlord.",
+    "error": "Unable to send message.",
+    "candidateSubject": "Contact about listing {id}",
+    "ownerSubject": "Message from your profile for listing {id}"
+  },
+  "modal": {
+    "title": "Message to {name}",
+    "subtitle": "Write a short and clear message to this person.",
+    "placeholder": "Write a message to {name}..."
+  },
+  "actions": {
+    "viewApplication": "View my application",
+    "share": "Share"
+  },
+  "owner": {
+    "title": "Landlord",
+    "verified": "Listing verified by moderation",
+    "self": "You are the landlord of this listing.",
+    "unavailable": "The landlord is not available at the moment."
+  },
+  "launch": {
+    "success": "The colocation has been launched successfully.",
+    "error": "Unable to launch the colocation."
+  },
+  "user": {
+    "connected": "Logged in as {name}",
+    "connectedDesc": "You can send your application directly from this page.",
+    "ownerTitle": "Application management",
+    "ownerDesc": "Application management is done from the dedicated page.",
+    "applied": "Your application has been registered.",
+    "appliedDesc": "You can track the progress and see other candidates for this listing.",
+    "viewApplication": "View my application",
+    "myApplication": "My application",
+    "status": "Current status:",
+    "statusPending": "pending",
+    "noMessage": "No message added.",
+    "otherCandidates": "Other candidates",
+    "noOtherCandidates": "No other candidates at the moment."
+  }
+}

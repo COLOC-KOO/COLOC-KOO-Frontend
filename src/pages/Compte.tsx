@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, Calendar, Bed, Building2, Users, Image as ImageIcon, Heart } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
@@ -27,6 +28,7 @@ function normalizeDateInputValue(value: unknown) {
 }
 
 function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user']; onSave: (payload: Record<string, unknown>) => Promise<unknown> }) {
+  const { t } = useTranslation('compte')
   const [form, setForm] = useState({
     prenom: user?.prenom || '',
     nom: user?.nom || '',
@@ -104,9 +106,9 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
         profile_picture: profilePicture,
       })
       setSelectedProfileFile(null)
-      setMessage('Profil mis à jour avec succès.')
+      setMessage(t('profileUpdated'))
     } catch {
-      setMessage('Impossible de mettre à jour le profil.')
+      setMessage(t('updateError'))
     } finally {
       setSaving(false)
       setUploadingProfile(false)
@@ -117,56 +119,56 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
 
   return (
     <div>
-      <h2 className="bebas text-2xl">Informations personnelles</h2>
+      <h2 className="bebas text-2xl">{t('personalInfo')}</h2>
       <div className="mt-5 rounded-2xl border border-border bg-muted/40 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-lg font-semibold text-white">
-            {form.profilePicture ? <img src={form.profilePicture} alt="Profil" className="h-full w-full rounded-full object-cover" /> : initials}
+            {form.profilePicture ? <img src={form.profilePicture} alt={t('profilePicture')} className="h-full w-full rounded-full object-cover" /> : initials}
           </div>
           <div>
-            <div className="font-semibold text-foreground">{[form.prenom, form.nom].filter(Boolean).join(' ') || 'Profil utilisateur'}</div>
+            <div className="font-semibold text-foreground">{[form.prenom, form.nom].filter(Boolean).join(' ') || t('userProfile')}</div>
             <div className="text-sm text-muted-foreground">
-              {user?.verification ? 'Compte vérifié' : 'Compte non vérifié'} • {user?.statut || 'active'}
+              {user?.verification ? t('verifiedAccount') : t('unverifiedAccount')} • {user?.statut || 'active'}
             </div>
           </div>
         </div>
         <div className="text-sm text-muted-foreground">
-          {user?.createdAt ? `Membre depuis ${new Date(user.createdAt).toLocaleDateString('fr-FR')}` : 'Profil en cours de mise à jour'}
+          {user?.createdAt ? `${t('memberSince')} ${new Date(user.createdAt).toLocaleDateString('fr-FR')}` : t('updatingProfile')}
         </div>
       </div>
       <div className="mt-5 grid md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Prénom</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('firstName')}</label>
           <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.prenom} onChange={(e) => setForm((prev) => ({ ...prev, prenom: e.target.value }))} />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Nom</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('lastName')}</label>
           <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.nom} onChange={(e) => setForm((prev) => ({ ...prev, nom: e.target.value }))} />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('email')}</label>
           <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Téléphone</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('phone')}</label>
           <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.telephone} onChange={(e) => setForm((prev) => ({ ...prev, telephone: e.target.value }))} />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Date de naissance</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('birthDate')}</label>
           <input type="date" className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.dateNaissance} onChange={(e) => setForm((prev) => ({ ...prev, dateNaissance: e.target.value }))} />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Profession</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('profession')}</label>
           <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.profession} onChange={(e) => setForm((prev) => ({ ...prev, profession: e.target.value }))} />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Langue préférée</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('preferredLanguage')}</label>
           <select
             className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
             value={form.languePreferee ?? ''}
             onChange={(e) => setForm((prev) => ({ ...prev, languePreferee: e.target.value }))}
           >
-            <option value="">-- Choisir une langue --</option>
+            <option value="">{t('chooseLanguage')}</option>
             {langues.map((langue) => (
               <option key={langue.id_langue} value={langue.id_langue}>
                 {langue.nom_langue}
@@ -175,14 +177,14 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
           </select>
         </div>
         <div className="md:col-span-2">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Photo de profil</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('profilePicture')}</label>
           <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-border bg-muted/30 p-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-lg font-semibold text-white">
-                {form.profilePicture ? <img src={form.profilePicture} alt="Profil" className="h-full w-full object-cover" /> : <span>{initials}</span>}
+                {form.profilePicture ? <img src={form.profilePicture} alt={t('profilePicture')} className="h-full w-full object-cover" /> : <span>{initials}</span>}
               </div>
               <div className="text-sm text-muted-foreground">
-                {selectedProfileFile ? `Fichier prêt à être envoyé : ${selectedProfileFile.name}` : 'Choisissez une image de profil à télécharger.'}
+                {selectedProfileFile ? `${t('fileReady')} ${selectedProfileFile.name}` : t('chooseImage')}
               </div>
             </div>
             <div className="flex gap-2">
@@ -194,13 +196,13 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
                 onChange={(e) => setSelectedProfileFile(e.target.files?.[0] || null)}
               />
               <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="mr-2 h-4 w-4" /> Choisir une image
+                <Upload className="mr-2 h-4 w-4" /> {t('chooseImageBtn')}
               </Button>
             </div>
           </div>
         </div>
         <div className="md:col-span-2">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Ce que l’utilisateur adore</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('userLoves')}</label>
           <textarea
             rows={4}
             className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
@@ -208,12 +210,12 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
             onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
             placeholder="Voyages, musique, sport, cuisine, lecture..."
           />
-          <p className="mt-1 text-xs text-muted-foreground">Ce champ est libre et optionnel.</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t('fieldOptional')}</p>
         </div>
       </div>
       {message ? <p className="mt-4 text-sm text-brand-cyan-dark">{message}</p> : null}
       <Button className="mt-6 bg-brand-cyan text-white hover:bg-brand-cyan-dark" onClick={handleSave} disabled={saving || uploadingProfile}>
-        {saving || uploadingProfile ? 'Enregistrement...' : 'Enregistrer'}
+        {saving || uploadingProfile ? t('saving') : t('save')}
       </Button>
     </div>
   )
@@ -229,6 +231,7 @@ function EditAnnonceModal({
   onClose: () => void
   onSave: (updated: ApiAnnonce) => void
 }) {
+  const { t } = useTranslation('compte')
   const [form, setForm] = useState({
     titre: '',
     description: '',
@@ -268,14 +271,12 @@ function EditAnnonceModal({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     setEditFiles(files)
-    // Créer des aperçus pour les nouveaux fichiers
     const newPreviews = files.map(file => URL.createObjectURL(file))
     setPhotoPreviews(prev => [...prev, ...newPreviews])
   }
 
   const removePhoto = (index: number) => {
     setPhotoPreviews(prev => prev.filter((_, i) => i !== index))
-    // Si la photo est un nouveau fichier, le retirer aussi
     if (editFiles.length > 0) {
       setEditFiles(prev => prev.filter((_, i) => i !== index - (prev.length - editFiles.length)))
     }
@@ -287,7 +288,7 @@ function EditAnnonceModal({
 
     const prix = Number(form.prix_loyer)
     if (!form.titre.trim() || Number.isNaN(prix) || prix < 0) {
-      setEditMessage('Le titre et un prix valide sont requis.')
+      setEditMessage(t('requiredFields'))
       return
     }
 
@@ -321,7 +322,7 @@ function EditAnnonceModal({
       onSave(updated)
       onClose()
     } catch (err) {
-      setEditMessage(err instanceof Error ? err.message : 'Impossible de modifier l\'annonce')
+      setEditMessage(err instanceof Error ? err.message : t('updateErrorTitle'))
     } finally {
       setEditSaving(false)
     }
@@ -332,12 +333,11 @@ function EditAnnonceModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 py-6 animate-in fade-in duration-200">
       <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
-        {/* Header */}
         <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-border/50 px-8 py-5 flex items-start justify-between gap-3 rounded-t-3xl">
           <div>
             <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Edit className="w-6 h-6 text-brand-cyan" />
-              Modifier l'annonce
+              {t('editAnnouncement')}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               {annonce.titre} · {annonce.ville}
@@ -353,12 +353,11 @@ function EditAnnonceModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          {/* Photos */}
           <div>
             <label className="block text-sm font-semibold text-foreground mb-2">
               <div className="flex items-center gap-2">
                 <ImageIcon className="w-4 h-4 text-brand-cyan" />
-                Photos
+                {t('photos')}
               </div>
             </label>
             <div className="rounded-2xl border-2 border-dashed border-border hover:border-brand-cyan/50 transition-colors p-4 bg-muted/30">
@@ -367,7 +366,7 @@ function EditAnnonceModal({
                   <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border border-border">
                     <img
                       src={photo}
-                      alt={`Photo ${index + 1}`}
+                      alt={`${t('photos')} ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                     <button
@@ -384,7 +383,7 @@ function EditAnnonceModal({
                   className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-brand-cyan/50 transition-colors flex flex-col items-center justify-center cursor-pointer bg-white/50 hover:bg-white"
                 >
                   <Camera className="w-8 h-8 text-muted-foreground mb-2" />
-                  <span className="text-xs text-muted-foreground">Ajouter</span>
+                  <span className="text-xs text-muted-foreground">{t('addPhoto')}</span>
                 </div>
               </div>
               <input
@@ -397,51 +396,47 @@ function EditAnnonceModal({
               />
               <p className="text-xs text-muted-foreground">
                 {editFiles.length > 0 
-                  ? `${editFiles.length} nouveau(x) fichier(s) sélectionné(s)` 
-                  : 'Cliquez sur une case pour ajouter des photos'}
+                  ? `${editFiles.length} ${t('newFilesSelected')}` 
+                  : t('clickToAddPhotos')}
               </p>
             </div>
           </div>
 
-          {/* Grid des champs */}
           <div className="grid gap-5 md:grid-cols-2">
-            {/* Titre */}
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-foreground mb-1.5">
                 <div className="flex items-center gap-2">
                   <Home className="w-4 h-4 text-brand-cyan" />
-                  Titre de l'annonce
+                  {t('title')}
                 </div>
               </label>
               <input
                 required
                 className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
-                placeholder="Ex: Superbe appartement en centre-ville"
+                placeholder={t('exampleTitle')}
                 value={form.titre}
                 onChange={(e) => setForm((prev) => ({ ...prev, titre: e.target.value }))}
               />
             </div>
 
-            {/* Description */}
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-foreground mb-1.5">
-                Description
+                {t('description')}
               </label>
               <textarea
                 rows={3}
                 className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
-                placeholder="Décrivez votre logement en détail..."
+                placeholder={t('describeYourHome')}
                 value={form.description}
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
               />
             </div>
 
-            {/* Prix */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-brand-cyan" />
-                  Prix (Ar)
+                  {t('price')}
                 </div>
               </label>
               <input
@@ -449,18 +444,17 @@ function EditAnnonceModal({
                 type="number"
                 min="0"
                 className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
-                placeholder="500 000"
+                placeholder={t('pricePlaceholder')}
                 value={form.prix_loyer}
                 onChange={(e) => setForm((prev) => ({ ...prev, prix_loyer: e.target.value }))}
               />
             </div>
 
-            {/* Type */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-brand-cyan" />
-                  Type de bien
+                  {t('propertyType')}
                 </div>
               </label>
               <select
@@ -468,84 +462,79 @@ function EditAnnonceModal({
                 value={form.type_propriete}
                 onChange={(e) => setForm((prev) => ({ ...prev, type_propriete: e.target.value }))}
               >
-                <option value="appartement">Appartement</option>
-                <option value="maison">Maison</option>
-                <option value="studio">Studio</option>
-                <option value="autre">Autre</option>
+                <option value="appartement">{t('apartment')}</option>
+                <option value="maison">{t('house')}</option>
+                <option value="studio">{t('studio')}</option>
+                <option value="autre">{t('other')}</option>
               </select>
             </div>
 
-            {/* Nombre de colocataires */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-brand-cyan" />
-                  Nombre de colocataires
+                  {t('numberOfColocataires')}
                 </div>
               </label>
               <input
                 type="number"
                 min="1"
                 className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
-                placeholder="3"
+                placeholder={t('colocatairesPlaceholder')}
                 value={form.total_colocataires}
                 onChange={(e) => setForm((prev) => ({ ...prev, total_colocataires: e.target.value }))}
               />
             </div>
 
-            {/* Quartier */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-brand-cyan" />
-                  Quartier
+                  {t('neighborhood')}
                 </div>
               </label>
               <input
                 className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
-                placeholder="Analakely, Isoraka..."
+                placeholder={t('neighborhoodPlaceholder')}
                 value={form.quartier}
                 onChange={(e) => setForm((prev) => ({ ...prev, quartier: e.target.value }))}
               />
             </div>
 
-            {/* Adresse */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
-                Adresse exacte
+                {t('exactAddress')}
               </label>
               <input
                 className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
-                placeholder="12 Rue de la Liberté"
+                placeholder={t('addressPlaceholder')}
                 value={form.adresse_exacte}
                 onChange={(e) => setForm((prev) => ({ ...prev, adresse_exacte: e.target.value }))}
               />
             </div>
 
-            {/* Surface */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
                 <div className="flex items-center gap-2">
                   <Ruler className="w-4 h-4 text-brand-cyan" />
-                  Surface (m²)
+                  {t('surface')}
                 </div>
               </label>
               <input
                 type="number"
                 min="0"
                 className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all outline-none"
-                placeholder="45"
+                placeholder={t('surfacePlaceholder')}
                 value={form.surface}
                 onChange={(e) => setForm((prev) => ({ ...prev, surface: e.target.value }))}
               />
             </div>
 
-            {/* Date disponibilité */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-brand-cyan" />
-                  Disponible à partir du
+                  {t('availableFrom')}
                 </div>
               </label>
               <input
@@ -556,7 +545,6 @@ function EditAnnonceModal({
               />
             </div>
 
-            {/* Meublé */}
             <div className="md:col-span-2">
               <label className="flex items-center gap-3 text-sm font-medium text-foreground cursor-pointer">
                 <input
@@ -567,13 +555,12 @@ function EditAnnonceModal({
                 />
                 <div className="flex items-center gap-2">
                   <Bed className="w-4 h-4 text-brand-cyan" />
-                  Logement meublé
+                  {t('furnished')}
                 </div>
               </label>
             </div>
           </div>
 
-          {/* Message d'erreur */}
           {editMessage && (
             <div className="rounded-xl bg-red-50 border border-red-200 p-3 flex items-center gap-2 text-sm text-red-700">
               <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -581,14 +568,13 @@ function EditAnnonceModal({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end border-t border-border/50 pt-6">
             <button
               type="button"
               onClick={onClose}
               className="rounded-xl border border-border px-6 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors"
             >
-              Annuler
+              {t('cancel')}
             </button>
             <button
               type="submit"
@@ -598,12 +584,12 @@ function EditAnnonceModal({
               {editSaving ? (
                 <>
                   <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Enregistrement...
+                  {t('saving')}
                 </>
               ) : (
                 <>
                   <Check className="w-4 h-4" />
-                  Enregistrer les modifications
+                  {t('saveChanges')}
                 </>
               )}
             </button>
@@ -615,6 +601,7 @@ function EditAnnonceModal({
 }
 
 function TabMesAnnonces() {
+  const { t } = useTranslation('compte')
   const [annonces, setAnnonces] = useState<ApiAnnonce[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -623,21 +610,21 @@ function TabMesAnnonces() {
   useEffect(() => {
     api.annonces({ mine: 'true', statut: 'all' })
       .then((data) => setAnnonces(data))
-      .catch((err) => setError(err instanceof Error ? err.message : 'Impossible de charger vos annonces.'))
+      .catch((err) => setError(err instanceof Error ? err.message : t('updateError')))
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   const handleUpdateAnnonce = (updated: ApiAnnonce) => {
     setAnnonces((current) => current.map((a) => (a.id === updated.id ? updated : a)))
   }
 
   const handleDeleteAnnonce = async (annonce: ApiAnnonce) => {
-    if (!window.confirm('Supprimer cette annonce ? Cette action est irréversible.')) return
+    if (!window.confirm(t('deleteConfirm'))) return
     try {
       await api.deleteAnnonce(annonce.id)
       setAnnonces((current) => current.filter((a) => a.id !== annonce.id))
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Impossible de supprimer l\'annonce')
+      alert(err instanceof Error ? err.message : t('deleteError'))
     }
   }
 
@@ -650,26 +637,26 @@ function TabMesAnnonces() {
   }
 
   const statutLabels: Record<string, string> = {
-    pending: 'En attente',
-    active: 'Active',
-    rejected: 'Rejetée',
-    archived: 'Archivée',
-    expired: 'Expirée',
+    pending: t('pending'),
+    active: t('active'),
+    rejected: t('rejected'),
+    archived: t('archived'),
+    expired: t('expired'),
   }
 
   return (
     <div>
-      <h2 className="bebas text-2xl">Mes annonces</h2>
+      <h2 className="bebas text-2xl">{t('myAnnouncements')}</h2>
       <p className="text-sm text-muted-foreground mt-1">
-        Toutes les annonces que tu as déposées, y compris celles en attente de validation.
+        {t('allAnnouncementsDesc')}
       </p>
 
       {loading ? (
-        <p className="mt-5 text-sm text-muted-foreground">Chargement...</p>
+        <p className="mt-5 text-sm text-muted-foreground">{t('loading')}</p>
       ) : error ? (
         <p className="mt-5 text-sm text-red-600">{error}</p>
       ) : annonces.length === 0 ? (
-        <p className="mt-5 text-sm text-muted-foreground">Aucune annonce trouvée. Dépose une annonce pour la voir ici.</p>
+        <p className="mt-5 text-sm text-muted-foreground">{t('noAnnouncements')}</p>
       ) : (
         <div className="mt-5 space-y-4">
           {annonces.map((annonce) => {
@@ -692,10 +679,10 @@ function TabMesAnnonces() {
                           <Link to={`/annonces/${annonce.id}`} className="text-lg font-semibold text-foreground hover:text-brand-cyan-dark">
                             {annonce.titre}
                           </Link>
-                          <button title="Modifier" onClick={() => setEditingAnnonce(annonce)} className="p-1.5 hover:bg-muted rounded text-muted-foreground">
+                          <button title={t('editAnnonce')} onClick={() => setEditingAnnonce(annonce)} className="p-1.5 hover:bg-muted rounded text-muted-foreground">
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button title="Supprimer" onClick={() => handleDeleteAnnonce(annonce)} className="p-1.5 hover:bg-red-50 rounded text-red-500">
+                          <button title={t('deleteAnnonce')} onClick={() => handleDeleteAnnonce(annonce)} className="p-1.5 hover:bg-red-50 rounded text-red-500">
                             <Trash className="w-4 h-4" />
                           </button>
                         </div>
@@ -709,9 +696,9 @@ function TabMesAnnonces() {
                     </div>
 
                     <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm text-muted-foreground">
-                      <div>Prix: {annonce.chambre?.prix_loyer ? `${annonce.chambre.prix_loyer.toLocaleString('fr-FR')} Ar` : 'Indisponible'}</div>
-                      <div>Type: {annonce.type_propriete}</div>
-                      <div>Créée le: {new Date(annonce.date_creation).toLocaleDateString('fr-FR')}</div>
+                      <div>{t('priceLabel')}: {annonce.chambre?.prix_loyer ? `${annonce.chambre.prix_loyer.toLocaleString('fr-FR')} Ar` : t('unavailable')}</div>
+                      <div>{t('type')}: {annonce.type_propriete}</div>
+                      <div>{t('createdOn')}: {new Date(annonce.date_creation).toLocaleDateString('fr-FR')}</div>
                     </div>
 
                     {photos.length > 1 && (
@@ -729,7 +716,6 @@ function TabMesAnnonces() {
         </div>
       )}
 
-      {/* Modal d'édition améliorée */}
       {editingAnnonce && (
         <EditAnnonceModal
           annonce={editingAnnonce}
@@ -742,6 +728,7 @@ function TabMesAnnonces() {
 }
 
 function TabMesFavoris() {
+  const { t } = useTranslation('compte')
   const [favoris, setFavoris] = useState<ApiAnnonce[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -754,10 +741,10 @@ function TabMesFavoris() {
       .then(setFavoris)
       .catch((err) => {
         setFavoris([])
-        setError(err instanceof Error ? err.message : 'Impossible de charger vos favoris.')
+        setError(err instanceof Error ? err.message : t('removeFavoriteError'))
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!toastMessage) return
@@ -775,9 +762,9 @@ function TabMesFavoris() {
       await api.deleteFavori(id)
       setFavoris((prev) => prev.filter((item) => item.id !== id))
       window.dispatchEvent(new CustomEvent('colockoo:favori-removed', { detail: { id: String(id) } }))
-      showToast('Suppression avec succès')
+      showToast(t('removeFavoriteSuccess'))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de retirer ce favori.')
+      setError(err instanceof Error ? err.message : t('removeFavoriteError'))
     }
   }
 
@@ -789,14 +776,14 @@ function TabMesFavoris() {
         </div>
       ) : null}
 
-      <h2 className="bebas text-2xl">Mes favoris</h2>
+      <h2 className="bebas text-2xl">{t('myFavorites')}</h2>
       <p className="text-sm text-muted-foreground mt-1">
-        Retrouvez ici les annonces que vous avez enregistrées comme favorites.
+        {t('myFavoritesDesc')}
       </p>
 
       {loading ? (
         <div className="mt-5 rounded-3xl border border-border bg-white p-6 text-sm text-muted-foreground">
-          Chargement de vos favoris...
+          {t('loadingFavorites')}
         </div>
       ) : error ? (
         <div className="mt-5 rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
@@ -804,7 +791,7 @@ function TabMesFavoris() {
         </div>
       ) : favoris.length === 0 ? (
         <div className="mt-5 rounded-3xl border border-dashed border-border bg-white p-6 text-sm text-muted-foreground">
-          Aucun favori pour l’instant. Ajoutez des annonces depuis la liste pour les retrouver ici.
+          {t('noFavorites')}
         </div>
       ) : (
         <div className="mt-5 space-y-4">
@@ -832,7 +819,7 @@ function TabMesFavoris() {
                           <Link to={`/annonces/${annonce.id}`} className="text-lg font-semibold text-foreground hover:text-brand-cyan-dark">
                             {annonce.titre}
                           </Link>
-                          <button title="Supprimer des favoris" onClick={() => removeFavorite(annonce.id)} className="p-1.5 hover:bg-red-50 rounded text-red-500">
+                          <button title={t('removeFavorite')} onClick={() => removeFavorite(annonce.id)} className="p-1.5 hover:bg-red-50 rounded text-red-500">
                             <Trash className="w-4 h-4" />
                           </button>
                         </div>
@@ -843,9 +830,9 @@ function TabMesFavoris() {
                     </div>
 
                     <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm text-muted-foreground">
-                      <div>Prix: {annonce.chambre?.prix_loyer ? `${annonce.chambre.prix_loyer.toLocaleString('fr-FR')} Ar` : 'Indisponible'}</div>
-                      <div>Type: {annonce.type_propriete}</div>
-                      <div>Ajouté aux favoris</div>
+                      <div>{t('priceLabel')}: {annonce.chambre?.prix_loyer ? `${annonce.chambre.prix_loyer.toLocaleString('fr-FR')} Ar` : t('unavailable')}</div>
+                      <div>{t('type')}: {annonce.type_propriete}</div>
+                      <div>{t('addedToFavorites')}</div>
                     </div>
 
                     {photos.length > 1 && (
@@ -867,13 +854,8 @@ function TabMesFavoris() {
 }
 
 function TabNotif() {
+  const { t } = useTranslation('compte')
   const navigate = useNavigate()
-  const [prefs, setPrefs] = useState<Record<string, boolean>>({
-    annonces: true,
-    candidatures: true,
-    newsletter: false,
-    offres: false,
-  })
   const [notifications, setNotifications] = useState<Array<{ id_notification: number; titre: string; texte: string; est_lue: number; type_notification: string; date_creation: string; lien: string | null }>>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -896,7 +878,7 @@ function TabNotif() {
   }
 
   const handleDeleteNotification = async (id: number) => {
-    if (!window.confirm('Supprimer cette notification ?')) return
+    if (!window.confirm(t('deleteConversationConfirm'))) return
     try {
       await api.deleteNotification(id)
       setNotifications((prev) => prev.filter((n) => n.id_notification !== id))
@@ -917,12 +899,12 @@ function TabNotif() {
 
   return (
     <div>
-      <h2 className="bebas text-2xl">Notifications</h2>
+      <h2 className="bebas text-2xl">{t('notifications')}</h2>
       <div className="mt-5 space-y-3">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Chargement…</p>
+          <p className="text-sm text-muted-foreground">{t('loading')}</p>
         ) : notifications.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aucune notification pour le moment.</p>
+          <p className="text-sm text-muted-foreground">{t('noNotifications')}</p>
         ) : (
           notifications.map((item) => (
             <div
@@ -950,7 +932,7 @@ function TabNotif() {
                   <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{item.texte}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="rounded-full bg-muted px-2.5 py-1 font-medium">
-                      {item.type_notification === 'message' ? 'Message de contact' : 'Notification'}
+                      {item.type_notification === 'message' ? t('messageContact') : t('notification')}
                     </span>
                     <span>{new Date(item.date_creation).toLocaleString('fr-FR')}</span>
                   </div>
@@ -962,7 +944,7 @@ function TabNotif() {
                       event.stopPropagation()
                       handleMarkOne(item.id_notification)
                     }}
-                    title="Marquer comme lu et supprimer"
+                    title={t('markAsRead')}
                     className="p-1.5 hover:bg-white/5 rounded text-sm text-muted-foreground"
                   >
                     <Check className="w-4 h-4" />
@@ -973,13 +955,13 @@ function TabNotif() {
                       event.stopPropagation()
                       handleDeleteNotification(item.id_notification)
                     }}
-                    title="Supprimer"
+                    title={t('delete')}
                     className="p-1.5 hover:bg-white/5 rounded text-red-500"
                   >
                     <Trash className="w-4 h-4" />
                   </button>
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.est_lue ? 'bg-muted text-muted-foreground' : 'bg-brand-cyan-light text-brand-cyan-dark'}`}>
-                    {item.est_lue ? 'Lue' : 'Nouvelle'}
+                    {item.est_lue ? t('read') : t('new')}
                   </span>
                 </div>
               </div>
@@ -988,7 +970,7 @@ function TabNotif() {
         )}
       </div>
       <Button className="mt-6 bg-brand-cyan text-white hover:bg-brand-cyan-dark" onClick={handleReadAll} disabled={saving}>
-        {saving ? 'Mise à jour…' : 'Tout marquer comme lu'}
+        {saving ? t('updating') : t('markAllAsRead')}
       </Button>
     </div>
   )
@@ -1024,6 +1006,7 @@ interface SuperadminUser {
 }
 
 function TabMessages() {
+  const { t } = useTranslation('compte')
   const { user } = useAuth()
   const [superadmin, setSuperadmin] = useState<SuperadminUser | null>(null)
   const [threads, setThreads] = useState<Array<{
@@ -1048,13 +1031,13 @@ function TabMessages() {
     setLoading(true)
     api.messagesThreads()
       .then((data) => setThreads(data))
-      .catch((err) => setError(err instanceof Error ? err.message : 'Impossible de charger les messages.'))
+      .catch((err) => setError(err instanceof Error ? err.message : t('updateError')))
       .finally(() => setLoading(false))
 
     api.superadmin()
       .then((data) => setSuperadmin(data))
       .catch(() => setSuperadmin(null))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (activeThread === null) return
@@ -1089,34 +1072,34 @@ function TabMessages() {
       const data = await api.messagesThread(activeThread)
       setMessages(data)
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : "Impossible d'envoyer le message.")
+      setSendError(err instanceof Error ? err.message : t('reportError'))
     } finally {
       setSending(false)
     }
   }
 
   const handleReportMessage = async (id_message: number) => {
-    const raison = window.prompt('Raison du signalement (optionnel)')
+    const raison = window.prompt(t('reportReason'))
     try {
-      await api.reportMessage(id_message, { raison: raison || 'Signalement utilisateur' })
+      await api.reportMessage(id_message, { raison: raison || t('reportSent') })
       if (activeThread !== null) {
         const data = await api.messagesThread(activeThread)
         setMessages(data)
       }
-      alert('Signalement envoyé.')
+      alert(t('reportSent'))
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Impossible d'envoyer le signalement.")
+      alert(err instanceof Error ? err.message : t('reportError'))
     }
   }
 
   const handleDeleteConversation = async (interlocutorId: number) => {
-    if (!window.confirm('Supprimer cette conversation ?')) return
+    if (!window.confirm(t('deleteConversationConfirm'))) return
     try {
       await api.deleteThread(interlocutorId)
       setThreads((prev) => prev.filter((t) => t.interlocuteur_id !== interlocutorId))
       if (activeThread === interlocutorId) setActiveThread(null)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Impossible de supprimer la conversation.")
+      alert(err instanceof Error ? err.message : t('deleteConversationError'))
     }
   }
 
@@ -1125,7 +1108,7 @@ function TabMessages() {
     ? `${activeThreadInfo.interlocuteur_prenom} ${activeThreadInfo.interlocuteur_nom}`
     : superadmin && activeThread === superadmin.id
       ? `${superadmin.prenom} ${superadmin.nom}`
-      : 'Conversation'
+      : t('conversationWithSuperadmin')
   
   if (activeThread !== null) {
     return (
@@ -1145,21 +1128,21 @@ function TabMessages() {
               {currentThreadName}
             </div>
             <div className="text-xs text-muted-foreground">
-              {activeThreadInfo ? `${activeThreadInfo.total_messages} message${activeThreadInfo.total_messages > 1 ? 's' : ''}` : 'Conversation avec le superadmin'}
+              {activeThreadInfo ? `${activeThreadInfo.total_messages} ${activeThreadInfo.total_messages > 1 ? t('messagesCount') : t('message')}` : t('conversationWithSuperadmin')}
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto py-4 space-y-3">
           {msgLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Chargement des messages...</p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t('loading')}</p>
           ) : messages.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Aucun message dans cette conversation.</p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t('noConversations')}</p>
           ) : (
             messages.map((msg) => {
               const isMe = msg.id_expediteur === user?.id
               const senderName = isMe
-                ? 'Vous'
+                ? t('profile')
                 : `${msg.expediteur_prenom} ${msg.expediteur_nom}`
               const isAdmin = !isMe && (msg.expediteur_nom?.toLowerCase().includes('admin') || msg.expediteur_prenom?.toLowerCase().includes('admin') || msg.expediteur_nom?.toLowerCase().includes('super'))
               return (
@@ -1178,7 +1161,7 @@ function TabMessages() {
                           {isAdmin && <span className="ml-1.5 inline-flex items-center gap-0.5 text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full">Admin</span>}
                         </div>
                           <div className="ml-3">
-                            <button title="Signaler" onClick={() => handleReportMessage(msg.id_message)} className="p-1.5 hover:bg-white/5 rounded text-muted-foreground">
+                            <button title={t('reportMessage')} onClick={() => handleReportMessage(msg.id_message)} className="p-1.5 hover:bg-white/5 rounded text-muted-foreground">
                               <AlertTriangle className="w-4 h-4" />
                             </button>
                           </div>
@@ -1207,7 +1190,7 @@ function TabMessages() {
             value={reply}
             onChange={(e) => setReply(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-            placeholder="Écris ton message..."
+            placeholder={t('typeMessage')}
             className="flex-1 border border-border rounded-full px-4 py-2.5 text-sm bg-white outline-none focus:border-brand-cyan"
             disabled={sending}
           />
@@ -1225,14 +1208,14 @@ function TabMessages() {
 
   return (
     <div>
-      <h2 className="bebas text-2xl">Messages</h2>
+      <h2 className="bebas text-2xl">{t('messages')}</h2>
       <p className="text-sm text-muted-foreground mt-1">
-        Retrouve tes conversations avec l'administration et le support.
+        {t('messagesDesc')}
       </p>
 
       <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <p className="text-sm text-muted-foreground">Démarre une conversation avec le superadmin ou choisis un fil existant.</p>
+          <p className="text-sm text-muted-foreground">{t('startConversation')}</p>
         </div>
         <button
           type="button"
@@ -1240,17 +1223,17 @@ function TabMessages() {
           disabled={!superadmin}
           className="inline-flex items-center justify-center rounded-full bg-brand-cyan px-4 py-2 text-sm font-semibold text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {superadmin ? `Contacter ${superadmin.prenom}` : 'Superadmin indisponible'}
+          {superadmin ? `${t('contact')} ${superadmin.prenom}` : t('superadminUnavailable')}
         </button>
       </div>
 
       {loading ? (
-        <p className="mt-5 text-sm text-muted-foreground">Chargement...</p>
+        <p className="mt-5 text-sm text-muted-foreground">{t('loading')}</p>
       ) : error ? (
         <p className="mt-5 text-sm text-red-600">{error}</p>
       ) : threads.length === 0 ? (
         <div className="mt-5 rounded-3xl border border-border bg-white p-5">
-          <p className="text-sm text-muted-foreground">Tu n'as pas encore de conversation. Clique sur "Contacter {superadmin ? superadmin.prenom : 'le superadmin'}" pour démarrer.</p>
+          <p className="text-sm text-muted-foreground">{t('noConversations')} {t('contact')} {superadmin ? superadmin.prenom : t('superadmin')}{t('toStart')}</p>
         </div>
       ) : (
         <div className="mt-5 space-y-3">
@@ -1273,22 +1256,22 @@ function TabMessages() {
                         {thread.interlocuteur_prenom} {thread.interlocuteur_nom}
                       </span>
                       {isAdmin && (
-                        <span className="text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full font-semibold">Admin</span>
+                        <span className="text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full font-semibold">{t('admin')}</span>
                       )}
                       {thread.non_lus > 0 && (
                         <span className="text-[10px] bg-brand-cyan text-white px-1.5 py-0.5 rounded-full font-semibold">
-                          {thread.non_lus} non lu{thread.non_lus > 1 ? 's' : ''}
+                          {thread.non_lus} {thread.non_lus > 1 ? t('unreads') : t('unread')}
                         </span>
                       )}
                     </div>
                     <div className="mt-0.5 text-xs text-muted-foreground">
-                      {thread.total_messages} message{thread.total_messages > 1 ? 's' : ''} · Dernière activité le {new Date(thread.dernier_message).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      {thread.total_messages} {thread.total_messages > 1 ? t('messagesCount') : t('message')} · {t('lastActivity')} {new Date(thread.dernier_message).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                   <div className="ml-4">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDeleteConversation(thread.interlocuteur_id) }}
-                      title="Supprimer la conversation"
+                      title={t('deleteConversation')}
                       className="p-1.5 hover:bg-white/5 rounded text-red-500"
                     >
                       <Trash className="w-4 h-4" />
@@ -1305,23 +1288,24 @@ function TabMessages() {
 }
 
 function TabSecu() {
+  const { t } = useTranslation('compte')
   const [form, setForm] = useState({ current: '', next: '', confirm: '' })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
   const handleSave = async () => {
     if (!form.current || !form.next || form.next !== form.confirm) {
-      setMessage('Vérifie le mot de passe actuel et la confirmation.')
+      setMessage(t('passwordValidation'))
       return
     }
     setSaving(true)
     setMessage('')
     try {
       await api.changePassword({ mot_de_passe_actuel: form.current, nouveau_mot_de_passe: form.next })
-      setMessage('Mot de passe mis à jour avec succès.')
+      setMessage(t('passwordUpdateSuccess'))
       setForm({ current: '', next: '', confirm: '' })
     } catch {
-      setMessage('Impossible de changer le mot de passe.')
+      setMessage(t('passwordUpdateError'))
     } finally {
       setSaving(false)
     }
@@ -1329,40 +1313,41 @@ function TabSecu() {
 
   return (
     <div>
-      <h2 className="bebas text-2xl">Sécurité</h2>
+      <h2 className="bebas text-2xl">{t('security')}</h2>
       <div className="mt-5 grid md:grid-cols-2 gap-4 max-w-lg">
         <div className="md:col-span-2">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Mot de passe actuel</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('currentPassword')}</label>
           <input type="password" value={form.current} onChange={(e) => setForm((prev) => ({ ...prev, current: e.target.value }))} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Nouveau mot de passe</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('newPassword')}</label>
           <input type="password" value={form.next} onChange={(e) => setForm((prev) => ({ ...prev, next: e.target.value }))} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Confirmer</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('confirmPassword')}</label>
           <input type="password" value={form.confirm} onChange={(e) => setForm((prev) => ({ ...prev, confirm: e.target.value }))} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" />
         </div>
       </div>
       {message ? <p className="mt-4 text-sm text-brand-cyan-dark">{message}</p> : null}
       <Button className="mt-6 bg-brand-cyan text-white hover:bg-brand-cyan-dark" onClick={handleSave} disabled={saving}>
-        {saving ? 'Mise à jour…' : 'Mettre à jour'}
+        {saving ? t('updating') : t('update')}
       </Button>
     </div>
   )
 }
 
 export default function Compte() {
+  const { t } = useTranslation('compte')
   const location = useLocation()
   const navigate = useNavigate()
   const { user, loading, logout, updateProfile, isAdmin } = useAuth()
   const isColocataire = user?.poste === 'colocataire'
   const tabs = [
-    { id: 'profil', label: 'Profil', icon: User },
-    { id: isColocataire ? 'favoris' : 'dossier', label: isColocataire ? 'Mes favoris' : 'Mes annonces', icon: isColocataire ? Heart : FileText },
-    { id: 'notif', label: 'Notifications', icon: Bell },
-    { id: 'paiements', label: 'Messages', icon: MessageSquare },
-    { id: 'secu', label: 'Sécurité', icon: Lock }
+    { id: 'profil', label: t('profile'), icon: User },
+    { id: isColocataire ? 'favoris' : 'dossier', label: isColocataire ? t('myFavoritesTab') : t('myAnnouncementsTab'), icon: isColocataire ? Heart : FileText },
+    { id: 'notif', label: t('notifications'), icon: Bell },
+    { id: 'paiements', label: t('messagesTab'), icon: MessageSquare },
+    { id: 'secu', label: t('securityTab'), icon: Lock }
   ]
 
   const getInitialTab = () => {
@@ -1384,8 +1369,8 @@ export default function Compte() {
   }, [location.search, isColocataire])
 
   const initials = (user?.prenom?.[0] || user?.name?.[0] || 'U').toUpperCase()
-  const fullName = `${user?.prenom || ''} ${user?.nom || ''}`.trim() || user?.name || 'Utilisateur'
-  const roleLabel = user?.poste === 'proprietaire' ? 'Propriétaire' : user?.poste === 'colocataire' ? 'Locataire' : user?.poste || 'Membre'
+  const fullName = `${user?.prenom || ''} ${user?.nom || ''}`.trim() || user?.name || t('userProfile')
+  const roleLabel = user?.poste === 'proprietaire' ? t('proprietaire') : user?.poste === 'colocataire' ? t('colocataire') : user?.poste || t('member')
   const profileMeta = [user?.profession].filter(Boolean).join(' • ')
 
   return (
@@ -1397,9 +1382,9 @@ export default function Compte() {
               {initials}
             </div>
             <div>
-              <h1 className="bebas text-3xl">{loading ? 'Chargement...' : fullName}</h1>
+              <h1 className="bebas text-3xl">{loading ? t('loadingProfile') : fullName}</h1>
               <div className="text-sm text-muted-foreground">
-                {user ? `${user.email} · ${roleLabel}` : 'Connecte-toi pour voir ton profil'}
+                {user ? `${user.email} · ${roleLabel}` : t('connectToSeeProfile')}
                 {profileMeta ? <div className="mt-1">{profileMeta}</div> : null}
               </div>
             </div>
@@ -1407,12 +1392,12 @@ export default function Compte() {
           <div className="flex items-center gap-2">
             {user && isAdmin ? (
               <Button variant="outline" onClick={() => navigate('/admin')}>
-                Aller au back office
+                {t('goToBackOffice')}
               </Button>
             ) : null}
             {user ? (
               <Button variant="outline" onClick={() => { logout(); navigate('/auth?mode=signin') }}>
-                Se déconnecter
+                {t('logout')}
               </Button>
             ) : null}
           </div>

@@ -1,0 +1,52 @@
+{
+  "hero": {
+    "badge": "Services Coloc'KOO",
+    "title": "Demandez un service, on s'occupe du reste",
+    "subtitle": "Ménage, jardinage, petites prestations du quotidien… Sélectionnez ce dont vous avez besoin et envoyez votre demande. Un conseiller Coloc'KOO vous recontacte."
+  },
+  "user": {
+    "myAccount": "Mon compte",
+    "accountLabel": "Demande au nom de ce compte",
+    "notConnected": "Non connecté",
+    "notConnectedDesc": "parcourez librement, connectez-vous pour envoyer une demande."
+  },
+  "catalogue": {
+    "title": "Services disponibles",
+    "subtitle": "Cochez une ou plusieurs prestations, puis envoyez votre demande.",
+    "defaultDesc": "Prestation à la demande.",
+    "empty": "Aucun service disponible pour le moment."
+  },
+  "cart": {
+    "title": "Ma demande",
+    "item": "article",
+    "items": "articles",
+    "empty": "Sélectionnez un ou plusieurs services pour composer votre demande.",
+    "total": "Total estimé",
+    "phonePlaceholder": "Téléphone de contact",
+    "messagePlaceholder": "Précisez votre besoin (adresse, date souhaitée, détails…)",
+    "submit": "Envoyer la demande",
+    "loginToSubmit": "Se connecter pour demander",
+    "clear": "Vider la sélection",
+    "disclaimer": "Montant indicatif. Le devis définitif est confirmé par Coloc'KOO, hors plateforme."
+  },
+  "history": {
+    "title": "Mes demandes"
+  },
+  "confirmation": {
+    "title": "Demande envoyée !",
+    "subtitle": "Un conseiller Coloc'KOO vous recontacte pour finaliser le devis.",
+    "reference": "Référence",
+    "total": "Total estimé",
+    "ok": "Parfait"
+  },
+  "status": {
+    "new": "Nouvelle",
+    "inProgress": "En cours",
+    "processed": "Traitée",
+    "canceled": "Annulée"
+  },
+  "errors": {
+    "load": "Impossible de charger les services.",
+    "submit": "Impossible d'envoyer la demande."
+  }
+}

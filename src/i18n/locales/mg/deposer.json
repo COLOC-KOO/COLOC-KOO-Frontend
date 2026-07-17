@@ -1,0 +1,111 @@
+{
+  "hero": {
+    "badge": "Famoahana aorian'ny fanamarinana admin",
+    "title": "Alefaso ny",
+    "highlight": "fanambarana",
+    "subtitle": "Fenoy ny taratasy eto ambany hamoahana ny fanambaranao. Ny ekipanay dia hanamarina izany haingana araka izay azo atao."
+  },
+  "auth": {
+    "required": "Mifandraisa mba handefasana fanambarana.",
+    "login": "Hiditra"
+  },
+  "steps": {
+    "1": {
+      "label": "Karazana",
+      "description": "Karazana trano"
+    },
+    "2": {
+      "label": "Toerana",
+      "description": "Aiza no misy azy ?"
+    },
+    "3": {
+      "label": "Antiparitany",
+      "description": "Toetra"
+    },
+    "4": {
+      "label": "Sary",
+      "description": "Sarin'ilay trano"
+    },
+    "5": {
+      "label": "Vidiny",
+      "description": "Vidiny sy fepetra"
+    }
+  },
+  "step1": {
+    "title": "Karazana trano",
+    "subtitle": "Inona no karazana trano atolotrao ?",
+    "titleField": "Lohatenin'ny fanambarana",
+    "titleHelp": "Lohateny mahasarika hisarihana ny mpiara-monina",
+    "titlePlaceholder": "Ohatra: Efitra mamirapiratra ao Isoraka"
+  },
+  "step2": {
+    "title": "Toerana",
+    "subtitle": "Aiza no misy ilay trano ?",
+    "city": "Tanàna",
+    "district": "Faritra",
+    "districtPlaceholder": "Ohatra: Isoraka, Analakely...",
+    "address": "Adiresy marina",
+    "addressHelp": "Tsy voatery - hita aorian'ny fanamarinana ihany",
+    "addressPlaceholder": "12 Rue de la Liberté"
+  },
+  "step3": {
+    "title": "Antiparitany momba ilay trano",
+    "subtitle": "Ny toetran'ilay trano",
+    "surface": "Velarambony (m²)",
+    "colocataires": "Isa ny mpiara-monina",
+    "roomSurface": "Velaran'ny efitra (m²)",
+    "furnished": "Misy fanaka",
+    "furnishedYes": "Eny",
+    "furnishedPartial": "Ampahany",
+    "furnishedNo": "Tsia",
+    "furnishedBuyout": "Mety hovidiana",
+    "availability": "Fahafahana",
+    "services": "Fitaovana",
+    "servicesHelp": "Sarahan'ny tsiroaroa",
+    "servicesPlaceholder": "Wi-Fi, Lakozia feno, Mpanasa lamba",
+    "description": "Famaritana",
+    "descriptionPlaceholder": "Famaritana amin'ny antsipirihany..."
+  },
+  "step4": {
+    "title": "Sary",
+    "subtitle": "Ampio sary hanasongadinana ilay trano",
+    "drop": "Arya amin'ity mba handefasana !",
+    "drag": "Ampidiro eto ny sarinao",
+    "click": "na tsindrio eto",
+    "formats": "JPG, PNG, WEBP hatramin'ny 10MB",
+    "uploading": "Fandefasana sary..."
+  },
+  "step5": {
+    "title": "Vidiny sy fepetra",
+    "subtitle": "Farito ny vidiny sy ny fitsipika",
+    "rent": "Vidin-trano isam-bolana (Ar)",
+    "charges": "Saram-piasana isam-bolana (Ar)",
+    "deposit": "Antoka (Ar)",
+    "rules": "Fitsipika",
+    "rulesHelp": "Sarahan'ny tsiroaroa",
+    "rulesPlaceholder": "Tsy mifoka, Biby ekena",
+    "leaseType": "Karazana fanofana",
+    "leaseHelp": "Hita eo amin'ny taratasy ary averina amin'ny fifanarahana",
+    "leaseCollective": "Fanofana iraisana — fifanarahana iray nosoniavin'ny rehetra",
+    "leaseIndividual": "Fanofana manokana — samy manao ny azy",
+    "solidarity": "Fepetra firaisankina",
+    "solidarityWithout": "Tsy misy firaisankina — samy tompon'andraikitra amin'ny ampahany",
+    "solidarityWith": "Misy firaisankina — miara-mandraikitra ny vidin-trano",
+    "summary": "Fintinina ny fanambarana",
+    "summaryTitle": "Lohateny",
+    "summaryLocation": "Toerana",
+    "summaryPrice": "Vidin-trano",
+    "summaryType": "Karazana",
+    "summaryPhotos": "sary",
+    "summaryPhotosLabel": "sary",
+    "summaryAvailability": "Fahafahana",
+    "submit": "Alefa amin'ny admin"
+  },
+  "success": {
+    "message": "🎉 Fanambarana alefa soa aman-tsara ! Ho hita aorian'ny fanamarinana ny admin."
+  },
+  "errors": {
+    "upload": "Tsy afaka nandefa ny sary",
+    "submit": "Tsy afaka nandefa ny fanambarana"
+  }
+}
