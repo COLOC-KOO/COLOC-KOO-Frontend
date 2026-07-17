@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/ui/Button'
 import { Poste } from '../lib/api'
 import { roleLevel, useAuth } from '../lib/auth'
 
 const postes: { value: Poste; label: string }[] = [
-  { value: 'colocataire', label: 'Colocataire' },
-  { value: 'proprietaire', label: 'Proprietaire' },
-  /*{ value: 'moderateur', label: 'Moderateur' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'superadmin', label: 'Superadmin' },*/
+  { value: 'colocataire', label: 'colocataire' },
+  { value: 'proprietaire', label: 'proprietaire' },
+  /*{ value: 'moderateur', label: 'moderateur' },
+  { value: 'admin', label: 'admin' },
+  { value: 'superadmin', label: 'superadmin' },*/
 ]
 
 export default function Auth() {
+  const { t } = useTranslation('auth')
   const [params] = useSearchParams()
   const [mode, setMode] = useState<'signin' | 'signup'>(
     params.get('mode') === 'signup' ? 'signup' : 'signin'
@@ -56,10 +58,22 @@ export default function Auth() {
       const redirect = params.get('redirect')
       navigate(redirect || (roleLevel(connected.poste) > 0 ? '/admin' : '/compte'), { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion impossible')
+      setError(err instanceof Error ? err.message : t('loginError'))
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Fonction pour obtenir le label traduit d'un poste
+  const getPosteLabel = (posteValue: string): string => {
+    const translationMap: Record<string, string> = {
+      'colocataire': t('colocataire'),
+      'proprietaire': t('proprietaire'),
+      'moderateur': t('moderateur'),
+      'admin': t('admin'),
+      'superadmin': t('superadmin'),
+    }
+    return translationMap[posteValue] || posteValue
   }
 
   return (
@@ -68,17 +82,13 @@ export default function Auth() {
         <Logo />
         <div>
           <div className="bebas text-5xl leading-none">
-            Bienvenue
-            <br />
-            dans la coloc
-            <br />
-            nouvelle generation.
+            {t('welcome')}
           </div>
           <p className="mt-4 text-white/85 max-w-sm">
-            Annonces verifiees, dossiers en ligne et moderation par role.
+            {t('verifiedAnnouncements')}
           </p>
         </div>
-        <div className="text-xs text-white/60">2026 Sarintany Group</div>
+        <div className="text-xs text-white/60">2026 {t('copyright')}</div>
       </div>
 
       <div className="flex items-center justify-center p-8">
@@ -94,7 +104,7 @@ export default function Auth() {
                 mode === 'signin' ? 'bg-white shadow-sm' : 'text-muted-foreground'
               }`}
             >
-              Connexion
+              {t('signin')}
             </button>
             <button
               type="button"
@@ -103,18 +113,18 @@ export default function Auth() {
                 mode === 'signup' ? 'bg-white shadow-sm' : 'text-muted-foreground'
               }`}
             >
-              Inscription
+              {t('signup')}
             </button>
           </div>
 
-          <h1 className="bebas text-3xl">{mode === 'signin' ? 'Content de te revoir' : 'Creer un compte'}</h1>
+          <h1 className="bebas text-3xl">{mode === 'signin' ? t('welcomeBack') : t('createAccount')}</h1>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             {mode === 'signup' && (
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">Prenom</label>
+                    <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">{t('firstName')}</label>
                     <input
                       required
                       className="input"
@@ -123,7 +133,7 @@ export default function Auth() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">Nom</label>
+                    <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">{t('lastName')}</label>
                     <input
                       required
                       className="input"
@@ -133,7 +143,7 @@ export default function Auth() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">Poste</label>
+                  <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">{t('role')}</label>
                   <select
                     required
                     className="input"
@@ -142,7 +152,7 @@ export default function Auth() {
                   >
                     {postes.map((poste) => (
                       <option key={poste.value} value={poste.value}>
-                        {poste.label}
+                        {getPosteLabel(poste.value)}
                       </option>
                     ))}
                   </select>
@@ -150,7 +160,7 @@ export default function Auth() {
               </>
             )}
             <div>
-              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">Email</label>
+              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">{t('email')}</label>
               <input
                 required
                 type="email"
@@ -160,7 +170,7 @@ export default function Auth() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">Mot de passe</label>
+              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">{t('password')}</label>
               <input
                 required
                 minLength={6}
@@ -169,16 +179,19 @@ export default function Auth() {
                 value={form.mot_de_passe}
                 onChange={(e) => setForm({ ...form, mot_de_passe: e.target.value })}
               />
+              {mode === 'signup' && (
+                <p className="mt-1 text-xs text-muted-foreground">{t('passwordMinLength')}</p>
+              )}
             </div>
             {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
             <Button disabled={submitting} type="submit" className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white">
-              {submitting ? 'Traitement...' : mode === 'signin' ? 'Se connecter' : 'Creer mon compte'}
+              {submitting ? t('processing') : mode === 'signin' ? t('signinBtn') : t('signupBtn')}
             </Button>
           </form>
 
           <div className="mt-6 text-xs text-center text-muted-foreground">
             <Link to="/admin" className="text-brand-cyan-dark font-semibold">
-              Acces back-office admin
+              {t('backOfficeAccess')}
             </Link>
           </div>
         </div>

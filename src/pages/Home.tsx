@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
   MapPin,
@@ -61,6 +62,7 @@ const steps = [
 ];
 
 export default function Home() {
+  const { t } = useTranslation(['home', 'common']);
   const navigate = useNavigate();
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [cityCards, setCityCards] = useState<CityInfo[]>([]);
@@ -171,12 +173,11 @@ export default function Home() {
         setCurrentPartnerIndex((prev) => {
           const maxIndex = Math.max(0, partners.length - itemsPerSlide);
           if (prev >= maxIndex) {
-            // Retour au début pour un défilement infini
             return 0;
           }
-          return prev + 0.5; // Défilement très lent (0.5 au lieu de 1)
+          return prev + 0.5;
         });
-      }, 3000); // Intervalle plus long pour un défilement lent
+      }, 3000);
     }
     return () => {
       if (autoPlayInterval.current) {
@@ -226,11 +227,20 @@ export default function Home() {
   const maxIndex = Math.max(0, partners.length - itemsPerSlide);
 
   const summaryText = useMemo(() => {
-    if (loading) return "Chargement...";
-    const cityLabel = cityCards.length > 1 ? "villes" : "ville";
+    if (loading) return t('common:common.loading');
+    const cityLabel = cityCards.length > 1 ? t('home:cities.subtitle').split(' ')[0] : "ville";
     const annonceLabel = featuredListings.length > 1 ? "annonces" : "annonce";
-    return `${cityCards.length} ${cityLabel} couvertes, ${featuredListings.length} ${annonceLabel} validées`;
-  }, [cityCards.length, featuredListings.length, loading]);
+    return `${cityCards.length} ${t('home:cities.subtitle').split(' ')[0]}${cityCards.length > 1 ? 's' : ''} couvertes, ${featuredListings.length} ${annonceLabel} validées`;
+  }, [cityCards.length, featuredListings.length, loading, t]);
+
+  // Traductions des étapes
+  const translatedSteps = useMemo(() => {
+    return steps.map((step, index) => ({
+      ...step,
+      t: t(`home:howItWorks.steps.${index}.title`),
+      d: t(`home:howItWorks.steps.${index}.description`),
+    }));
+  }, [t]);
 
   return (
     <SiteLayout>
@@ -245,21 +255,15 @@ export default function Home() {
           <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-xs font-semibold text-white border border-white/20 shadow-lg">
               <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-              Colocation nouvelle génération
+              {t('home:hero.badge')}
             </span>
 
             <h1 className="bebas text-4xl md:text-6xl mt-4 leading-[0.95] drop-shadow-2xl">
-              Trouve ta coloc,
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
-                partout à
-                <span className="text-[--brand-green-dark]"> Madagascar</span>
-              </span>
+              {t('home:hero.title')}
             </h1>
 
             <p className="mt-4 text-lg md:text-xl font-bold text-white max-w-lg bg-black/15 backdrop-blur-md p-3 rounded-xl">
-              Chambres, appartements et maisons vérifiés dossiers en ligne,
-              signature simplifiée.
+              {t('home:hero.subtitle')}
             </p>
           </div>
 
@@ -267,13 +271,13 @@ export default function Home() {
             <Link to="/annonces">
               <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-2xl hover:from-cyan-600 hover:to-blue-700 hover:shadow-2xl hover:scale-105 border border-white/20">
                 <MapPin className="w-4 h-4" />
-                Je cherche un logement
+                {t('home:hero.search')}
               </button>
             </Link>
             <Link to="/deposer">
               <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-2xl hover:from-green-600 hover:to-emerald-700 hover:shadow-2xl hover:scale-105 border border-white/20">
                 <KeyRound className="w-4 h-4" />
-                Je propose un logement
+                {t('home:hero.propose')}
               </button>
             </Link>
           </div>
@@ -282,20 +286,20 @@ export default function Home() {
             <div className="flex-1 flex items-center gap-2 px-4 py-2.5">
               <MapPin className="w-5 h-5 text-brand-cyan" />
               <input
-                placeholder="Ville, quartier..."
+                placeholder={t('home:hero.placeholder')}
                 className="flex-1 bg-transparent text-gray-800 outline-none text-sm placeholder-gray-500"
               />
             </div>
             <div className="hidden md:block w-px bg-gray-300 my-2" />
             <select className="px-4 py-2.5 bg-transparent text-gray-800 text-sm outline-none cursor-pointer">
-              <option>Tous types</option>
-              <option>Chambre</option>
-              <option>Appartement</option>
-              <option>Maison</option>
+              <option>{t('home:hero.allTypes')}</option>
+              <option>{t('home:hero.room')}</option>
+              <option>{t('home:hero.apartment')}</option>
+              <option>{t('home:hero.house')}</option>
             </select>
             <Link to="/annonces">
               <Button className="w-full md:w-auto bg-gradient-to-r from-brand-cyan to-cyan-600 hover:from-brand-cyan-dark hover:to-cyan-700 text-white h-full px-6 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                <Search className="w-4 h-4" /> Rechercher
+                <Search className="w-4 h-4" /> {t('common:common.search')}
               </Button>
             </Link>
           </div>
@@ -303,15 +307,15 @@ export default function Home() {
           <div className="mt-5 flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <Shield className="w-4 h-4 text-green-400" />
-              <span className="text-white">Annonces vérifiées</span>
+              <span className="text-white">{t('home:hero.verified')}</span>
             </div>
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <Users className="w-4 h-4 text-green-400" />
-              <span className="text-white">1 400+ colocataires</span>
+              <span className="text-white">{t('home:hero.colocataires')}</span>
             </div>
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <Star className="w-4 h-4 text-yellow-400" />
-              <span className="text-white">4,8/5 satisfaction</span>
+              <span className="text-white">{t('home:hero.satisfaction')}</span>
             </div>
           </div>
         </div>
@@ -324,11 +328,11 @@ export default function Home() {
           <div className="flex items-end justify-between mb-6">
             <div>
               <h2 className="bebas text-3xl">
-                <span className="text-[--brand-cyan-dark]">Annonces </span>
-                <span className="text-[--brand-green-dark]">vedettes</span>
+                <span className="text-[--brand-cyan-dark]">{t('home:featured.title').split(' ')[0]} </span>
+                <span className="text-[--brand-green-dark]">{t('home:featured.title').split(' ').slice(1).join(' ')}</span>
               </h2>
               <p className="text-gray-500 text-sm mt-1">
-                Sélection de la semaine, vérifiée par notre équipe
+                {t('home:featured.subtitle')}
               </p>
             </div>
 
@@ -343,7 +347,7 @@ export default function Home() {
                 }`}
               >
                 <List className="w-4 h-4" />
-                <span className="hidden sm:inline">Liste</span>
+                <span className="hidden sm:inline">{t('home:featured.list')}</span>
               </button>
               <button
                 onClick={() => setViewMode("map")}
@@ -354,7 +358,7 @@ export default function Home() {
                 }`}
               >
                 <Map className="w-4 h-4" />
-                <span className="hidden sm:inline">Carte</span>
+                <span className="hidden sm:inline">{t('home:featured.map')}</span>
               </button>
             </div>
           </div>
@@ -398,7 +402,7 @@ export default function Home() {
 
                       {/* Badge "Vérifiée" */}
                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-medium text-gray-700 shadow-sm">
-                        ✓ Vérifiée
+                        ✓ {t('home:featured.verified')}
                       </div>
 
                       {/* PRIX SUR LA CARTE - Style Airbnb */}
@@ -406,11 +410,11 @@ export default function Home() {
                         <span className="text-sm font-bold text-gray-900">
                           {l.price
                             ? `${(l.price / 1000).toFixed(0)}k Ar`
-                            : "Prix sur demande"}
+                            : t('common:common.none')}
                         </span>
                         {l.price && (
                           <span className="text-[10px] text-gray-500 ml-1">
-                            /mois
+                            {t('home:featured.pricePerMonth')}
                           </span>
                         )}
                       </div>
@@ -422,7 +426,6 @@ export default function Home() {
                         <h3 className="text-sm font-medium text-gray-900 line-clamp-1 flex-1">
                           {l.title || "Annonce sans titre"}
                         </h3>
-                        {/* Étoile de notation (optionnelle) */}
                         <div className="flex items-center gap-0.5 text-xs text-gray-600 shrink-0">
                           <Star className="w-3 h-3 fill-[#FF385C] text-[#FF385C]" />
                           <span>4.8</span>
@@ -468,7 +471,6 @@ export default function Home() {
                             <Building2 className="w-8 h-8 text-gray-400" />
                           </div>
                         )}
-                        {/* PRIX SUR LA CARTE (vue carte) */}
                         <div className="absolute bottom-1.5 right-1.5 bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-lg shadow-sm">
                           <span className="text-xs font-bold text-gray-900">
                             {l.price
@@ -498,10 +500,10 @@ export default function Home() {
             <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-12 text-center">
               <div className="text-4xl mb-3">🏠</div>
               <h3 className="text-lg font-medium text-gray-700">
-                Aucune annonce disponible
+                {t('home:featured.empty')}
               </h3>
               <p className="text-gray-500 text-sm mt-1">
-                Revenez plus tard pour découvrir les nouvelles annonces
+                {t('home:featured.emptySub')}
               </p>
             </div>
           )}
@@ -514,8 +516,8 @@ export default function Home() {
           <div className="flex items-end justify-between mb-6">
             <div>
               <h2 className="bebas text-3xl">
-                <span className="text-[--brand-cyan-dark]">Explorez </span>
-                <span className="text-[--brand-green-dark]">par ville</span>
+                <span className="text-[--brand-cyan-dark]">{t('home:cities.title').split(' ')[0]} </span>
+                <span className="text-[--brand-green-dark]">{t('home:cities.title').split(' ').slice(1).join(' ')}</span>
               </h2>
               <p className="text-muted-foreground text-sm mt-1">
                 {summaryText}
@@ -525,7 +527,7 @@ export default function Home() {
               to="/annonces"
               className="hidden md:inline-flex items-center gap-1 text-sm font-medium text-[--brand-cyan-dark] hover:gap-2 transition-all duration-300"
             >
-              Toutes les annonces <ArrowRight className="w-4 h-4" />
+              {t('home:cities.viewAll')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
@@ -543,43 +545,27 @@ export default function Home() {
                 to="/annonces"
                 className="group relative aspect-square rounded-2xl overflow-hidden bg-card border border-border hover:border-[--brand-cyan]/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
-                {/* Fond avec dégradé doux utilisant les couleurs brand */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[--brand-cyan-light] to-[--brand-green-light] group-hover:from-[--brand-cyan]/10 group-hover:to-[--brand-green]/10 transition-colors duration-300" />
-
-                {/* Icône de localisation */}
                 <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <MapPin className="w-4 h-4 text-[--brand-cyan-dark]" />
                 </div>
-
-                {/* Contenu centré */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                  {/* Nom de la ville */}
                   <div className="text-xl md:text-2xl font-semibold text-foreground group-hover:text-[--brand-cyan-dark] transition-colors duration-300">
                     {c.name}
                   </div>
-
-                  {/* Séparateur */}
                   <div className="w-8 h-0.5 bg-border group-hover:bg-[--brand-cyan] rounded-full transition-all duration-300 my-2" />
-
-                  {/* Nombre d'annonces */}
                   <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
-                    {c.count} annonce{c.count > 1 ? "s" : ""}
+                    {c.count} {c.count > 1 ? t('home:cities.annonces') : t('home:cities.annonce')}
                   </div>
-
-                  {/* Lien "Explorer" qui apparaît au survol */}
                   <div className="mt-3 overflow-hidden">
                     <span className="inline-block text-xs font-medium text-[--brand-cyan-dark] opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                      Explorer →
+                      {t('home:cities.explore')} →
                     </span>
                   </div>
                 </div>
-
-                {/* Effet de brillance subtil au survol */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
                 </div>
-
-                {/* Bordure animée en bas - Dégradé brand */}
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[--brand-cyan] to-[--brand-green] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
               </Link>
             ))}
@@ -593,23 +579,23 @@ export default function Home() {
           <div className="flex items-end justify-between mb-6">
             <div>
               <h2 className="bebas text-3xl">
-                <span className="text-[--brand-cyan-dark]">Comment </span>
-                <span className="text-[--brand-green-dark]">ça marche</span>
+                <span className="text-[--brand-cyan-dark]">{t('home:howItWorks.title').split(' ')[0]} </span>
+                <span className="text-[--brand-green-dark]">{t('home:howItWorks.title').split(' ').slice(1).join(' ')}</span>
               </h2>
               <p className="text-muted-foreground text-sm mt-1">
-                3 étapes simples pour rejoindre ta coloc
+                {t('home:howItWorks.subtitle')}
               </p>
             </div>
             <Link
               to="/annonces"
               className="hidden md:inline-flex items-center gap-1 text-sm font-medium text-[--brand-cyan-dark] hover:gap-2 transition-all duration-300"
             >
-              Voir les annonces <ArrowRight className="w-4 h-4" />
+              {t('home:howItWorks.viewAll')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
           <div className="grid md:grid-cols-3 gap-5">
-            {steps.map((s, index) => (
+            {translatedSteps.map((s, index) => (
               <motion.div
                 key={s.n}
                 initial={{ opacity: 0, y: 30 }}
@@ -622,7 +608,6 @@ export default function Home() {
                 }}
                 className="group relative bg-card border border-border rounded-2xl p-6 transition-all duration-300 hover:border-[--brand-cyan]/30"
               >
-                {/* Numéro d'étape */}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[--brand-cyan-light] text-[--brand-cyan-dark] text-lg font-bold transition-all duration-300 group-hover:bg-[--brand-cyan] group-hover:text-white">
                     {s.n}
@@ -632,20 +617,16 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* Titre */}
                 <h3 className="text-base font-semibold text-foreground group-hover:text-[--brand-cyan-dark] transition-colors duration-300">
                   {s.t}
                 </h3>
 
-                {/* Description */}
                 <p className="mt-1.5 text-muted-foreground text-sm leading-relaxed">
                   {s.d}
                 </p>
 
-                {/* Ligne d'accentuation au survol */}
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[--brand-cyan] to-[--brand-green] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-b-2xl" />
 
-                {/* Indicateur de progression */}
                 <div className="mt-3 flex items-center gap-2">
                   <span className="text-xs font-medium text-[--brand-cyan-dark] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     Étape {s.n}
@@ -656,13 +637,13 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Lien "Toutes les annonces" en bas - comme la section villes */}
+          {/* Lien "Toutes les annonces" en bas */}
           <div className="text-center mt-6">
             <Link
               to="/annonces"
               className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-[--brand-cyan-dark] transition-colors duration-300 group"
             >
-              <span>Commencer ma recherche</span>
+              <span>{t('home:howItWorks.startSearch')}</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
@@ -674,24 +655,24 @@ export default function Home() {
         <div className="flex items-end justify-between mb-4">
           <div>
             <h2 className="bebas text-3xl">
-              <span className="text-[--brand-cyan-dark]">Nos </span>
-              <span className="text-[--brand-green-dark]">Partenaires</span>
+              <span className="text-[--brand-cyan-dark]">{t('home:partners.title').split(' ')[0]} </span>
+              <span className="text-[--brand-green-dark]">{t('home:partners.title').split(' ').slice(1).join(' ')}</span>
             </h2>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Ils nous font confiance
+              {t('home:partners.subtitle')}
             </p>
           </div>
           <Link
             to="/partenaires"
             className="inline-flex items-center gap-1 text-sm font-medium text-brand-cyan-dark hover:gap-2 transition-all"
           >
-            Voir tous <ArrowRight className="w-4 h-4" />
+            {t('home:partners.viewAll')} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {partners.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
-            {loading ? "Chargement..." : "Aucun partenaire disponible"}
+            {loading ? t('home:partners.loading') : t('home:partners.empty')}
           </div>
         ) : (
           <div
@@ -707,7 +688,6 @@ export default function Home() {
                   transform: `translateX(-${Math.floor(currentPartnerIndex) * (100 / itemsPerSlide)}%)`,
                 }}
               >
-                {/* Partners avec duplication pour effet infini */}
                 {[...partners, ...partners, ...partners].map((partner, idx) => (
                   <div
                     key={`${partner.id_partenaire}-${idx}`}
@@ -785,14 +765,14 @@ export default function Home() {
                 <button
                   onClick={goToPrevious}
                   className="absolute top-1/2 -left-3 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border/50 z-10"
-                  aria-label="Précédent"
+                  aria-label={t('common:common.previous')}
                 >
                   <ChevronLeft className="w-4 h-4 text-foreground" />
                 </button>
                 <button
                   onClick={goToNext}
                   className="absolute top-1/2 -right-3 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border/50 z-10"
-                  aria-label="Suivant"
+                  aria-label={t('common:common.next')}
                 >
                   <ChevronRight className="w-4 h-4 text-foreground" />
                 </button>
@@ -832,10 +812,10 @@ export default function Home() {
           <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
           <div className="relative text-white">
             <h2 className="bebas text-3xl md:text-4xl">
-              Propriétaire ou agence ?
+              {t('home:cta.title')}
             </h2>
             <p className="mt-2 text-white/80 text-sm">
-              Publie ton annonce et gère tes colocataires en toute simplicité.
+              {t('home:cta.subtitle')}
             </p>
           </div>
           <div className="relative flex md:justify-end gap-3 flex-wrap">
@@ -846,7 +826,7 @@ export default function Home() {
                   backgroundColor: "oklch(68% 0.17 130)",
                 }}
               >
-                Déposer une annonce
+                {t('home:cta.deposer')}
               </Button>
             </Link>
             <Link to="/partenaires">
@@ -854,7 +834,7 @@ export default function Home() {
                 variant="outline"
                 className="border-white/30 text-white bg-white/10 hover:bg-white/20 transition-all duration-300"
               >
-                Devenir partenaire
+                {t('home:cta.partenaire')}
               </Button>
             </Link>
           </div>

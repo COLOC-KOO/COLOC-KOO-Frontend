@@ -1,0 +1,53 @@
+{
+  "hero": {
+    "badge": "Contactez-nous",
+    "title": "On vous",
+    "highlight": "écoute",
+    "subtitle": "Une question, un partenariat, un souci ? Écrivez-nous. Notre équipe est là pour vous accompagner."
+  },
+  "infos": {
+    "email": {
+      "title": "Email",
+      "desc": "Réponse sous 24h"
+    },
+    "phone": {
+      "title": "Téléphone",
+      "desc": "Lun - Ven, 9h - 18h"
+    },
+    "address": {
+      "title": "Bureau",
+      "value": "Isoraka, Antananarivo",
+      "desc": "Venez nous rencontrer"
+    }
+  },
+  "stats": {
+    "colocataires": "Colocataires",
+    "annonces": "Annonces",
+    "satisfaction": "Satisfaction",
+    "partenaires": "Partenaires"
+  },
+  "sidebar": {
+    "title": "Envoyer un message",
+    "subtitle": "Réponse sous 24h ouvrées. Nous sommes à votre écoute.",
+    "follow": "Suivez-nous",
+    "features": {
+      "rapide": "Réponse rapide",
+      "dediee": "Équipe dédiée",
+      "garantie": "Satisfaction garantie"
+    }
+  },
+  "form": {
+    "name": "Nom complet",
+    "namePlaceholder": "Jean Dupont",
+    "email": "Email",
+    "emailPlaceholder": "jean@exemple.com",
+    "subject": "Sujet",
+    "subjectPlaceholder": "Demande d'information",
+    "message": "Message",
+    "messagePlaceholder": "Décrivez votre demande en détail...",
+    "submit": "Envoyer le message",
+    "success": "Message envoyé avec succès ! Nous revenons vers vous rapidement.",
+    "error": "Impossible d'envoyer le message",
+    "privacy": "En envoyant ce formulaire, vous acceptez notre politique de confidentialité."
+  }
+}

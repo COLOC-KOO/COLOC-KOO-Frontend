@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { 
   ArrowLeft, ArrowRight, Camera, Check, DollarSign, House, Info, MapPin, 
   Upload, X, Image, Trash2, Sparkles, Shield, Clock, Users, Ruler, Bed, 
@@ -51,6 +52,7 @@ function Field({ label, children, required, help, className = '' }: {
 }
 
 export default function Deposer() {
+  const { t } = useTranslation(['deposer', 'common'])
   const [step, setStep] = useState(1)
   const [villes, setVilles] = useState<Ville[]>([])
   const [error, setError] = useState('')
@@ -139,7 +141,7 @@ export default function Deposer() {
       }, 300)
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de téléverser les photos')
+      setError(err instanceof Error ? err.message : t('deposer:errors.upload'))
       setUploadProgress(0)
     } finally {
       setTimeout(() => setUploadingPhotos(false), 500)
@@ -189,7 +191,7 @@ export default function Deposer() {
       })
       
       setShowSuccessAnimation(true)
-      setSuccess("🎉 Annonce envoyée avec succès ! Elle sera visible après validation par l'admin.")
+      setSuccess(t('deposer:success.message'))
       
       setTimeout(() => {
         setForm({
@@ -219,7 +221,7 @@ export default function Deposer() {
       }, 4000)
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible d'envoyer l'annonce")
+      setError(err instanceof Error ? err.message : t('deposer:errors.submit'))
     } finally {
       setSubmitting(false)
     }
@@ -259,13 +261,10 @@ export default function Deposer() {
       <section className="relative">
         <div className="absolute inset-0">
           <img src={heroImage} alt="" className="w-full h-full object-cover" />
-          {/* Overlay plus foncé pour améliorer la lisibilité */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-          {/* Ajout d'un overlay de couleur pour harmoniser */}
           <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
         </div>
         <div className="relative max-w-5xl mx-auto px-6 py-12 text-white">
-          {/* Header avec animation */}
           <motion.div 
             className="text-center mb-8"
             initial={{ opacity: 0, y: -30 }}
@@ -278,7 +277,7 @@ export default function Deposer() {
               transition={{ type: "spring", stiffness: 400 }}
             >
               <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-              Publication après validation admin
+              {t('deposer:hero.badge')}
             </motion.div>
             <motion.h1 
               className="bebas text-5xl md:text-7xl drop-shadow-2xl"
@@ -287,10 +286,10 @@ export default function Deposer() {
               }}
               transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             >
-              <span className="text-white">Dépose ton</span>
+              <span className="text-white">{t('deposer:hero.title')}</span>
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
-                annonce
+                {t('deposer:hero.highlight')}
               </span>
             </motion.h1>
             <motion.p 
@@ -299,8 +298,7 @@ export default function Deposer() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              Remplis le formulaire ci-dessous pour publier ton annonce. 
-              Notre équipe la validera dans les plus brefs délais.
+              {t('deposer:hero.subtitle')}
             </motion.p>
           </motion.div>
         </div>
@@ -319,10 +317,10 @@ export default function Deposer() {
             >
               <div className="flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <span>Connecte-toi pour envoyer une annonce.</span>
+                <span>{t('deposer:auth.required')}</span>
               </div>
               <Link to="/auth?mode=signin&redirect=/deposer" className="font-semibold underline hover:text-amber-900 transition-colors">
-                Se connecter
+                {t('deposer:auth.login')}
               </Link>
             </motion.div>
           )}
@@ -347,6 +345,8 @@ export default function Deposer() {
               {steps.map((s, i) => {
                 const active = step === s.n
                 const done = step > s.n
+                const stepLabel = t(`deposer:steps.${s.n}.label`)
+                const stepDescription = t(`deposer:steps.${s.n}.description`)
                 return (
                   <button
                     key={s.n}
@@ -369,10 +369,10 @@ export default function Deposer() {
                     </motion.div>
                     <div className="text-center">
                       <div className={`text-xs font-semibold ${active ? 'text-brand-cyan-dark' : done ? 'text-brand-green' : 'text-muted-foreground'}`}>
-                        {s.label}
+                        {stepLabel}
                       </div>
                       <div className="hidden md:block text-[10px] text-muted-foreground">
-                        {s.description}
+                        {stepDescription}
                       </div>
                     </div>
                   </button>
@@ -408,8 +408,8 @@ export default function Deposer() {
                       <House className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold">Type de bien</h2>
-                      <p className="text-sm text-muted-foreground">Quel type de logement proposes-tu ?</p>
+                      <h2 className="text-xl font-bold">{t('deposer:step1.title')}</h2>
+                      <p className="text-sm text-muted-foreground">{t('deposer:step1.subtitle')}</p>
                     </div>
                   </motion.div>
 
@@ -446,12 +446,12 @@ export default function Deposer() {
                     ))}
                   </motion.div>
 
-                  <Field label="Titre de l'annonce" required help="Un titre accrocheur pour attirer les colocataires">
+                  <Field label={t('deposer:step1.titleField')} required help={t('deposer:step1.titleHelp')}>
                     <input 
                       className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" 
                       value={form.titre} 
                       onChange={(e) => update('titre', e.target.value)} 
-                      placeholder="Ex: Chambre lumineuse à Isoraka"
+                      placeholder={t('deposer:step1.titlePlaceholder')}
                     />
                   </Field>
                 </motion.div>
@@ -470,25 +470,25 @@ export default function Deposer() {
                       <MapPin className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold">Localisation</h2>
-                      <p className="text-sm text-muted-foreground">Où se trouve ton logement ?</p>
+                      <h2 className="text-xl font-bold">{t('deposer:step2.title')}</h2>
+                      <p className="text-sm text-muted-foreground">{t('deposer:step2.subtitle')}</p>
                     </div>
                   </motion.div>
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Ville" required>
+                    <Field label={t('deposer:step2.city')} required>
                       <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.id_ville} onChange={(e) => update('id_ville', Number(e.target.value))}>
                         {villes.map((v) => (
                           <option key={v.id_ville} value={v.id_ville}>{v.nom_ville}</option>
                         ))}
                       </select>
                     </Field>
-                    <Field label="Quartier" required>
-                      <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.quartier} onChange={(e) => update('quartier', e.target.value)} placeholder="Ex: Isoraka, Analakely..." />
+                    <Field label={t('deposer:step2.district')} required>
+                      <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.quartier} onChange={(e) => update('quartier', e.target.value)} placeholder={t('deposer:step2.districtPlaceholder')} />
                     </Field>
                     <div className="md:col-span-2">
-                      <Field label="Adresse exacte" help="Optionnel - visible seulement après validation">
-                        <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.adresse_exacte} onChange={(e) => update('adresse_exacte', e.target.value)} placeholder="12 Rue de la Liberté" />
+                      <Field label={t('deposer:step2.address')} help={t('deposer:step2.addressHelp')}>
+                        <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.adresse_exacte} onChange={(e) => update('adresse_exacte', e.target.value)} placeholder={t('deposer:step2.addressPlaceholder')} />
                       </Field>
                     </div>
                   </div>
@@ -508,55 +508,55 @@ export default function Deposer() {
                       <Info className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold">Détails du logement</h2>
-                      <p className="text-sm text-muted-foreground">Les caractéristiques de ton bien</p>
+                      <h2 className="text-xl font-bold">{t('deposer:step3.title')}</h2>
+                      <p className="text-sm text-muted-foreground">{t('deposer:step3.subtitle')}</p>
                     </div>
                   </motion.div>
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Surface totale (m²)">
+                    <Field label={t('deposer:step3.surface')}>
                       <div className="relative">
                         <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.surface_totale} onChange={(e) => update('surface_totale', e.target.value)} placeholder="45" />
                       </div>
                     </Field>
-                    <Field label="Nombre de colocataires">
+                    <Field label={t('deposer:step3.colocataires')}>
                       <div className="relative">
                         <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.total_colocataires} onChange={(e) => update('total_colocataires', e.target.value)} placeholder="3" />
                       </div>
                     </Field>
-                    <Field label="Surface chambre (m²)">
+                    <Field label={t('deposer:step3.roomSurface')}>
                       <div className="relative">
                         <Bed className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.surface_chambre} onChange={(e) => update('surface_chambre', e.target.value)} placeholder="12" />
                       </div>
                     </Field>
-                    <Field label="Meublé">
+                    <Field label={t('deposer:step3.furnished')}>
                       <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.est_meuble} onChange={(e) => update('est_meuble', e.target.value)}>
-                        <option value="Oui">✅ Oui</option>
-                        <option value="Partiellement">🔶 Partiellement</option>
-                        <option value="Non">❌ Non</option>
-                        <option value="Rachat">🔄 Rachat possible</option>
+                        <option value="Oui">✅ {t('deposer:step3.furnishedYes')}</option>
+                        <option value="Partiellement">🔶 {t('deposer:step3.furnishedPartial')}</option>
+                        <option value="Non">❌ {t('deposer:step3.furnishedNo')}</option>
+                        <option value="Rachat">🔄 {t('deposer:step3.furnishedBuyout')}</option>
                       </select>
                     </Field>
-                    <Field label="Disponibilité" required>
+                    <Field label={t('deposer:step3.availability')} required>
                       <div className="relative">
                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input type="date" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.date_disponibilite} onChange={(e) => update('date_disponibilite', e.target.value)} />
                       </div>
                     </Field>
-                    <Field label="Équipements" help="Séparés par des virgules">
-                      <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.services} onChange={(e) => update('services', e.target.value)} placeholder="Wi-Fi, Cuisine équipée, Lave-linge" />
+                    <Field label={t('deposer:step3.services')} help={t('deposer:step3.servicesHelp')}>
+                      <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.services} onChange={(e) => update('services', e.target.value)} placeholder={t('deposer:step3.servicesPlaceholder')} />
                     </Field>
                     <div className="md:col-span-2">
-                      <Field label="Description">
+                      <Field label={t('deposer:step3.description')}>
                         <textarea 
                           rows={4} 
                           className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all resize-none" 
                           value={form.description} 
                           onChange={(e) => update('description', e.target.value)} 
-                          placeholder="Décris ton logement en détail..."
+                          placeholder={t('deposer:step3.descriptionPlaceholder')}
                         />
                       </Field>
                     </div>
@@ -577,8 +577,8 @@ export default function Deposer() {
                       <Camera className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold">Photos</h2>
-                      <p className="text-sm text-muted-foreground">Ajoute des photos pour mettre en valeur ton bien</p>
+                      <h2 className="text-xl font-bold">{t('deposer:step4.title')}</h2>
+                      <p className="text-sm text-muted-foreground">{t('deposer:step4.subtitle')}</p>
                     </div>
                   </motion.div>
 
@@ -605,10 +605,10 @@ export default function Deposer() {
                         <Upload className="w-8 h-8 text-brand-cyan" />
                       </div>
                       <div>
-                        <p className="font-medium">{dragOver ? 'Relâche pour téléverser !' : 'Glisse tes photos ici'}</p>
-                        <p className="text-sm text-muted-foreground">ou clique pour parcourir</p>
+                        <p className="font-medium">{dragOver ? t('deposer:step4.drop') : t('deposer:step4.drag')}</p>
+                        <p className="text-sm text-muted-foreground">{t('deposer:step4.click')}</p>
                       </div>
-                      <span className="text-xs text-muted-foreground">JPG, PNG, WEBP jusqu'à 10MB</span>
+                      <span className="text-xs text-muted-foreground">{t('deposer:step4.formats')}</span>
                     </div>
                   </motion.div>
 
@@ -622,7 +622,7 @@ export default function Deposer() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground flex items-center gap-2">
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Téléversement en cours...
+                          {t('deposer:step4.uploading')}
                         </span>
                         <span className="font-semibold text-brand-cyan">{uploadProgress}%</span>
                       </div>
@@ -681,43 +681,43 @@ export default function Deposer() {
                       <DollarSign className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold">Tarifs et conditions</h2>
-                      <p className="text-sm text-muted-foreground">Définis le prix et les règles</p>
+                      <h2 className="text-xl font-bold">{t('deposer:step5.title')}</h2>
+                      <p className="text-sm text-muted-foreground">{t('deposer:step5.subtitle')}</p>
                     </div>
                   </motion.div>
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Loyer mensuel (Ar)" required>
+                    <Field label={t('deposer:step5.rent')} required>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.prix_loyer} onChange={(e) => update('prix_loyer', e.target.value)} placeholder="500 000" />
                       </div>
                     </Field>
-                    <Field label="Charges mensuelles (Ar)">
+                    <Field label={t('deposer:step5.charges')}>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.prix_charges} onChange={(e) => update('prix_charges', e.target.value)} placeholder="50 000" />
                       </div>
                     </Field>
-                    <Field label="Caution (Ar)">
+                    <Field label={t('deposer:step5.deposit')}>
                       <div className="relative">
                         <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.montant_garantie} onChange={(e) => update('montant_garantie', e.target.value)} placeholder="500 000" />
                       </div>
                     </Field>
-                    <Field label="Règles" help="Séparées par des virgules">
-                      <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.regles} onChange={(e) => update('regles', e.target.value)} placeholder="Non fumeur, Animaux acceptés" />
+                    <Field label={t('deposer:step5.rules')} help={t('deposer:step5.rulesHelp')}>
+                      <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.regles} onChange={(e) => update('regles', e.target.value)} placeholder={t('deposer:step5.rulesPlaceholder')} />
                     </Field>
-                    <Field label="Type de bail" help="Sera affiché sur la fiche et repris dans le contrat">
+                    <Field label={t('deposer:step5.leaseType')} help={t('deposer:step5.leaseHelp')}>
                       <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.type_bail} onChange={(e) => update('type_bail', e.target.value)}>
-                        <option value="collectif">Bail collectif — un seul contrat signé par tous</option>
-                        <option value="individuel">Bail individuel — chacun signe son contrat</option>
+                        <option value="collectif">{t('deposer:step5.leaseCollective')}</option>
+                        <option value="individuel">{t('deposer:step5.leaseIndividual')}</option>
                       </select>
                     </Field>
-                    <Field label="Clause de solidarité">
+                    <Field label={t('deposer:step5.solidarity')}>
                       <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.clause_solidarite} onChange={(e) => update('clause_solidarite', e.target.value)}>
-                        <option value="sans">Sans clause de solidarité — chacun responsable de sa part</option>
-                        <option value="avec">Avec clause de solidarité — tous solidaires du loyer</option>
+                        <option value="sans">{t('deposer:step5.solidarityWithout')}</option>
+                        <option value="avec">{t('deposer:step5.solidarityWith')}</option>
                       </select>
                     </Field>
                   </div>
@@ -728,16 +728,16 @@ export default function Deposer() {
                   >
                     <h3 className="font-semibold mb-3 flex items-center gap-2">
                       <CheckCircle2 className="w-5 h-5 text-brand-green" />
-                      Résumé de l'annonce
+                      {t('deposer:step5.summary')}
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                       {[
-                        ['Titre', form.titre || '—'],
-                        ['Localisation', form.quartier || '—'],
-                        ['Loyer', form.prix_loyer ? `${Number(form.prix_loyer).toLocaleString('fr-FR')} Ar` : '—'],
-                        ['Type', form.type_propriete.charAt(0).toUpperCase() + form.type_propriete.slice(1)],
-                        ['Photos', `${form.photos.length} photo${form.photos.length > 1 ? 's' : ''}`],
-                        ['Disponibilité', form.date_disponibilite ? new Date(form.date_disponibilite).toLocaleDateString('fr-FR') : '—'],
+                        [t('deposer:step5.summaryTitle'), form.titre || '—'],
+                        [t('deposer:step5.summaryLocation'), form.quartier || '—'],
+                        [t('deposer:step5.summaryPrice'), form.prix_loyer ? `${Number(form.prix_loyer).toLocaleString('fr-FR')} Ar` : '—'],
+                        [t('deposer:step5.summaryType'), form.type_propriete.charAt(0).toUpperCase() + form.type_propriete.slice(1)],
+                        [t('deposer:step5.summaryPhotos'), `${form.photos.length} ${t('deposer:step5.summaryPhotosLabel')}`],
+                        [t('deposer:step5.summaryAvailability'), form.date_disponibilite ? new Date(form.date_disponibilite).toLocaleDateString('fr-FR') : '—'],
                       ].map(([label, value], index) => (
                         <div key={index}>
                           <span className="text-muted-foreground">{label}</span>
@@ -778,7 +778,7 @@ export default function Deposer() {
                 </div>
               )}
 
-              {/* Navigation - Version corrigée sans erreur variant */}
+              {/* Navigation */}
               <div className="mt-8 pt-6 border-t border-border flex flex-col-reverse sm:flex-row gap-3 sm:justify-between">
                 <Button 
                   onClick={() => setStep(Math.max(1, step - 1))} 
@@ -786,7 +786,7 @@ export default function Deposer() {
                   variant="outline"
                   className="rounded-xl border-2 hover:border-brand-cyan hover:bg-brand-cyan/5 transition-all duration-200 w-full sm:w-auto"
                 >
-                  Précédent
+                  {t('common:common.previous')}
                 </Button>
                 {step < 5 ? (
                   <Button 
@@ -795,7 +795,7 @@ export default function Deposer() {
                     className="rounded-xl bg-gradient-to-r from-brand-cyan to-blue-500 hover:from-brand-cyan-dark hover:to-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
                     disabled={!isStepValid()}
                   >
-                    Continuer
+                    {t('common:common.next')}
                   </Button>
                 ) : (
                   <Button 
@@ -803,7 +803,7 @@ export default function Deposer() {
                     onClick={submitAnnonce} 
                     className="rounded-xl bg-gradient-to-r from-brand-green to-emerald-500 hover:from-brand-green-dark hover:to-emerald-600 text-white shadow-md hover:shadow-lg transition-all duration-200 text-base px-8 w-full sm:w-auto"
                   >
-                    {submitting ? 'Envoi...' : "Envoyer à l'admin"}
+                    {submitting ? t('common:common.loading') : t('deposer:step5.submit')}
                   </Button>
                 )}
               </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { MapPin, Search, X, ChevronDown, Check } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { SiteLayout } from "../components/site/SiteLayout";
@@ -6,20 +7,8 @@ import { ListingCard } from "../components/site/ListingCard";
 import { api, annonceToListing, ApiServiceCkoo, Ville } from "../lib/api";
 import { Listing } from "../types";
 
-const typeOptions = [
-  { value: "", label: "Tous types" },
-  { value: "chambre", label: "Chambre" },
-  { value: "appartement", label: "Appartement" },
-  { value: "maison", label: "Maison" },
-];
-
-const colocOptions = [
-  { value: "", label: "Tous" },
-  { value: "existantes", label: "Colocataires existantes" },
-  { value: "a_creer", label: "Colocataires à créer" },
-];
-
 export default function Annonces() {
+  const { t } = useTranslation(['annonces', 'common']);
   const location = useLocation();
   const [city, setCity] = useState("");
   const [type, setType] = useState("");
@@ -42,6 +31,20 @@ export default function Annonces() {
   const colocRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Options de filtres traduites
+  const typeOptions = useMemo(() => [
+    { value: "", label: t('annonces:filters.types.all') },
+    { value: "chambre", label: t('annonces:filters.types.room') },
+    { value: "appartement", label: t('annonces:filters.types.apartment') },
+    { value: "maison", label: t('annonces:filters.types.house') },
+  ], [t]);
+
+  const colocOptions = useMemo(() => [
+    { value: "", label: t('annonces:filters.coloc.all') },
+    { value: "existantes", label: t('annonces:filters.coloc.existing') },
+    { value: "a_creer", label: t('annonces:filters.coloc.create') },
+  ], [t]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -90,11 +93,11 @@ export default function Annonces() {
         setError(
           err instanceof Error
             ? err.message
-            : "Impossible de charger les annonces",
+            : t('common:common.error'),
         ),
       )
       .finally(() => setLoading(false));
-  }, [city, type, selectedServiceIds, maxPrice, query, colocFilter]);
+  }, [city, type, selectedServiceIds, maxPrice, query, colocFilter, t]);
 
   const citiesList = useMemo(() => {
     const fromDb = villes.map((v) => v.nom_ville);
@@ -136,10 +139,10 @@ export default function Annonces() {
   }, []);
 
   const getTypeLabel = (val: string) =>
-    typeOptions.find((t) => t.value === val)?.label || "Tous types";
+    typeOptions.find((t) => t.value === val)?.label || t('annonces:filters.types.all');
   const getColocLabel = (val: string) =>
-    colocOptions.find((c) => c.value === val)?.label || "Tous";
-  const getCityLabel = (val: string) => val || "Toutes les villes";
+    colocOptions.find((c) => c.value === val)?.label || t('annonces:filters.coloc.all');
+  const getCityLabel = (val: string) => val || t('annonces:filters.city.all');
 
   return (
     <SiteLayout>
@@ -160,11 +163,11 @@ export default function Annonces() {
         {/* Contenu - hauteur agrandie */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 text-center min-h-[180px] flex flex-col items-center justify-center">
           <h1 className="bebas text-4xl md:text-5xl">
-            <span className="text-[--brand-cyan-dark] drop-shadow-lg">Annonces à </span>
+            <span className="text-[--brand-cyan-dark] drop-shadow-lg">{t('annonces:title').split(' ')[0]} à </span>
             <span className="text-[--brand-green-dark] drop-shadow-lg">Madagascar</span>
           </h1>
           <p className="text-white/80 text-sm md:text-base drop-shadow mt-2">
-            {loading ? "Chargement..." : `${listings.length} résultats valides`}
+            {loading ? t('common:common.loading') : `${listings.length} ${t('annonces:results')}`}
           </p>
         </div>
       </div>
@@ -178,7 +181,7 @@ export default function Annonces() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Où voulez-vous aller ?"
+              placeholder={t('annonces:search')}
               className="w-full pl-5 pr-8 py-2.5 text-sm bg-transparent border-none focus:ring-0 placeholder:text-gray-500 font-medium text-gray-800"
             />
             {query && (
@@ -260,7 +263,7 @@ export default function Annonces() {
 
             {/* Budget */}
             <div className="flex items-center gap-3 px-3 py-1.5">
-              <span className="text-sm font-medium text-gray-700">Budget</span>
+              <span className="text-sm font-medium text-gray-700">{t('annonces:filters.budget')}</span>
               <div className="relative">
                 <input
                   type="range"
@@ -277,7 +280,7 @@ export default function Annonces() {
                 />
               </div>
               <span className="text-sm font-medium text-gray-900 min-w-[70px]">
-                {maxPrice ? `${(maxPrice / 1000).toFixed(0)}k Ar` : "—"}
+                {maxPrice ? `${(maxPrice / 1000).toFixed(0)}k Ar` : t('annonces:filters.budget')}
               </span>
             </div>
 
@@ -287,7 +290,7 @@ export default function Annonces() {
                 onClick={() => setShowServicesMenu(!showServicesMenu)}
                 className="flex items-center gap-1.5 text-sm font-medium text-gray-700 px-4 py-2.5 rounded-full hover:bg-gray-100/80 transition-colors whitespace-nowrap"
               >
-                Services
+                {t('annonces:filters.services')}
                 <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
                 {selectedServiceIds.length > 0 && (
                   <span className="ml-1 bg-[#FF385C] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
@@ -315,7 +318,7 @@ export default function Annonces() {
                     ))}
                   {services.filter((s) => s.est_actif === 1).length === 0 && (
                     <div className="text-sm text-gray-500 px-2 py-3 text-center">
-                      Aucun service actif
+                      {t('annonces:filters.noServices')}
                     </div>
                   )}
                 </div>
@@ -341,7 +344,7 @@ export default function Annonces() {
                     className={`px-3.5 py-2.5 rounded-xl cursor-pointer text-sm hover:bg-gray-50 flex items-center justify-between transition-colors ${city === "" ? "bg-gray-50" : ""
                       }`}
                   >
-                    <span>Toutes les villes</span>
+                    <span>{t('annonces:filters.city.all')}</span>
                     {city === "" && <Check className="w-4 h-4 text-[#FF385C]" />}
                   </div>
                   {citiesList.map((c) => (
@@ -367,7 +370,7 @@ export default function Annonces() {
               onClick={resetFilters}
               className="text-sm font-medium text-[#FF385C] px-4 py-2.5 rounded-full hover:bg-red-50/50 transition-colors whitespace-nowrap"
             >
-              Réinitialiser
+              {t('common:common.reset')}
             </button>
           </div>
         </div>
@@ -378,9 +381,8 @@ export default function Annonces() {
             <MapPin className="w-4 h-4 text-gray-400" />
             <span>
               {loading
-                ? "Recherche en cours..."
-                : `${listings.length} résultat${listings.length > 1 ? "s" : ""} trouvé${listings.length > 1 ? "s" : ""
-                }`}
+                ? t('annonces:loading')
+                : `${listings.length} ${t('annonces:results')} ${t('annonces:found')}`}
             </span>
           </div>
           <div className="text-sm text-gray-400">
@@ -427,9 +429,9 @@ export default function Annonces() {
           {!loading && !error && listings.length === 0 && (
             <div className="text-center py-20">
               <div className="text-5xl mb-4">🏠</div>
-              <h3 className="text-lg font-medium text-gray-700">Aucune annonce trouvée</h3>
+              <h3 className="text-lg font-medium text-gray-700">{t('annonces:empty')}</h3>
               <p className="text-gray-500 mt-1 text-sm">
-                Essayez de modifier vos filtres de recherche
+                {t('annonces:emptySub')}
               </p>
             </div>
           )}
