@@ -61,6 +61,9 @@ interface ConfigurationItem {
   date_modification?: string
 }
 
+// Type pour les constantes sans valeur
+type ConstanteSansValeur = Omit<Constante, 'value'>
+
 // ===== COMPOSANTS =====
 
 // Badge de statut
@@ -133,19 +136,20 @@ export default function AdminConfiguration() {
     { id: 'F-008', name: 'I18N_EN', description: 'Internationalisation Anglais', category: 'internationalisation' }
   ]
 
-  const CONSTANTE_DEFINITIONS: Omit<Constante, 'value'>[] = [
-    { id: 'C-001', key: 'DUREE_ANNONCE_STANDARD', description: 'Durée de validité d\'une annonce standard (mois)', category: 'annonce', editable: true },
-    { id: 'C-002', key: 'DUREE_ANNONCE_PARTENAIRE', description: 'Durée de validité d\'une annonce partenaire (mois)', category: 'annonce', editable: true },
-    { id: 'C-003', key: 'RAPPEL_RENOUVELLEMENT', description: 'Rappel de renouvellement avant expiration (jours)', category: 'annonce', editable: true },
-    { id: 'C-004', key: 'RETENTION_TEXTE', description: 'Rétention des textes des annonces (années)', category: 'annonce', editable: true },
-    { id: 'C-005', key: 'RETENTION_IMAGES', description: 'Rétention des images des annonces (années)', category: 'annonce', editable: true },
-    { id: 'C-006', key: 'PHOTOS_MAX', description: 'Nombre maximum de photos par annonce', category: 'annonce', editable: true },
-    { id: 'C-007', key: 'CHAMBRES_MIN', description: 'Nombre minimum de chambres pour une colocation', category: 'colocation', editable: true },
-    { id: 'C-008', key: 'VALIDATION_AUTO_DELAI', description: 'Délai avant validation automatique sans modération (minutes)', category: 'modération', editable: true },
-    { id: 'C-009', key: 'SIGNALEMENTS_MAX', description: 'Nombre de signalements avant suspension recommandée', category: 'modération', editable: true },
-    { id: 'C-010', key: 'SUSPENSION_DUREE', description: 'Durée de suspension par défaut (jours)', category: 'modération', editable: true },
-    { id: 'C-011', key: 'PARTENAIRE_NIVEAUX', description: 'Nombre de niveaux de partenariat', category: 'partenaire', editable: false },
-    { id: 'C-012', key: 'CACHE_DUREE', description: 'Durée de cache des pages (secondes)', category: 'général', editable: true }
+  // Correction: Utiliser un type qui inclut les valeurs par défaut
+  const CONSTANTE_DEFINITIONS: (ConstanteSansValeur & { defaultValue: string | number })[] = [
+    { id: 'C-001', key: 'DUREE_ANNONCE_STANDARD', description: 'Durée de validité d\'une annonce standard (mois)', category: 'annonce', editable: true, defaultValue: 3 },
+    { id: 'C-002', key: 'DUREE_ANNONCE_PARTENAIRE', description: 'Durée de validité d\'une annonce partenaire (mois)', category: 'annonce', editable: true, defaultValue: 6 },
+    { id: 'C-003', key: 'RAPPEL_RENOUVELLEMENT', description: 'Rappel de renouvellement avant expiration (jours)', category: 'annonce', editable: true, defaultValue: 7 },
+    { id: 'C-004', key: 'RETENTION_TEXTE', description: 'Rétention des textes des annonces (années)', category: 'annonce', editable: true, defaultValue: 5 },
+    { id: 'C-005', key: 'RETENTION_IMAGES', description: 'Rétention des images des annonces (années)', category: 'annonce', editable: true, defaultValue: 5 },
+    { id: 'C-006', key: 'PHOTOS_MAX', description: 'Nombre maximum de photos par annonce', category: 'annonce', editable: true, defaultValue: 10 },
+    { id: 'C-007', key: 'CHAMBRES_MIN', description: 'Nombre minimum de chambres pour une colocation', category: 'colocation', editable: true, defaultValue: 2 },
+    { id: 'C-008', key: 'VALIDATION_AUTO_DELAI', description: 'Délai avant validation automatique sans modération (minutes)', category: 'modération', editable: true, defaultValue: 60 },
+    { id: 'C-009', key: 'SIGNALEMENTS_MAX', description: 'Nombre de signalements avant suspension recommandée', category: 'modération', editable: true, defaultValue: 3 },
+    { id: 'C-010', key: 'SUSPENSION_DUREE', description: 'Durée de suspension par défaut (jours)', category: 'modération', editable: true, defaultValue: 30 },
+    { id: 'C-011', key: 'PARTENAIRE_NIVEAUX', description: 'Nombre de niveaux de partenariat', category: 'partenaire', editable: false, defaultValue: 3 },
+    { id: 'C-012', key: 'CACHE_DUREE', description: 'Durée de cache des pages (secondes)', category: 'général', editable: true, defaultValue: 3600 }
   ]
 
   const LANGUE_DEFINITIONS: Langue[] = [
@@ -306,12 +310,16 @@ export default function AdminConfiguration() {
       })
       setFlags(updatedFlags)
 
-      // Mettre à jour les constantes
+      // Mettre à jour les constantes - CORRECTION ICI
       const updatedConstantes = CONSTANTE_DEFINITIONS.map(constante => {
         const config = configMap.get(constante.key)
         return {
-          ...constante,
-          value: config?.valeur !== undefined ? config.valeur : constante.value
+          id: constante.id,
+          key: constante.key,
+          description: constante.description,
+          category: constante.category,
+          editable: constante.editable,
+          value: config?.valeur !== undefined ? config.valeur : constante.defaultValue
         }
       })
       setConstantes(updatedConstantes)
@@ -334,9 +342,16 @@ export default function AdminConfiguration() {
       setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger la configuration')
-      // Fallback sur les données par défaut
+      // Fallback sur les données par défaut - CORRECTION ICI
       setFlags(FLAG_DEFINITIONS.map(f => ({ ...f, enabled: false })))
-      setConstantes(CONSTANTE_DEFINITIONS.map(c => ({ ...c, value: c.value || 0 })))
+      setConstantes(CONSTANTE_DEFINITIONS.map(c => ({
+        id: c.id,
+        key: c.key,
+        description: c.description,
+        category: c.category,
+        editable: c.editable,
+        value: c.defaultValue
+      })))
       setLangues(LANGUE_DEFINITIONS)
     } finally {
       setLoading(false)
@@ -393,11 +408,22 @@ export default function AdminConfiguration() {
     constante: Constante
     onClose: () => void
   }) => {
-    const [value, setValue] = useState(constante.value)
+    const [value, setValue] = useState<string | number>(constante.value)
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
       handleEditConstante(constante.id, value)
+    }
+
+    // Gérer le changement de valeur
+    const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const rawValue = e.target.value
+      if (typeof constante.value === 'number') {
+        const numValue = parseFloat(rawValue)
+        setValue(isNaN(numValue) ? 0 : numValue)
+      } else {
+        setValue(rawValue)
+      }
     }
 
     return (
@@ -425,8 +451,8 @@ export default function AdminConfiguration() {
               <label className="block text-sm text-white/60 mb-1">Valeur</label>
               <input
                 type={typeof constante.value === 'number' ? 'number' : 'text'}
-                value={value}
-                onChange={(e) => setValue(typeof constante.value === 'number' ? parseFloat(e.target.value) : e.target.value)}
+                value={String(value)}
+                onChange={handleValueChange}
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
               />
             </div>
