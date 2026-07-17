@@ -468,8 +468,9 @@ export interface ApiSignalementConversation {
 }
 
 export interface BackofficeMember extends AuthUser {
-    annoncesCount: number
-    candidaturesCount: number
+    annoncesCount?: number
+    candidaturesCount?: number
+    signalementsCount?: number
 }
 
 export function getToken() {
