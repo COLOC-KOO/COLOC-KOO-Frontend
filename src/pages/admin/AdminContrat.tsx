@@ -375,7 +375,7 @@ const TypeBadge = ({ type }: { type: DocumentDemande["type"] }) => {
   );
 };
 
-// ===== MODALE DE DÉTAILS =====
+// ===== MODALE DE DÉTAILS AVEC ENVOI D'EMAIL =====
 const DocumentDetailsModal = ({
   document,
   versements,
@@ -392,6 +392,13 @@ const DocumentDetailsModal = ({
   const [note, setNote] = useState(document.note || "");
   const [updating, setUpdating] = useState(false);
   const [versementsLoading, setVersementsLoading] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{
+    sent: boolean;
+    count: number;
+    message?: string;
+    destinataires?: string[];
+  } | null>(null);
 
   const getCoordonneesManquantes = () => {
     const manquantes: { nom: string; champ: string }[] = [];
@@ -435,11 +442,54 @@ const DocumentDetailsModal = ({
     onClose();
   };
 
-  const handleSendToAll = () => {
-    const emails = document.parties.filter(p => p.email).map(p => p.email);
-    alert(
-      `Envoi du document ${document.id} à tous les destinataires (${emails.length} email(s))`
-    );
+  // ============================================================
+  // FONCTION D'ENVOI D'EMAIL - VERSION CORRIGÉE
+  // ============================================================
+
+  const handleSendToAll = async () => {
+    const emails = document.parties.filter(p => p.email && p.email.trim() !== "").map(p => p.email);
+
+    if (emails.length === 0) {
+      alert('❌ Aucun email disponible pour les parties du document.');
+      return;
+    }
+
+    // Confirmation avant envoi
+    if (!confirm(`📧 Envoyer le document ${document.id} à ${emails.length} destinataire(s) ?`)) {
+      return;
+    }
+
+    setSendingEmail(true);
+    setEmailStatus(null);
+
+    try {
+      const response = await api.envoyerEmailContrat(document.id, {
+        type: document.type,
+        sujet: `Document ${document.type === 'contrat' ? 'Contrat' : 'État des lieux'} - ${document.id}`,
+        message: `Bonjour,\n\nVeuillez trouver ci-joint le document ${document.type === 'contrat' ? 'contrat' : 'état des lieux'} (référence: ${document.id}).\n\nCordialement,\nL'équipe Coloc'KOO`
+      });
+
+      setEmailStatus({
+        sent: response.success,
+        count: response.count || emails.length,
+        message: response.message,
+        destinataires: response.destinataires,
+      });
+
+      // Afficher un message de succès
+      alert(`✅ Email envoyé à ${response.count || emails.length} destinataire(s)`);
+
+    } catch (error) {
+      console.error('Erreur envoi email:', error);
+      setEmailStatus({
+        sent: false,
+        count: 0,
+        message: error instanceof Error ? error.message : 'Erreur lors de l\'envoi',
+      });
+      alert('❌ Erreur lors de l\'envoi de l\'email. Veuillez réessayer.');
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   const handleUpdateVersement = async (versementId: string, newStatut: Versement["statut"]) => {
@@ -452,6 +502,10 @@ const DocumentDetailsModal = ({
     } finally {
       setVersementsLoading(false);
     }
+  };
+
+  const getEmailsCount = () => {
+    return document.parties.filter(p => p.email && p.email.trim() !== "").length;
   };
 
   return (
@@ -655,7 +709,7 @@ const DocumentDetailsModal = ({
                     {versements.map((v) => {
                       const estPartiel = v.recu < v.du;
                       const estDepasse = v.recu > v.du;
-                      
+
                       return (
                         <tr key={v.id} className="hover:bg-white/5 transition">
                           <td className="p-2 font-mono text-xs">{v.id}</td>
@@ -725,6 +779,28 @@ const DocumentDetailsModal = ({
             )}
           </div>
 
+          {/* ===== STATUT DE L'EMAIL ===== */}
+          {emailStatus && (
+            <div className={`text-xs ${emailStatus.sent ? 'text-green-400' : 'text-red-400'} bg-white/5 rounded-lg p-2 flex items-center gap-2 border ${emailStatus.sent ? 'border-green-500/30' : 'border-red-500/30'}`}>
+              {emailStatus.sent ? (
+                <>
+                  <CheckCircle className="w-3 h-3" />
+                  ✅ Email envoyé à {emailStatus.count} destinataire(s)
+                  {emailStatus.destinataires && emailStatus.destinataires.length > 0 && (
+                    <span className="text-white/40 text-[10px] ml-2">
+                      ({emailStatus.destinataires.join(', ')})
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-3 h-3" />
+                  ❌ {emailStatus.message || 'Erreur lors de l\'envoi'}
+                </>
+              )}
+            </div>
+          )}
+
           {/* Note de suivi */}
           <div>
             <div className="text-white/40 text-xs uppercase tracking-wider mb-1">
@@ -740,6 +816,7 @@ const DocumentDetailsModal = ({
           </div>
         </div>
 
+        {/* ===== FOOTER AVEC TOUS LES BOUTONS ===== */}
         <div className="p-4 border-t border-white/10 flex flex-wrap gap-2">
           <button
             onClick={handleSave}
@@ -748,7 +825,7 @@ const DocumentDetailsModal = ({
             <Save className="w-4 h-4" />
             Enregistrer
           </button>
-          
+
           {document.statut !== "emis" &&
             document.statut !== "signe" &&
             estComplet && (
@@ -763,7 +840,7 @@ const DocumentDetailsModal = ({
                   : "Planifier EDL"}
               </button>
             )}
-          
+
           {document.statut === "emis" && (
             <button
               onClick={handleMarkAsSigned}
@@ -774,13 +851,40 @@ const DocumentDetailsModal = ({
               Marquer comme signé
             </button>
           )}
-          
+
+          {/* ============================================================ */}
+          {/* BOUTON ENVOYER À TOUS - VERSION CORRIGÉE */}
+          {/* ============================================================ */}
           <button
             onClick={handleSendToAll}
-            className="px-4 py-2 bg-blue-500/15 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/25 transition flex items-center gap-2"
+            disabled={sendingEmail || getEmailsCount() === 0}
+            className={`px-4 py-2 rounded-lg transition flex items-center gap-2 ${
+              getEmailsCount() === 0
+                ? 'bg-gray-500/20 text-gray-400 cursor-not-allowed'
+                : 'bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30'
+            }`}
+            title={
+              getEmailsCount() === 0
+                ? 'Aucun email disponible'
+                : 'Envoyer le document à tous'
+            }
           >
-            <Mail className="w-4 h-4" />
-            Envoyer à tous
+            {sendingEmail ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Envoi en cours...
+              </>
+            ) : (
+              <>
+                <Mail className="w-4 h-4" />
+                Envoyer à tous
+                {getEmailsCount() > 0 && (
+                  <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded-full">
+                    {getEmailsCount()}
+                  </span>
+                )}
+              </>
+            )}
           </button>
           
           <button
