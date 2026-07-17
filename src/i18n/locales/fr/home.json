@@ -1,0 +1,72 @@
+{
+  "hero": {
+    "badge": "Colocation nouvelle génération",
+    "title": "Trouve ta coloc, partout à Madagascar",
+    "subtitle": "Chambres, appartements et maisons vérifiés dossiers en ligne, signature simplifiée.",
+    "search": "Je cherche un logement",
+    "propose": "Je propose un logement",
+    "placeholder": "Ville, quartier...",
+    "allTypes": "Tous types",
+    "room": "Chambre",
+    "apartment": "Appartement",
+    "house": "Maison",
+    "verified": "Annonces vérifiées",
+    "colocataires": "1 400+ colocataires",
+    "satisfaction": "4,8/5 satisfaction"
+  },
+  "featured": {
+    "title": "Annonces vedettes",
+    "subtitle": "Sélection de la semaine, vérifiée par notre équipe",
+    "list": "Liste",
+    "map": "Carte",
+    "verified": "Vérifiée",
+    "pricePerMonth": "/mois",
+    "empty": "Aucune annonce disponible",
+    "emptySub": "Revenez plus tard pour découvrir les nouvelles annonces"
+  },
+  "cities": {
+    "title": "Explorez par ville",
+    "subtitle": "villes couvertes, annonces validées",
+    "annonce": "annonce",
+    "annonces": "annonces",
+    "viewAll": "Toutes les annonces",
+    "explore": "Explorer",
+    "empty": "Aucune ville disponible"
+  },
+  "howItWorks": {
+    "title": "Comment ça marche",
+    "subtitle": "3 étapes simples pour rejoindre ta coloc",
+    "viewAll": "Voir les annonces",
+    "startSearch": "Commencer ma recherche",
+    "steps": [
+      {
+        "number": "01",
+        "title": "Cherche dans ta ville",
+        "description": "Indique ta ville ou région. La carte interactive affiche toutes les colocations disponibles."
+      },
+      {
+        "number": "02",
+        "title": "Consulte les annonces vérifiées et Postuler",
+        "description": "Photos, prix, services, règles — tout est détaillé. Chaque annonce est vérifiée avant publication."
+      },
+      {
+        "number": "03",
+        "title": "Contacte directement",
+        "description": "Envoie un message sécurisé. Aucune commission, 100% gratuit."
+      }
+    ]
+  },
+  "partners": {
+    "title": "Nos Partenaires",
+    "subtitle": "Ils nous font confiance",
+    "viewAll": "Voir tous",
+    "empty": "Aucun partenaire disponible",
+    "loading": "Chargement..."
+  },
+  "cta": {
+    "title": "Propriétaire ou agence ?",
+    "subtitle": "Publie ton annonce et gère tes colocataires en toute simplicité.",
+    "deposer": "Déposer une annonce",
+    "partenaire": "Devenir partenaire"
+  }
+}

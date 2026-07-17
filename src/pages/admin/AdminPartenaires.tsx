@@ -43,6 +43,20 @@ import {
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api, type ApiPartenaireRequest } from '../../lib/api'
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+
+function normalizeCampaignImageUrl(value: string | null | undefined) {
+  if (!value) return ''
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (trimmed.startsWith('/')) return `${API_BASE_URL}${trimmed}`
+  if (trimmed.startsWith('uploads/')) return `${API_BASE_URL}/${trimmed}`
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+  return `${API_BASE_URL}/${trimmed}`
+}
+
 // ===== TYPES =====
 interface Partenaire {
   id: string
@@ -68,6 +82,19 @@ interface PartenaireComplet extends Partenaire {
   tier: string
   visibilite: number
   statut: 'actif' | 'attente' | 'suspendu'
+}
+
+interface PartenaireContactDirectoryEntry {
+  id: string
+  nom: string
+  tier: string
+  contact: {
+    ref: string
+    fonction: string
+    telephone: string
+    email: string
+    adresse: string
+  }
 }
 
 interface Campagne {
@@ -304,13 +331,29 @@ function mapCampagne(row: any): Campagne {
     titre: row.titre,
     description: row.description || null,
     emplacement: row.emplacement || 'fil_annonces',
-    visuel: row.visuel || null,
+    visuel: normalizeCampaignImageUrl(row.visuel || null) || null,
     date_debut: row.date_debut,
     date_fin: row.date_fin || null,
     statut: row.statut || 'programmee',
     date_creation: row.date_creation,
     partenaire_nom: row.partenaire_nom,
     partenaire_niveau: row.partenaire_niveau,
+  }
+}
+
+function mapPartenaireRequestToContactDirectoryEntry(request: ApiPartenaireRequest): PartenaireContactDirectoryEntry {
+  const phoneValue = request.telephone ? `${request.telephone_code || ''} ${request.telephone}`.trim() : 'Non renseigné'
+  return {
+    id: `REQ-${request.id_demande}`,
+    nom: request.nom_entreprise || request.nom_contact || 'Partenaire',
+    tier: request.niveau_souhaite || 'Niveau non défini',
+    contact: {
+      ref: request.nom_contact || request.nom_entreprise || 'Non renseigné',
+      fonction: 'Contact référent',
+      telephone: phoneValue,
+      email: request.email || 'Non renseigné',
+      adresse: 'Non renseignée',
+    },
   }
 }
 
@@ -512,9 +555,9 @@ function CampagneModal({
   const [titre, setTitre] = useState(campagne?.titre || '')
   const [description, setDescription] = useState(campagne?.description || '')
   const [emplacement, setEmplacement] = useState<Campagne['emplacement']>(campagne?.emplacement || 'fil_annonces')
-  const [visuel, setVisuel] = useState(campagne?.visuel || '')
+  const [visuel, setVisuel] = useState(() => normalizeCampaignImageUrl(campagne?.visuel || ''))
   const [visuelFile, setVisuelFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState(campagne?.visuel || '')
+  const [preview, setPreview] = useState(() => normalizeCampaignImageUrl(campagne?.visuel || ''))
   const [dateDebut, setDateDebut] = useState(campagne?.date_debut || '')
   const [dateFin, setDateFin] = useState(campagne?.date_fin || '')
   const [statut, setStatut] = useState<Campagne['statut']>(campagne?.statut || 'programmee')
@@ -711,6 +754,12 @@ export default function AdminPartenaires() {
     return { total, actifs, attente, suspendus, familles }
   }, [comptes])
 
+  const validatedPartnerContacts = useMemo(() => {
+    return partnerRequests
+      .filter(request => request.statut === 'acceptee')
+      .map(mapPartenaireRequestToContactDirectoryEntry)
+  }, [partnerRequests])
+
   const campagneStats = useMemo(() => {
     const total = campagnes.length
     const actives = campagnes.filter(c => c.statut === 'active').length
@@ -801,7 +850,7 @@ export default function AdminPartenaires() {
         logo: '',
         actif: 1,
       })
-      await api.deleteBackofficePartenaireRequest(requestItem.id_demande)
+      await api.updateBackofficePartenaireRequest(requestItem.id_demande, { statut: 'acceptee' })
       setSuccessMessage('Demande de partenaire validée')
       await loadData()
       window.setTimeout(() => setSuccessMessage(null), 3000)
@@ -1159,18 +1208,26 @@ export default function AdminPartenaires() {
                           </td>
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => handleValidatePartnerRequest(request)}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-green-500/30 bg-green-500/10 px-2.5 py-1.5 text-xs text-green-300 hover:bg-green-500/20 transition"
-                              >
-                                <CheckCircle className="w-3.5 h-3.5" /> Valider
-                              </button>
-                              <button
-                                onClick={() => handleDeletePartnerRequest(request.id_demande)}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs text-red-300 hover:bg-red-500/20 transition"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Supprimer
-                              </button>
+                              {request.statut === 'acceptee' ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-green-500/30 bg-green-500/10 px-2.5 py-1.5 text-xs text-green-300">
+                                  <CheckCircle className="w-3.5 h-3.5" /> Accepté
+                                </span>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => handleValidatePartnerRequest(request)}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-green-500/30 bg-green-500/10 px-2.5 py-1.5 text-xs text-green-300 hover:bg-green-500/20 transition"
+                                  >
+                                    <CheckCircle className="w-3.5 h-3.5" /> Valider
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeletePartnerRequest(request.id_demande)}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs text-red-300 hover:bg-red-500/20 transition"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" /> Supprimer
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1456,7 +1513,7 @@ export default function AdminPartenaires() {
                     <Users className="w-4 h-4 text-pink-400" />
                     Répertoire de contacts partenaires
                   </h3>
-                  <p className="text-white/40 text-xs">Coordonnées des référents — réservé super admin</p>
+                  <p className="text-white/40 text-xs">Coordonnées des référents — issus des demandes validées</p>
                 </div>
                 <Lock className="w-4 h-4 text-white/40" />
               </div>
@@ -1469,29 +1526,37 @@ export default function AdminPartenaires() {
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Fonction</th>
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Téléphone</th>
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Email</th>
-                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Adresse</th>
+               
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {comptes.map((compte) => (
-                      <tr key={`contact-${compte.id}`} className="hover:bg-white/5 transition">
-                        <td className="p-3">
-                          <div className="font-medium">{compte.nom}</div>
-                          <div className="text-xs text-white/40">{compte.id} · {compte.tier}</div>
+                    {validatedPartnerContacts.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-6 text-center text-white/40">
+                          Aucune demande validée n’est encore disponible pour le répertoire.
                         </td>
-                        <td className="p-3">{compte.contact.ref}</td>
-                        <td className="p-3 text-white/60">{compte.contact.fonction}</td>
-                        <td className="p-3">{compte.contact.telephone}</td>
-                        <td className="p-3">{compte.contact.email}</td>
-                        <td className="p-3 text-white/60 text-xs">{compte.contact.adresse}</td>
                       </tr>
-                    ))}
+                    ) : (
+                      validatedPartnerContacts.map((compte) => (
+                        <tr key={`contact-${compte.id}`} className="hover:bg-white/5 transition">
+                          <td className="p-3">
+                            <div className="font-medium">{compte.nom}</div>
+                            <div className="text-xs text-white/40">{compte.id} · {compte.tier}</div>
+                          </td>
+                          <td className="p-3">{compte.contact.ref}</td>
+                          <td className="p-3 text-white/60">{compte.contact.fonction}</td>
+                          <td className="p-3">{compte.contact.telephone}</td>
+                          <td className="p-3">{compte.contact.email}</td>
+                       
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
               <div className="p-4 border-t border-white/10 text-xs text-white/40">
                 <Info className="w-3 h-3 inline mr-1" />
-                Coordonnées des référents de l'ensemble des comptes partenaires, tous statuts confondus. Données confidentielles à usage interne.
+                Les coordonnées affichées proviennent des demandes de partenariat validées dans la base. Données confidentielles à usage interne.
               </div>
             </div>
           </>
@@ -1553,15 +1618,15 @@ export default function AdminPartenaires() {
             {/* Tableau des campagnes */}
             <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead className="bg-white/5">
                     <tr>
-                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Campagne</th>
-                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Partenaire</th>
-                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Emplacement</th>
-                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Période</th>
-                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Statut</th>
-                      <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Actions</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider w-[32%]">Campagne</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider w-[22%]">Partenaire</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider w-[16%]">Emplacement</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider w-[14%]">Période</th>
+                      <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider w-[10%]">Statut</th>
+                      <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider w-[6%]">Actions</th>
                     </tr>
                     <tr className="bg-white/3">
                       <th className="p-2">
@@ -1621,27 +1686,45 @@ export default function AdminPartenaires() {
                       filteredCampagnes.map((campagne) => (
                         <tr key={campagne.id_campagne} className="hover:bg-white/5 transition">
                           <td className="p-3">
-                            <div className="flex items-center gap-3">
-                              {campagne.visuel ? (
-                                <img src={campagne.visuel} alt={campagne.titre} className="w-10 h-10 rounded object-cover" />
-                              ) : (
-                                <div className="w-10 h-10 rounded bg-brand-cyan/10 flex items-center justify-center">
-                                  <Image className="w-4 h-4 text-brand-cyan" />
-                                </div>
-                              )}
-                              <div>
-                                <div className="font-medium">{campagne.titre}</div>
+                            <div className="flex items-start gap-3">
+                              <div className="h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                                {campagne.visuel ? (
+                                  <img
+                                    src={normalizeCampaignImageUrl(campagne.visuel) || FALLBACK_IMAGE}
+                                    alt={campagne.titre}
+                                    className="h-full w-full object-cover"
+                                    loading="lazy"
+                                    onError={(event) => {
+                                      const target = event.currentTarget as HTMLImageElement
+                                      if (target.src !== FALLBACK_IMAGE) {
+                                        target.src = FALLBACK_IMAGE
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-brand-cyan/10 text-brand-cyan">
+                                    <Image className="w-5 h-5" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-medium text-white break-words">{campagne.titre}</div>
                                 {campagne.description && (
-                                  <div className="text-xs text-white/40 truncate max-w-[200px]">{campagne.description}</div>
+                                  <div className="mt-1 text-xs text-white/40 break-words">{campagne.description}</div>
                                 )}
                               </div>
                             </div>
                           </td>
                           <td className="p-3">
-                            <span className="text-sm">{campagne.partenaire_nom || `#${campagne.id_partenaire}`}</span>
-                            {campagne.partenaire_niveau && (
-                              <div className="text-xs text-white/40">{campagne.partenaire_niveau}</div>
-                            )}
+                            <div className="flex flex-col gap-1">
+                              <span className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-cyan/20 bg-brand-cyan/10 px-2.5 py-1 text-sm font-medium text-brand-cyan">
+                                <Users className="w-3.5 h-3.5" />
+                                {campagne.partenaire_nom || `#${campagne.id_partenaire}`}
+                              </span>
+                              {campagne.partenaire_niveau && (
+                                <div className="text-xs text-white/40">{campagne.partenaire_niveau}</div>
+                              )}
+                            </div>
                           </td>
                           <td className="p-3">
                             <EmplacementBadge emplacement={campagne.emplacement} />

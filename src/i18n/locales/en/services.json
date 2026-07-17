@@ -1,0 +1,52 @@
+{
+  "hero": {
+    "badge": "Coloc'KOO Services",
+    "title": "Request a service, we'll take care of the rest",
+    "subtitle": "Cleaning, gardening, everyday small services… Select what you need and send your request. A Coloc'KOO advisor will get back to you."
+  },
+  "user": {
+    "myAccount": "My account",
+    "accountLabel": "Request on behalf of this account",
+    "notConnected": "Not connected",
+    "notConnectedDesc": "browse freely, log in to submit a request."
+  },
+  "catalogue": {
+    "title": "Available services",
+    "subtitle": "Check one or more services, then send your request.",
+    "defaultDesc": "On-demand service.",
+    "empty": "No service available at the moment."
+  },
+  "cart": {
+    "title": "My request",
+    "item": "item",
+    "items": "items",
+    "empty": "Select one or more services to compose your request.",
+    "total": "Estimated total",
+    "phonePlaceholder": "Contact phone",
+    "messagePlaceholder": "Specify your needs (address, preferred date, details…)",
+    "submit": "Submit request",
+    "loginToSubmit": "Log in to request",
+    "clear": "Clear selection",
+    "disclaimer": "Indicative amount. The final quote is confirmed by Coloc'KOO, off-platform."
+  },
+  "history": {
+    "title": "My requests"
+  },
+  "confirmation": {
+    "title": "Request sent!",
+    "subtitle": "A Coloc'KOO advisor will contact you to finalize the quote.",
+    "reference": "Reference",
+    "total": "Estimated total",
+    "ok": "Perfect"
+  },
+  "status": {
+    "new": "New",
+    "inProgress": "In progress",
+    "processed": "Processed",
+    "canceled": "Canceled"
+  },
+  "errors": {
+    "load": "Unable to load services.",
+    "submit": "Unable to submit request."
+  }
+}

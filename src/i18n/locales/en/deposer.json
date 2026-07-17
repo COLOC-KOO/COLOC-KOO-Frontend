@@ -1,0 +1,111 @@
+{
+  "hero": {
+    "badge": "Publication after admin validation",
+    "title": "Post your",
+    "highlight": "listing",
+    "subtitle": "Fill out the form below to publish your listing. Our team will validate it as soon as possible."
+  },
+  "auth": {
+    "required": "Log in to submit a listing.",
+    "login": "Login"
+  },
+  "steps": {
+    "1": {
+      "label": "Type",
+      "description": "Property type"
+    },
+    "2": {
+      "label": "Location",
+      "description": "Where is it located?"
+    },
+    "3": {
+      "label": "Details",
+      "description": "Characteristics"
+    },
+    "4": {
+      "label": "Photos",
+      "description": "Property images"
+    },
+    "5": {
+      "label": "Pricing",
+      "description": "Price and conditions"
+    }
+  },
+  "step1": {
+    "title": "Property type",
+    "subtitle": "What type of accommodation are you offering?",
+    "titleField": "Listing title",
+    "titleHelp": "A catchy title to attract housemates",
+    "titlePlaceholder": "Ex: Bright room in Isoraka"
+  },
+  "step2": {
+    "title": "Location",
+    "subtitle": "Where is your accommodation?",
+    "city": "City",
+    "district": "District",
+    "districtPlaceholder": "Ex: Isoraka, Analakely...",
+    "address": "Exact address",
+    "addressHelp": "Optional - visible only after validation",
+    "addressPlaceholder": "12 Rue de la Liberté"
+  },
+  "step3": {
+    "title": "Property details",
+    "subtitle": "The characteristics of your property",
+    "surface": "Total surface (m²)",
+    "colocataires": "Number of housemates",
+    "roomSurface": "Room surface (m²)",
+    "furnished": "Furnished",
+    "furnishedYes": "Yes",
+    "furnishedPartial": "Partially",
+    "furnishedNo": "No",
+    "furnishedBuyout": "Possible buyout",
+    "availability": "Availability",
+    "services": "Amenities",
+    "servicesHelp": "Separated by commas",
+    "servicesPlaceholder": "Wi-Fi, Equipped kitchen, Washing machine",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe your accommodation in detail..."
+  },
+  "step4": {
+    "title": "Photos",
+    "subtitle": "Add photos to showcase your property",
+    "drop": "Drop to upload!",
+    "drag": "Drag your photos here",
+    "click": "or click to browse",
+    "formats": "JPG, PNG, WEBP up to 10MB",
+    "uploading": "Uploading..."
+  },
+  "step5": {
+    "title": "Pricing and conditions",
+    "subtitle": "Set the price and rules",
+    "rent": "Monthly rent (Ar)",
+    "charges": "Monthly charges (Ar)",
+    "deposit": "Deposit (Ar)",
+    "rules": "Rules",
+    "rulesHelp": "Separated by commas",
+    "rulesPlaceholder": "Non-smoking, Pets allowed",
+    "leaseType": "Lease type",
+    "leaseHelp": "Will be displayed on the listing and included in the contract",
+    "leaseCollective": "Collective lease — one contract signed by all",
+    "leaseIndividual": "Individual lease — each signs their contract",
+    "solidarity": "Solidarity clause",
+    "solidarityWithout": "Without solidarity clause — each responsible for their share",
+    "solidarityWith": "With solidarity clause — all jointly responsible for rent",
+    "summary": "Listing summary",
+    "summaryTitle": "Title",
+    "summaryLocation": "Location",
+    "summaryPrice": "Rent",
+    "summaryType": "Type",
+    "summaryPhotos": "photos",
+    "summaryPhotosLabel": "photo(s)",
+    "summaryAvailability": "Availability",
+    "submit": "Submit to admin"
+  },
+  "success": {
+    "message": "🎉 Listing submitted successfully! It will be visible after admin validation."
+  },
+  "errors": {
+    "upload": "Unable to upload photos",
+    "submit": "Unable to submit listing"
+  }
+}

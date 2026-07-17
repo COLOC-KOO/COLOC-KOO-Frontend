@@ -1,0 +1,28 @@
+{
+  "title": "Fanambarana",
+  "results": "valiny",
+  "found": "hita",
+  "search": "Aiza no tianao haleha?",
+  "loading": "Fikarohana mitohy...",
+  "empty": "Tsy misy fanambarana hita",
+  "emptySub": "Andramo ovaina ny sivanao",
+  "filters": {
+    "types": {
+      "all": "Karazana rehetra",
+      "room": "Efitra",
+      "apartment": "Trano",
+      "house": "Trano fonenana"
+    },
+    "coloc": {
+      "all": "Rehetra",
+      "existing": "Mpiara-monina efa misy",
+      "create": "Mpiara-monina hoforonina"
+    },
+    "budget": "Tetibola",
+    "services": "Tolotra",
+    "noServices": "Tsy misy tolotra miasa",
+    "city": {
+      "all": "Tanàna rehetra"
+    }
+  }
+}

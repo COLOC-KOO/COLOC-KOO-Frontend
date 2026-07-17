@@ -168,6 +168,28 @@ export interface ApiPartenaireCampagne {
     actif?: 0 | 1
 }
 
+export interface ApiPartenaireCampagne {
+  id_campagne: number
+  id_partenaire: number
+  titre: string
+  description: string | null
+  emplacement: 'carte' | 'fil_annonces' | 'bandeau_regional' | 'page_partenaire'
+  visuel: string | null
+  date_debut: string
+  date_fin: string | null
+  statut: 'active' | 'programmee' | 'suspendue' | 'terminee'
+  date_creation: string
+  nom?: string | null
+  partenaire_nom?: string | null
+  partenaire_niveau?: string | null
+  secteur?: string | null
+  niveau?: 'Bronze' | 'Argent' | 'Or' | 'Diamant' | null
+  remise?: string | null
+  engagement?: string | null
+  logo?: string | null
+  actif?: 0 | 1
+}
+
 export interface ApiPartenaireRequest {
     id_demande: number
     nom_entreprise: string

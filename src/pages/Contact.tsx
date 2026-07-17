@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Mail, MapPin, MessageCircle, Phone, Send, CheckCircle2, Sparkles, Clock, Award, Building2, Users, Heart, ArrowRight, Facebook, Twitter, Linkedin, Instagram, Search } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
@@ -9,32 +10,107 @@ import { Link } from 'react-router-dom'
 // Image hero identique à celle de Home.tsx
 const heroImage = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80"
 
-const infos = [
-  { icon: Mail, t: 'Email', v: 'hello@sarintany-coloc.mg', desc: 'Réponse sous 24h' },
-  { icon: Phone, t: 'Téléphone', v: '+261 34 12 345 67', desc: 'Lun - Ven, 9h - 18h' },
-  { icon: MapPin, t: 'Bureau', v: 'Isoraka, Antananarivo', desc: 'Venez nous rencontrer' }
-]
+// =============================================
+// COMPOSANT HERO
+// =============================================
+const Hero: React.FC = () => {
+  const { t } = useTranslation(['contact', 'common'])
 
-const stats = [
-  { label: 'Colocataires', value: '1 400+', icon: Users },
-  { label: 'Annonces', value: '120+', icon: Building2 },
-  { label: 'Satisfaction', value: '4.8/5', icon: Heart },
-  { label: 'Partenaires', value: '25+', icon: Award },
-]
+  return (
+    <section className="relative">
+      <div className="absolute inset-0">
+        <img src={heroImage} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
+      </div>
+      <div className="relative max-w-6xl mx-auto px-6 py-16 text-white">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <motion.div 
+            className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-semibold mb-4 border border-white/20 shadow-lg"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400 }}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+            {t('contact:hero.badge')}
+          </motion.div>
+          <motion.h1 
+            className="bebas text-5xl md:text-7xl drop-shadow-2xl"
+            animate={{ 
+              textShadow: ['0 0 20px rgba(255,255,255,0.2)', '0 0 40px rgba(255,255,255,0.1)', '0 0 20px rgba(255,255,255,0.2)'],
+            }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          >
+            <span className="text-white">{t('contact:hero.title')}</span>
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+              {t('contact:hero.highlight')}
+            </span>
+          </motion.h1>
+          <motion.p 
+            className="text-white/90 mt-2 max-w-2xl mx-auto text-lg bg-black/15 backdrop-blur-md p-4 rounded-xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            {t('contact:hero.subtitle')}
+          </motion.p>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
 
-const socialLinks = [
-  { icon: Facebook, href: '#', label: 'Facebook' },
-  { icon: Twitter, href: '#', label: 'Twitter' },
-  { icon: Linkedin, href: '#', label: 'LinkedIn' },
-  { icon: Instagram, href: '#', label: 'Instagram' },
-]
-
+// =============================================
+// COMPOSANT PRINCIPAL
+// =============================================
 export default function Contact() {
+  const { t } = useTranslation(['contact', 'common'])
   const [form, setForm] = useState({ nom: '', email: '', sujet: '', message: '' })
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+
+  // Infos de contact traduites
+  const infos = [
+    { 
+      icon: Mail, 
+      title: t('contact:infos.email.title'), 
+      value: 'hello@sarintany-coloc.mg', 
+      desc: t('contact:infos.email.desc') 
+    },
+    { 
+      icon: Phone, 
+      title: t('contact:infos.phone.title'), 
+      value: '+261 34 12 345 67', 
+      desc: t('contact:infos.phone.desc') 
+    },
+    { 
+      icon: MapPin, 
+      title: t('contact:infos.address.title'), 
+      value: t('contact:infos.address.value'), 
+      desc: t('contact:infos.address.desc') 
+    }
+  ]
+
+  const stats = [
+    { label: t('contact:stats.colocataires'), value: '1 400+', icon: Users },
+    { label: t('contact:stats.annonces'), value: '120+', icon: Building2 },
+    { label: t('contact:stats.satisfaction'), value: '4.8/5', icon: Heart },
+    { label: t('contact:stats.partenaires'), value: '25+', icon: Award },
+  ]
+
+  const socialLinks = [
+    { icon: Facebook, href: '#', label: 'Facebook' },
+    { icon: Twitter, href: '#', label: 'Twitter' },
+    { icon: Linkedin, href: '#', label: 'LinkedIn' },
+    { icon: Instagram, href: '#', label: 'Instagram' },
+  ]
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -43,10 +119,10 @@ export default function Contact() {
     setSubmitting(true)
     try {
       await api.contact(form)
-      setStatus('Message envoyé avec succès ! Nous revenons vers vous rapidement.')
+      setStatus(t('contact:form.success'))
       setForm({ nom: '', email: '', sujet: '', message: '' })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible d\'envoyer le message')
+      setError(err instanceof Error ? err.message : t('contact:form.error'))
     } finally {
       setSubmitting(false)
     }
@@ -68,56 +144,7 @@ export default function Contact() {
 
   return (
     <SiteLayout>
-      {/* Section Hero avec l'image de fond */}
-      <section className="relative">
-        <div className="absolute inset-0">
-          <img src={heroImage} alt="" className="w-full h-full object-cover" />
-          {/* Overlay plus foncé pour améliorer la lisibilité */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-          {/* Ajout d'un overlay de couleur pour harmoniser */}
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
-        </div>
-        <div className="relative max-w-6xl mx-auto px-6 py-16 text-white">
-          {/* Header avec animation */}
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <motion.div 
-              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-semibold mb-4 border border-white/20 shadow-lg"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400 }}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-              Contactez-nous
-            </motion.div>
-            <motion.h1 
-              className="bebas text-5xl md:text-7xl drop-shadow-2xl"
-              animate={{ 
-                textShadow: ['0 0 20px rgba(255,255,255,0.2)', '0 0 40px rgba(255,255,255,0.1)', '0 0 20px rgba(255,255,255,0.2)'],
-              }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            >
-              <span className="text-white">On vous</span>
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
-                écoute
-              </span>
-            </motion.h1>
-            <motion.p 
-              className="text-white/90 mt-2 max-w-2xl mx-auto text-lg bg-black/15 backdrop-blur-md p-4 rounded-xl"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              Une question, un partenariat, un souci ? Écrivez-nous. 
-              Notre équipe est là pour vous accompagner.
-            </motion.p>
-          </motion.div>
-        </div>
-      </section>
+      <Hero />
 
       {/* Le reste du contenu */}
       <div className="relative overflow-hidden">
@@ -156,7 +183,7 @@ export default function Contact() {
           >
             {infos.map((info, index) => (
               <motion.div
-                key={info.t}
+                key={info.title}
                 variants={fadeInUp}
                 className="group relative bg-white border border-border/60 rounded-2xl p-6 text-center hover:shadow-xl transition-all duration-300 hover:-translate-y-2 hover:border-brand-cyan/30"
               >
@@ -165,8 +192,8 @@ export default function Contact() {
                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-cyan-light to-brand-cyan/20 text-brand-cyan-dark flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
                     <info.icon className="w-6 h-6" />
                   </div>
-                  <div className="mt-4 text-xs uppercase text-muted-foreground font-semibold tracking-wider">{info.t}</div>
-                  <div className="mt-1 font-semibold text-foreground">{info.v}</div>
+                  <div className="mt-4 text-xs uppercase text-muted-foreground font-semibold tracking-wider">{info.title}</div>
+                  <div className="mt-1 font-semibold text-foreground">{info.value}</div>
                   <div className="mt-1 text-sm text-muted-foreground">{info.desc}</div>
                 </div>
               </motion.div>
@@ -188,9 +215,9 @@ export default function Contact() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  <h2 className="bebas text-4xl md:text-5xl">Envoyer un message</h2>
+                  <h2 className="bebas text-4xl md:text-5xl">{t('contact:sidebar.title')}</h2>
                   <p className="mt-2 text-white/80 text-sm">
-                    Réponse sous 24h ouvrées. Nous sommes à votre écoute.
+                    {t('contact:sidebar.subtitle')}
                   </p>
                 </motion.div>
                 
@@ -201,9 +228,9 @@ export default function Contact() {
                   transition={{ delay: 0.5 }}
                 >
                   {[
-                    { icon: Clock, text: 'Réponse rapide' },
-                    { icon: Users, text: 'Équipe dédiée' },
-                    { icon: CheckCircle2, text: 'Satisfaction garantie' },
+                    { icon: Clock, text: t('contact:sidebar.features.rapide') },
+                    { icon: Users, text: t('contact:sidebar.features.dediee') },
+                    { icon: CheckCircle2, text: t('contact:sidebar.features.garantie') },
                   ].map((item, index) => (
                     <div key={index} className="flex items-center gap-3 text-white/80">
                       <item.icon className="w-4 h-4 text-white/60" />
@@ -219,7 +246,7 @@ export default function Contact() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
               >
-                <p className="text-sm text-white/70">Suivez-nous</p>
+                <p className="text-sm text-white/70">{t('contact:sidebar.follow')}</p>
                 <div className="flex gap-3 mt-3">
                   {socialLinks.map((social) => (
                     <a
@@ -248,7 +275,7 @@ export default function Contact() {
                     transition={{ delay: 0.3 }}
                   >
                     <label className="block text-sm font-semibold text-foreground">
-                      Nom complet <span className="text-red-500">*</span>
+                      {t('contact:form.name')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -256,7 +283,7 @@ export default function Contact() {
                       value={form.nom}
                       onChange={(event) => setForm((current) => ({ ...current, nom: event.target.value }))}
                       className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all"
-                      placeholder="Jean Dupont"
+                      placeholder={t('contact:form.namePlaceholder')}
                     />
                   </motion.div>
                   <motion.div 
@@ -266,7 +293,7 @@ export default function Contact() {
                     transition={{ delay: 0.35 }}
                   >
                     <label className="block text-sm font-semibold text-foreground">
-                      Email <span className="text-red-500">*</span>
+                      {t('contact:form.email')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -274,7 +301,7 @@ export default function Contact() {
                       value={form.email}
                       onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
                       className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all"
-                      placeholder="jean@exemple.com"
+                      placeholder={t('contact:form.emailPlaceholder')}
                     />
                   </motion.div>
                 </div>
@@ -286,7 +313,7 @@ export default function Contact() {
                   transition={{ delay: 0.4 }}
                 >
                   <label className="block text-sm font-semibold text-foreground">
-                    Sujet <span className="text-red-500">*</span>
+                    {t('contact:form.subject')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     required
@@ -294,7 +321,7 @@ export default function Contact() {
                     value={form.sujet}
                     onChange={(event) => setForm((current) => ({ ...current, sujet: event.target.value }))}
                     className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all"
-                    placeholder="Demande d'information"
+                    placeholder={t('contact:form.subjectPlaceholder')}
                   />
                 </motion.div>
 
@@ -305,7 +332,7 @@ export default function Contact() {
                   transition={{ delay: 0.45 }}
                 >
                   <label className="block text-sm font-semibold text-foreground">
-                    Message <span className="text-red-500">*</span>
+                    {t('contact:form.message')} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     required
@@ -313,7 +340,7 @@ export default function Contact() {
                     value={form.message}
                     onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))}
                     className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm bg-white/50 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all resize-none"
-                    placeholder="Décrivez votre demande en détail..."
+                    placeholder={t('contact:form.messagePlaceholder')}
                   />
                 </motion.div>
 
@@ -355,12 +382,12 @@ export default function Contact() {
                     {submitting ? (
                       <>
                         <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                        Envoi en cours...
+                        {t('common:common.loading')}
                       </>
                     ) : (
                       <>
                         <Send className="w-4 h-4 mr-2" />
-                        Envoyer le message
+                        {t('contact:form.submit')}
                       </>
                     )}
                   </Button>
@@ -372,7 +399,7 @@ export default function Contact() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.55 }}
                 >
-                  En envoyant ce formulaire, vous acceptez notre politique de confidentialité.
+                  {t('contact:form.privacy')}
                 </motion.p>
               </form>
             </div>

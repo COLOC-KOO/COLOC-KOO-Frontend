@@ -1,0 +1,109 @@
+{
+  "back": "Hiverina any amin'ny fanambarana",
+  "verified": "Fanambarana voamarina",
+  "perMonth": "/ volana",
+  "noDescription": "Tsy misy famaritana.",
+  "noAmenities": "Hamarina",
+  "stats": {
+    "surface": "Velarambony",
+    "housemates": "Mpiara-monina",
+    "colocs": "Mpiara-monina",
+    "existing": "Efa misy",
+    "toCreate": "Hoforonina",
+    "none": "Tsy misy",
+    "applications": "Fangatahana"
+  },
+  "sections": {
+    "description": "Famaritana",
+    "amenities": "Fitaovana",
+    "candidatesTitle": "Mpiara-monina mifandray amin'ity fanambarana ity",
+    "candidatesSubtitle": "Ity fizarana ity dia mampiseho ny fangatahana voarakitra ao amin'ny base ho an'ity fanambarana ity.",
+    "candidatesSingular": "fangatahana voarakitra",
+    "candidatesPlural": "fangatahana voarakitra",
+    "noCandidates": "Tsy mbola misy fangatahana voarakitra ho an'ity fanambarana ity.",
+    "leaseType": "Karazana fanofana"
+  },
+  "lease": {
+    "collective": "Fifanarahana iraisana",
+    "individual": "Fanofana manokana",
+    "withSolidarity": "miaraka amin'ny firaisankina",
+    "withoutSolidarity": "tsy misy firaisankina",
+    "collectiveDesc": "Fifanarahana iray nosoniavin'ny rehetra.",
+    "individualDesc": "Samy manao ny azy ny mpiara-monina tsirairay miaraka amin'ny tompon-trano.",
+    "withSolidarityDesc": " Miara-mandraikitra ny vidin-trano ny mpiara-monina rehetra.",
+    "withoutSolidarityDesc": " Samy tompon'andraikitra amin'ny ampahany ny mpiara-monina tsirairay."
+  },
+  "candidates": {
+    "defaultName": "Mpifaninana",
+    "statusPending": "miandry",
+    "noProfession": "Mbola tsy feno ny mombamomba",
+    "age": "taona",
+    "expand": "Hijery ny mombamomba feno",
+    "collapse": "Hanafoana ny mombamomba",
+    "sendMessage": "Handefa hafatra",
+    "noMessage": "Tsy misy hafatra fanampiny.",
+    "currentCity": "Tanàna misy amin'izao :",
+    "originCity": "Niaviany :",
+    "youAreCandidate": "Efa ao amin'ity lisitry ny mpiara-monina ity ianao.",
+    "youAreCandidateDesc": "Afaka miresaka momba ny toeranao amin'ity fanambarana ity ianao mivantana avy amin'ny fangatahanao na ny hafatrao.",
+    "discussSuccess": "Resadresaka nisokatra tamin'ny mpifaninana.",
+    "acceptSuccess": "Fangatahana ekena.",
+    "refuseSuccess": "Fangatahana lavina.",
+    "actionError": "Tsy afaka nanao ny fangatahana."
+  },
+  "apply": {
+    "placeholder": "Ampidiro ny tenanao ary ampio hafatra ho an'ny tompon-trano...",
+    "submit": "Mangataka amin'ity trano fiarahamonina ity",
+    "loginToApply": "Hiditra mba hangataka",
+    "error": "Tsy afaka nandefa ny fangatahana."
+  },
+  "contact": {
+    "defaultSubject": "Fanontaniana momba ny fanambaranao",
+    "subject": "Lohahevitra",
+    "subjectPlaceholder": "Lohahevitry ny hafatra",
+    "message": "Hafatra",
+    "messagePlaceholder": "Soraty ny hafatrao ho an'ny tompon-trano...",
+    "submit": "Mifandraisa amin'ny tompon-trano",
+    "loginToContact": "Hiditra mba handefa hafatra",
+    "selfError": "Tsy afaka mandefa hafatra amin'ny tenanao ianao.",
+    "messageRequired": "Ilaina ny hafatra.",
+    "success": "Hafatra alefa amin'ny tompon-trano.",
+    "error": "Tsy afaka nandefa ny hafatra.",
+    "candidateSubject": "Fifandraisana momba ny fanambarana {id}",
+    "ownerSubject": "Hafatra avy amin'ny mombamomba anao ho an'ny fanambarana {id}"
+  },
+  "modal": {
+    "title": "Hafatra ho an'i {name}",
+    "subtitle": "Soraty hafatra fohy sy mazava ho an'ity olona ity.",
+    "placeholder": "Soraty hafatra ho an'i {name}..."
+  },
+  "actions": {
+    "viewApplication": "Hijery ny fangatahako",
+    "share": "Hizara"
+  },
+  "owner": {
+    "title": "Tompon-trano",
+    "verified": "Fanambarana nohamarinin'ny fanaraha-maso",
+    "self": "Ianao no tompon-tranon'ity fanambarana ity.",
+    "unavailable": "Tsy misy ny tompon-trano amin'izao fotoana izao."
+  },
+  "launch": {
+    "success": "Ny trano fiarahamonina dia natomboka soa aman-tsara.",
+    "error": "Tsy afaka nanomboka ny trano fiarahamonina."
+  },
+  "user": {
+    "connected": "Tafiditra amin'ny maha {name}",
+    "connectedDesc": "Afaka mandefa ny fangatahanao mivantana avy amin'ity pejy ity ianao.",
+    "ownerTitle": "Fitantanana ny fangatahana",
+    "ownerDesc": "Ny fitantanana ny fangatahana dia atao avy amin'ny pejy natokana.",
+    "applied": "Voaray tsara ny fangatahanao.",
+    "appliedDesc": "Afaka manaraka ny fivoarana sy mahita ny mpifaninana hafa amin'ity fanambarana ity ianao.",
+    "viewApplication": "Hijery ny fangatahako",
+    "myApplication": "Ny fangatahako",
+    "status": "Toe-javatra amin'izao :",
+    "statusPending": "miandry",
+    "noMessage": "Tsy misy hafatra nampiana.",
+    "otherCandidates": "Mpifaninana hafa",
+    "noOtherCandidates": "Tsy misy mpifaninana hafa amin'izao."
+  }
+}
