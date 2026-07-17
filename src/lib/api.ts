@@ -145,6 +145,28 @@ export interface ApiPartenaire {
   date_creation: string
 }
 
+export interface ApiPartenaireCampagne {
+  id_campagne: number
+  id_partenaire: number
+  titre: string
+  description: string | null
+  emplacement: 'carte' | 'fil_annonces' | 'bandeau_regional' | 'page_partenaire'
+  visuel: string | null
+  date_debut: string
+  date_fin: string | null
+  statut: 'active' | 'programmee' | 'suspendue' | 'terminee'
+  date_creation: string
+  nom?: string | null
+  partenaire_nom?: string | null
+  partenaire_niveau?: string | null
+  secteur?: string | null
+  niveau?: 'Bronze' | 'Argent' | 'Or' | 'Diamant' | null
+  remise?: string | null
+  engagement?: string | null
+  logo?: string | null
+  actif?: 0 | 1
+}
+
 export interface ApiPartenaireRequest {
   id_demande: number
   nom_entreprise: string
@@ -618,6 +640,9 @@ export const api = {
   partenaires() {
     return request<ApiPartenaire[]>('/partenaires')
   },
+  partenairesCampagnes() {
+    return request<ApiPartenaireCampagne[]>('/partenaires/campaigns')
+  },
   createPartenaireRequest(payload: CreatePartenaireRequestPayload) {
     return request<{ id_demande: number; message: string }>('/partenaires/requests', {
       method: 'POST',
@@ -985,6 +1010,12 @@ export const api = {
   },
   backofficePartenaireRequests() {
     return request<ApiPartenaireRequest[]>('/backoffice/partenaires/requests')
+  },
+  updateBackofficePartenaireRequest(id: string | number, payload: { statut: string }) {
+    return request<{ message: string }>(`/backoffice/partenaires/requests/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
   },
   deleteBackofficePartenaireRequest(id: string | number) {
     return request<{ message: string }>(`/backoffice/partenaires/requests/${id}`, { method: 'DELETE' })
