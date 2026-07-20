@@ -438,8 +438,8 @@ const ContactSection: React.FC = () => {
     const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID?.trim()
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim()
 
-    if (!serviceId || !templateId || !publicKey) {
-      setSubmitError(t('partenaires:contact.errors.emailjs'))
+    if (!serviceId || !templateId || !publicKey || publicKey === 'your_public_key_here' || serviceId === 'your_service_id_here' || templateId === 'your_template_id_here') {
+      setSubmitError('EmailJS n’est pas encore configuré correctement. Veuillez renseigner les variables VITE_EMAILJS_PUBLIC_KEY, VITE_EMAILJS_SERVICE_ID et VITE_EMAILJS_TEMPLATE_ID dans le fichier .env du frontend.')
       setSubmitting(false)
       return
     }

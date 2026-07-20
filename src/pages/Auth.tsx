@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { ArrowLeft, Home } from 'lucide-react'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/ui/Button'
 import { Poste } from '../lib/api'
@@ -77,8 +78,17 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      <div className="hidden md:flex bg-gradient-to-br from-brand-cyan via-brand-cyan-dark to-brand-green p-12 text-white flex-col justify-between">
+    <div className="min-h-screen grid md:grid-cols-2 relative">
+      {/* Bouton retour - Version desktop */}
+      <Link
+        to="/"
+        className="hidden md:flex absolute top-6 left-6 z-10 items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/20 hover:bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        {t('')}
+      </Link>
+
+      <div className="hidden md:flex bg-gradient-to-br from-brand-cyan via-brand-cyan-dark to-brand-green p-12 text-white flex-col justify-between relative">
         <Logo />
         <div>
           <div className="bebas text-5xl leading-none">
@@ -91,9 +101,18 @@ export default function Auth() {
         <div className="text-xs text-white/60">2026 {t('copyright')}</div>
       </div>
 
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8 relative">
+        {/* Bouton retour - Version mobile */}
+        <Link
+          to="/"
+          className="md:hidden absolute top-4 left-4 z-10 flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium bg-white/80 hover:bg-white backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-gray-200/50"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden xs:inline">{t(' ')}</span>
+        </Link>
+
         <div className="w-full max-w-sm">
-          <div className="md:hidden mb-6">
+          <div className="md:hidden mb-6 flex justify-center">
             <Logo />
           </div>
           <div className="flex gap-1 p-1 bg-muted rounded-lg text-sm mb-6">
@@ -189,9 +208,18 @@ export default function Auth() {
             </Button>
           </form>
 
-          <div className="mt-6 text-xs text-center text-muted-foreground">
-            <Link to="/admin" className="text-brand-cyan-dark font-semibold">
+          <div className="mt-6 text-xs text-center text-muted-foreground space-y-2">
+            <Link to="/admin" className="text-brand-cyan-dark font-semibold block">
               {t('backOfficeAccess')}
+            </Link>
+            
+            {/* Bouton retour vers le site - Version texte en bas */}
+            <Link 
+              to="/" 
+              className="inline-flex items-center gap-1.5 text-muted-foreground/70 hover:text-brand-cyan-dark transition-colors"
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>{t('')}</span>
             </Link>
           </div>
         </div>
