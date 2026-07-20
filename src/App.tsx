@@ -56,6 +56,7 @@ export default function App() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/compte" element={<Compte />} />
       <Route path="/candidatures" element={<Candidatures />} />
+      <Route path="/candidatures/:annonceId" element={<Candidatures />} />
 
       {/* Back-office admin */}
       <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
