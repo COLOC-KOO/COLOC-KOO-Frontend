@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
-  ArrowLeft, ArrowRight, Camera, Check, DollarSign, House, Info, MapPin, 
+  ArrowLeft, ArrowRight, Camera, Check, House, Info, MapPin, 
   Upload, X, Image, Trash2, Sparkles, Shield, Clock, Users, Ruler, Bed, 
   Wifi, Coffee, Car, Dog, AlertCircle, Building2, CheckCircle2, 
-  Loader2, PartyPopper, Home, Key, Heart, Star, Award, Zap, Search
+  Loader2, PartyPopper, Home, Key, Heart, Star, Award, Zap, Search, Banknote
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { SiteLayout } from '../components/site/SiteLayout'
@@ -21,7 +21,7 @@ const steps = [
   { n: 2, label: 'Localisation', icon: MapPin, description: 'Où se situe-t-il ?', color: 'from-cyan-400 to-teal-400' },
   { n: 3, label: 'Détails', icon: Info, description: 'Caractéristiques', color: 'from-teal-400 to-green-400' },
   { n: 4, label: 'Photos', icon: Camera, description: 'Images du bien', color: 'from-green-400 to-yellow-400' },
-  { n: 5, label: 'Tarifs', icon: DollarSign, description: 'Prix et conditions', color: 'from-yellow-400 to-orange-400' },
+  { n: 5, label: 'Tarifs', icon: Banknote, description: 'Prix et conditions', color: 'from-yellow-400 to-orange-400' },
 ]
 
 function Field({ label, children, required, help, className = '' }: { 
@@ -91,8 +91,15 @@ export default function Deposer() {
 
   useEffect(() => {
     api.villes().then((rows) => {
-      setVilles(rows)
-      if (rows[0]) setForm((current) => ({ ...current, id_ville: rows[0].id_ville }))
+      const uniqueCities = rows.reduce<Ville[]>((acc, city) => {
+        const exists = acc.some((item) => item.nom_ville.toLowerCase() === city.nom_ville.toLowerCase())
+        if (!exists) {
+          acc.push(city)
+        }
+        return acc
+      }, [])
+      setVilles(uniqueCities)
+      if (uniqueCities[0]) setForm((current) => ({ ...current, id_ville: uniqueCities[0].id_ville }))
     })
   }, [])
 
@@ -678,7 +685,7 @@ export default function Deposer() {
                 >
                   <motion.div className="flex items-center gap-3" variants={itemVariants}>
                     <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-400 text-white flex items-center justify-center shadow-lg shadow-yellow-400/30">
-                      <DollarSign className="w-5 h-5" />
+                      <Banknote className="w-5 h-5" />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold">{t('deposer:step5.title')}</h2>
@@ -689,13 +696,13 @@ export default function Deposer() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <Field label={t('deposer:step5.rent')} required>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">Ar</div>
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.prix_loyer} onChange={(e) => update('prix_loyer', e.target.value)} placeholder="500 000" />
                       </div>
                     </Field>
                     <Field label={t('deposer:step5.charges')}>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">Ar</div>
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.prix_charges} onChange={(e) => update('prix_charges', e.target.value)} placeholder="50 000" />
                       </div>
                     </Field>
