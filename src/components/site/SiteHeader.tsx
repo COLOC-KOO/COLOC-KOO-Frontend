@@ -21,10 +21,11 @@ const navItems = [
 ]
 
 // Langues avec leurs informations complètes
+// 🇺🇸 Drapeau américain pour l'anglais
 const languageOptions = [
   { code: 'FR' as const, label: 'Français', nativeName: 'Français', flagCode: 'fr' },
   { code: 'MG' as const, label: 'Malagasy', nativeName: 'Malagasy', flagCode: 'mg' },
-  { code: 'EN' as const, label: 'English', nativeName: 'English', flagCode: 'gb' }
+  { code: 'EN' as const, label: 'English', nativeName: 'English', flagCode: 'us' } // Changé de 'gb' à 'us'
 ]
 
 export function SiteHeader() {
@@ -109,13 +110,27 @@ export function SiteHeader() {
   })
 
   const getUserInitials = () => {
-    if (user?.prenom && user?.nom) {
-      return `${user.prenom[0]}${user.nom[0]}`.toUpperCase()
+    const firstName = user?.prenom || user?.name?.split(' ')[0] || ''
+    const lastName = user?.nom || user?.name?.split(' ').slice(1).join(' ') || ''
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase()
     }
-    if (user?.prenom) return user.prenom[0].toUpperCase()
+    if (firstName) return firstName[0].toUpperCase()
     if (user?.name) return user.name[0].toUpperCase()
     return 'U'
   }
+
+  const getUserDisplayName = () => {
+    if (user?.prenom && user?.nom) return `${user.prenom} ${user.nom}`.trim()
+    if (user?.prenom) return user.prenom
+    if (user?.name) return user.name
+    return t('user', { ns: 'common' })
+  }
+
+  const profileImageUrl = user?.profilePicture || user?.avatar || null
+
+  const getAccountMenuTarget = () => (isColocataire ? '/compte?tab=favoris' : '/compte?tab=dossier')
+  const getAccountMenuLabel = () => (isColocataire ? t('myFavorites', { ns: 'header' }) : t('myAnnouncements', { ns: 'header' }))
 
   // Fonction pour obtenir le label traduit d'un item de navigation
   const getNavLabel = (labelKey: string): string => {
@@ -233,8 +248,12 @@ export function SiteHeader() {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-muted/80 transition-all duration-200 group"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm shadow-md">
-                  {getUserInitials()}
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden">
+                  {profileImageUrl ? (
+                    <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
+                  ) : (
+                    getUserInitials()
+                  )}
                 </div>
                 <ChevronDown className={cn(
                   "w-3.5 h-3.5 opacity-60 transition-transform duration-200",
@@ -246,12 +265,16 @@ export function SiteHeader() {
                 <div className="absolute right-0 top-full mt-2 min-w-[240px] rounded-2xl border border-border/50 bg-white shadow-xl overflow-hidden z-20 animate-in fade-in-0 zoom-in-95 duration-150">
                   <div className="p-4 border-b border-border/50">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm shadow-md">
-                        {getUserInitials()}
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden">
+                        {profileImageUrl ? (
+                          <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
+                        ) : (
+                          getUserInitials()
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold truncate">
-                          {user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.name || t('user', { ns: 'common' })}
+                          {getUserDisplayName()}
                         </div>
                         <div className="text-xs text-muted-foreground truncate">
                           {user.email}
@@ -261,7 +284,7 @@ export function SiteHeader() {
                   </div>
                   <div className="p-1">
                     <Link
-                      to="/compte?tab=dossier"
+                      to="/compte?tab=profil"
                       onClick={() => setUserMenuOpen(false)}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
                     >
@@ -269,12 +292,12 @@ export function SiteHeader() {
                       <span>{t('myProfile', { ns: 'header' })}</span>
                     </Link>
                     <Link
-                      to="/compte?tab=dossier"
+                      to={getAccountMenuTarget()}
                       onClick={() => setUserMenuOpen(false)}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
                     >
                       <Home className="w-4 h-4 text-muted-foreground" />
-                      <span>{t('myAnnouncements', { ns: 'header' })}</span>
+                      <span>{getAccountMenuLabel()}</span>
                     </Link>
                
                     
@@ -381,14 +404,18 @@ export function SiteHeader() {
             {/* Mobile User Actions */}
             {user ? (
               <>
-                <Link to="/compte?tab=dossier" className="w-full" onClick={() => setOpen(false)}>
+                <Link to={getAccountMenuTarget()} className="w-full" onClick={() => setOpen(false)}>
                   <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white shadow-md hover:shadow-lg transition-all duration-200">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm">
-                      {getUserInitials()}
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                      {profileImageUrl ? (
+                        <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
+                      ) : (
+                        getUserInitials()
+                      )}
                     </div>
                     <div className="flex-1 text-left">
                       <div className="text-sm font-semibold">
-                        {user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.name || t('myAccount', { ns: 'header' })}
+                        {getUserDisplayName()}
                       </div>
                       <div className="text-xs opacity-80 truncate">{user.email}</div>
                     </div>
