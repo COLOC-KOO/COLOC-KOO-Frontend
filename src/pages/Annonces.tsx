@@ -309,8 +309,8 @@ export default function Annonces() {
 
   return (
     <SiteLayout>
-      {/* Header avec image de fond - Version responsive avec thème */}
-      <div className="relative bg-white border-b border-[var(--border)] overflow-hidden min-h-[140px] md:min-h-[180px]">
+      {/* Header avec image de fond - Aligné avec le header */}
+      <div className="relative bg-white border-b border-[var(--border)] overflow-hidden min-h-[180px] md:min-h-[220px] w-full">
         <div
           className="absolute inset-0 z-0"
           style={{
@@ -322,241 +322,238 @@ export default function Annonces() {
           <div className="absolute inset-0 bg-black/60 backdrop-sm"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-12 text-center min-h-[140px] md:min-h-[180px] flex flex-col items-center justify-center">
-          <h1 className="bebas text-3xl sm:text-4xl md:text-5xl">
+        <div className="relative z-10 max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6 md:py-8 min-h-[180px] md:min-h-[220px] flex flex-col items-center justify-center">
+          <h1 className="bebas text-3xl sm:text-4xl md:text-5xl text-center">
             <span className="text-[var(--brand-cyan)] drop-shadow-lg">
               {t('annonces:title').split(' ')[0]} à 
             </span>
             <span className="text-[var(--brand-green)] drop-shadow-lg"> Madagascar</span>
           </h1>
-          <p className="text-white/80 text-xs sm:text-sm md:text-base drop-shadow mt-1 sm:mt-2">
+          <p className="text-white/80 text-xs sm:text-sm md:text-base drop-shadow mt-1">
             {loading ? t('common:common.loading') : `${listings.length} ${t('annonces:results')}`}
           </p>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
-        {/* Barre de recherche - Version responsive avec thème */}
-        <div className="bg-white rounded-2xl sm:rounded-full border border-[var(--border)] shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_20px_rgba(0,0,0,0.08)] transition-all duration-300 p-2 sm:px-3 sm:py-1.5">
-          
-          {/* Recherche et boutons d'action */}
-          <div className="flex items-center gap-2">
-            {/* Champ de recherche */}
-            <div className="relative flex-1 min-w-0">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t('annonces:search')}
-                className="w-full pl-4 sm:pl-5 pr-8 py-2.5 text-sm bg-transparent border-none focus:ring-0 placeholder:text-[var(--muted-foreground)] font-medium text-[var(--foreground)] rounded-full"
-              />
-              {query && (
-                <button
-                  onClick={() => setQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] bg-[var(--muted)] hover:bg-[var(--border)] rounded-full p-0.5 transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Bouton filtres mobile */}
-            <button
-              onClick={() => setShowMobileFilters(true)}
-              className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-[var(--muted)] hover:bg-[var(--border)] rounded-full text-sm font-medium text-[var(--foreground)] transition-colors whitespace-nowrap relative"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              <span className="hidden xs:inline">{t('annonces:filters.title')}</span>
-              {activeFiltersCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--brand-cyan)] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Filtres desktop - cachés sur mobile */}
-          <div className="hidden lg:flex flex-wrap items-center gap-0.5 mt-1 sm:mt-0 border-t sm:border-t-0 border-[var(--border)] pt-2 sm:pt-0">
-            <div className="w-px h-7 bg-[var(--border)] hidden sm:block"></div>
-
-            {/* Type d'annonce */}
-            <div className="relative" ref={typeRef}>
-              <button
-                onClick={() => setShowTypeMenu(!showTypeMenu)}
-                className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
-              >
-                {getTypeLabel(type)}
-                <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-              </button>
-              {showTypeMenu && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-48">
-                  {typeOptions.map((opt) => (
-                    <div
-                      key={opt.value}
-                      onClick={() => {
-                        setType(opt.value);
-                        setShowTypeMenu(false);
-                      }}
-                      className={`px-3.5 py-2.5 rounded-xl cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${type === opt.value ? "bg-[var(--muted)]" : ""}`}
-                    >
-                      <span>{opt.label}</span>
-                      {type === opt.value && (
-                        <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Colocataires */}
-            <div className="relative" ref={colocRef}>
-              <button
-                onClick={() => setShowColocMenu(!showColocMenu)}
-                className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
-              >
-                {getColocLabel(colocFilter)}
-                <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-              </button>
-              {showColocMenu && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-52">
-                  {colocOptions.map((opt) => (
-                    <div
-                      key={opt.value}
-                      onClick={() => {
-                        setColocFilter(opt.value);
-                        setShowColocMenu(false);
-                      }}
-                      className={`px-3.5 py-2.5 rounded-xl cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${colocFilter === opt.value ? "bg-[var(--muted)]" : ""}`}
-                    >
-                      <span>{opt.label}</span>
-                      {colocFilter === opt.value && (
-                        <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Budget */}
-            <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5">
-              <span className="text-sm font-medium text-[var(--foreground)] hidden sm:inline">
-                {t('annonces:filters.budget')}
-              </span>
-              <div className="relative">
+          {/* Barre de recherche - Déplacée sous le titre, sans border-radius */}
+          <div className="w-full max-w-3xl mt-4">
+            <div className="bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
                 <input
-                  type="range"
-                  min={0}
-                  max={1000000}
-                  step={50000}
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="w-20 sm:w-28 accent-[var(--brand-cyan)] h-1 bg-[var(--border)] rounded-full appearance-none cursor-pointer"
-                  style={{
-                    background: `linear-gradient(to right, var(--brand-cyan) 0%, var(--brand-cyan) ${(maxPrice / 1000000) * 100}%, var(--border) ${(maxPrice / 1000000) * 100}%, var(--border) 100%)`,
-                  }}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t('annonces:search')}
+                  className="w-full pl-4 pr-8 py-2.5 text-sm bg-transparent border-none focus:ring-0 placeholder:text-gray-500 font-medium text-gray-900"
                 />
+                {query && (
+                  <button
+                    onClick={() => setQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-0.5 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-              <span className="text-sm font-medium text-[var(--foreground)] min-w-[60px] sm:min-w-[70px]">
-                {maxPrice ? `${(maxPrice / 1000).toFixed(0)}k` : t('annonces:filters.budget')}
-              </span>
-            </div>
 
-            {/* Services */}
-            <div className="relative" ref={servicesRef}>
+              {/* Bouton filtres mobile */}
               <button
-                onClick={() => setShowServicesMenu(!showServicesMenu)}
-                className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+                onClick={() => setShowMobileFilters(true)}
+                className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors whitespace-nowrap relative"
               >
-                {t('annonces:filters.services')}
-                <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-                {selectedServiceIds.length > 0 && (
-                  <span className="ml-1 bg-[var(--brand-cyan)] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {selectedServiceIds.length}
+                <SlidersHorizontal className="w-4 h-4" />
+                <span className="hidden xs:inline">{t('annonces:filters.title')}</span>
+                {activeFiltersCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--brand-cyan)] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {activeFiltersCount}
                   </span>
                 )}
               </button>
-              {showServicesMenu && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-3 z-20 w-56 max-h-64 overflow-y-auto">
-                  {services
-                    .filter((s) => s.est_actif === 1)
-                    .map((service) => (
-                      <label
-                        key={service.id_service}
-                        className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-[var(--muted)] cursor-pointer text-sm transition-colors text-[var(--foreground)]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedServiceIds.includes(service.id_service)}
-                          onChange={() => toggleService(service.id_service)}
-                          className="w-4 h-4 accent-[var(--brand-cyan)] rounded-md"
-                        />
-                        <span>{service.nom}</span>
-                      </label>
-                    ))}
-                  {services.filter((s) => s.est_actif === 1).length === 0 && (
-                    <div className="text-sm text-[var(--muted-foreground)] px-2 py-3 text-center">
-                      {t('annonces:filters.noServices')}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Ville */}
-            <div className="relative" ref={cityRef}>
-              <button
-                onClick={() => setShowCityMenu(!showCityMenu)}
-                className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
-              >
-                {getCityLabel(city)}
-                <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-              </button>
-              {showCityMenu && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-52 max-h-64 overflow-y-auto">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-4 sm:py-6">
+        {/* Filtres desktop - sans border-radius */}
+        <div className="hidden lg:flex flex-wrap items-center gap-0.5 bg-white border border-[var(--border)] shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-2">
+          <div className="w-px h-7 bg-[var(--border)]"></div>
+
+          {/* Type d'annonce */}
+          <div className="relative" ref={typeRef}>
+            <button
+              onClick={() => setShowTypeMenu(!showTypeMenu)}
+              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+            >
+              {getTypeLabel(type)}
+              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+            </button>
+            {showTypeMenu && (
+              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-48">
+                {typeOptions.map((opt) => (
                   <div
+                    key={opt.value}
                     onClick={() => {
-                      setCity("");
+                      setType(opt.value);
+                      setShowTypeMenu(false);
+                    }}
+                    className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${type === opt.value ? "bg-[var(--muted)]" : ""}`}
+                  >
+                    <span>{opt.label}</span>
+                    {type === opt.value && (
+                      <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Colocataires */}
+          <div className="relative" ref={colocRef}>
+            <button
+              onClick={() => setShowColocMenu(!showColocMenu)}
+              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+            >
+              {getColocLabel(colocFilter)}
+              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+            </button>
+            {showColocMenu && (
+              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-52">
+                {colocOptions.map((opt) => (
+                  <div
+                    key={opt.value}
+                    onClick={() => {
+                      setColocFilter(opt.value);
+                      setShowColocMenu(false);
+                    }}
+                    className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${colocFilter === opt.value ? "bg-[var(--muted)]" : ""}`}
+                  >
+                    <span>{opt.label}</span>
+                    {colocFilter === opt.value && (
+                      <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Budget */}
+          <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5">
+            <span className="text-sm font-medium text-[var(--foreground)] hidden sm:inline">
+              {t('annonces:filters.budget')}
+            </span>
+            <div className="relative">
+              <input
+                type="range"
+                min={0}
+                max={1000000}
+                step={50000}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                className="w-20 sm:w-28 accent-[var(--brand-cyan)] h-1 bg-[var(--border)] appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, var(--brand-cyan) 0%, var(--brand-cyan) ${(maxPrice / 1000000) * 100}%, var(--border) ${(maxPrice / 1000000) * 100}%, var(--border) 100%)`,
+                }}
+              />
+            </div>
+            <span className="text-sm font-medium text-[var(--foreground)] min-w-[60px] sm:min-w-[70px]">
+              {maxPrice ? `${(maxPrice / 1000).toFixed(0)}k` : t('annonces:filters.budget')}
+            </span>
+          </div>
+
+          {/* Services */}
+          <div className="relative" ref={servicesRef}>
+            <button
+              onClick={() => setShowServicesMenu(!showServicesMenu)}
+              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+            >
+              {t('annonces:filters.services')}
+              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+              {selectedServiceIds.length > 0 && (
+                <span className="ml-1 bg-[var(--brand-cyan)] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center">
+                  {selectedServiceIds.length}
+                </span>
+              )}
+            </button>
+            {showServicesMenu && (
+              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-3 z-20 w-56 max-h-64 overflow-y-auto">
+                {services
+                  .filter((s) => s.est_actif === 1)
+                  .map((service) => (
+                    <label
+                      key={service.id_service}
+                      className="flex items-center gap-3 px-2 py-2.5 hover:bg-[var(--muted)] cursor-pointer text-sm transition-colors text-[var(--foreground)]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedServiceIds.includes(service.id_service)}
+                        onChange={() => toggleService(service.id_service)}
+                        className="w-4 h-4 accent-[var(--brand-cyan)]"
+                      />
+                      <span>{service.nom}</span>
+                    </label>
+                  ))}
+                {services.filter((s) => s.est_actif === 1).length === 0 && (
+                  <div className="text-sm text-[var(--muted-foreground)] px-2 py-3 text-center">
+                    {t('annonces:filters.noServices')}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Ville */}
+          <div className="relative" ref={cityRef}>
+            <button
+              onClick={() => setShowCityMenu(!showCityMenu)}
+              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+            >
+              {getCityLabel(city)}
+              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+            </button>
+            {showCityMenu && (
+              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-52 max-h-64 overflow-y-auto">
+                <div
+                  onClick={() => {
+                    setCity("");
+                    setShowCityMenu(false);
+                  }}
+                  className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${city === "" ? "bg-[var(--muted)]" : ""}`}
+                >
+                  <span>{t('annonces:filters.city.all')}</span>
+                  {city === "" && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
+                </div>
+                {citiesList.map((c) => (
+                  <div
+                    key={c}
+                    onClick={() => {
+                      setCity(c);
                       setShowCityMenu(false);
                     }}
-                    className={`px-3.5 py-2.5 rounded-xl cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${city === "" ? "bg-[var(--muted)]" : ""}`}
+                    className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${city === c ? "bg-[var(--muted)]" : ""}`}
                   >
-                    <span>{t('annonces:filters.city.all')}</span>
-                    {city === "" && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
+                    <span>{c}</span>
+                    {city === c && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
                   </div>
-                  {citiesList.map((c) => (
-                    <div
-                      key={c}
-                      onClick={() => {
-                        setCity(c);
-                        setShowCityMenu(false);
-                      }}
-                      className={`px-3.5 py-2.5 rounded-xl cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${city === c ? "bg-[var(--muted)]" : ""}`}
-                    >
-                      <span>{c}</span>
-                      {city === c && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Bouton Réinitialiser */}
-            <button
-              onClick={resetFilters}
-              className="text-sm font-medium text-[var(--brand-cyan)] px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-[var(--brand-cyan-light)] transition-colors whitespace-nowrap"
-            >
-              {t('common:common.reset')}
-            </button>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Bouton Réinitialiser */}
+          <button
+            onClick={resetFilters}
+            className="text-sm font-medium text-[var(--brand-cyan)] px-3 sm:px-4 py-2 hover:bg-[var(--brand-cyan-light)] transition-colors whitespace-nowrap"
+          >
+            {t('common:common.reset')}
+          </button>
         </div>
 
         {/* Filtres actifs - Version mobile */}
         {activeFiltersCount > 0 && (
           <div className="lg:hidden flex flex-wrap gap-1.5 mt-3">
             {city && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] rounded-full text-xs text-[var(--foreground)]">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {city}
                 <button onClick={() => setCity("")} className="hover:text-[var(--brand-cyan)]">
                   <X className="w-3 h-3" />
@@ -564,7 +561,7 @@ export default function Annonces() {
               </span>
             )}
             {type && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] rounded-full text-xs text-[var(--foreground)]">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {getTypeLabel(type)}
                 <button onClick={() => setType("")} className="hover:text-[var(--brand-cyan)]">
                   <X className="w-3 h-3" />
@@ -572,7 +569,7 @@ export default function Annonces() {
               </span>
             )}
             {selectedServiceIds.length > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] rounded-full text-xs text-[var(--foreground)]">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {selectedServiceIds.length} services
                 <button onClick={() => setSelectedServiceIds([])} className="hover:text-[var(--brand-cyan)]">
                   <X className="w-3 h-3" />
@@ -580,7 +577,7 @@ export default function Annonces() {
               </span>
             )}
             {maxPrice > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] rounded-full text-xs text-[var(--foreground)]">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {`${(maxPrice / 1000).toFixed(0)}k Ar`}
                 <button onClick={() => setMaxPrice(0)} className="hover:text-[var(--brand-cyan)]">
                   <X className="w-3 h-3" />
@@ -588,7 +585,7 @@ export default function Annonces() {
               </span>
             )}
             {colocFilter && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] rounded-full text-xs text-[var(--foreground)]">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {getColocLabel(colocFilter)}
                 <button onClick={() => setColocFilter("")} className="hover:text-[var(--brand-cyan)]">
                   <X className="w-3 h-3" />
@@ -613,22 +610,22 @@ export default function Annonces() {
           </div>
         </div>
 
-        {/* Grille d'annonces - Version responsive */}
+        {/* Grille d'annonces - Cards plus petites et cliquables */}
         <div className="mt-4 sm:mt-5">
           {error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50/80 p-5 text-sm text-red-700 backdrop-blur-sm">
+            <div className="border border-red-200 bg-red-50/80 p-5 text-sm text-red-700 backdrop-blur-sm">
               {error}
             </div>
           )}
 
           {loading && (
-            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="bg-[var(--muted)] rounded-2xl aspect-[4/3] w-full"></div>
-                  <div className="mt-3 space-y-2">
-                    <div className="h-4 bg-[var(--muted)] rounded w-3/4"></div>
-                    <div className="h-3 bg-[var(--muted)] rounded w-1/2"></div>
+                  <div className="bg-[var(--muted)] aspect-[4/3] w-full"></div>
+                  <div className="mt-2 space-y-1.5">
+                    <div className="h-3 bg-[var(--muted)] w-3/4"></div>
+                    <div className="h-2.5 bg-[var(--muted)] w-1/2"></div>
                   </div>
                 </div>
               ))}
@@ -636,14 +633,17 @@ export default function Annonces() {
           )}
 
           {!loading && !error && (
-            <div className="grid gap-3 sm:gap-6 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
               {listings.map((l, index) => (
                 <div
                   key={l.id}
-                  className="animate-fade-in-up"
+                  className="animate-fade-in-up cursor-pointer hover:opacity-80 transition-opacity"
                   style={{ animationDelay: `${index * 40}ms` }}
+                  onClick={() => {
+                    window.location.href = `/annonces/${l.id}`;
+                  }}
                 >
-                  <ListingCard l={l} />
+                  <ListingCard l={l} compact />
                 </div>
               ))}
             </div>
