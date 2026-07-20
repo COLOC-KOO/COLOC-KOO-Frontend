@@ -19,6 +19,7 @@ export interface AuthUser {
     poste: Poste
     roleLabel: Poste
     telephone?: string
+    cin?: string | null
     profession?: string
     bio?: string | null
     profilePicture?: string | null
@@ -468,8 +469,9 @@ export interface ApiSignalementConversation {
 }
 
 export interface BackofficeMember extends AuthUser {
-    annoncesCount: number
-    candidaturesCount: number
+    annoncesCount?: number
+    candidaturesCount?: number
+    signalementsCount?: number
 }
 
 export function getToken() {
