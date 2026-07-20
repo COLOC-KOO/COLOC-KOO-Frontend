@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 type ViewId = "flux" | "track" | "cand" | "join" | "won" | "lost";
 
 type Props = {
@@ -8,14 +10,7 @@ type Props = {
   officialNotification?: "won" | "lost" | null;
 };
 
-const viewButtons: Array<{ id: ViewId; label: string }> = [
-  { id: "flux", label: "Validation individuelle · Membre" },
-  { id: "track", label: "Colocation complète · Déposant" },
-  { id: "cand", label: "Colocation complète · Candidat" },
-  { id: "join", label: "Rejoindre une équipe · Candidat" },
-  { id: "won", label: "Notif · Colocataire validé" },
-  { id: "lost", label: "Notif · Colocataire non retenu" },
-];
+const viewButtons: ViewId[] = ["flux", "track", "cand", "join", "won", "lost"];
 
 export function CandidaturesHeader({
   activeView,
@@ -24,25 +19,26 @@ export function CandidaturesHeader({
   inactiveButtonClass,
   officialNotification = null,
 }: Props) {
+  const { t } = useTranslation(["candidatures"]);
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-3xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-cyan-light px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-brand-cyan-dark">
-            Aperçu maquette
+            {t("candidatures:header.badge")}
           </span>
           <h1 className="bebas mt-4 text-4xl leading-tight">
-            Candidatures & constitution de la colocation
+            {t("candidatures:header.title")}
           </h1>
           <p className="mt-3 max-w-xl text-muted-foreground">
-            Une simulation inspirée du parcours Sarintany'COLOC pour suivre les candidatures,
-            organiser les équipes et valider la colocation.
+            {t("candidatures:header.subtitle")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {viewButtons.map((button) => {
-            const isWonNotification = button.id === "won";
-            const isLostNotification = button.id === "lost";
+            const isWonNotification = button === "won";
+            const isLostNotification = button === "lost";
             const hasOfficialNotification = Boolean(officialNotification);
             const isCurrentNotification =
               (officialNotification === "won" && isWonNotification) ||
@@ -59,22 +55,22 @@ export function CandidaturesHeader({
                 ? isWonNotification
                   ? "cursor-not-allowed border-brand-green bg-brand-green text-white opacity-60"
                   : "cursor-not-allowed border-red-500 bg-red-500 text-white opacity-60"
-                : activeView === button.id
+                : activeView === button
                   ? activeButtonClass
                   : inactiveButtonClass;
 
             return (
               <button
-                key={button.id}
+                key={button}
                 type="button"
                 onClick={() => {
-                  if (!disabled) onChangeView(button.id);
+                  if (!disabled) onChangeView(button);
                 }}
                 disabled={disabled}
                 aria-disabled={disabled}
                 className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${notificationClass}`}
               >
-                {button.label}
+                {t(`candidatures:header.views.${button}`)}
               </button>
             );
           })}

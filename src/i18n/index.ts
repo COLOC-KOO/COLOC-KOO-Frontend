@@ -9,7 +9,7 @@ import frHome from './locales/fr/home.json'
 import frAuth from './locales/fr/auth.json'
 import frAnnonces from './locales/fr/annonces.json'
 import frAnnonceDetail from './locales/fr/annonceDetail.json'
-// import frCandidatures from './locales/fr/candidatures.json'
+import frCandidatures from './locales/fr/candidatures.json'
 import frCompte from './locales/fr/compte.json'
 import frContact from './locales/fr/contact.json'
 import frDeposer from './locales/fr/deposer.json'
@@ -23,7 +23,7 @@ import mgHome from './locales/mg/home.json'
 import mgAuth from './locales/mg/auth.json'
 import mgAnnonces from './locales/mg/annonces.json'
 import mgAnnonceDetail from './locales/mg/annonceDetail.json'
-// import mgCandidatures from './locales/mg/candidatures.json'
+import mgCandidatures from './locales/mg/candidatures.json'
 import mgCompte from './locales/mg/compte.json'
 import mgContact from './locales/mg/contact.json'
 import mgDeposer from './locales/mg/deposer.json'
@@ -37,7 +37,7 @@ import enHome from './locales/en/home.json'
 import enAuth from './locales/en/auth.json'
 import enAnnonces from './locales/en/annonces.json'
 import enAnnonceDetail from './locales/en/annonceDetail.json'
-// import enCandidatures from './locales/en/candidatures.json'
+import enCandidatures from './locales/en/candidatures.json'
 import enCompte from './locales/en/compte.json'
 import enContact from './locales/en/contact.json'
 import enDeposer from './locales/en/deposer.json'
@@ -53,7 +53,7 @@ const resources = {
     auth: frAuth,
     annonces: frAnnonces,
     annonceDetail: frAnnonceDetail,
-    // candidatures: frCandidatures,
+    candidatures: frCandidatures,
     compte: frCompte,
     contact: frContact,
     deposer: frDeposer,
@@ -68,7 +68,7 @@ const resources = {
     auth: mgAuth,
     annonces: mgAnnonces,
     annonceDetail: mgAnnonceDetail,
-    // candidatures: mgCandidatures,
+    candidatures: mgCandidatures,
     compte: mgCompte,
     contact: mgContact,
     deposer: mgDeposer,
@@ -83,7 +83,7 @@ const resources = {
     auth: enAuth,
     annonces: enAnnonces,
     annonceDetail: enAnnonceDetail,
-    // candidatures: enCandidatures,
+    candidatures: enCandidatures,
     compte: enCompte,
     contact: enContact,
     deposer: enDeposer,
