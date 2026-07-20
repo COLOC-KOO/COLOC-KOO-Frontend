@@ -99,9 +99,14 @@ export function SiteHeader() {
 
   const selectedLanguageOption = currentLanguage
 
-  const visibleNavItems = navItems.filter(
-    (item) => item.to !== '/partenaires' || partnerEnabled
-  )
+  const isColocataire = user?.poste === 'colocataire'
+
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.to === '/deposer' && isColocataire) {
+      return false
+    }
+    return item.to !== '/partenaires' || partnerEnabled
+  })
 
   const getUserInitials = () => {
     if (user?.prenom && user?.nom) {
