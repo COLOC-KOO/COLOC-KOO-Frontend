@@ -20,6 +20,12 @@ import {
 import { SiteLayout } from "../components/site/SiteLayout";
 import { useAuth } from "../lib/auth";
 import { api, ApiAnnonce, ApiBackofficeContratDetails } from "../lib/api";
+import { BasicCandidatureModals } from "../components/candidatures/BasicCandidatureModals";
+import { CandidateAvatarStack } from "../components/candidatures/CandidateAvatarStack";
+import { CandidaturesHeader } from "../components/candidatures/CandidaturesHeader";
+import { ContractWizardModal } from "../components/candidatures/ContractWizardModal";
+import { JoinTeamView } from "../components/candidatures/JoinTeamView";
+import { RealCandidaturesPanel } from "../components/candidatures/RealCandidaturesPanel";
 
 type OwnerCandidate = {
   id: string;
@@ -250,6 +256,7 @@ export default function Candidatures() {
   const [myContracts, setMyContracts] = useState<Awaited<ReturnType<typeof api.myContractsForAnnonce>>>([]);
   const [launchingOfficial, setLaunchingOfficial] = useState(false);
   const [officialFeedback, setOfficialFeedback] = useState<string | null>(null);
+  const [officialLaunched, setOfficialLaunched] = useState(false);
   const [celebrateOpen, setCelebrateOpen] = useState(false);
 
   // États pour la discussion
@@ -293,6 +300,27 @@ export default function Candidatures() {
     : null;
   const activeWinner = decision === "validated" ? validatedTeam : winnerTeam;
   const isCourseFinished = Boolean(activeWinner || decision);
+  const currentUserCandidature = useMemo(() => {
+    if (!user?.id) return myCandidature;
+    return (
+      realCandidatures.find(
+        (cand: any) => Number(cand.id_utilisateur) === Number(user.id),
+      ) || myCandidature
+    );
+  }, [myCandidature, realCandidatures, user?.id]);
+  const currentUserStatus = currentUserCandidature?.statut;
+  const isCurrentUserRetained =
+    currentUserStatus === "acceptee" || currentUserStatus === "signature";
+  const isCurrentUserRefused = currentUserStatus === "refusee";
+  const isOfficiallyLaunched = officialLaunched || annonceData?.statut === "terminee";
+  const officialNotification =
+    isOfficiallyLaunched && !isAnnonceOwner
+      ? isCurrentUserRetained
+        ? "won"
+        : isCurrentUserRefused
+          ? "lost"
+          : null
+      : null;
 
   // ===== CHARGEMENT DES DONNÉES RÉELLES =====
   const loadRealCandidatures = async () => {
@@ -344,7 +372,7 @@ export default function Candidatures() {
       setOwnerCandidates(formattedCandidates);
 
       if (user?.id) {
-        const myCand = data.find((c: any) => c.id_utilisateur === user.id);
+        const myCand = data.find((c: any) => Number(c.id_utilisateur) === Number(user.id));
         const hasAppliedNow = !!myCand;
         console.log(
           "🔍 Ma candidature trouvée:",
@@ -486,7 +514,7 @@ export default function Candidatures() {
       console.error("❌ Erreur vérification:", error);
       if (user?.id && realCandidatures.length > 0) {
         const myCand = realCandidatures.find(
-          (c: any) => c.id_utilisateur === user.id,
+          (c: any) => Number(c.id_utilisateur) === Number(user.id),
         );
         setHasApplied(!!myCand);
         console.log("🔍 hasApplied défini depuis realCandidatures:", !!myCand);
@@ -707,7 +735,7 @@ export default function Candidatures() {
 
     if (user?.id && realCandidatures.length > 0) {
       const myCand = realCandidatures.find(
-        (c: any) => c.id_utilisateur === user.id,
+        (c: any) => Number(c.id_utilisateur) === Number(user.id),
       );
       const hasAppliedNow = !!myCand;
       console.log(
@@ -745,9 +773,18 @@ export default function Candidatures() {
     "bg-card text-muted-foreground border border-border hover:border-brand-cyan";
 
   function changeView(view: typeof activeView) {
+    if (officialNotification === "won" && view === "lost") return;
+    if (officialNotification === "lost" && view === "won") return;
     setActiveView(view);
     if (view === "join" && !joinTarget) setJoinTarget(JOIN_DEFAULT);
   }
+
+  useEffect(() => {
+    if (!officialNotification) return;
+    if (activeView !== officialNotification) {
+      setActiveView(officialNotification);
+    }
+  }, [activeView, officialNotification]);
 
   async function acceptCandidate(id: string) {
     const candidate = ownerCandidates.find((cand) => cand.id === id);
@@ -820,6 +857,23 @@ export default function Candidatures() {
         year: "numeric",
       })
     : MOVEIN;
+  const currentCandidateName =
+    [currentUserCandidature?.prenom, currentUserCandidature?.nom]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    currentUserCandidature?.email ||
+    userName;
+  const retainedCandidateNames = ownerRetained.map((cand) => cand.name).filter(Boolean);
+  const retainedTeamLabel =
+    retainedCandidateNames.length > 0
+      ? retainedCandidateNames.join(", ")
+      : activeWinner?.members.join(", ") || "les colocataires retenus";
+  const retainedTeamTitle = activeWinner?.title || "l'equipe retenue";
+  const wonIndividualMessage = `${currentCandidateName}, ta candidature est retenue : tu fais partie de la colocation ${logementTitre}. Bienvenue ! Emmenagement prevu le ${moveInLabel}.`;
+  const wonGroupMessage = `L'equipe ${retainedTeamTitle} est officiellement validee pour ${logementTitre}. Colocataires retenus : ${retainedTeamLabel}. Emmenagement prevu le ${moveInLabel}.`;
+  const lostIndividualMessage = `${currentCandidateName}, ta candidature n'a pas ete retenue pour ${logementTitre}. Une autre equipe est maintenant validee, mais tu peux continuer a chercher une colocation qui te correspond.`;
+  const lostGroupMessage = `Une autre equipe a ete officiellement validee pour ${logementTitre}. Merci pour votre candidature : votre groupe peut retenter sa chance sur une autre colocation.`;
 
   useEffect(() => {
     api
@@ -852,6 +906,8 @@ export default function Candidatures() {
     try {
       const res = await api.lancerColocationOfficielle(annonceId);
       setOfficialFeedback(res.message);
+      setOfficialLaunched(true);
+      setAnnonceData((prev) => (prev ? { ...prev, statut: "terminee" } : prev));
       refreshMyContracts();
     } catch (error: any) {
       setOfficialFeedback(error?.message || "Impossible de lancer officiellement la colocation.");
@@ -1156,94 +1212,23 @@ export default function Candidatures() {
   }
 
   function renderAvStack(members: string[]) {
-    return (
-      <div className="flex items-center -space-x-3">
-        {members.map((member, index) => (
-          <div
-            key={index}
-            className="h-10 w-10 rounded-full bg-brand-cyan text-white flex items-center justify-center text-sm font-semibold ring-2 ring-white"
-          >
-            {member
-              .split(" ")
-              .map((part) => part[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase()}
-          </div>
-        ))}
-        {Array.from({ length: TARGET - members.length }).map((_, idx) => (
-          <div
-            key={idx}
-            className="h-10 w-10 rounded-full border border-border bg-muted/50 text-muted-foreground flex items-center justify-center text-sm font-semibold ring-2 ring-white"
-          >
-            +
-          </div>
-        ))}
-      </div>
-    );
+    return <CandidateAvatarStack members={members} target={TARGET} />;
   }
 
   function renderJoinTeam() {
-    const target = teams.find((team) => team.id === joinTarget) || teams[0];
-    const available = TARGET - target.members.length;
     return (
-      <div className="space-y-4">
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Équipe sélectionnée
-              </div>
-              <h2 className="bebas text-2xl mt-3">{target.title}</h2>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">
-                {target.members.length}/{TARGET} membres
-              </div>
-              <div className="text-base font-semibold text-brand-cyan-dark">
-                {available > 0
-                  ? `${available} place${available > 1 ? "s" : ""} restante${available > 1 ? "s" : ""}`
-                  : "Complète"}
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 whitespace-pre-line text-sm text-muted-foreground">
-            {target.mood}
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            {renderAvStack(target.members)}
-          </div>
-          <div className="mt-5">
-            {available > 0 ? (
-              <button
-                className="inline-flex w-full items-center justify-center rounded-2xl bg-brand-green px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-dark"
-                onClick={() => {
-                  joinTeam(target.id);
-                  setActiveView("cand");
-                }}
-              >
-                <UserPlus className="mr-2 h-4 w-4" /> Rejoindre cette équipe
-              </button>
-            ) : (
-              <button
-                className="inline-flex w-full items-center justify-center rounded-2xl bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground"
-                disabled
-              >
-                Équipe complète
-              </button>
-            )}
-            <button
-              className="mt-3 inline-flex w-full items-center justify-center rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-muted-foreground hover:border-brand-cyan"
-              onClick={() => setActiveView("cand")}
-            >
-              Voir toutes les équipes
-            </button>
-          </div>
-        </div>
-      </div>
+      <JoinTeamView
+        teams={teams}
+        joinTarget={joinTarget}
+        target={TARGET}
+        onJoinTeam={(teamId) => {
+          joinTeam(teamId);
+          setActiveView("cand");
+        }}
+        onBackToTeams={() => setActiveView("cand")}
+      />
     );
   }
-
   function renderRealCandidatures() {
     if (loadingCandidatures) {
       return (
@@ -1402,48 +1387,14 @@ export default function Candidatures() {
 
   return (
     <SiteLayout>
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-3xl">
-              <span className="inline-flex items-center gap-2 rounded-full bg-brand-cyan-light px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-brand-cyan-dark">
-                Aperçu maquette
-              </span>
-              <h1 className="bebas mt-4 text-4xl leading-tight">
-                Candidatures & constitution de la colocation
-              </h1>
-              <p className="mt-3 max-w-xl text-muted-foreground">
-                Une simulation inspirée du parcours Sarintany'COLOC pour suivre
-                les candidatures, organiser les équipes et valider la
-                colocation.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: "flux", label: "Validation individuelle · Membre" },
-                { id: "track", label: "Colocation complète · Déposant" },
-                { id: "cand", label: "Colocation complète · Candidat" },
-                { id: "join", label: "Rejoindre une équipe · Candidat" },
-                { id: "won", label: "Notif · Colocataire validé" },
-                { id: "lost", label: "Notif · Colocataire non retenu" },
-              ].map((button) => (
-                <button
-                  key={button.id}
-                  type="button"
-                  onClick={() => changeView(button.id as typeof activeView)}
-                  className={`rounded-2xl border px-3 py-2 text-xs font-semibold transition ${
-                    activeView === button.id
-                      ? activeButtonClass
-                      : inactiveButtonClass
-                  }`}
-                >
-                  {button.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
+      <div className="mx-auto min-h-[calc(100vh-120px)] max-w-6xl px-4 py-6 sm:px-6">
+        <CandidaturesHeader
+          activeView={activeView}
+          onChangeView={changeView}
+          activeButtonClass={activeButtonClass}
+          inactiveButtonClass={inactiveButtonClass}
+          officialNotification={officialNotification}
+        />
         {!authLoading && !user ? (
           <div className="mt-8 rounded-3xl border border-border bg-card p-8 text-center">
             <p className="text-lg font-semibold">
@@ -1465,74 +1416,26 @@ export default function Candidatures() {
           </div>
         ) : (
           <div className="mt-8 space-y-6">
-            {/* ===== SECTION CANDIDATURES RÉELLES ===== */}
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-              <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-                <h2 className="bebas text-2xl">📋 Candidatures reçues</h2>
-
-                {/* 🔥 BOUTON POSTULER - S'AFFICHE SI L'UTILISATEUR N'A PAS POSTULÉ */}
-                {!hasApplied && user && annonceId && (
-                  <button
-                    onClick={() => setShowPostulerModal(true)}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-brand-cyan px-4 py-2 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Postuler à cette coloc
-                  </button>
-                )}
-
-                {/* 🔥 BOUTON VOIR MA CANDIDATURE - S'AFFICHE SI L'UTILISATEUR A POSTULÉ */}
-                {hasApplied && user && (
-                  <Link
-                    to={`/candidatures?annonceId=${annonceId}`}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light transition-colors"
-                  >
-                    <Eye className="h-4 w-4" />
-                    Voir ma candidature
-                  </Link>
-                )}
-              </div>
-
-              {/* 🔥 BOUTON VOIR MA CANDIDATURE - TOUJOURS AFFICHÉ EN DESSOUS */}
-              <div className="mt-4 border-t border-border pt-4">
-                <button
-                  onClick={handleViewMyCandidature}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light transition-colors w-full sm:w-auto justify-center"
-                >
-                  <Eye className="h-4 w-4" />
-                  Voir ma candidature
-                </button>
-
-                {/* 🔥 MESSAGE SI NON POSTULÉ */}
-                {showNotAppliedMessage && (
-                  <div className="mt-3 p-3 rounded-2xl bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
-                    ⚠️ Vous n'avez pas encore postulé à cette annonce.
-                    <br />
-                    <span className="text-xs text-yellow-600">
-                      Postulez en cliquant sur le bouton "Postuler à cette
-                      coloc" ci-dessus.
-                    </span>
-                  </div>
-                )}
-
-                {/* 🔥 MESSAGE SI DÉJÀ POSTULÉ */}
-                {hasApplied && (
-                  <div className="mt-3 p-3 rounded-2xl bg-green-50 border border-green-200 text-green-800 text-sm flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-600" />✅ Vous avez
-                    déjà postulé à cette annonce.
-                    <span className="text-xs text-green-600 ml-2">
-                      Cliquez sur "Voir ma candidature" pour voir toutes les
-                      candidatures.
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* AFFICHER LES CANDIDATURES SEULEMENT SI annonceId EXISTE */}
-              {annonceId && renderRealCandidatures()}
-            </div>
-
+            {activeView === "flux" && (
+              <RealCandidaturesPanel
+              annonceId={annonceId}
+              candidateActionFeedback={candidateActionFeedback}
+              candidateActionLoading={candidateActionLoading}
+              hasApplied={hasApplied}
+              isAnnonceOwner={isAnnonceOwner}
+              loadingCandidatures={loadingCandidatures}
+              realCandidatures={realCandidatures}
+              showNotAppliedMessage={showNotAppliedMessage}
+              user={user}
+              onCandidateDecision={handleCandidateDecision}
+              onDeleteCandidature={handleDeleteCandidature}
+              onOpenChat={openChat}
+              onPostuler={() => setShowPostulerModal(true)}
+              onViewMyCandidature={handleViewMyCandidature}
+              />
+            )}
             {/* ===== SECTION ÉQUIPES RÉELLES ===== */}
+            {activeView === "cand" && (
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
               <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
                 <h2 className="bebas text-2xl">Équipes en formation</h2>
@@ -1753,8 +1656,9 @@ export default function Candidatures() {
               )}
             </div>
 
+            )}
             {/* ===== PANNEAU DÉPOSANT : avancement des paiements + lancement officiel ===== */}
-            {isAnnonceOwner && myContracts.length > 0 && (() => {
+            {activeView === "track" && isAnnonceOwner && myContracts.length > 0 && (() => {
               const allPaid = myContracts.every((c) => c.paidCount >= c.total);
               const isFinalized = annonceData?.statut === "terminee";
               return (
@@ -1809,7 +1713,7 @@ export default function Candidatures() {
             })()}
 
             {/* ===== CARTE COLOCATAIRE : payer ma part ===== */}
-            {!isAnnonceOwner && myContracts.filter((c) => c.peut_payer).length > 0 && (
+            {activeView === "cand" && !isAnnonceOwner && myContracts.filter((c) => c.peut_payer).length > 0 && (
               <div className="mb-6 rounded-3xl border border-brand-cyan/40 bg-white p-6 shadow-sm">
                 <div className="bebas text-2xl text-brand-cyan-dark">Ton contrat de colocation</div>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -2553,7 +2457,75 @@ export default function Candidatures() {
 
             {activeView === "join" && renderJoinTeam()}
 
-            {activeView === "won" && (
+            {activeView === "won" && officialNotification === "won" && (
+              <div className="rounded-3xl border border-brand-green-light bg-card p-6 shadow-sm">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-3 text-lg font-semibold text-brand-green-dark">
+                    <Sparkles className="h-5 w-5" /> Notification
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(["indiv", "group"] as NotificationMode[]).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setWonMode(mode)}
+                        className={`rounded-2xl px-4 py-2 text-sm font-semibold ${wonMode === mode ? "bg-brand-green text-white" : "border border-border bg-card text-muted-foreground"}`}
+                      >
+                        {mode === "indiv" ? "Message individuel" : "Message au groupe"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-6 rounded-3xl border border-brand-green-light bg-brand-green-light/40 p-6 text-center">
+                  <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-brand-green text-white mx-auto">
+                    <Sparkles className="h-8 w-8" />
+                  </div>
+                  <h2 className="bebas text-3xl">
+                    {wonMode === "indiv"
+                      ? `Felicitations, ${currentCandidateName} !`
+                      : `Felicitations a ${retainedTeamTitle} !`}
+                  </h2>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {wonMode === "indiv" ? wonIndividualMessage : wonGroupMessage}
+                  </p>
+                  <div className="mt-6 rounded-3xl border border-border bg-card p-5 text-left text-sm text-muted-foreground">
+                    <div className="flex items-start gap-3">
+                      <Calendar className="h-4 w-4 text-brand-cyan-dark" />
+                      <div>
+                        <div className="font-semibold">Emmenagement</div>
+                        <div>{moveInLabel}</div>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-start gap-3">
+                      <MessageCircle className="h-4 w-4 text-brand-cyan-dark" />
+                      <div>Ta conversation de groupe reste ouverte pour t'organiser.</div>
+                    </div>
+                  </div>
+                  <button className="mt-6 w-full rounded-3xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark">
+                    Ouvrir la conversation de groupe
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeView === "won" && !officialNotification && (
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
+                  <Sparkles className="h-5 w-5" /> Notification
+                </div>
+                <div className="mt-6 rounded-3xl border border-border bg-background p-8 text-center">
+                  <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <Sparkles className="h-8 w-8" />
+                  </div>
+                  <h2 className="bebas text-3xl">Aucune notification pour le moment</h2>
+                  <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
+                    La notification de colocataire valide sera disponible lorsque la colocation sera lancee officiellement.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {false && activeView === "won" && !officialNotification && (
               <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-3 text-lg font-semibold text-brand-green-dark">
@@ -2615,7 +2587,73 @@ export default function Candidatures() {
               </div>
             )}
 
-            {activeView === "lost" && (
+            {activeView === "lost" && officialNotification === "lost" && (
+              <div className="rounded-3xl border border-red-200 bg-card p-6 shadow-sm">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-3 text-lg font-semibold text-red-700">
+                    <Shield className="h-5 w-5" /> Notification
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(["indiv", "group"] as NotificationMode[]).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setLostMode(mode)}
+                        className={`rounded-2xl px-4 py-2 text-sm font-semibold ${lostMode === mode ? "bg-red-500 text-white" : "border border-border bg-card text-muted-foreground"}`}
+                      >
+                        {mode === "indiv" ? "Message individuel" : "Message au groupe"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-6 rounded-3xl border border-red-100 bg-red-50 p-6 text-center">
+                  <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-500 text-white mx-auto">
+                    <Shield className="h-8 w-8" />
+                  </div>
+                  <h2 className="bebas text-3xl">
+                    {lostMode === "indiv" ? "Ce ne sera pas cette fois" : "Merci pour votre candidature"}
+                  </h2>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {lostMode === "indiv" ? lostIndividualMessage : lostGroupMessage}
+                  </p>
+                  <div className="mt-6 rounded-3xl border border-border bg-card p-5 text-left text-sm text-muted-foreground">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-4 w-4 text-brand-cyan-dark" />
+                      <div>Reviens sur la carte pour trouver un logement qui te correspond encore mieux.</div>
+                    </div>
+                    <div className="mt-4 flex items-start gap-3">
+                      <Clock className="h-4 w-4 text-brand-cyan-dark" />
+                      <div>Active une alerte pour etre prevenu des nouvelles colocations qui matchent avec tes criteres.</div>
+                    </div>
+                  </div>
+                  <Link
+                    to="/annonces"
+                    className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-red-500 px-5 py-3 text-sm font-semibold text-white hover:bg-red-600"
+                  >
+                    Revenir a la carte des colocations
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {activeView === "lost" && !officialNotification && (
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
+                  <Shield className="h-5 w-5" /> Notification
+                </div>
+                <div className="mt-6 rounded-3xl border border-border bg-background p-8 text-center">
+                  <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <Shield className="h-8 w-8" />
+                  </div>
+                  <h2 className="bebas text-3xl">Aucune notification pour le moment</h2>
+                  <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
+                    La notification de colocataire non retenu sera disponible lorsque la colocation sera lancee officiellement.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {false && activeView === "lost" && !officialNotification && (
               <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
@@ -2679,512 +2717,74 @@ export default function Candidatures() {
         )}
       </div>
 
-      {/* ===== MODAL DE POSTULATION ===== */}
-      {showPostulerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold">
-                📝 Postuler à la colocation
-              </h3>
-              <button
-                onClick={() => setShowPostulerModal(false)}
-                className="rounded-full p-2 hover:bg-gray-100 transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <BasicCandidatureModals
+        candidatureMessage={candidatureMessage}
+        celebrateOpen={celebrateOpen}
+        chatModalOpen={chatModalOpen}
+        chatMessages={chatMessages}
+        createdContractIds={createdContractIds}
+        createdContracts={createdContracts}
+        fmtAr={fmtAr}
+        logementResume={logementResume}
+        logementTitre={logementTitre}
+        monthlyRent={monthlyRent}
+        moveInLabel={moveInLabel}
+        newMessage={newMessage}
+        ownerRetained={ownerRetained}
+        selectedCandidate={selectedCandidate}
+        showPostulerModal={showPostulerModal}
+        onChangeCandidatureMessage={setCandidatureMessage}
+        onChangeNewMessage={setNewMessage}
+        onCloseCelebrate={closeCelebrate}
+        onCloseChat={closeChat}
+        onClosePostuler={() => setShowPostulerModal(false)}
+        onOpenContractDocument={openContractDocument}
+        onPostuler={handlePostuler}
+        onSendMessage={sendMessage}
+      />
 
-            <p className="text-sm text-muted-foreground mb-4">
-              Envoyez un message personnalisé pour augmenter vos chances d'être
-              retenu.
-            </p>
-
-            <textarea
-              value={candidatureMessage}
-              onChange={(e) => setCandidatureMessage(e.target.value)}
-              placeholder="Présentez-vous brièvement et expliquez pourquoi vous êtes intéressé..."
-              className="w-full rounded-2xl border border-border p-3 text-sm outline-none focus:border-brand-cyan min-h-[120px] resize-none transition-colors"
-            />
-
-            <div className="mt-4 flex gap-3">
-              <button
-                onClick={() => setShowPostulerModal(false)}
-                className="flex-1 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handlePostuler}
-                className="flex-1 rounded-2xl bg-brand-cyan px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors"
-              >
-                Envoyer ma candidature
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===== MODAL DE CÉLÉBRATION ===== */}
-      {celebrateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-brand-cyan-light px-3 py-1.5 text-sm font-semibold text-brand-cyan-dark">
-                  <Sparkles className="h-4 w-4" /> Célébration
-                </div>
-                <h2 className="bebas mt-4 text-3xl">
-                  Toutes nos félicitations !
-                </h2>
-              </div>
-              <button
-                type="button"
-                className="rounded-full bg-muted p-3 text-muted-foreground hover:bg-muted/80"
-                onClick={closeCelebrate}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Tu as permis à plusieurs colocataires de se rencontrer à travers
-              ton logement pour un mieux vivre ensemble.
-            </p>
-            {createdContractIds.length > 0 && (
-              <div className="mt-4 space-y-4 rounded-3xl border border-brand-cyan/30 bg-white p-4 text-sm text-brand-cyan-dark">
-                <div className="font-semibold">
-                  Contrat{createdContractIds.length > 1 ? 's' : ''} créé{createdContractIds.length > 1 ? 's' : ''}
-                </div>
-                {createdContracts.map((contract) => (
-                  <div key={contract.id_contrat} className="rounded-3xl border border-border p-4">
-                    <div className="text-sm font-semibold">
-                      #{contract.id_contrat} · {contract.type === 'contrat' ? 'Contrat de colocation' : "État des lieux"}
-                    </div>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Parties :
-                    </div>
-                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                      {contract.parties.map((partie, index) => (
-                        <li key={`${contract.id_contrat}-${index}`}>
-                          <span className="font-medium text-brand-cyan-dark">{partie.nom_complet || 'Participant'}</span> — {partie.role || 'Participant'}{partie.email ? ` · ${partie.email}` : ''}
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      type="button"
-                      onClick={() => openContractDocument(contract.id_contrat)}
-                      className="mt-3 w-full rounded-xl border border-brand-cyan px-4 py-2 text-xs font-bold text-brand-cyan-dark hover:bg-brand-cyan/10"
-                    >
-                      Voir / télécharger le document
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="mt-6 rounded-3xl border border-border bg-brand-cyan-light/30 p-6">
-              <div className="text-sm text-muted-foreground">Logement</div>
-              <div className="bebas text-2xl text-brand-cyan-dark mt-2">
-                {logementTitre} · {logementResume} · {fmtAr(monthlyRent)} Ar / mois
-              </div>
-              <div className="mt-4 text-sm text-muted-foreground">
-                Colocataires —{" "}
-                {ownerRetained.map((c) => c.name).join(" · ") || "—"}
-              </div>
-              <div className="mt-2 text-sm text-muted-foreground">
-                Début d'emménagement — {moveInLabel}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="mt-6 w-full rounded-3xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark"
-              onClick={closeCelebrate}
-            >
-              Terminer
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ===== MODAL CONTRAT (assistant 3 etapes) ===== */}
-      {contractModalOpen && (() => {
-        const orderTotal = createdContracts.reduce((sum, c) => sum + Number(c.montant_total || 0), 0);
-        const previewTotal = previewAmount(contractMode);
-        const isEdlOnly = contractMode === "edl";
-        const priceLabel = isEdlOnly ? "Document d'état des lieux (forfait)" : "Création du contrat (forfait)";
-        const userEmail = user?.email || "ton adresse e-mail";
-        const clauses = activeClauses;
-        // Apercu pre-rempli du contrat (donnees DB)
-        const coName = ownerRetained.map((c) => c.name).join(", ") || "—";
-        const coAddr =
-          [annonceData?.quartier, annonceData?.ville].filter(Boolean).join(", ") || "—";
-        const coDate = moveInLabel;
-        return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6">
-          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-            {contractStep !== "offer" && (
-              <div className="relative text-center">
-                <button
-                  type="button"
-                  className="absolute right-0 top-0 rounded-full bg-muted p-2 text-muted-foreground hover:bg-muted/80"
-                  onClick={closeContractModal}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-                <h2 className="bebas text-3xl text-brand-cyan-dark">Ton contrat de colocation</h2>
-                <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                  Ton contrat comprend tous les éléments nécessaires pour établir un contrat
-                  légal entre les colocataires et le propriétaire.
-                </p>
-              </div>
-            )}
-
-            {contractError && (
-              <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {contractError}
-              </div>
-            )}
-
-            {/* ---------- ETAPE 0 : celebration + offre (maquette) ---------- */}
-            {contractStep === "offer" && (
-              <div className="relative text-center">
-                <button
-                  type="button"
-                  className="absolute right-0 top-0 rounded-full bg-muted p-2 text-muted-foreground hover:bg-muted/80"
-                  onClick={closeContractModal}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-br from-brand-green to-brand-cyan" />
-                <h2 className="bebas text-3xl">Toutes nos félicitations !</h2>
-                <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                  Tu as permis à plusieurs colocataires de se rencontrer à travers ton
-                  logement pour un mieux vivre ensemble.
-                </p>
-
-                {/* Carte offre contrat (magenta) */}
-                <div className="mt-6 rounded-2xl border border-brand-cyan/30 bg-gradient-to-br from-brand-green-light to-brand-cyan-light p-5 pt-10">
-                  <div className="mx-auto -mt-16 mb-3 grid h-[94px] w-[94px] place-items-center rounded-full bg-white shadow-md">
-                    <span className="bebas text-lg leading-none text-brand-cyan-dark">
-                      COLOC'<span className="text-brand-cyan-dark">KOO</span>
-                    </span>
-                  </div>
-                  <h3 className="bebas mx-auto max-w-md text-2xl text-brand-cyan-dark">
-                    {activeOffer.titre}
-                  </h3>
-                  <p className="mx-auto mt-2 max-w-md text-sm text-foreground/80">
-                    {activeOffer.texte}
-                  </p>
-
-                  {/* Apercu du contrat (gabarit + donnees DB) */}
-                  <div className="relative mt-3 max-h-40 overflow-hidden rounded-xl border border-border bg-white p-4 text-left text-xs leading-relaxed text-foreground">
-                    <div className="bebas mb-1.5 text-base">{activeBody.titre}</div>
-                    {renderTemplate(activeBody.intro, { names: coName, address: coAddr, date: coDate })}
-                    <br /><br />
-                    {activeBody.corps}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white to-transparent" />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => chooseOffer("contrat")}
-                    className="mt-3 w-full rounded-xl bg-brand-cyan px-4 py-3 text-sm font-bold text-white hover:bg-brand-cyan-dark"
-                  >
-                    Aide au contrat
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => chooseOffer("edl")}
-                    className="mt-2.5 w-full rounded-xl bg-brand-cyan px-4 py-3 text-sm font-bold text-white hover:bg-brand-cyan-dark"
-                  >
-                    Aide à l'état des lieux
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => chooseOffer("both")}
-                    className="mt-2.5 w-full rounded-xl bg-brand-cyan px-4 py-3 text-sm font-bold text-white hover:bg-brand-cyan-dark"
-                  >
-                    Les deux Monsieur !
-                  </button>
-                  <button
-                    type="button"
-                    onClick={ignoreOffer}
-                    className="mt-2.5 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    Ignorer l'offre et continuer ›
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ETAPE 1 (type de bail) supprimee : le bail est herite de l'annonce (cahier des charges). */}
-
-            {/* ---------- ETAPE 2 : contenu + prix ---------- */}
-            {contractStep === "contenu" && (
-              <div className="mt-6 space-y-3">
-                <div className="text-sm font-semibold">{isEdlOnly ? "Ta prestation — état des lieux" : "Ce que comprend ta commande"}</div>
-                {!isEdlOnly && (
-                  <div className="rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm">
-                    <div className="font-semibold text-brand-cyan-dark">
-                      {activeBail.find((b) => b.cle === bailType)?.titre || "Bail"} · {activeSolidarite.find((s) => s.cle === solidarite)?.titre || ""}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Défini sur l'annonce.</div>
-                  </div>
-                )}
-
-                {/* Offres de contrat (services_ckoo) — incluses, cochees automatiquement */}
-                {!isEdlOnly && activeContratOffers.map((o) => (
-                  <div key={`c-${o.id}`} className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
-                    <span className="flex items-start gap-3">
-                      <input type="checkbox" checked disabled className="mt-1" />
-                      <span>
-                        <span className="block text-sm font-medium">{o.nom}</span>
-                        {o.description && <span className="block text-xs text-muted-foreground">{o.description}</span>}
-                      </span>
-                    </span>
-                    <span className="bebas whitespace-nowrap text-brand-cyan-dark">{fmtAr(o.prix)} Ar</span>
-                  </div>
-                ))}
-
-                {/* Offres d'etat des lieux (si EDL seul ou les deux) — cochees automatiquement */}
-                {(isEdlOnly || contractMode === "both") && activeEdlOffers.map((o) => (
-                  <div key={`e-${o.id}`} className="flex items-start justify-between gap-3 rounded-2xl border border-brand-olive/40 bg-brand-olive/10 px-4 py-3">
-                    <span className="flex items-start gap-3">
-                      <input type="checkbox" checked disabled className="mt-1" />
-                      <span>
-                        <span className="block text-sm font-medium">{o.nom} <span className="text-xs font-normal text-muted-foreground">(état des lieux)</span></span>
-                        {o.description && <span className="block text-xs text-muted-foreground">{o.description}</span>}
-                      </span>
-                    </span>
-                    <span className="bebas whitespace-nowrap text-brand-cyan-dark">{fmtAr(o.prix)} Ar</span>
-                  </div>
-                ))}
-
-                <div className="flex items-center justify-between rounded-2xl bg-muted/40 px-4 py-3 text-sm">
-                  <span className="text-muted-foreground">
-                    {isEdlOnly ? "État des lieux (forfait)" : contractMode === "both" ? "Total (contrat + état des lieux)" : "Création du contrat (forfait)"}
-                  </span>
-                  <span className="bebas text-xl text-brand-cyan-dark">{fmtAr(previewTotal)} Ar</span>
-                </div>
-
-                <p className="rounded-2xl border border-border bg-brand-cyan-light/40 px-4 py-3 text-xs text-muted-foreground">
-                  {renderTemplate(isEdlOnly ? activeMailNote.edl : activeMailNote.contrat, { email: userEmail })}
-                </p>
-
-                <p className="text-center text-xs text-muted-foreground">
-                  Le forfait sera <b>réparti entre les colocataires</b> — chacun règlera sa part. Toi (déposant), tu ne paies rien.
-                </p>
-                <button type="button" onClick={goPaiement} className="w-full rounded-xl bg-brand-cyan px-5 py-3.5 text-sm font-bold text-white hover:bg-brand-cyan-dark">
-                  Continuer
-                </button>
-                <div className="flex items-center justify-between text-xs">
-                  <button type="button" onClick={() => setContractStep("offer")} className="text-muted-foreground hover:text-foreground">‹ Étape précédente</button>
-                  <button type="button" onClick={ignoreOffer} className="text-muted-foreground hover:text-foreground">Ignorer l'offre</button>
-                </div>
-              </div>
-            )}
-
-            {/* ---------- ETAPE 3 : paiement Mobile Money ---------- */}
-            {contractStep === "paiement" && (
-              <div className="mt-6 space-y-4">
-                <div className="text-sm font-semibold">Choix du mode de règlement</div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {mobileMoneyList.map((m) => (
-                    <button
-                      key={m.nom}
-                      type="button"
-                      onClick={() => setMoyenPaiement(m.nom)}
-                      className={`rounded-3xl border px-4 py-4 text-left ${moyenPaiement === m.nom ? "border-brand-cyan bg-brand-cyan-light" : "border-border bg-card hover:border-brand-cyan"}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold" style={{ color: m.couleur }}>{m.nom}</span>
-                        <span className="grid h-16 w-16 place-items-center rounded-lg border border-border bg-white text-[9px] text-muted-foreground">QR</span>
-                      </div>
-                      <div className="mt-2 font-mono text-sm">{m.numero}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{m.hint}</div>
-                    </button>
-                  ))}
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-center text-sm font-medium">Référence de paiement Mobile money *</label>
-                  <div className="mb-2 text-center text-xs text-muted-foreground">Les frais de l'opérateur sont à la charge de l'acheteur.</div>
-                  <input
-                    className="input"
-                    value={payRef}
-                    onChange={(e) => setPayRef(e.target.value)}
-                    placeholder="Ex : MP240607.1234.A56789"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl bg-muted/40 px-4 py-3 text-sm">
-                  <span className="text-muted-foreground">{myShare != null ? "Ta part à régler" : priceLabel}</span>
-                  <span className="bebas text-xl text-brand-cyan-dark">{fmtAr(myShare ?? (orderTotal || previewTotal))} Ar</span>
-                </div>
-
-                <button type="button" onClick={confirmPayment} disabled={contractSubmitting} className="w-full rounded-xl bg-brand-cyan px-5 py-3.5 text-sm font-bold text-white hover:bg-brand-cyan-dark disabled:opacity-60">
-                  {contractSubmitting ? "Enregistrement…" : "Valider ma commande"}
-                </button>
-                <div className="flex items-center justify-between text-xs">
-                  <button type="button" onClick={() => setContractStep("contenu")} className="text-muted-foreground hover:text-foreground">‹ Étape précédente</button>
-                  <button type="button" onClick={ignoreOffer} className="text-muted-foreground hover:text-foreground">Ignorer l'offre</button>
-                </div>
-              </div>
-            )}
-
-            {/* ---------- ETAPE 4 : confirmation ---------- */}
-            {contractStep === "done" && (
-              <div className="mt-6 space-y-4 text-center">
-                <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-green/15 text-brand-green">
-                  <Sparkles className="h-7 w-7" />
-                </div>
-                <div className="bebas text-2xl">{paymentInfo ? "Paiement enregistré" : "Récapitulatif du contrat"}</div>
-                <p className="text-sm text-muted-foreground">
-                  {paymentInfo ? (
-                    <>
-                      Ta part <b>{paymentInfo.reference}</b> de <b>{fmtAr(paymentInfo.montant || 0)} Ar</b> (honoraire de service Coloc'KOO) a bien été enregistrée.
-                      {paymentInfo.total ? <> {paymentInfo.paidCount}/{paymentInfo.total} colocataire(s) ont réglé.</> : null}
-                      {paymentInfo.allPaid
-                        ? <> <b>Toutes les parts sont réglées : le contrat est validé.</b></>
-                        : <> Le paiement sera <b>vérifié par notre équipe</b>.</>}
-                    </>
-                  ) : (
-                    <>
-                      {isEdlOnly ? "Document d'état des lieux" : "Contrat de colocation"}
-                      {!isEdlOnly && (
-                        <> — {bailType === "collectif" ? "bail collectif" : "bail individuel"} {solidarite === "avec" ? "avec" : "sans"} clause de solidarité</>
-                      )}. Forfait <b>{fmtAr(previewTotal)} Ar</b>, réparti entre les colocataires.
-                      <br /><br />
-                      En cliquant sur <b>Terminer</b>, le contrat sera <b>enregistré</b>. Chaque colocataire réglera ensuite <b>sa part</b> ; toi, tu ne paies rien.
-                    </>
-                  )}
-                </p>
-                {createdContracts.map((ct) => (
-                  <button
-                    key={ct.id_contrat}
-                    type="button"
-                    onClick={() => openContractDocument(ct.id_contrat)}
-                    className="w-full rounded-xl border border-brand-cyan px-5 py-3 text-sm font-bold text-brand-cyan-dark hover:bg-brand-cyan/10"
-                  >
-                    Voir / télécharger le {ct.type === "edl" ? "document d'état des lieux" : "contrat"}
-                  </button>
-                ))}
-                {contractError && (
-                  <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">{contractError}</div>
-                )}
-                <button
-                  type="button"
-                  disabled={contractSubmitting}
-                  onClick={paymentInfo ? () => { setContractModalOpen(false); setCelebrateOpen(true); } : finalizeContract}
-                  className="w-full rounded-3xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:opacity-60"
-                >
-                  {contractSubmitting ? "Enregistrement…" : "Terminer"}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-        );
-      })()}
-
-      {/* ===== MODAL DE DISCUSSION ===== */}
-      {chatModalOpen && selectedCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl flex flex-col max-h-[80vh]">
-            <div className="flex items-center gap-3 border-b border-border p-4">
-              <button
-                type="button"
-                onClick={closeChat}
-                className="rounded-full p-2 hover:bg-muted transition-colors"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-brand-cyan text-white flex items-center justify-center font-semibold">
-                  {selectedCandidate.initials}
-                </div>
-                <div>
-                  <div className="font-semibold">{selectedCandidate.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {selectedCandidate.subtitle}
-                  </div>
-                </div>
-              </div>
-              <div className="ml-auto">
-                <span className="inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
-                <span className="ml-2 text-xs text-muted-foreground">
-                  En ligne
-                </span>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50">
-              {chatMessages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${msg.who === "Toi" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                      msg.who === "Toi"
-                        ? "bg-brand-cyan text-white rounded-tr-none"
-                        : "bg-white border border-border text-foreground rounded-tl-none"
-                    }`}
-                  >
-                    <div className="text-xs font-semibold mb-1 opacity-70">
-                      {msg.who === "Toi" ? "Vous" : msg.who}
-                    </div>
-                    <p className="text-sm whitespace-pre-line">{msg.txt}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-border p-4 bg-white rounded-b-3xl">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                  placeholder="Écris ton message..."
-                  className="flex-1 rounded-2xl border border-border bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-brand-cyan focus:bg-white transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={sendMessage}
-                  className="rounded-2xl bg-brand-cyan px-4 py-2.5 text-white hover:bg-brand-cyan-dark transition-colors"
-                >
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {contractModalOpen && (
+        <ContractWizardModal
+          activeBail={activeBail}
+          activeBody={activeBody}
+          activeContratOffers={activeContratOffers}
+          activeEdlOffers={activeEdlOffers}
+          activeMailNote={activeMailNote}
+          activeOffer={activeOffer}
+          activeSolidarite={activeSolidarite}
+          annonceData={annonceData}
+          bailType={bailType}
+          contractError={contractError}
+          contractMode={contractMode}
+          contractStep={contractStep}
+          contractSubmitting={contractSubmitting}
+          createdContracts={createdContracts}
+          fmtAr={fmtAr}
+          mobileMoneyList={mobileMoneyList}
+          moyenPaiement={moyenPaiement}
+          moveInLabel={moveInLabel}
+          myShare={myShare}
+          ownerRetained={ownerRetained}
+          paymentInfo={paymentInfo}
+          payRef={payRef}
+          previewAmount={previewAmount}
+          renderTemplate={renderTemplate}
+          solidarite={solidarite}
+          userEmail={user?.email || "ton adresse e-mail"}
+          onChooseOffer={chooseOffer}
+          onClose={closeContractModal}
+          onConfirmPayment={confirmPayment}
+          onFinalizeContract={finalizeContract}
+          onIgnoreOffer={ignoreOffer}
+          onOpenContractDocument={openContractDocument}
+          onPayRefChange={setPayRef}
+          onSetContractStep={(step) => (step === "done" ? goPaiement() : setContractStep(step))}
+          onSetMoyenPaiement={setMoyenPaiement}
+          onShowCelebrateAfterPayment={() => {
+            setContractModalOpen(false);
+            setCelebrateOpen(true);
+          }}
+        />
       )}
     </SiteLayout>
   );
