@@ -10,6 +10,7 @@
   "lastName": "Nom",
   "email": "Email",
   "phone": "Téléphone",
+  "cin": "CIN",
   "birthDate": "Date de naissance",
   "profession": "Profession",
   "preferredLanguage": "Langue préférée",

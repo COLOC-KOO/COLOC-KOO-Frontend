@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
+import emailjs from '@emailjs/browser'
 import { useTranslation } from 'react-i18next'
 import { Mail, MapPin, MessageCircle, Phone, Send, CheckCircle2, Sparkles, Clock, Award, Building2, Users, Heart, ArrowRight, Facebook, Twitter, Linkedin, Instagram, Search } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
@@ -112,17 +113,70 @@ export default function Contact() {
     { icon: Instagram, href: '#', label: 'Instagram' },
   ]
 
+  useEffect(() => {
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim()
+    if (publicKey) {
+      emailjs.init(publicKey)
+    }
+  }, [])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setStatus('')
     setError('')
     setSubmitting(true)
+
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID?.trim()
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID?.trim()
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim()
+    const hasEmailjsConfig = Boolean(
+      serviceId &&
+      templateId &&
+      publicKey &&
+      publicKey !== 'your_public_key_here' &&
+      serviceId !== 'your_service_id_here' &&
+      templateId !== 'your_template_id_here'
+    )
+
     try {
-      await api.contact(form)
+      if (hasEmailjsConfig) {
+        const templateParams = {
+          from_name: form.nom || 'Contact',
+          name: form.nom || 'Contact',
+          from_email: form.email || '',
+          email: form.email || '',
+          reply_to: form.email || '',
+          subject: form.sujet || 'Sans sujet',
+          sujet: form.sujet || 'Sans sujet',
+          message: form.message || 'Aucun message',
+          details: form.message || 'Aucun message',
+          time: new Date().toLocaleString('fr-FR', {
+            dateStyle: 'full',
+            timeStyle: 'short',
+          }),
+          to_email: 'mioramh@gmail.com',
+          to_name: "Sarintany'COLOC",
+        }
+
+        await emailjs.send(serviceId!, templateId!, templateParams, publicKey!)
+      }
+
+      await api.contact({
+        nom: form.nom,
+        email: form.email,
+        sujet: form.sujet,
+        message: form.message,
+      })
+
       setStatus(t('contact:form.success'))
       setForm({ nom: '', email: '', sujet: '', message: '' })
+      if (formRef.current) {
+        formRef.current.reset()
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('contact:form.error'))
+      const emailError = err as { text?: string; status?: number; message?: string }
+      const detail = emailError?.text || emailError?.message || 'Erreur inconnue'
+      setError(`${t('contact:form.error')} (${detail})`)
     } finally {
       setSubmitting(false)
     }
