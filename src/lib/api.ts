@@ -19,6 +19,7 @@ export interface AuthUser {
     poste: Poste
     roleLabel: Poste
     telephone?: string
+    cin?: string | null
     profession?: string
     bio?: string | null
     profilePicture?: string | null

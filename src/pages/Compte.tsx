@@ -34,6 +34,7 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
     nom: user?.nom || '',
     email: user?.email || '',
     telephone: user?.telephone || '',
+    cin: user?.cin || '',
     dateNaissance: normalizeDateInputValue(user?.dateNaissance),
     profession: user?.profession || '',
     bio: user?.bio || '',
@@ -53,6 +54,7 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
       nom: user?.nom || '',
       email: user?.email || '',
       telephone: user?.telephone || '',
+      cin: user?.cin || '',
       dateNaissance: normalizeDateInputValue(user?.dateNaissance),
       profession: user?.profession || '',
       bio: user?.bio || '',
@@ -98,6 +100,7 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
         nom: form.nom || null,
         email: form.email || null,
         telephone: form.telephone || null,
+        cin: form.cin || null,
         bio: form.bio || null,
         date_naissance: birthDate,
         age,
@@ -152,6 +155,10 @@ function TabProfil({ user, onSave }: { user: ReturnType<typeof useAuth>['user'];
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('phone')}</label>
           <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.telephone} onChange={(e) => setForm((prev) => ({ ...prev, telephone: e.target.value }))} />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('cin')}</label>
+          <input className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" value={form.cin} onChange={(e) => setForm((prev) => ({ ...prev, cin: e.target.value }))} />
         </div>
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{t('birthDate')}</label>
