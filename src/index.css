@@ -113,7 +113,8 @@ h4,
 }
 
 /* Version avec pause aux extrémités pour un effet plus naturel */
-@keyframes shimmer-pulse {
+@keyframes shimmer-pulse {cls
+  
   0% {
     transform: translateX(-100%) skewX(-12deg);
     opacity: 0;

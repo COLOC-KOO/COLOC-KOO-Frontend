@@ -127,7 +127,7 @@ export function SiteHeader() {
     return t('user', { ns: 'common' })
   }
 
-  const profileImageUrl = user?.profilePicture || user?.avatar || null
+  const profileImageUrl = user?.profilePicture || null
 
   const getAccountMenuTarget = () => (isColocataire ? '/compte?tab=favoris' : '/compte?tab=dossier')
   const getAccountMenuLabel = () => (isColocataire ? t('myFavorites', { ns: 'header' }) : t('myAnnouncements', { ns: 'header' }))
