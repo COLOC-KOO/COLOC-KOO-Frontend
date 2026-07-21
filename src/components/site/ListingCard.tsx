@@ -31,7 +31,12 @@ function loadFavoriteIds(userId: number | string) {
   return favoriteIdsPromise
 }
 
-export function ListingCard({ l }: { l: Listing }) {
+interface ListingCardProps {
+  l: Listing
+  compact?: boolean
+}
+
+export function ListingCard({ l, compact = false }: ListingCardProps) {
   const { user } = useAuth()
   const [isFavorite, setIsFavorite] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -166,14 +171,14 @@ export function ListingCard({ l }: { l: Listing }) {
           <span className="text-xs text-muted-foreground font-normal">/mois</span>
         </div>
       </div>
-      <div className="p-4">
+      <div className={compact ? 'p-3' : 'p-4'}>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="w-3.5 h-3.5" /> {l.district}, {l.city}
         </div>
         <h3 className="mt-1.5 font-semibold text-[15px] leading-snug line-clamp-2 min-h-[42px]">
           {l.title}
         </h3>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <div className={compact ? 'mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground' : 'mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'}>
           <span className="inline-flex items-center gap-1">
             <BedDouble className="w-3.5 h-3.5" /> {l.surface} m2
           </span>
@@ -187,7 +192,7 @@ export function ListingCard({ l }: { l: Listing }) {
             Dispo {l.available.slice(0, 5)}
           </span>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <div className={compact ? 'mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground' : 'mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground'}>
           <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 bg-white/90">
             {l.candidatureCount && l.candidatureCount > 0
               ? 'Colocataires existants'
