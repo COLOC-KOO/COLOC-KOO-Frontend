@@ -51,6 +51,8 @@ const fadeInUp = {
 
 export default function Services() {
   const { t } = useTranslation(['services', 'common'])
+  const heroTitle = t('services:hero.title')
+  const [heroTitleLead, ...heroTitleRest] = heroTitle.split(',')
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -139,15 +141,24 @@ export default function Services() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img src={heroImage} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan-dark/90 via-brand-cyan/70 to-brand-green/70" />
+          <div className="absolute inset-0 bg-black/45" />
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan-dark/70 via-brand-cyan/45 to-brand-green/45 mix-blend-overlay" />
         </div>
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24 text-white">
           <motion.div {...fadeInUp} className="max-w-2xl">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-sm font-medium mb-5">
               <ConciergeBell className="w-4 h-4" /> {t('services:hero.badge')}
             </span>
-            <h1 className="text-3xl md:text-5xl font-extrabold leading-tight mb-4">
-              {t('services:hero.title')}
+            <h1 className="bebas text-3xl md:text-5xl leading-tight mb-4 drop-shadow-2xl">
+              <span className="text-[var(--brand-cyan)]">
+                {heroTitleLead}
+                {heroTitleRest.length > 0 ? ',' : ''}
+              </span>
+              {heroTitleRest.length > 0 && (
+                <span className="text-[var(--brand-green)]">
+                  {heroTitleRest.join(',')}
+                </span>
+              )}
             </h1>
             <p className="text-white/90 text-base md:text-lg">
               {t('services:hero.subtitle')}

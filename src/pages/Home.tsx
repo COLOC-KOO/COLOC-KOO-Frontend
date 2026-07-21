@@ -63,6 +63,8 @@ const steps = [
 
 export default function Home() {
   const { t } = useTranslation(['home', 'common']);
+  const heroTitle = t('home:hero.title');
+  const [heroTitleLead, ...heroTitleRest] = heroTitle.split(',');
   const navigate = useNavigate();
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [cityCards, setCityCards] = useState<CityInfo[]>([]);
@@ -259,7 +261,15 @@ export default function Home() {
             </span>
 
             <h1 className="bebas text-4xl md:text-6xl mt-4 leading-[0.95] drop-shadow-2xl">
-              {t('home:hero.title')}
+              <span className="text-[var(--brand-cyan)]">
+                {heroTitleLead}
+                {heroTitleRest.length > 0 ? ',' : ''}
+              </span>
+              {heroTitleRest.length > 0 && (
+                <span className="text-[var(--brand-green)]">
+                  {heroTitleRest.join(',')}
+                </span>
+              )}
             </h1>
 
             <p className="mt-4 text-lg md:text-xl font-bold text-white max-w-lg bg-black/15 backdrop-blur-md p-3 rounded-xl">
