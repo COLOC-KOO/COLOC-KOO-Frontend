@@ -146,9 +146,9 @@ export default function Services() {
         </div>
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24 text-white">
           <motion.div {...fadeInUp} className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-sm font-medium mb-5">
+            {/* <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-sm font-medium mb-5">
               <ConciergeBell className="w-4 h-4" /> {t('services:hero.badge')}
-            </span>
+            </span> */}
             <h1 className="bebas text-3xl md:text-5xl leading-tight mb-4 drop-shadow-2xl">
               <span className="text-[var(--brand-cyan)]">
                 {heroTitleLead}
