@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Menu, User, X, ChevronDown, Home, Search, Plus, Users, Phone, Globe, LogOut, UserCircle, Settings, HelpCircle, ConciergeBell } from 'lucide-react'
+import { Menu, User, X, ChevronDown, Home, Search, Plus, Users, Phone, Globe, LogOut, UserCircle, Settings, HelpCircle, ConciergeBell, Leaf } from 'lucide-react'
 import { Logo } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
@@ -11,6 +11,7 @@ import { useConfig } from '../../lib/config'
 import { cn } from '../../lib/utils'
 
 const LANGUAGE_STORAGE_KEY = 'colockoo_language'
+const LITE_MODE_STORAGE_KEY = 'colockoo_lite_mode'
 
 const navItems = [
   { to: '/annonces', label: 'announcements', icon: Search },
@@ -25,7 +26,7 @@ const navItems = [
 const languageOptions = [
   { code: 'FR' as const, label: 'Français', nativeName: 'Français', flagCode: 'fr' },
   { code: 'MG' as const, label: 'Malagasy', nativeName: 'Malagasy', flagCode: 'mg' },
-  { code: 'EN' as const, label: 'English', nativeName: 'English', flagCode: 'us' } // Changé de 'gb' à 'us'
+  { code: 'EN' as const, label: 'English', nativeName: 'English', flagCode: 'us' } 
 ]
 
 export function SiteHeader() {
@@ -35,6 +36,7 @@ export function SiteHeader() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<'FR' | 'MG' | 'EN'>('FR')
   const [scrolled, setScrolled] = useState(false)
+  const [liteMode, setLiteMode] = useState(false)
   const location = useLocation()
   const { user, logout } = useAuth()
   const { config } = useConfig()
@@ -64,6 +66,14 @@ export function SiteHeader() {
     }
   }, [availableLanguages, i18n, selectedLanguage])
 
+  // INITIALISER le mode Lite depuis localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(LITE_MODE_STORAGE_KEY)
+    if (stored === 'true') {
+      setLiteMode(true)
+    }
+  }, [])
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10)
@@ -91,6 +101,17 @@ export function SiteHeader() {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, code)
     i18n.changeLanguage(code.toLowerCase())
     setLanguageMenuOpen(false)
+  }
+
+  // BASCULER LE MODE LITE (économie de data)
+  const handleToggleLiteMode = () => {
+    setLiteMode((prev) => {
+      const next = !prev
+      localStorage.setItem(LITE_MODE_STORAGE_KEY, String(next))
+      // Permet aux autres composants (ex: LazyImage) de réagir en direct
+      window.dispatchEvent(new CustomEvent('litemodechange', { detail: { liteMode: next } }))
+      return next
+    })
   }
 
   // Récupérer la langue actuelle pour l'affichage
@@ -184,6 +205,31 @@ export function SiteHeader() {
 
         {/* Actions Desktop */}
         <div className="hidden lg:flex items-center gap-3">
+          {/* Lite Mode Toggle - économie de data */}
+          <button
+            type="button"
+            onClick={handleToggleLiteMode}
+            aria-pressed={liteMode}
+            aria-label={liteMode ? 'Désactiver le mode Lite' : 'Activer le mode Lite'}
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-full border transition-all duration-200',
+              liteMode
+                ? 'border-brand-green/40 bg-brand-green/10 text-brand-green-dark'
+                : 'border-border/50 hover:border-brand-cyan/30 hover:bg-muted/80 text-foreground/70'
+            )}
+          >
+            <Leaf className={cn('w-4 h-4', liteMode ? 'text-brand-green' : 'opacity-60')} />
+            <span className="font-semibold">Lite</span>
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-colors duration-200',
+                liteMode ? 'bg-brand-green text-white' : 'bg-muted text-muted-foreground'
+              )}
+            >
+              {liteMode ? 'ON' : 'OFF'}
+            </span>
+          </button>
+
           {/* Language Selector avec les 3 langues */}
           <div className="relative" ref={languageMenuRef}>
             <button
@@ -373,6 +419,28 @@ export function SiteHeader() {
           })}
           
           <div className="border-t border-border/50 mt-3 pt-3 flex flex-col gap-3">
+            {/* Mobile Lite Mode Toggle */}
+            <button
+              type="button"
+              onClick={handleToggleLiteMode}
+              aria-pressed={liteMode}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl border-2 transition-all duration-150 w-full justify-center',
+                liteMode
+                  ? 'border-brand-green bg-brand-green/10 text-brand-green-dark'
+                  : 'border-border/50 bg-white text-foreground/70'
+              )}
+            >
+              <Leaf className="w-4 h-4" />
+              <span className="font-semibold">Mode Lite</span>
+              <span className={cn(
+                'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase',
+                liteMode ? 'bg-brand-green text-white' : 'bg-muted text-muted-foreground'
+              )}>
+                {liteMode ? 'ON' : 'OFF'}
+              </span>
+            </button>
+
             {/* Mobile Language Selector avec les 3 langues */}
             <div className="grid grid-cols-3 gap-2">
               {availableLanguages.map((language) => (

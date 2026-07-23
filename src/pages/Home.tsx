@@ -25,6 +25,7 @@ import { MapView } from "../components/MapView";
 import { api, annonceToListing, type ApiPartenaireCampagne } from "../lib/api";
 import { CityInfo, Listing } from "../types";
 import { motion } from "framer-motion";
+import { LazyImage } from '../components/ui/LazyImage'
 
 const heroImage =
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80";
@@ -249,18 +250,18 @@ export default function Home() {
       {/* Hero - Hauteur réduite */}
       <section className="relative min-h-[400px] sm:min-h-[450px] w-full">
         <div className="absolute inset-0">
-          <img src={heroImage} alt="" className="w-full h-full object-cover" />
+          <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
           <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
         </div>
         <div className="relative max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 pt-14 pb-16 text-white">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-xs font-semibold text-white border border-white/20 shadow-lg">
+            {/* <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-xs font-semibold text-white border border-white/20 shadow-lg">
               <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
               {t('home:hero.badge')}
-            </span>
+            </span> */}
 
-            <h1 className="bebas text-4xl md:text-6xl mt-4 leading-[0.95] drop-shadow-2xl">
+            <h1 className="bebas text-3xl md:text-5xl leading-tight mb-4 drop-shadow-2xl">
               <span className="text-[var(--brand-cyan)]">
                 {heroTitleLead}
                 {heroTitleRest.length > 0 ? ',' : ''}
@@ -315,18 +316,18 @@ export default function Home() {
           </div>
 
           <div className="mt-5 flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+            {/* <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <Shield className="w-4 h-4 text-green-400" />
               <span className="text-white">{t('home:hero.verified')}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+            </div> */}
+            {/* <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <Users className="w-4 h-4 text-green-400" />
               <span className="text-white">{t('home:hero.colocataires')}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+            </div> */}
+            {/* <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <Star className="w-4 h-4 text-yellow-400" />
               <span className="text-white">{t('home:hero.satisfaction')}</span>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
@@ -821,7 +822,7 @@ export default function Home() {
         >
           <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
           <div className="relative text-white">
-            <h2 className="bebas text-3xl md:text-4xl">
+            <h2 className="bebas text-3xl md:text-3xl">
               {t('home:cta.title')}
             </h2>
             <p className="mt-2 text-white/80 text-sm">
