@@ -12,6 +12,7 @@ import { Button } from '../components/ui/Button'
 import { api, Ville } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
+import { LazyImage } from '../components/ui/LazyImage'
 
 // Ajout de l'image hero
 const heroImage = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80"
@@ -267,7 +268,7 @@ export default function Deposer() {
       {/* Section Hero avec l'image de fond */}
       <section className="relative">
         <div className="absolute inset-0">
-          <img src={heroImage} alt="" className="w-full h-full object-cover" />
+          <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
           <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
         </div>
