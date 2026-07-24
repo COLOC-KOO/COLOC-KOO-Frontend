@@ -1,14 +1,22 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { MapPin, Search, X, ChevronDown, Check, SlidersHorizontal } from "lucide-react";
+import {
+  MapPin,
+  Search,
+  X,
+  ChevronDown,
+  Check,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { ListingCard } from "../components/site/ListingCard";
 import { api, annonceToListing, ApiServiceCkoo, Ville } from "../lib/api";
 import { Listing } from "../types";
+import { LazyBackgroundImage } from "../components/ui/LazyBackgroundImage";
 
 export default function Annonces() {
-  const { t } = useTranslation(['annonces', 'common']);
+  const { t } = useTranslation(["annonces", "common"]);
   const location = useLocation();
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
@@ -34,18 +42,24 @@ export default function Annonces() {
   const servicesRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<HTMLDivElement>(null);
 
-  const typeOptions = useMemo(() => [
-    { value: "", label: t('annonces:filters.types.all') },
-    { value: "chambre", label: t('annonces:filters.types.room') },
-    { value: "appartement", label: t('annonces:filters.types.apartment') },
-    { value: "maison", label: t('annonces:filters.types.house') },
-  ], [t]);
+  const typeOptions = useMemo(
+    () => [
+      { value: "", label: t("annonces:filters.types.all") },
+      { value: "chambre", label: t("annonces:filters.types.room") },
+      { value: "appartement", label: t("annonces:filters.types.apartment") },
+      { value: "maison", label: t("annonces:filters.types.house") },
+    ],
+    [t],
+  );
 
-  const colocOptions = useMemo(() => [
-    { value: "", label: t('annonces:filters.coloc.all') },
-    { value: "existantes", label: t('annonces:filters.coloc.existing') },
-    { value: "a_creer", label: t('annonces:filters.coloc.create') },
-  ], [t]);
+  const colocOptions = useMemo(
+    () => [
+      { value: "", label: t("annonces:filters.coloc.all") },
+      { value: "existantes", label: t("annonces:filters.coloc.existing") },
+      { value: "a_creer", label: t("annonces:filters.coloc.create") },
+    ],
+    [t],
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -94,11 +108,7 @@ export default function Annonces() {
         setServices(Array.isArray(servicesList) ? servicesList : []);
       })
       .catch((err) =>
-        setError(
-          err instanceof Error
-            ? err.message
-            : t('common:common.error'),
-        ),
+        setError(err instanceof Error ? err.message : t("common:common.error")),
       )
       .finally(() => setLoading(false));
   }, [city, type, selectedServiceIds, maxPrice, query, colocFilter, t]);
@@ -145,10 +155,12 @@ export default function Annonces() {
   }, []);
 
   const getTypeLabel = (val: string) =>
-    typeOptions.find((t) => t.value === val)?.label || t('annonces:filters.types.all');
+    typeOptions.find((t) => t.value === val)?.label ||
+    t("annonces:filters.types.all");
   const getColocLabel = (val: string) =>
-    colocOptions.find((c) => c.value === val)?.label || t('annonces:filters.coloc.all');
-  const getCityLabel = (val: string) => val || t('annonces:filters.city.all');
+    colocOptions.find((c) => c.value === val)?.label ||
+    t("annonces:filters.coloc.all");
+  const getCityLabel = (val: string) => val || t("annonces:filters.city.all");
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -163,17 +175,17 @@ export default function Annonces() {
 
   // Composant filtres mobile avec les couleurs du thème
   const MobileFilters = () => (
-    <div 
-      className="lg:hidden fixed inset-0 z-50 bg-black/50" 
+    <div
+      className="lg:hidden fixed inset-0 z-50 bg-black/50"
       onClick={() => setShowMobileFilters(false)}
     >
-      <div 
+      <div
         className="absolute bottom-0 left-0 right-0 bg-[var(--background)] rounded-t-3xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-[var(--background)] z-10 px-4 py-4 border-b border-[var(--border)] flex items-center justify-between rounded-t-3xl">
           <h3 className="bebas text-xl text-[var(--foreground)]">
-            {t('annonces:filters.title')}
+            {t("annonces:filters.title")}
           </h3>
           <button
             onClick={() => setShowMobileFilters(false)}
@@ -182,12 +194,12 @@ export default function Annonces() {
             <X className="w-5 h-5 text-[var(--foreground)]" />
           </button>
         </div>
-        
+
         <div className="p-4 space-y-6">
           {/* Type */}
           <div>
             <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
-              {t('annonces:filters.types.title')}
+              {t("annonces:filters.types.title")}
             </label>
             <div className="flex flex-wrap gap-2">
               {typeOptions.map((opt) => (
@@ -209,7 +221,7 @@ export default function Annonces() {
           {/* Coloc */}
           <div>
             <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
-              {t('annonces:filters.coloc.title')}
+              {t("annonces:filters.coloc.title")}
             </label>
             <div className="flex flex-wrap gap-2">
               {colocOptions.map((opt) => (
@@ -231,16 +243,18 @@ export default function Annonces() {
           {/* Ville */}
           <div>
             <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
-              {t('annonces:filters.city.title')}
+              {t("annonces:filters.city.title")}
             </label>
             <select
               value={city}
               onChange={(e) => setCity(e.target.value)}
               className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
             >
-              <option value="">{t('annonces:filters.city.all')}</option>
+              <option value="">{t("annonces:filters.city.all")}</option>
               {citiesList.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </select>
           </div>
@@ -262,7 +276,7 @@ export default function Annonces() {
           {/* Budget */}
           <div>
             <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
-              {t('annonces:filters.budget')}
+              {t("annonces:filters.budget")}
             </label>
             <div className="flex items-center gap-4">
               <input
@@ -278,7 +292,7 @@ export default function Annonces() {
                 }}
               />
               <span className="text-sm font-semibold text-[var(--foreground)] min-w-[80px] text-right">
-                {maxPrice ? `${(maxPrice / 1000).toFixed(0)}k Ar` : '0 Ar'}
+                {maxPrice ? `${(maxPrice / 1000).toFixed(0)}k Ar` : "0 Ar"}
               </span>
             </div>
           </div>
@@ -286,7 +300,7 @@ export default function Annonces() {
           {/* Services */}
           <div>
             <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
-              {t('annonces:filters.services')}
+              {t("annonces:filters.services")}
             </label>
             <div className="flex flex-wrap gap-2">
               {services
@@ -313,13 +327,13 @@ export default function Annonces() {
               onClick={resetFilters}
               className="flex-1 px-4 py-3 border border-[var(--border)] rounded-xl text-sm font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
             >
-              {t('common:common.reset')}
+              {t("common:common.reset")}
             </button>
             <button
               onClick={() => setShowMobileFilters(false)}
               className="flex-1 px-4 py-3 bg-[var(--brand-cyan)] text-white rounded-xl text-sm font-medium hover:bg-[var(--brand-cyan-dark)] transition-colors shadow-md"
             >
-              {t('common:common.apply')}
+              {t("common:common.apply")}
             </button>
           </div>
         </div>
@@ -331,7 +345,7 @@ export default function Annonces() {
     <SiteLayout>
       {/* Header avec image de fond - Aligné avec le header */}
       <div className="relative bg-white border-b border-[var(--border)] overflow-hidden min-h-[180px] md:min-h-[220px] w-full">
-        <div
+        {/* <div
           className="absolute inset-0 z-0"
           style={{
             backgroundImage: 'url("https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80")',
@@ -340,17 +354,26 @@ export default function Annonces() {
           }}
         >
           <div className="absolute inset-0 bg-black/60 backdrop-sm"></div>
-        </div>
+        </div> */}
+        <LazyBackgroundImage
+          src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80"
+          overlayClassName="absolute inset-0 bg-black/60 backdrop-sm"
+        />
 
         <div className="relative z-10 max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6 md:py-8 min-h-[180px] md:min-h-[220px] flex flex-col items-center justify-center">
           <h1 className="bebas text-3xl sm:text-4xl md:text-5xl text-center">
             <span className="text-[var(--brand-cyan)] drop-shadow-lg">
-              {t('annonces:title').split(' ')[0]} à 
+              {t("annonces:title").split(" ")[0]} à
             </span>
-            <span className="text-[var(--brand-green)] drop-shadow-lg"> Madagascar</span>
+            <span className="text-[var(--brand-green)] drop-shadow-lg">
+              {" "}
+              Madagascar
+            </span>
           </h1>
           <p className="text-white/80 text-xs sm:text-sm md:text-base drop-shadow mt-1">
-            {loading ? t('common:common.loading') : `${listings.length} ${t('annonces:results')}`}
+            {loading
+              ? t("common:common.loading")
+              : `${listings.length} ${t("annonces:results")}`}
           </p>
 
           {/* Barre de recherche - Déplacée sous le titre, sans border-radius */}
@@ -361,7 +384,7 @@ export default function Annonces() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('annonces:search')}
+                  placeholder={t("annonces:search")}
                   className="w-full pl-4 pr-8 py-2.5 text-sm bg-transparent border-none focus:ring-0 placeholder:text-gray-500 font-medium text-gray-900"
                 />
                 {query && (
@@ -380,7 +403,9 @@ export default function Annonces() {
                 className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors whitespace-nowrap relative"
               >
                 <SlidersHorizontal className="w-4 h-4" />
-                <span className="hidden xs:inline">{t('annonces:filters.title')}</span>
+                <span className="hidden xs:inline">
+                  {t("annonces:filters.title")}
+                </span>
                 {activeFiltersCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--brand-cyan)] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                     {activeFiltersCount}
@@ -460,7 +485,7 @@ export default function Annonces() {
           {/* Budget */}
           <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5">
             <span className="text-sm font-medium text-[var(--foreground)] hidden sm:inline">
-              {t('annonces:filters.budget')}
+              {t("annonces:filters.budget")}
             </span>
             <div className="relative">
               <input
@@ -477,7 +502,9 @@ export default function Annonces() {
               />
             </div>
             <span className="text-sm font-medium text-[var(--foreground)] min-w-[60px] sm:min-w-[70px]">
-              {maxPrice ? `${(maxPrice / 1000).toFixed(0)}k` : t('annonces:filters.budget')}
+              {maxPrice
+                ? `${(maxPrice / 1000).toFixed(0)}k`
+                : t("annonces:filters.budget")}
             </span>
           </div>
 
@@ -487,7 +514,7 @@ export default function Annonces() {
               onClick={() => setShowServicesMenu(!showServicesMenu)}
               className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
             >
-              {t('annonces:filters.services')}
+              {t("annonces:filters.services")}
               <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
               {selectedServiceIds.length > 0 && (
                 <span className="ml-1 bg-[var(--brand-cyan)] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center">
@@ -506,7 +533,9 @@ export default function Annonces() {
                     >
                       <input
                         type="checkbox"
-                        checked={selectedServiceIds.includes(service.id_service)}
+                        checked={selectedServiceIds.includes(
+                          service.id_service,
+                        )}
                         onChange={() => toggleService(service.id_service)}
                         className="w-4 h-4 accent-[var(--brand-cyan)]"
                       />
@@ -515,7 +544,7 @@ export default function Annonces() {
                   ))}
                 {services.filter((s) => s.est_actif === 1).length === 0 && (
                   <div className="text-sm text-[var(--muted-foreground)] px-2 py-3 text-center">
-                    {t('annonces:filters.noServices')}
+                    {t("annonces:filters.noServices")}
                   </div>
                 )}
               </div>
@@ -540,8 +569,10 @@ export default function Annonces() {
                   }}
                   className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${city === "" ? "bg-[var(--muted)]" : ""}`}
                 >
-                  <span>{t('annonces:filters.city.all')}</span>
-                  {city === "" && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
+                  <span>{t("annonces:filters.city.all")}</span>
+                  {city === "" && (
+                    <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
+                  )}
                 </div>
                 {citiesList.map((c) => (
                   <div
@@ -553,7 +584,9 @@ export default function Annonces() {
                     className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${city === c ? "bg-[var(--muted)]" : ""}`}
                   >
                     <span>{c}</span>
-                    {city === c && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
+                    {city === c && (
+                      <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
+                    )}
                   </div>
                 ))}
               </div>
@@ -576,7 +609,7 @@ export default function Annonces() {
             onClick={resetFilters}
             className="text-sm font-medium text-[var(--brand-cyan)] px-3 sm:px-4 py-2 hover:bg-[var(--brand-cyan-light)] transition-colors whitespace-nowrap"
           >
-            {t('common:common.reset')}
+            {t("common:common.reset")}
           </button>
         </div>
 
@@ -586,7 +619,10 @@ export default function Annonces() {
             {city && (
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {city}
-                <button onClick={() => setCity("")} className="hover:text-[var(--brand-cyan)]">
+                <button
+                  onClick={() => setCity("")}
+                  className="hover:text-[var(--brand-cyan)]"
+                >
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -602,7 +638,10 @@ export default function Annonces() {
             {type && (
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {getTypeLabel(type)}
-                <button onClick={() => setType("")} className="hover:text-[var(--brand-cyan)]">
+                <button
+                  onClick={() => setType("")}
+                  className="hover:text-[var(--brand-cyan)]"
+                >
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -610,7 +649,10 @@ export default function Annonces() {
             {selectedServiceIds.length > 0 && (
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {selectedServiceIds.length} services
-                <button onClick={() => setSelectedServiceIds([])} className="hover:text-[var(--brand-cyan)]">
+                <button
+                  onClick={() => setSelectedServiceIds([])}
+                  className="hover:text-[var(--brand-cyan)]"
+                >
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -618,7 +660,10 @@ export default function Annonces() {
             {maxPrice > 0 && (
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {`${(maxPrice / 1000).toFixed(0)}k Ar`}
-                <button onClick={() => setMaxPrice(0)} className="hover:text-[var(--brand-cyan)]">
+                <button
+                  onClick={() => setMaxPrice(0)}
+                  className="hover:text-[var(--brand-cyan)]"
+                >
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -626,7 +671,10 @@ export default function Annonces() {
             {colocFilter && (
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {getColocLabel(colocFilter)}
-                <button onClick={() => setColocFilter("")} className="hover:text-[var(--brand-cyan)]">
+                <button
+                  onClick={() => setColocFilter("")}
+                  className="hover:text-[var(--brand-cyan)]"
+                >
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -640,8 +688,8 @@ export default function Annonces() {
             <MapPin className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[var(--muted-foreground)]" />
             <span>
               {loading
-                ? t('annonces:loading')
-                : `${listings.length} ${t('annonces:results')}`}
+                ? t("annonces:loading")
+                : `${listings.length} ${t("annonces:results")}`}
             </span>
           </div>
           <div className="text-xs sm:text-sm text-[var(--muted-foreground)]">
@@ -692,10 +740,10 @@ export default function Annonces() {
             <div className="text-center py-12 sm:py-20">
               <div className="text-4xl sm:text-5xl mb-4">🏠</div>
               <h3 className="bebas text-lg sm:text-xl text-[var(--foreground)]">
-                {t('annonces:empty')}
+                {t("annonces:empty")}
               </h3>
               <p className="text-[var(--muted-foreground)] mt-1 text-xs sm:text-sm">
-                {t('annonces:emptySub')}
+                {t("annonces:emptySub")}
               </p>
             </div>
           )}

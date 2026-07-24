@@ -460,7 +460,7 @@ export default function Home() {
                     <div className="relative rounded-2xl overflow-hidden bg-gray-100">
                       {/* Image */}
                       {l.image ? (
-                        <img
+                        <LazyImage
                           src={l.image}
                           alt={l.title}
                           className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-300"

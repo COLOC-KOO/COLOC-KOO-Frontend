@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { LazyImage } from '../components/ui/LazyImage'
 
 // Image hero identique à celle de Home.tsx
 const heroImage = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80"
@@ -20,7 +21,7 @@ const Hero: React.FC = () => {
   return (
     <section className="relative">
       <div className="absolute inset-0">
-        <img src={heroImage} alt="" className="w-full h-full object-cover" />
+        <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
         <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
       </div>
