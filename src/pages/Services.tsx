@@ -12,6 +12,7 @@ import { Button } from '../components/ui/Button'
 import { useAuth } from '../lib/auth'
 import { api, ServiceCatalogueItem, DemandeServiceGroup } from '../lib/api'
 import { cn } from '../lib/utils'
+import { LazyImage } from '../components/ui/LazyImage'
 
 // Choisit une icône adaptée selon le nom du service (fallback : cloche).
 function getServiceIcon(nom: string): React.ElementType {
@@ -140,7 +141,7 @@ export default function Services() {
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroImage} alt="" className="w-full h-full object-cover" />
+          <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/45" />
           <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan-dark/70 via-brand-cyan/45 to-brand-green/45 mix-blend-overlay" />
         </div>

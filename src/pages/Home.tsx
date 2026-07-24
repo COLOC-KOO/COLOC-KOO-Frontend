@@ -400,7 +400,7 @@ export default function Home() {
                     <div className="relative rounded-2xl overflow-hidden bg-gray-100">
                       {/* Image */}
                       {l.image ? (
-                        <img
+                        <LazyImage
                           src={l.image}
                           alt={l.title}
                           className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-300"
@@ -472,7 +472,7 @@ export default function Home() {
                     >
                       <div className="relative flex-shrink-0 w-32 h-24 rounded-xl overflow-hidden bg-gray-100">
                         {l.image ? (
-                          <img
+                          <LazyImage
                             src={l.image}
                             alt={l.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

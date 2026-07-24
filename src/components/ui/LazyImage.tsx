@@ -4,31 +4,30 @@ import { ImageOff, Download } from 'lucide-react'
 import { useLiteMode } from '../../lib/useLiteMode'
 import { cn } from '../../lib/utils'
 
-interface LazyImageProps {
+interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string
   alt: string
   className?: string
 }
 
-export function LazyImage({ src, alt, className }: LazyImageProps) {
+export function LazyImage({ src, alt, className, onError, ...rest }: LazyImageProps) {
   const liteMode = useLiteMode()
   const [loaded, setLoaded] = useState(!liteMode)
 
-  // Resynchronise l'affichage quand l'utilisateur bascule le toggle Lite
+  // Synchronise TOUJOURS l'affichage avec l'état du toggle Lite
   useEffect(() => {
-    if (!liteMode) {
-      // Lite désactivé -> on affiche l'image automatiquement
-      setLoaded(true)
-    }
-    // Si liteMode passe à true, on NE cache PAS une image déjà chargée
-    // (évite qu'une image visible disparaisse brutalement pendant la navigation)
+    setLoaded(!liteMode)
   }, [liteMode])
 
   if (!loaded) {
     return (
       <button
         type="button"
-        onClick={() => setLoaded(true)}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setLoaded(true)
+        }}
         className={cn(
           'flex flex-col items-center justify-center gap-2 bg-muted text-muted-foreground text-xs cursor-pointer hover:bg-muted/80 transition-colors',
           className
@@ -42,5 +41,14 @@ export function LazyImage({ src, alt, className }: LazyImageProps) {
     )
   }
 
-  return <img src={src} alt={alt} className={className} loading="lazy" />
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      onError={onError}
+      {...rest}
+    />
+  )
 }
