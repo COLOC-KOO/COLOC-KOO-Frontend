@@ -602,7 +602,7 @@ export default function Home() {
 
                           {l.image ? (
 
-                            <img
+                            <LazyImage
                               src={l.image}
                               alt={
                                 l.title ||
@@ -988,7 +988,7 @@ export default function Home() {
                       <div className="flex items-center gap-4 mb-3">
                         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-cyan-light/40 to-brand-cyan/10 flex items-center justify-center overflow-hidden shrink-0">
                           {partner.logo || partner.visuel ? (
-                            <img
+                            <LazyImage
                               src={normalizeImageUrl(partner.logo || partner.visuel)}
                               alt={partner.partenaire_nom || partner.titre || "Partenaire"}
                               className="h-full w-full object-cover"

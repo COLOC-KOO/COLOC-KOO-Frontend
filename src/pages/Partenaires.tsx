@@ -21,6 +21,9 @@ import { LazyImage } from '../components/ui/LazyImage'
 // Image hero
 const heroImage = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1600&q=80"
 
+// Police unifiée du site
+const HEADING_FONT = "font-['Oswald']"
+
 // Types
 interface PartnerTier {
   name: string
@@ -54,7 +57,7 @@ interface WhyCard {
 }
 
 // =============================================
-// COMPOSANT HERO - AVEC IMAGE DE FOND
+// COMPOSANT HERO - AVEC IMAGE DE FOND (style Services - hauteur identique)
 // =============================================
 const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }> = ({
   onContactClick, onStatutsClick
@@ -62,59 +65,44 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
   const { t } = useTranslation(['partenaires', 'common'])
 
   return (
-    <section className="relative overflow-hidden min-h-[400px] sm:min-h-[450px] flex items-center">
-      {/* Image de fond */}
+    <section className="relative overflow-hidden">
       <div className="absolute inset-0">
         <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-br from-black/85 via-black/70 to-black/60" />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan-dark/70 via-brand-cyan/45 to-brand-green/45 mix-blend-overlay" />
       </div>
-
-      <div className="relative z-10 max-w-[900px] mx-auto px-4 sm:px-6 py-8 sm:py-10 md:py-12 text-white w-full">
-        <div className="text-center">
+      <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24 text-white">
+        <div className="max-w-2xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-yellow-300 text-[10px] sm:text-xs mb-2 sm:mb-3 shadow-lg">
-            <Gift className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span>{t('partenaires:hero.badge')}</span>
-          </div>
+          {/* <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-sm font-medium mb-5">
+            <Gift className="w-4 h-4" />
+            {t('partenaires:hero.badge')}
+          </span> */}
 
-          {/* Mission */}
-          <p className="font-['Bebas_Neue'] text-lg sm:text-xl md:text-2xl text-white/90 leading-tight mb-1 px-2 drop-shadow-lg">
-            {t('partenaires:hero.mission')}
-          </p>
-
-          {/* Titre */}
-          <h1 className="font-['Bebas_Neue'] text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-none tracking-wide drop-shadow-2xl">
-            <span className="text-white">{t('partenaires:hero.title')}</span>
+          {/* Titre principal uniquement - sans le texte "Associez votre marque..." */}
+          <h1 className="bebas text-3xl md:text-5xl leading-tight mb-4 drop-shadow-2xl">
+            <span className="text-brand-cyan">{t('partenaires:hero.title')}</span>
           </h1>
 
-          {/* Description */}
-          <p className="text-xs sm:text-sm md:text-base text-white/80 max-w-2xl mx-auto leading-relaxed mt-2 sm:mt-3 mb-4 sm:mb-5 px-2">
+          {/* Description courte */}
+          <p className="text-white/75 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-6">
             {t('partenaires:hero.subtitle')}
           </p>
 
           {/* Buttons */}
-          <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 px-3">
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
             <button
               onClick={onContactClick}
-              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-white text-xs sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
-              style={{
-                backgroundColor: 'oklch(66% 0.11 210)',
-                boxShadow: '0 8px 25px rgba(0, 150, 200, 0.35)'
-              }}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl bg-gradient-to-r from-brand-cyan to-brand-green"
             >
-              <Handshake className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Handshake className="w-4 h-4" />
               {t('partenaires:hero.cta')}
             </button>
             <button
               onClick={onStatutsClick}
-              className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-white text-xs sm:text-sm font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
-              style={{
-                backgroundColor: 'oklch(78% 0.16 130)',
-                boxShadow: '0 8px 25px rgba(80, 200, 80, 0.35)'
-              }}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl border border-white/20 backdrop-blur-sm hover:bg-white/10"
             >
-              <ListChecks className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <ListChecks className="w-4 h-4" />
               {t('partenaires:hero.cta2')}
             </button>
           </div>
@@ -125,92 +113,96 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
 }
 
 // =============================================
-// COMPOSANT POURQUOI - CARTES BLANCHES AVEC ZOOM ET DÉGRADÉ AU HOVER
+// COMPOSANT POURQUOI
 // =============================================
 const WhySection: React.FC = () => {
   const { t } = useTranslation(['partenaires'])
 
-  const cards: WhyCard[] = [
+  const cards: (WhyCard & { accent: 'cyan' | 'green' })[] = [
     {
       icon: <Users className="w-5 h-5" />,
       title: t('partenaires:why.cards.audience.title'),
       desc: t('partenaires:why.cards.audience.desc'),
-      stat: '15k+'
+      stat: '15k+',
+      accent: 'cyan'
     },
     {
       icon: <HeartHandshake className="w-5 h-5" />,
       title: t('partenaires:why.cards.rse.title'),
       desc: t('partenaires:why.cards.rse.desc'),
-      stat: '100%'
+      stat: '100%',
+      accent: 'green'
     },
     {
       icon: <Compass className="w-5 h-5" />,
       title: t('partenaires:why.cards.visibility.title'),
       desc: t('partenaires:why.cards.visibility.desc'),
-      stat: '50k+'
+      stat: '50k+',
+      accent: 'cyan'
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
       title: t('partenaires:why.cards.data.title'),
       desc: t('partenaires:why.cards.data.desc'),
-      stat: '365j'
+      stat: '365j',
+      accent: 'green'
     }
   ]
 
   return (
-    <section className="py-6 sm:py-8 md:py-10 px-4 sm:px-6 bg-gradient-to-b from-white to-[#f5f7f2]">
-      <div className="max-w-[1120px] mx-auto">
-        <div className="flex flex-col items-center gap-2 mb-2">
-          <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] text-center">
+    <section className="py-10 md:py-14 px-4 md:px-6 lg:px-8 bg-white">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">
             {t('partenaires:why.title')}
           </h2>
+          <p className="text-sm text-muted-foreground max-w-2xl mx-auto mt-1">
+            {t('partenaires:why.subtitle')}
+          </p>
         </div>
-        <p className="text-xs sm:text-sm md:text-base text-[#666] leading-relaxed max-w-3xl mx-auto text-center mb-3 sm:mb-4">
-          {t('partenaires:why.subtitle')}
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {cards.map((card, idx) => (
-            <motion.div
-              key={idx}
-              className="group relative bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 text-center transition-all duration-500 cursor-pointer overflow-hidden shadow-sm hover:shadow-2xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1, duration: 0.5 }}
-              whileHover={{
-                scale: 1.05,
-                transition: { duration: 0.3 }
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#99CC33] to-[#46BDD6] opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
-              <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
-              </div>
-              <div className="relative z-10">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 transition-all duration-500 bg-[#F4F8E8] group-hover:bg-white/20 group-hover:scale-110">
-                  <span className="text-[#99CC33] group-hover:text-white transition-colors duration-500">
-                    {card.icon}
-                  </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {cards.map((card, idx) => {
+            const isCyan = card.accent === 'cyan'
+            const accentColor = isCyan ? 'var(--brand-cyan)' : 'var(--brand-green)'
+            const accentTint = isCyan ? 'oklch(97% 0.02 210)' : 'oklch(97% 0.16 130)'
+            return (
+              <motion.div
+                key={idx}
+                className="relative bg-white border rounded-2xl p-6 text-center transition-shadow duration-300 shadow-sm hover:shadow-md"
+                style={{ borderColor: '#E4ECEA' }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.08, duration: 0.5 }}
+              >
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                  style={{ backgroundColor: accentTint }}
+                >
+                  <span style={{ color: accentColor }}>{card.icon}</span>
                 </div>
-                <h3 className="text-sm sm:text-base font-semibold text-[#2C2C2C] group-hover:text-white transition-colors duration-500 mb-1 sm:mb-2">
+                <h3 className="text-base font-semibold mb-2 text-foreground">
                   {card.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-[#666] group-hover:text-white/90 transition-colors duration-500 leading-relaxed">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {card.desc}
                 </p>
                 {card.stat && (
-                  <div className="mt-2 text-lg sm:text-xl font-bold text-[#46BDD6] group-hover:text-white/80 transition-colors duration-500">
+                  <div className="mt-2 text-xl font-bold" style={{ color: accentColor }}>
                     {card.stat}
                   </div>
                 )}
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            )
+          })}
         </div>
-        <div className="mt-3 sm:mt-4 bg-[#F4F8E8] border border-dashed border-[#99CC33]/60 rounded-2xl px-4 sm:px-5 py-2.5 sm:py-3 flex items-start sm:items-center gap-3 sm:gap-4">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#99CC33]/20 flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0">
-            <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-[#99CC33]" />
+        <div
+          className="mt-4 border border-dashed rounded-2xl px-5 py-3 flex items-center gap-4"
+          style={{ backgroundColor: 'oklch(97% 0.16 130)', borderColor: 'oklch(78% 0.16 130 / 0.33)' }}
+        >
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'oklch(78% 0.16 130 / 0.15)' }}>
+            <Rocket className="w-5 h-5" style={{ color: 'var(--brand-green)' }} />
           </div>
-          <p className="text-xs sm:text-sm md:text-base text-[#4d6b1a] leading-relaxed">{t('partenaires:why.launchText')}</p>
+          <p className="text-sm md:text-base leading-relaxed" style={{ color: 'var(--brand-green-dark)' }}>{t('partenaires:why.launchText')}</p>
         </div>
       </div>
     </section>
@@ -218,112 +210,87 @@ const WhySection: React.FC = () => {
 }
 
 // =============================================
-// COMPOSANT TIER CARD AMÉLIORÉ AVEC DÉGRADÉ
+// COMPOSANT TIER CARD
 // =============================================
 const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index }) => {
   const { t } = useTranslation(['partenaires'])
 
-  const getTierBorderColor = (tierClass: string) => {
-    if (tierClass.includes('bronze')) return 'from-[#c8843c]/30 to-[#c8843c]/10'
-    if (tierClass.includes('argent')) return 'from-[#9aa3ad]/30 to-[#9aa3ad]/10'
-    if (tierClass.includes('or')) return 'from-[#d4af37]/30 to-[#d4af37]/10'
-    if (tierClass.includes('platine')) return 'from-[#5a8aa0]/30 to-[#5a8aa0]/10'
-    if (tierClass.includes('green')) return 'from-[#99CC33]/30 to-[#99CC33]/10'
-    if (tierClass.includes('cy')) return 'from-[#46BDD6]/30 to-[#46BDD6]/10'
-    return 'from-gray-200 to-gray-100'
+  const getTierAccent = (tierClass: string) => {
+    if (tierClass.includes('bronze')) return { top: 'var(--brand-cyan)', tint: 'oklch(97% 0.02 210)' }
+    if (tierClass.includes('argent')) return { top: 'var(--brand-cyan)', tint: 'oklch(97% 0.02 210)' }
+    if (tierClass.includes('or')) return { top: 'var(--brand-green)', tint: 'oklch(97% 0.16 130)' }
+    if (tierClass.includes('platine')) return { top: 'var(--brand-cyan-dark)', tint: 'oklch(97% 0.02 210)' }
+    if (tierClass.includes('green')) return { top: 'var(--brand-green)', tint: 'oklch(97% 0.16 130)' }
+    if (tierClass.includes('cy')) return { top: 'var(--brand-cyan)', tint: 'oklch(97% 0.02 210)' }
+    return { top: 'var(--brand-cyan)', tint: 'oklch(97% 0.02 210)' }
   }
+
+  const accent = getTierAccent(tier.tierClass)
 
   return (
     <motion.div
-      className="group relative bg-gradient-to-br from-[#99CC33] to-[#46BDD6] rounded-2xl p-[2px] shadow-lg hover:shadow-2xl transition-all duration-500"
-      initial={{ opacity: 0, y: 50, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{
-        delay: index * 0.15,
-        duration: 0.6,
-        type: "spring",
-        stiffness: 100,
-        damping: 15
-      }}
-      whileHover={{
-        scale: 1.03,
-        rotateY: 2,
-        rotateX: 2,
-        transition: { duration: 0.3 }
-      }}
+      className="relative bg-white rounded-2xl p-5 flex flex-col h-full border transition-shadow duration-300 hover:shadow-lg"
+      style={{ borderColor: '#E4ECEA' }}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
     >
-      <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
-      </div>
+      <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{ backgroundColor: accent.top }} />
 
-      <div className="relative bg-white rounded-2xl p-4 sm:p-5 flex flex-col h-full transition-all duration-300">
-        <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-2xl bg-gradient-to-r ${getTierBorderColor(tier.tierClass)}`} />
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-1 pt-1">
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            {tier.icon && (
-              <span className="text-[#99CC33] group-hover:scale-110 transition-transform duration-300">
-                {tier.icon}
-              </span>
-            )}
-            <span className="font-['Bebas_Neue'] text-lg sm:text-xl md:text-2xl text-[#2C2C2C] group-hover:text-[#46BDD6] transition-colors duration-300">
-              {tier.name}
-            </span>
-          </div>
-          {tier.launch && (
-            <span className={`text-[8px] sm:text-[10px] font-bold border rounded-full px-2 sm:px-3 py-0.5 sm:py-1 whitespace-nowrap bg-[#99CC33]/10 text-[#99CC33] border-[#99CC33]/30`}>
-              {tier.launch}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-1 pt-1">
+        <div className="flex items-center gap-2.5">
+          {tier.icon && (
+            <span style={{ color: accent.top }}>
+              {tier.icon}
             </span>
           )}
+          <span className={`${HEADING_FONT} font-medium text-xl md:text-2xl text-foreground`}>
+            {tier.name}
+          </span>
         </div>
-
-        <p className="text-xs sm:text-sm text-[#46BDD6] italic leading-relaxed my-1 sm:my-2 mb-2 sm:mb-3">
-          {tier.arg}
-        </p>
-
-        <ul className="list-none flex flex-col gap-1.5 sm:gap-2 p-0 m-0 flex-1">
-          {tier.benefits.map((benefit, idx) => {
-            const isHead = benefit.startsWith('Intègre toute')
-            return (
-              <motion.li
-                key={idx}
-                className={`text-xs sm:text-sm leading-relaxed flex gap-2 sm:gap-2.5 items-start ${isHead ? 'font-semibold text-[#2C2C2C]' : 'text-[#555]'}`}
-                initial={{ opacity: 0, x: -15 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  delay: index * 0.15 + idx * 0.06,
-                  duration: 0.4,
-                  type: "spring",
-                  stiffness: 200
-                }}
-              >
-                <span className={`flex-shrink-0 mt-0.5 transition-transform duration-300 group-hover:scale-110 ${isHead ? 'text-[#999]' : 'text-[#99CC33]'}`}>
-                  {isHead ? <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <Check className="w-3 h-3 sm:w-4 sm:h-4" />}
-                </span>
-                <span>{benefit}</span>
-              </motion.li>
-            )
-          })}
-        </ul>
-
-        {tier.popular && (
-          <motion.div
-            className="mt-3 pt-3 border-t border-[#e8e8e8]"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.15 + 0.3, duration: 0.4 }}
+        {tier.launch && (
+          <span
+            className="text-[10px] font-bold border rounded-full px-3 py-0.5 whitespace-nowrap"
+            style={{ backgroundColor: accent.tint, color: accent.top, borderColor: `${accent.top}40` }}
           >
-            <span className="text-[10px] sm:text-xs font-semibold text-[#99CC33] bg-[#F4F8E8] px-3 py-1 rounded-full inline-flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3" />
-              {t('partenaires:tiers.popular')}
-            </span>
-          </motion.div>
+            {tier.launch}
+          </span>
         )}
-
-        <div className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#99CC33]/20 to-[#46BDD6]/20 blur-xl" />
-        </div>
       </div>
+
+      <p className="text-sm italic leading-relaxed my-2 mb-3" style={{ color: accent.top }}>
+        {tier.arg}
+      </p>
+
+      <ul className="list-none flex flex-col gap-2 p-0 m-0 flex-1">
+        {tier.benefits.map((benefit, idx) => {
+          const isHead = benefit.startsWith('Intègre toute')
+          return (
+            <li
+              key={idx}
+              className={`text-sm leading-relaxed flex gap-2.5 items-start ${isHead ? 'font-semibold' : ''}`}
+              style={{ color: isHead ? 'var(--foreground)' : 'var(--muted-foreground)' }}
+            >
+              <span className="flex-shrink-0 mt-0.5" style={{ color: isHead ? '#999' : 'var(--brand-green)' }}>
+                {isHead ? <ArrowUpRight className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+              </span>
+              <span>{benefit}</span>
+            </li>
+          )
+        })}
+      </ul>
+
+      {tier.popular && (
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: '#E4ECEA' }}>
+          <span
+            className="text-xs font-semibold px-3 py-1 rounded-full inline-flex items-center gap-1.5"
+            style={{ backgroundColor: 'oklch(97% 0.02 210)', color: 'var(--brand-cyan)' }}
+          >
+            <Sparkles className="w-3 h-3" />
+            {t('partenaires:tiers.popular')}
+          </span>
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -332,20 +299,27 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
 // COMPOSANT SECTION PARTENAIRE
 // =============================================
 const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ section }) => {
-  const { t } = useTranslation(['partenaires'])
   const isCyan = section.iconClass === 'cy'
+  const iconBg = isCyan ? 'oklch(97% 0.02 210)' : 'oklch(97% 0.16 130)'
+  const iconColor = isCyan ? 'var(--brand-cyan)' : 'var(--brand-green)'
 
   if (section.isAddon) {
     return (
-      <div className="group bg-gradient-to-br from-white via-[#E8F7FA] to-[#E8F7FA]/50 border-2 border-[#46BDD6] rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-5 items-start transition-all duration-200 hover:shadow-xl">
-        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border-2 border-[#46BDD6] flex items-center justify-center flex-shrink-0 text-xl sm:text-2xl shadow-sm">
-          <span className="text-[#46BDD6]">{section.icon}</span>
+      <div
+        className="bg-white border-2 rounded-2xl p-6 flex flex-col sm:flex-row gap-5 items-start transition-shadow duration-200 hover:shadow-lg"
+        style={{ borderColor: 'var(--brand-cyan)' }}
+      >
+        <div
+          className="w-14 h-14 rounded-2xl border-2 flex items-center justify-center flex-shrink-0"
+          style={{ borderColor: 'var(--brand-cyan)', backgroundColor: 'oklch(97% 0.02 210)' }}
+        >
+          <span style={{ color: 'var(--brand-cyan)' }}>{section.icon}</span>
         </div>
         <div>
-          <h3 className="font-['Bebas_Neue'] text-xl sm:text-2xl md:text-3xl text-[#2C2C2C]">{section.title}</h3>
-          <p className="text-xs sm:text-sm md:text-base text-[#555] leading-relaxed mt-1 sm:mt-1.5">{section.subtitle}</p>
+          <h3 className={`${HEADING_FONT} font-semibold text-2xl md:text-3xl text-foreground`}>{section.title}</h3>
+          <p className="text-sm md:text-base leading-relaxed mt-1.5 text-muted-foreground">{section.subtitle}</p>
           {section.addonNote && (
-            <p className="text-[10px] sm:text-xs md:text-sm text-[#888] mt-2 border-t border-[#46BDD6]/30 pt-2 sm:pt-3">{section.addonNote}</p>
+            <p className="text-xs md:text-sm mt-3 border-t pt-3" style={{ color: '#888', borderColor: 'oklch(74% 0.11 210 / 0.2)' }}>{section.addonNote}</p>
           )}
         </div>
       </div>
@@ -354,25 +328,26 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
 
   return (
     <motion.div
-      className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-5 md:p-6 transition-all duration-200 hover:shadow-lg"
+      className="bg-white border rounded-2xl p-6"
+      style={{ borderColor: '#E4ECEA' }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 mb-4 sm:mb-5 pb-4 sm:pb-5 border-b border-[#e8e8e8]">
-        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${isCyan ? 'bg-[#E8F7FA]' : 'bg-[#F4F8E8]'}`}>
-          <span className={isCyan ? 'text-[#46BDD6]' : 'text-[#99CC33]'}>{section.icon}</span>
+      <div className="flex flex-col sm:flex-row items-start gap-4 mb-5 pb-5 border-b" style={{ borderColor: '#E4ECEA' }}>
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: iconBg }}>
+          <span style={{ color: iconColor }}>{section.icon}</span>
         </div>
         <div>
-          <h3 className={`font-['Bebas_Neue'] text-xl sm:text-2xl md:text-3xl leading-tight ${isCyan ? 'text-[#46BDD6]' : 'text-[#99CC33]'}`}>
+          <h3 className={`${HEADING_FONT} font-semibold text-2xl md:text-3xl leading-tight`} style={{ color: iconColor }}>
             {section.title}
           </h3>
-          <p className="text-xs sm:text-sm md:text-base text-[#666] leading-relaxed mt-0.5">{section.subtitle}</p>
+          <p className="text-sm md:text-base leading-relaxed mt-0.5 text-muted-foreground">{section.subtitle}</p>
         </div>
       </div>
 
       <div
-        className={`grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 ${section.id === 'entreprise-generale'
+        className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${section.id === 'entreprise-generale'
             ? 'xl:grid-cols-4'
             : 'xl:grid-cols-3'
           }`}
@@ -386,7 +361,7 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
 }
 
 // =============================================
-// COMPOSANT CONTACT
+// COMPOSANT CONTACT - COULEUR ALIGNÉE SUR SERVICES
 // =============================================
 const ContactSection: React.FC = () => {
   const { t } = useTranslation(['partenaires', 'common'])
@@ -440,7 +415,7 @@ const ContactSection: React.FC = () => {
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim()
 
     if (!serviceId || !templateId || !publicKey || publicKey === 'your_public_key_here' || serviceId === 'your_service_id_here' || templateId === 'your_template_id_here') {
-      setSubmitError('EmailJS n’est pas encore configuré correctement. Veuillez renseigner les variables VITE_EMAILJS_PUBLIC_KEY, VITE_EMAILJS_SERVICE_ID et VITE_EMAILJS_TEMPLATE_ID dans le fichier .env du frontend.')
+      setSubmitError('EmailJS n\'est pas encore configuré correctement. Veuillez renseigner les variables VITE_EMAILJS_PUBLIC_KEY, VITE_EMAILJS_SERVICE_ID et VITE_EMAILJS_TEMPLATE_ID dans le fichier .env du frontend.')
       setSubmitting(false)
       return
     }
@@ -554,32 +529,31 @@ const ContactSection: React.FC = () => {
   ]
 
   return (
-    <section className="relative py-8 sm:py-12 md:py-16 px-4 sm:px-6 overflow-hidden" id="contact">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#f5f7f2] via-white to-[#f0f5ed]" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-[#99CC33]/8 rounded-full blur-3xl" />
+    <section className="relative py-12 md:py-16 px-4 md:px-6 lg:px-8 overflow-hidden" id="contact">
+      <div className="absolute inset-0 bg-muted/40" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-3xl" style={{ backgroundColor: 'oklch(74% 0.11 210 / 0.05)' }} />
 
-      <div className="max-w-xl mx-auto relative z-10 px-2 sm:px-0">
+      <div className="max-w-xl mx-auto relative z-10">
         {/* En-tête */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] mb-1 sm:mb-2">
+        <div className="text-center mb-8">
+          <h2 className={`${HEADING_FONT} font-semibold text-3xl md:text-4xl mb-2 text-foreground`}>
             {t('partenaires:contact.title')}
           </h2>
-          <p className="text-[#666] text-xs sm:text-sm max-w-sm mx-auto px-2">
+          <p className="text-sm max-w-sm mx-auto text-muted-foreground">
             {t('partenaires:contact.subtitle')}
           </p>
         </div>
 
-        {/* Carte noire */}
-        <div className="bg-[#1a1a2e] rounded-2xl shadow-2xl shadow-black/20 border border-white/10 p-4 sm:p-6 md:p-8">
+        {/* Carte - style aligné sur Services */}
+        <div className="rounded-2xl border border-border/60 bg-white shadow-sm p-6 md:p-8">
           {!showOk ? (
-            <form ref={formRef} className="flex flex-col gap-3 sm:gap-4" onSubmit={handleSubmit}>
-              {/* Nom & Structure */}
+            <form ref={formRef} className="flex flex-col gap-4" onSubmit={handleSubmit}>
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.name')}</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">{t('partenaires:contact.name')}</label>
                 <input
                   type="text"
                   name="name"
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm placeholder:text-white/20 focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border/60 bg-white text-foreground text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 transition-all duration-200"
                   placeholder={t('partenaires:contact.namePlaceholder')}
                   value={formData.name}
                   onChange={handleInputChange}
@@ -587,13 +561,12 @@ const ContactSection: React.FC = () => {
                 />
               </div>
 
-              {/* Email */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.email')}</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">{t('partenaires:contact.email')}</label>
                 <input
                   type="email"
                   name="email"
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm placeholder:text-white/20 focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border/60 bg-white text-foreground text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 transition-all duration-200"
                   placeholder={t('partenaires:contact.emailPlaceholder')}
                   value={formData.email}
                   onChange={handleInputChange}
@@ -601,13 +574,12 @@ const ContactSection: React.FC = () => {
                 />
               </div>
 
-              {/* Téléphone */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.phone')}</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">{t('partenaires:contact.phone')}</label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <select
                     name="phoneCC"
-                    className="w-full sm:w-[120px] px-3 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 [&>option]:text-[#1a1a2e]"
+                    className="w-full sm:w-[120px] px-4 py-2.5 rounded-xl border border-border/60 bg-white text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
                     value={formData.phoneCC}
                     onChange={handleInputChange}
                   >
@@ -619,7 +591,7 @@ const ContactSection: React.FC = () => {
                     type="tel"
                     name="phone"
                     inputMode="tel"
-                    className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm placeholder:text-white/20 focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-border/60 bg-white text-foreground text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
                     placeholder={t('partenaires:contact.phonePlaceholder')}
                     value={formData.phone}
                     onChange={handleInputChange}
@@ -627,12 +599,11 @@ const ContactSection: React.FC = () => {
                 </div>
               </div>
 
-              {/* Secteur */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.sector')}</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">{t('partenaires:contact.sector')}</label>
                 <select
                   name="secteur"
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 [&>option]:text-[#1a1a2e]"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border/60 bg-white text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
                   value={formData.secteur}
                   onChange={handleInputChange}
                 >
@@ -642,12 +613,11 @@ const ContactSection: React.FC = () => {
                 </select>
               </div>
 
-              {/* Niveau souhaité */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.level')}</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">{t('partenaires:contact.level')}</label>
                 <select
                   name="niveauSouhaite"
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 [&>option]:text-[#1a1a2e]"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border/60 bg-white text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
                   value={formData.niveauSouhaite}
                   onChange={handleInputChange}
                 >
@@ -657,24 +627,22 @@ const ContactSection: React.FC = () => {
                 </select>
               </div>
 
-              {/* Activité */}
               <div>
-                <label className="block text-xs font-medium text-white mb-1 sm:mb-1.5">{t('partenaires:contact.activity')}</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">{t('partenaires:contact.activity')}</label>
                 <textarea
                   name="activity"
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm placeholder:text-white/20 focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 resize-y min-h-[60px] sm:min-h-[70px]"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border/60 bg-white text-foreground text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 resize-y min-h-[70px]"
                   placeholder={t('partenaires:contact.activityPlaceholder')}
                   value={formData.activity}
                   onChange={handleInputChange}
                 />
               </div>
 
-              {/* Options */}
               <div className="space-y-2 pt-1">
-                <label className="flex items-center gap-2.5 text-xs sm:text-sm text-white/60 cursor-pointer hover:text-white transition-colors">
+                <label className="flex items-center gap-2.5 text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
                   <input
                     type="checkbox"
-                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-white/20 bg-white/5 accent-[#99CC33] cursor-pointer"
+                    className="w-4 h-4 rounded border-border/60 cursor-pointer accent-brand-green"
                     checked={formData.wantCallback}
                     onChange={(e) => handleCallbackToggle(e.target.checked)}
                   />
@@ -682,17 +650,17 @@ const ContactSection: React.FC = () => {
                 </label>
 
                 {showCallback && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 pl-5 sm:pl-7">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-7">
                     <input
                       type="date"
                       name="callbackDate"
-                      className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200"
+                      className="px-4 py-2.5 rounded-xl border border-border/60 bg-white text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
                       value={formData.callbackDate}
                       onChange={handleInputChange}
                     />
                     <select
                       name="callbackSlot"
-                      className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-white/10 bg-white/5 text-white text-xs sm:text-sm focus:outline-none focus:border-[#99CC33] focus:ring-2 focus:ring-[#99CC33]/20 transition-all duration-200 [&>option]:text-[#1a1a2e]"
+                      className="px-4 py-2.5 rounded-xl border border-border/60 bg-white text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
                       value={formData.callbackSlot}
                       onChange={handleInputChange}
                     >
@@ -703,11 +671,11 @@ const ContactSection: React.FC = () => {
                   </div>
                 )}
 
-                <label className="flex items-center gap-2.5 text-xs sm:text-sm text-white/60 cursor-pointer hover:text-white transition-colors">
+                <label className="flex items-center gap-2.5 text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
                   <input
                     type="checkbox"
                     name="wantBrochure"
-                    className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-white/20 bg-white/5 accent-[#99CC33] cursor-pointer"
+                    className="w-4 h-4 rounded border-border/60 cursor-pointer accent-brand-green"
                     checked={formData.wantBrochure}
                     onChange={handleInputChange}
                   />
@@ -716,35 +684,33 @@ const ContactSection: React.FC = () => {
               </div>
 
               {submitError && (
-                <p className="text-xs sm:text-sm text-red-400/80">{submitError}</p>
+                <p className="text-sm text-red-600">{submitError}</p>
               )}
 
-              {/* Bouton */}
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-[#99CC33] to-[#46BDD6] text-white text-xs sm:text-sm font-semibold hover:shadow-lg hover:shadow-[#99CC33]/25 transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-1"
+                className="w-full px-6 py-3 rounded-xl text-white text-sm font-semibold transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-1 bg-gradient-to-r from-brand-cyan to-brand-green shadow-md hover:shadow-lg"
               >
                 {submitting ? t('common:common.loading') : t('partenaires:contact.submit')}
               </button>
             </form>
           ) : (
-            <div className="text-center py-4 sm:py-6">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#99CC33]/20 flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <CircleCheck className="w-7 h-7 sm:w-8 sm:h-8 text-[#99CC33]" />
+            <div className="text-center py-6">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'oklch(78% 0.16 130 / 0.15)' }}>
+                <CircleCheck className="w-8 h-8" style={{ color: 'var(--brand-green)' }} />
               </div>
-              <h3 className="font-['Bebas_Neue'] text-xl sm:text-2xl text-white mb-1">{t('partenaires:contact.thanks')}</h3>
-              <p className="text-white/50 text-xs sm:text-sm">{t('partenaires:contact.thanksText')}</p>
+              <h3 className={`${HEADING_FONT} font-semibold text-2xl text-foreground mb-1`}>{t('partenaires:contact.thanks')}</h3>
+              <p className="text-sm text-muted-foreground">{t('partenaires:contact.thanksText')}</p>
             </div>
           )}
         </div>
 
-        {/* Coordonnées */}
-        <div className="flex flex-wrap justify-center gap-x-4 sm:gap-x-6 gap-y-2 mt-4 sm:mt-6 text-[10px] sm:text-xs text-[#555]">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-6 text-xs text-muted-foreground">
           <span>✉️ contact@colockoo.com</span>
-          <span className="hidden sm:inline text-[#d0d5c8]">•</span>
+          <span className="hidden sm:inline text-muted-foreground/30">•</span>
           <span>📱 +261 34 00 000 00</span>
-          <span className="hidden sm:inline text-[#d0d5c8]">•</span>
+          <span className="hidden sm:inline text-muted-foreground/30">•</span>
           <span>🕐 {t('partenaires:contact.hours')}</span>
         </div>
       </div>
@@ -753,7 +719,7 @@ const ContactSection: React.FC = () => {
 }
 
 // =============================================
-// DONNÉES DES SECTIONS PARTENAIRES - AVEC CLÉS DE TRADUCTION
+// DONNÉES DES SECTIONS PARTENAIRES
 // =============================================
 const partnerSections: PartnerSection[] = [
   {
@@ -938,7 +904,6 @@ export default function Partenaires() {
   const partnerVisibility = config.PARTENAIRE_VISIBILITY !== false
   const totalSections = partnerSections.length
 
-  // EMPÊCHER LE GLISSEMENT HORIZONTAL SUR MOBILE
   useEffect(() => {
     const style = document.createElement('style')
     style.id = 'prevent-horizontal-scroll'
@@ -967,7 +932,6 @@ export default function Partenaires() {
     }
   }, [])
 
-  // Light mode
   useEffect(() => {
     const savedLight = localStorage.getItem('scLight')
     if (savedLight === '1') {
@@ -1016,7 +980,6 @@ export default function Partenaires() {
     }
   }, [lightOn])
 
-  // Navigation
   const goToNext = () => {
     if (isTransitioning) return
     if (currentSection < totalSections - 1) {
@@ -1054,19 +1017,18 @@ export default function Partenaires() {
     return (
       <SiteLayout>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
-          <h1 className="font-['Bebas_Neue'] text-3xl sm:text-4xl">{t('partenaires:unavailable.title')}</h1>
-          <p className="mt-4 text-muted-foreground text-sm sm:text-base">
+          <h1 className={`${HEADING_FONT} font-semibold text-3xl sm:text-4xl text-foreground`}>{t('partenaires:unavailable.title')}</h1>
+          <p className="mt-4 text-sm sm:text-base text-muted-foreground">
             {t('partenaires:unavailable.subtitle')}
           </p>
           <Link to="/">
-            <Button className="mt-6 sm:mt-8 bg-[#46BDD6] hover:bg-[#3aadca] text-white">{t('common:common.back')}</Button>
+            <Button className="mt-6 sm:mt-8 text-white bg-gradient-to-r from-brand-cyan to-brand-green">{t('common:common.back')}</Button>
           </Link>
         </div>
       </SiteLayout>
     )
   }
 
-  // Fonction pour obtenir les traductions des sections
   const getTranslatedSections = () => {
     return partnerSections.map(section => {
       if (section.isAddon) {
@@ -1099,7 +1061,7 @@ export default function Partenaires() {
 
   return (
     <SiteLayout>
-      <div className="partenaires-page bg-[#f5f7f2] min-h-screen font-sans text-[#2C2C2C]">
+      <div className="partenaires-page min-h-screen font-sans bg-muted/40 text-foreground">
         <Hero
           onContactClick={scrollToContact}
           onStatutsClick={scrollToStatuts}
@@ -1107,34 +1069,31 @@ export default function Partenaires() {
 
         <WhySection />
 
-        {/* Statuts Section - CARROUSEL */}
-        <section className="py-4 px-4 sm:px-6" id="statuts">
-          <div className="max-w-[1120px] mx-auto">
-            <div className="flex justify-center mb-2">
-              <h2 className="font-['Bebas_Neue'] text-2xl sm:text-3xl md:text-4xl text-[#2C2C2C] text-center">
+        <section className="py-6 px-4 md:px-6 lg:px-8" id="statuts">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">
                 {t('partenaires:statuts.title')}
               </h2>
+              <p className="text-sm text-muted-foreground max-w-2xl mx-auto mt-1">
+                {t('partenaires:statuts.subtitle')}
+              </p>
             </div>
-            <p className="text-xs sm:text-sm md:text-base text-[#666] leading-relaxed max-w-3xl mx-auto mb-4 sm:mb-6 text-center">
-              {t('partenaires:statuts.subtitle')}
-            </p>
 
-            {/* CARROUSEL */}
             <div className="relative">
-              {/* Dots */}
-              <div className="flex justify-center gap-1.5 mb-3 sm:mb-4">
+              <div className="flex justify-center gap-1.5 mb-4">
                 {translatedSections.map((_, idx) => (
                   <div
                     key={idx}
-                    className={`h-1.5 rounded-full transition-all duration-500 ${idx === currentSection
-                        ? 'w-6 sm:w-8 bg-[#99CC33]'
-                        : 'w-1.5 bg-[#d0d5c8]'
-                      }`}
+                    className="h-1.5 rounded-full transition-all duration-500"
+                    style={{
+                      width: idx === currentSection ? '2rem' : '0.375rem',
+                      backgroundColor: idx === currentSection ? 'var(--brand-cyan)' : '#d5dedc'
+                    }}
                   />
                 ))}
               </div>
 
-              {/* Section courante */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentSection}
@@ -1147,54 +1106,46 @@ export default function Partenaires() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Boutons de navigation */}
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
                 <button
                   onClick={goToPrev}
                   disabled={isFirst || isTransitioning}
-                  className={`
-                    w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl
-                    bg-white border border-[#e8e8e8]
-                    text-xs sm:text-sm font-medium text-[#555]
-                    transition-all duration-200
-                    ${!isFirst && !isTransitioning
-                      ? 'hover:border-[#99CC33] hover:text-[#99CC33] hover:shadow-md'
-                      : 'opacity-40 cursor-not-allowed'
-                    }
-                  `}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border text-sm font-medium transition-all duration-200"
+                  style={{
+                    borderColor: '#E4ECEA',
+                    color: 'var(--muted-foreground)',
+                    opacity: !isFirst && !isTransitioning ? 1 : 0.4,
+                    cursor: !isFirst && !isTransitioning ? 'pointer' : 'not-allowed'
+                  }}
                 >
-                  <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <ChevronLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">{t('common:common.previous')}</span>
                 </button>
 
-                <span className="text-xs sm:text-sm text-[#888] font-medium order-first sm:order-none">
+                <span className="text-sm font-medium order-first sm:order-none text-muted-foreground">
                   {currentSection + 1} / {totalSections}
                 </span>
 
                 <button
                   onClick={goToNext}
                   disabled={isLast || isTransitioning}
-                  className={`
-                    w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl
-                    bg-white border border-[#e8e8e8]
-                    text-xs sm:text-sm font-medium text-[#555]
-                    transition-all duration-200
-                    ${!isLast && !isTransitioning
-                      ? 'hover:border-[#99CC33] hover:text-[#99CC33] hover:shadow-md'
-                      : 'opacity-40 cursor-not-allowed'
-                    }
-                  `}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border text-sm font-medium transition-all duration-200"
+                  style={{
+                    borderColor: '#E4ECEA',
+                    color: 'var(--muted-foreground)',
+                    opacity: !isLast && !isTransitioning ? 1 : 0.4,
+                    cursor: !isLast && !isTransitioning ? 'pointer' : 'not-allowed'
+                  }}
                 >
                   <span className="hidden sm:inline">{t('common:common.next')}</span>
-                  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Barre de progression */}
-              <div className="w-full h-1 rounded-full bg-[#e0e5da] overflow-hidden mt-3 sm:mt-4">
+              <div className="w-full h-1 rounded-full overflow-hidden mt-4" style={{ backgroundColor: '#e2e8e6' }}>
                 <div
-                  className="h-full bg-[#99CC33] rounded-full transition-all duration-700"
-                  style={{ width: `${((currentSection + 1) / totalSections) * 100}%` }}
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${((currentSection + 1) / totalSections) * 100}%`, backgroundColor: 'var(--brand-cyan)' }}
                 />
               </div>
             </div>
@@ -1203,33 +1154,33 @@ export default function Partenaires() {
 
         <ContactSection />
 
-        {/* Light Mode Popup */}
         {showLightPopup && (
           <div className="fixed inset-0 bg-black/45 z-[100000] flex items-center justify-center p-4 sm:p-5 animate-in fade-in duration-300">
-            <div className="bg-white rounded-2xl max-w-[320px] sm:max-w-[360px] w-full px-4 sm:px-6 py-6 sm:py-8 text-center shadow-2xl">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#F4F8E8] flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Feather className="w-6 h-6 sm:w-7 sm:h-7 text-[#99CC33]" />
+            <div className="bg-white rounded-2xl max-w-[360px] w-full px-6 py-8 text-center shadow-2xl">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'oklch(97% 0.16 130)' }}>
+                <Feather className="w-7 h-7" style={{ color: 'var(--brand-green)' }} />
               </div>
-              <h3 className="font-['Bebas_Neue'] text-xl sm:text-2xl text-[#2C2C2C] mb-2">{t('partenaires:lightpop.title')}</h3>
-              <p className="text-xs sm:text-sm leading-relaxed text-[#666] mb-5 sm:mb-6">{t('partenaires:lightpop.desc')}</p>
+              <h3 className={`${HEADING_FONT} font-semibold text-2xl mb-2 text-foreground`}>{t('partenaires:lightpop.title')}</h3>
+              <p className="text-sm leading-relaxed mb-6 text-muted-foreground">{t('partenaires:lightpop.desc')}</p>
               <div className="flex flex-col gap-2.5">
                 <button
-                  className="px-4 py-2.5 sm:py-3 rounded-xl border-none bg-[#99CC33] text-white text-xs sm:text-sm font-semibold hover:bg-[#88bb2e] transition-colors duration-200"
+                  className="px-4 py-3 rounded-xl border-none text-white text-sm font-semibold transition-colors duration-200 bg-gradient-to-r from-brand-cyan to-brand-green"
                   onClick={handleEnableLight}
                 >
                   {t('partenaires:lightpop.enable')}
                 </button>
                 <button
-                  className="px-4 py-2.5 sm:py-3 rounded-xl border border-[#e8e8e8] bg-transparent text-[#666] text-xs sm:text-sm font-semibold hover:bg-[#f5f5f5] transition-colors duration-200"
+                  className="px-4 py-3 rounded-xl border text-sm font-semibold transition-colors duration-200"
+                  style={{ borderColor: '#E4ECEA', color: 'var(--muted-foreground)' }}
                   onClick={handleCloseLightPopup}
                 >
                   {t('partenaires:lightpop.disable')}
                 </button>
               </div>
-              <label className="flex items-center justify-center gap-2 mt-4 text-[10px] sm:text-xs text-[#999] cursor-pointer">
+              <label className="flex items-center justify-center gap-2 mt-4 text-xs cursor-pointer" style={{ color: '#999' }}>
                 <input
                   type="checkbox"
-                  className="accent-[#99CC33] cursor-pointer"
+                  className="cursor-pointer accent-brand-green"
                   onChange={(e) => handleDontRemind(e.target.checked)}
                 />
                 <span>{t('partenaires:lightpop.remind')}</span>
