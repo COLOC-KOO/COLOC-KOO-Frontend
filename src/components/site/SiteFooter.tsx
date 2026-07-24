@@ -9,7 +9,7 @@ export function SiteFooter() {
     <footer className="bg-brand-dark text-white/85 w-full">
       <div className="w-full px-4 md:px-6 lg:px-8 py-14 grid gap-10 md:grid-cols-4">
         <div>
-          <div className="bebas text-2xl text-white">Sarintany'COLOC</div>
+          <div className="bebas text-2xl text-white">Coloc’KOO Miara-Trano</div>
           <p className="text-sm mt-3 text-white/60">
             {t('tagline')}
           </p>

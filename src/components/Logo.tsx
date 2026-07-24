@@ -17,8 +17,8 @@ export function Logo({ small = false }: { small?: boolean }) {
       <LogoMark className={small ? 'h-7 w-auto' : 'h-9 w-auto'} />
       <div className="flex flex-col leading-none">
           <h5 className="bebas text-2xl">
-            <span className="text-[--brand-cyan-dark]">Sarintany'</span>
-            <span className="text-[--brand-green-dark]">COLOC</span>
+            <span className="text-[--brand-cyan-dark]">Coloc’KOO</span>
+            <span className="text-[--brand-green-dark]">Miara-Trano</span>
           </h5>
         <span className="text-[9px] text-muted-foreground">by Sarintany Group</span>
       </div>
