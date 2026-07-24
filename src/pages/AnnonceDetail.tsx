@@ -1,7 +1,13 @@
+// AnnonceDetail.tsx - Version modifiée
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, BedDouble, Calendar, Check, ChevronDown, Eye, Heart, MessageSquare, MapPin, Send, Share2, Shield, Users, Building2, X } from 'lucide-react'
+import { 
+  ArrowLeft, BedDouble, Calendar, Check, ChevronDown, Eye, Heart, 
+  MessageSquare, MapPin, Send, Share2, Shield, Users, Building2, X,
+  User, Phone, Mail, Briefcase, MapPin as MapPinIcon, Calendar as CalendarIcon,
+  Award, Star, ExternalLink
+} from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { annonceToListing, api } from '../lib/api'
@@ -19,6 +25,155 @@ function StatItem({ icon, value, label }: { icon: React.ReactNode; value: string
       <div>
         <div className="font-semibold text-sm">{value}</div>
         <div className="text-xs text-muted-foreground">{label}</div>
+      </div>
+    </div>
+  )
+}
+
+// =============================================
+// MODAL PROFIL UTILISATEUR
+// =============================================
+interface UserProfileModalProps {
+  isOpen: boolean
+  onClose: () => void
+  userData: {
+    name: string
+    age?: number
+    budget?: string
+    memberSince?: string
+    avatar?: string
+    bio?: string
+    email?: string
+    phone?: string
+    profession?: string
+    city?: string
+    origin?: string
+    status?: string
+  }
+}
+
+function UserProfileModal({ isOpen, onClose, userData }: UserProfileModalProps) {
+  if (!isOpen) return null
+
+  const initials = userData.name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-md rounded-3xl border border-border bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+        {/* En-tête */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-brand-cyan to-brand-green">
+              {userData.avatar ? (
+                <img src={userData.avatar} alt={userData.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-lg font-bold text-white">
+                  {initials}
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-foreground">{userData.name}</div>
+              {userData.status && (
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <Award className="w-3 h-3 text-brand-cyan" />
+                  {userData.status}
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Badges */}
+        <div className="mt-4 flex flex-wrap gap-2">
+          {userData.budget && (
+            <span className="rounded-full bg-brand-cyan-light px-3 py-1 text-sm font-semibold text-brand-cyan-dark">
+              Budget max de {userData.budget}
+            </span>
+          )}
+          {userData.memberSince && (
+            <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+              Membre depuis {userData.memberSince}
+            </span>
+          )}
+          <button className="rounded-full bg-red-50 px-3 py-1 text-xs text-red-600 hover:bg-red-100 transition-colors">
+            Signaler un problème
+          </button>
+        </div>
+
+        {/* Bio */}
+        {userData.bio && (
+          <div className="mt-4 rounded-xl bg-muted/50 p-4">
+            <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+              {userData.bio}
+            </p>
+          </div>
+        )}
+
+        {/* Informations de contact */}
+        <div className="mt-4 space-y-2 border-t border-border pt-4">
+          {userData.email && (
+            <div className="flex items-center gap-3 text-sm">
+              <Mail className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">{userData.email}</span>
+            </div>
+          )}
+          {userData.phone && (
+            <div className="flex items-center gap-3 text-sm">
+              <Phone className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">{userData.phone}</span>
+            </div>
+          )}
+          {userData.profession && (
+            <div className="flex items-center gap-3 text-sm">
+              <Briefcase className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">{userData.profession}</span>
+            </div>
+          )}
+          {userData.city && (
+            <div className="flex items-center gap-3 text-sm">
+              <MapPinIcon className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">{userData.city}</span>
+            </div>
+          )}
+          {userData.origin && (
+            <div className="flex items-center gap-3 text-sm">
+              <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground">Originaire de {userData.origin}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="mt-5 flex flex-col gap-2">
+          <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white">
+            <Eye className="w-4 h-4 mr-2" /> Voir le profil
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1">
+              <MessageSquare className="w-4 h-4 mr-2" /> Message
+            </Button>
+            <Button variant="outline" className="flex-1">
+              <ExternalLink className="w-4 h-4 mr-2" /> Lien
+            </Button>
+          </div>
+        </div>
+
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          <a href="#" className="hover:underline">https://lcrf.fr/77zz1b</a>
+        </p>
       </div>
     </div>
   )
@@ -51,6 +206,41 @@ export default function AnnonceDetail() {
   const [messageToCandidate, setMessageToCandidate] = useState<Record<number, string>>({})
   const [messageModalCandidate, setMessageModalCandidate] = useState<null | { id: number; userId: number; name: string }>(null)
 
+  // Modal profil utilisateur
+  const [profileModal, setProfileModal] = useState<{
+    isOpen: boolean
+    userData: {
+      name: string
+      age?: number
+      budget?: string
+      memberSince?: string
+      avatar?: string
+      bio?: string
+      email?: string
+      phone?: string
+      profession?: string
+      city?: string
+      origin?: string
+      status?: string
+    }
+  }>({
+    isOpen: false,
+    userData: {
+      name: '',
+      age: 0,
+      budget: '',
+      memberSince: '',
+      avatar: '',
+      bio: '',
+      email: '',
+      phone: '',
+      profession: '',
+      city: '',
+      origin: '',
+      status: ''
+    }
+  })
+
   useEffect(() => {
     if (!id) return
     const loadAnnonce = async () => {
@@ -80,6 +270,31 @@ export default function AnnonceDetail() {
 
     loadAnnonce()
   }, [id, user?.id])
+
+  // Ouvrir le modal profil d'un utilisateur
+  const openProfileModal = (userData: {
+    name: string
+    age?: number
+    budget?: string
+    memberSince?: string
+    avatar?: string
+    bio?: string
+    email?: string
+    phone?: string
+    profession?: string
+    city?: string
+    origin?: string
+    status?: string
+  }) => {
+    setProfileModal({
+      isOpen: true,
+      userData
+    })
+  }
+
+  const closeProfileModal = () => {
+    setProfileModal(prev => ({ ...prev, isOpen: false }))
+  }
 
   const handleApply = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -278,6 +493,13 @@ export default function AnnonceDetail() {
 
   return (
     <SiteLayout>
+      {/* Modal Profil Utilisateur */}
+      <UserProfileModal
+        isOpen={profileModal.isOpen}
+        onClose={closeProfileModal}
+        userData={profileModal.userData}
+      />
+
       <div className="max-w-7xl mx-auto px-6 py-6">
         <Link to="/annonces" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" /> {t('annonceDetail:back')}
@@ -452,16 +674,33 @@ export default function AnnonceDetail() {
                             <ChevronDown className={`h-4 w-4 text-cyan-700 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                           </div>
                         </button>
-                        {!isCurrentUserCard ? (
-                          <button
-                            type="button"
-                            onClick={() => openMessageModal(candidate as any)}
-                            title={t('annonceDetail:candidates.sendMessage')}
-                            className="rounded-full border border-cyan-200 bg-cyan-50 p-2 text-cyan-700 transition hover:bg-cyan-100"
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                          </button>
-                        ) : null}
+                        {/* Bouton Détails utilisateur pour chaque candidat */}
+                        <button
+                          type="button"
+                          onClick={() => openProfileModal({
+                            name: fullName,
+                            age: candidate.age || undefined,
+                            budget: '850 €',
+                            memberSince: '3 mois',
+                            avatar: candidate.profile_picture || undefined,
+                            bio: candidate.bio || t('annonceDetail:profile.bio', { 
+                              name: fullName, 
+                              age: candidate.age || 27, 
+                              city: candidate.ville_actuelle || 'Paris',
+                              origin: candidate.ville_origine || 'Lyon'
+                            }),
+                            email: candidate.email || 'contact@email.com',
+                            phone: candidate.telephone || '+33 6 12 34 56 78',
+                            profession: candidate.profession || t('annonceDetail:profile.profession'),
+                            city: candidate.ville_actuelle || 'Paris',
+                            origin: candidate.ville_origine || 'Lyon',
+                            status: 'Salariée, 26 ans'
+                          })}
+                          className="rounded-full border border-cyan-200 bg-cyan-50 p-2 text-cyan-700 transition hover:bg-cyan-100 flex-shrink-0"
+                          title={t('annonceDetail:candidates.viewProfile')}
+                        >
+                          <User className="h-4 w-4" />
+                        </button>
                       </div>
                       {isExpanded ? (
                         <div className="mt-3 space-y-3 border-t border-cyan-100 pt-3">
@@ -625,8 +864,31 @@ export default function AnnonceDetail() {
               </div>
             </div>
             <div className="mt-6 pt-5 border-t border-border">
-              <div className="text-xs text-muted-foreground mb-2">{t('annonceDetail:owner.title')}</div>
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">{t('annonceDetail:owner.title')}</div>
+                {/* Bouton Détails utilisateur pour le déposant */}
+                <button
+                  type="button"
+                  onClick={() => openProfileModal({
+                    name: listing.owner.name,
+                    age: 35,
+                    budget: '850 €',
+                    memberSince: '1 an',
+                    avatar: listing.owner.profilePicture || undefined,
+                    bio: t('annonceDetail:profile.ownerBio', { name: listing.owner.name }),
+                    email: 'proprietaire@email.com',
+                    phone: '+33 6 98 76 54 32',
+                    profession: t('annonceDetail:profile.ownerProfession'),
+                    city: listing.city,
+                    origin: 'Antananarivo',
+                    status: 'Propriétaire'
+                  })}
+                  className="flex items-center gap-1 text-xs text-brand-cyan hover:text-brand-cyan-dark transition-colors"
+                >
+                  <User className="w-3 h-3" /> {t('annonceDetail:owner.viewProfile')}
+                </button>
+              </div>
+              <div className="flex items-center gap-3 mt-2">
                 <div className="w-10 h-10 rounded-full bg-brand-green-light flex items-center justify-center font-bold text-brand-green-dark">
                   {listing.owner.name[0]}
                 </div>
@@ -642,11 +904,11 @@ export default function AnnonceDetail() {
               {user ? (
                 listing.owner.id ? (
                   user.id === listing.owner.id ? (
-                    <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
+                    <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground mt-4">
                       {t('annonceDetail:owner.self')}
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-3 mt-4">
                       <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         {t('annonceDetail:contact.subject')}
                       </label>
@@ -679,12 +941,12 @@ export default function AnnonceDetail() {
                     </div>
                   )
                 ) : (
-                  <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
+                  <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground mt-4">
                     {t('annonceDetail:owner.unavailable')}
                   </div>
                 )
               ) : (
-                <Link to={`/auth?mode=signin&redirect=/annonces/${id}`}>
+                <Link to={`/auth?mode=signin&redirect=/annonces/${id}`} className="mt-4 block">
                   <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11">
                     {t('annonceDetail:contact.loginToContact')}
                   </Button>
