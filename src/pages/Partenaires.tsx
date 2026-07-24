@@ -16,6 +16,7 @@ import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { useConfig } from '../lib/config'
 import { motion, AnimatePresence } from 'framer-motion'
+import { LazyImage } from '../components/ui/LazyImage'
 
 // Image hero
 const heroImage = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1600&q=80"
@@ -64,7 +65,7 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
     <section className="relative overflow-hidden min-h-[400px] sm:min-h-[450px] flex items-center">
       {/* Image de fond */}
       <div className="absolute inset-0">
-        <img src={heroImage} alt="" className="w-full h-full object-cover" />
+        <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-br from-black/85 via-black/70 to-black/60" />
         <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
       </div>
