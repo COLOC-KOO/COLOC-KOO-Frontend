@@ -1,4 +1,4 @@
-{
+﻿{
   "title": "Annonces",
   "results": "résultats",
   "found": "trouvé(s)",
@@ -23,6 +23,10 @@
     "noServices": "Aucun service actif",
     "city": {
       "all": "Toutes les villes"
+    },
+    "district": {
+      "title": "Quartier",
+      "placeholder": "Ex : Antaninarenina"
     }
   }
 }

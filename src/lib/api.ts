@@ -1535,5 +1535,6 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         typeBail: a.type_bail ?? null,
         clauseSolidarite: a.clause_solidarite ?? null,
         candidatureCount: a.candidature_count != null ? Number(a.candidature_count) : undefined,
+        address: a.adresse_exacte ?? undefined,
     }
 }

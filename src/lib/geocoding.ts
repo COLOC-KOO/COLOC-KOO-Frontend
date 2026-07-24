@@ -5,55 +5,38 @@ export interface GeocodingResult {
   displayName: string;
 }
 
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')
+
 export async function geocodeAddress(address: string): Promise<GeocodingResult | null> {
   try {
-    // Encoder l'adresse pour l'URL
-    const encodedAddress = encodeURIComponent(address + ', Madagascar');
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1&countrycodes=mg`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'ColocationMadagascar/1.0', // Important pour Nominatim
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Erreur de géocodage: ${response.status}`);
+    const q = encodeURIComponent(address);
+    const url = `${API_BASE}/api/geocode?q=${q}`;
+    const res = await fetch(url, { method: 'GET' });
+    if (!res.ok) {
+      console.warn('Geocode proxy returned', res.status);
+      return null;
     }
-    
-    const data = await response.json();
-    
-    if (data && data.length > 0) {
+    const data = await res.json();
+    if (data && data.ok && data.result) {
       return {
-        latitude: parseFloat(data[0].lat),
-        longitude: parseFloat(data[0].lon),
-        displayName: data[0].display_name,
+        latitude: data.result.latitude,
+        longitude: data.result.longitude,
+        displayName: data.result.displayName || data.result.display_name || address,
       };
     }
-    
     return null;
-  } catch (error) {
-    console.error('Erreur de géocodage:', error);
+  } catch (err) {
+    console.error('Erreur geocode proxy:', err);
     return null;
   }
 }
 
-// Version batch pour plusieurs adresses
-export async function geocodeMultipleAddresses(
-  addresses: string[]
-): Promise<Record<string, GeocodingResult | null>> {
-  const results: Record<string, GeocodingResult | null> = {};
-  
-  // Nominatim limite à 1 requête par seconde
+export async function geocodeMultipleAddresses(addresses: string[]): Promise<Record<string, GeocodingResult | null>> {
+  const results: Record<string, GeocodingResult | null> = {}
   for (const address of addresses) {
-    const result = await geocodeAddress(address);
-    results[address] = result;
-    
-    // Attendre 1 seconde entre chaque requête
-    if (addresses.length > 1) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
+    results[address] = await geocodeAddress(address)
+    // small delay to avoid backend bursts
+    if (addresses.length > 1) await new Promise(r => setTimeout(r, 300))
   }
-  
-  return results;
+  return results
 }

@@ -67,12 +67,16 @@ export default function Home() {
   const heroTitle = t('home:hero.title');
   const [heroTitleLead, ...heroTitleRest] = heroTitle.split(',');
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchType, setSearchType] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [cityCards, setCityCards] = useState<CityInfo[]>([]);
   const [partners, setPartners] = useState<ApiPartenaireCampagne[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [hoveredListingId, setHoveredListingId] = useState<string | null>(null);
   const [currentPartnerIndex, setCurrentPartnerIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -130,9 +134,9 @@ export default function Home() {
 
         const dedupedCampaignPartners = Array.isArray(campagnes)
           ? campagnes.filter((item, index, array) => {
-              const firstIndex = array.findIndex((candidate) => candidate.id_partenaire === item.id_partenaire);
-              return firstIndex === index;
-            })
+            const firstIndex = array.findIndex((candidate) => candidate.id_partenaire === item.id_partenaire);
+            return firstIndex === index;
+          })
           : [];
 
         setFeaturedListings(mapped.slice(0, 6));
@@ -140,13 +144,23 @@ export default function Home() {
           dynamicCities.length > 0
             ? dynamicCities
             : villes.slice(0, 6).map((v) => ({
-                name: v.nom_ville,
-                count: 0,
-                image:
-                  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
-              })),
+              name: v.nom_ville,
+              count: 0,
+              image:
+                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+            })),
         );
         setPartners(dedupedCampaignPartners);
+
+        const suggestionSet = new Set<string>();
+        mapped.forEach((listing) => {
+          if (listing.city) suggestionSet.add(listing.city);
+          if (listing.district) suggestionSet.add(listing.district);
+        });
+        villes.forEach((v) => {
+          if (v.nom_ville) suggestionSet.add(v.nom_ville);
+        });
+        setSearchSuggestions(Array.from(suggestionSet).slice(0, 50));
       })
       .catch((err) => {
         if (!cancelled) {
@@ -236,6 +250,32 @@ export default function Home() {
     return `${cityCards.length} ${t('home:cities.subtitle').split(' ')[0]}${cityCards.length > 1 ? 's' : ''} couvertes, ${featuredListings.length} ${annonceLabel} validées`;
   }, [cityCards.length, featuredListings.length, loading, t]);
 
+  const handleSearch = () => {
+    const query = searchTerm.trim();
+    if (!query) {
+      navigate('/annonces');
+      return;
+    }
+
+    const normalizedQuery = query.replace(/\s+/g, ' ').trim();
+    const knownCities = cityCards.map((city) => city.name.toLowerCase());
+    const exactCityMatch = knownCities.find(
+      (name) => name === normalizedQuery.toLowerCase(),
+    );
+
+    const params = new URLSearchParams();
+    if (exactCityMatch) {
+      params.set('ville', normalizedQuery);
+    } else {
+      params.set('q', normalizedQuery);
+    }
+    if (searchType) {
+      params.set('type', searchType);
+    }
+
+    navigate(`/annonces?${params.toString()}`);
+  };
+
   // Traductions des étapes
   const translatedSteps = useMemo(() => {
     return steps.map((step, index) => ({
@@ -279,12 +319,14 @@ export default function Home() {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3 max-w-3xl">
-            <Link to="/annonces">
-              <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-2xl hover:from-cyan-600 hover:to-blue-700 hover:shadow-2xl hover:scale-105 border border-white/20">
-                <MapPin className="w-4 h-4" />
-                {t('home:hero.search')}
-              </button>
-            </Link>
+            <button
+              type="button"
+              onClick={handleSearch}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-2xl hover:from-cyan-600 hover:to-blue-700 hover:shadow-2xl hover:scale-105 border border-white/20"
+            >
+              <MapPin className="w-4 h-4" />
+              {t('home:hero.search')}
+            </button>
             <Link to="/deposer">
               <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-2xl hover:from-green-600 hover:to-emerald-700 hover:shadow-2xl hover:scale-105 border border-white/20">
                 <KeyRound className="w-4 h-4" />
@@ -297,22 +339,42 @@ export default function Home() {
             <div className="flex-1 flex items-center gap-2 px-4 py-2.5">
               <MapPin className="w-5 h-5 text-brand-cyan" />
               <input
+                list="hero-search-options"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSearch();
+                  }
+                }}
                 placeholder={t('home:hero.placeholder')}
                 className="flex-1 bg-transparent text-gray-800 outline-none text-sm placeholder-gray-500"
               />
+              <datalist id="hero-search-options">
+                {searchSuggestions.map((suggestion) => (
+                  <option key={suggestion} value={suggestion} />
+                ))}
+              </datalist>
             </div>
             <div className="hidden md:block w-px bg-gray-300 my-2" />
-            <select className="px-4 py-2.5 bg-transparent text-gray-800 text-sm outline-none cursor-pointer">
-              <option>{t('home:hero.allTypes')}</option>
-              <option>{t('home:hero.room')}</option>
-              <option>{t('home:hero.apartment')}</option>
-              <option>{t('home:hero.house')}</option>
+            <select
+              value={searchType}
+              onChange={(e) => setSearchType(e.target.value)}
+              className="px-4 py-2.5 bg-transparent text-gray-800 text-sm outline-none cursor-pointer"
+            >
+              <option value="">{t('home:hero.allTypes')}</option>
+              <option value="chambre">{t('home:hero.room')}</option>
+              <option value="appartement">{t('home:hero.apartment')}</option>
+              <option value="maison">{t('home:hero.house')}</option>
             </select>
-            <Link to="/annonces">
-              <Button className="w-full md:w-auto bg-gradient-to-r from-brand-cyan to-cyan-600 hover:from-brand-cyan-dark hover:to-cyan-700 text-white h-full px-6 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                <Search className="w-4 h-4" /> {t('common:common.search')}
-              </Button>
-            </Link>
+            <button
+              type="button"
+              onClick={handleSearch}
+              className="w-full md:w-auto bg-gradient-to-r from-brand-cyan to-cyan-600 hover:from-brand-cyan-dark hover:to-cyan-700 text-white h-full px-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
+            >
+              <Search className="w-4 h-4" /> {t('common:common.search')}
+            </button>
           </div>
 
           <div className="mt-5 flex flex-wrap gap-4 text-sm">
@@ -351,22 +413,20 @@ export default function Home() {
             <div className="flex gap-1 bg-gray-100/80 p-1 rounded-xl">
               <button
                 onClick={() => setViewMode("list")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  viewMode === "list"
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "list"
                     ? "bg-white shadow-sm text-gray-900"
                     : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                }`}
+                  }`}
               >
                 <List className="w-4 h-4" />
                 <span className="hidden sm:inline">{t('home:featured.list')}</span>
               </button>
               <button
                 onClick={() => setViewMode("map")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  viewMode === "map"
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "map"
                     ? "bg-white shadow-sm text-gray-900"
                     : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                }`}
+                  }`}
               >
                 <Map className="w-4 h-4" />
                 <span className="hidden sm:inline">{t('home:featured.map')}</span>
@@ -455,56 +515,275 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="h-[450px] lg:h-[500px] rounded-2xl overflow-hidden bg-gray-100 shadow-inner">
+
+                {/* =========================
+        CARTE INTERACTIVE
+    ========================== */}
+                <div className="h-[450px] lg:h-[600px] rounded-2xl overflow-hidden bg-gray-100 shadow-inner lg:sticky lg:top-4">
+
                   <MapView
                     listings={featuredListings}
+                    activeListingId={hoveredListingId}
+
+                    onListingHover={(listing) => {
+                      setHoveredListingId(
+                        listing?.id ?? null
+                      );
+                    }}
+
                     onListingClick={(listing) => {
-                      navigate(`/annonces/${listing.id}`);
+                      navigate(
+                        `/annonces/${listing.id}`
+                      );
                     }}
                   />
+
                 </div>
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {featuredListings.map((l) => (
-                    <div
-                      key={l.id}
-                      className="group cursor-pointer flex gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
-                      onClick={() => navigate(`/annonces/${l.id}`)}
-                    >
-                      <div className="relative flex-shrink-0 w-32 h-24 rounded-xl overflow-hidden bg-gray-100">
-                        {l.image ? (
-                          <img
-                            src={l.image}
-                            alt={l.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                            <Building2 className="w-8 h-8 text-gray-400" />
+
+
+                {/* =========================
+        LISTE DES ANNONCES
+    ========================== */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+
+                  {featuredListings.map((l) => {
+
+                    const isHovered =
+                      hoveredListingId === l.id;
+
+                    return (
+                      <div
+                        key={l.id}
+
+                        className={`
+              group cursor-pointer
+              overflow-hidden
+              rounded-3xl
+              border
+              bg-white
+              transition-all
+              duration-300
+
+              ${isHovered
+                            ? `
+                    border-[var(--brand-cyan)]
+                    ring-2
+                    ring-[var(--brand-cyan)]/20
+                    shadow-xl
+                    -translate-y-1
+                  `
+                            : `
+                    border-transparent
+                    shadow-sm
+                    hover:shadow-lg
+                  `
+                          }
+            `}
+
+                        onClick={() => {
+                          navigate(
+                            `/annonces/${l.id}`
+                          );
+                        }}
+
+                        onMouseEnter={() => {
+                          setHoveredListingId(l.id);
+                        }}
+
+                        onMouseLeave={() => {
+                          setHoveredListingId(null);
+                        }}
+                      >
+
+                        {/* =========================
+                IMAGE
+            ========================== */}
+                        <div className="relative h-40 overflow-hidden bg-gray-100">
+
+                          {l.image ? (
+
+                            <img
+                              src={l.image}
+                              alt={
+                                l.title ||
+                                "Annonce"
+                              }
+
+                              className={`
+                    w-full
+                    h-full
+                    object-cover
+                    transition-transform
+                    duration-500
+
+                    ${isHovered
+                                  ? "scale-110"
+                                  : "group-hover:scale-105"
+                                }
+                  `}
+                            />
+
+                          ) : (
+
+                            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+
+                              <Building2
+                                className="
+                      w-10
+                      h-10
+                      text-gray-400
+                    "
+                              />
+
+                            </div>
+
+                          )}
+
+
+                          {/* =========================
+                  BADGE LOCALISATION
+              ========================== */}
+                          <div className="absolute top-3 left-3">
+
+                            <span className="inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-medium text-gray-700 shadow-sm">
+
+                              <MapPin className="w-3 h-3" />
+
+                              {l.district ||
+                                l.city ||
+                                "Localisation"}
+
+                            </span>
+
                           </div>
-                        )}
-                        <div className="absolute bottom-1.5 right-1.5 bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-lg shadow-sm">
-                          <span className="text-xs font-bold text-gray-900">
-                            {l.price
-                              ? `${(l.price / 1000).toFixed(0)}k Ar`
-                              : "—"}
-                          </span>
+
+
+                          {/* =========================
+                  PRIX
+              ========================== */}
+                          <div className="absolute bottom-3 right-3">
+
+                            <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-xl shadow-md">
+
+                              <span className="text-sm font-bold text-gray-900">
+
+                                {l.price
+                                  ? `${(
+                                    l.price / 1000
+                                  ).toFixed(0)}k Ar`
+                                  : "Prix ?"}
+
+                              </span>
+
+                            </div>
+
+                          </div>
+
+
+                          {/* =========================
+                  OVERLAY
+              ========================== */}
+                          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+
                         </div>
+
+
+                        {/* =========================
+                INFORMATIONS
+            ========================== */}
+                        <div className="p-4 space-y-2">
+
+                          <div className="flex items-start justify-between gap-2">
+
+                            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 flex-1">
+
+                              {l.title ||
+                                "Annonce sans titre"}
+
+                            </h3>
+
+                            <div className="flex items-center gap-1 text-xs text-gray-600 shrink-0">
+
+                              <Star
+                                className="
+                      w-3.5
+                      h-3.5
+                      fill-[#FF385C]
+                      text-[#FF385C]
+                    "
+                              />
+
+                              <span>
+                                4.8
+                              </span>
+
+                            </div>
+
+                          </div>
+
+
+                          {/* LOCALISATION */}
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+
+                            <MapPin className="w-3.5 h-3.5" />
+
+                            <span>
+
+                              {l.district
+                                ? `${l.district}, `
+                                : ""}
+
+                              {l.city ||
+                                "Ville non spécifiée"}
+
+                            </span>
+
+                          </div>
+
+
+                          {/* DESCRIPTION */}
+                          {l.description && (
+
+                            <p className="text-xs text-gray-500 line-clamp-2">
+
+                              {l.description}
+
+                            </p>
+
+                          )}
+
+
+                          {/* PRIX */}
+                          <div className="pt-2 flex items-center justify-between">
+
+                            <span className="text-xs text-gray-400">
+
+                              {t(
+                                "home:featured.pricePerMonth"
+                              )}
+
+                            </span>
+
+                            <span className="text-sm font-bold text-[var(--brand-cyan-dark)]">
+
+                              {l.price
+                                ? `${(
+                                  l.price / 1000
+                                ).toFixed(0)}k Ar`
+                                : "Prix ?"}
+
+                            </span>
+
+                          </div>
+
+                        </div>
+
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-medium text-gray-900 line-clamp-1">
-                          {l.title || "Annonce sans titre"}
-                        </h3>
-                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3 h-3" />
-                          {l.city || "Ville non spécifiée"}
-                        </p>
-                        <p className="text-xs text-gray-500 line-clamp-2 mt-1">
-                          {l.description || ""}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+
                 </div>
+
               </div>
             )
           ) : (
@@ -797,11 +1076,10 @@ export default function Home() {
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`transition-all duration-300 rounded-full ${
-                        index === Math.floor(currentPartnerIndex)
+                      className={`transition-all duration-300 rounded-full ${index === Math.floor(currentPartnerIndex)
                           ? "w-6 h-1.5 bg-brand-cyan"
                           : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
-                      }`}
+                        }`}
                       aria-label={`Aller à la slide ${index + 1}`}
                     />
                   ),

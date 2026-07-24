@@ -11,6 +11,7 @@ export default function Annonces() {
   const { t } = useTranslation(['annonces', 'common']);
   const location = useLocation();
   const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
   const [type, setType] = useState("");
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
   const [maxPrice, setMaxPrice] = useState(0);
@@ -51,6 +52,7 @@ export default function Annonces() {
     const urlQuery = params.get("q") || "";
     const urlType = params.get("type") || "";
     const urlCity = params.get("ville") || params.get("city") || "";
+    const urlDistrict = params.get("quartier") || params.get("district") || "";
     const urlColoc = params.get("coloc") || "";
     const urlServices =
       params.get("services")?.split(",").map(Number).filter(Boolean) || [];
@@ -59,6 +61,7 @@ export default function Annonces() {
     setQuery(urlQuery);
     setType(urlType);
     setCity(urlCity);
+    setDistrict(urlDistrict);
     setColocFilter(urlColoc);
     setSelectedServiceIds(urlServices);
     setMaxPrice(urlMaxPrice);
@@ -70,6 +73,7 @@ export default function Annonces() {
     const params: any = {
       statut: "active",
       ville: city || undefined,
+      quartier: district || undefined,
       type: type || undefined,
       maxPrice: maxPrice || undefined,
       q: query || undefined,
@@ -113,6 +117,7 @@ export default function Annonces() {
 
   const resetFilters = () => {
     setCity("");
+    setDistrict("");
     setType("");
     setSelectedServiceIds([]);
     setMaxPrice(0);
@@ -148,12 +153,13 @@ export default function Annonces() {
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (city) count++;
+    if (district) count++;
     if (type) count++;
     if (selectedServiceIds.length > 0) count++;
     if (maxPrice > 0) count++;
     if (colocFilter) count++;
     return count;
-  }, [city, type, selectedServiceIds, maxPrice, colocFilter]);
+  }, [city, district, type, selectedServiceIds, maxPrice, colocFilter]);
 
   // Composant filtres mobile avec les couleurs du thème
   const MobileFilters = () => (
@@ -237,6 +243,20 @@ export default function Annonces() {
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
+          </div>
+
+          {/* Quartier */}
+          <div>
+            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+              {t('annonces:filters.district.title')}
+            </label>
+            <input
+              type="text"
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              placeholder={t('annonces:filters.district.placeholder')}
+              className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+            />
           </div>
 
           {/* Budget */}
@@ -540,6 +560,17 @@ export default function Annonces() {
             )}
           </div>
 
+          {/* Quartier */}
+          <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5">
+            <input
+              type="text"
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              placeholder={t('annonces:filters.district.placeholder')}
+              className="min-w-[130px] sm:min-w-[180px] text-sm px-3 py-2 border border-[var(--border)] rounded-xl bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
+            />
+          </div>
+
           {/* Bouton Réinitialiser */}
           <button
             onClick={resetFilters}
@@ -556,6 +587,14 @@ export default function Annonces() {
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
                 {city}
                 <button onClick={() => setCity("")} className="hover:text-[var(--brand-cyan)]">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {district && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
+                {district}
+                <button onClick={() => setDistrict("")} className="hover:text-[var(--brand-cyan)]">
                   <X className="w-3 h-3" />
                 </button>
               </span>
