@@ -10,6 +10,7 @@ import { roleLevel, useAuth } from '../lib/auth'
 const postes: { value: Poste; label: string }[] = [
   { value: 'colocataire', label: 'colocataire' },
   { value: 'proprietaire', label: 'proprietaire' },
+  { value: 'agent', label: 'agent' },
   /*{ value: 'moderateur', label: 'moderateur' },
   { value: 'admin', label: 'admin' },
   { value: 'superadmin', label: 'superadmin' },*/
@@ -70,6 +71,7 @@ export default function Auth() {
     const translationMap: Record<string, string> = {
       'colocataire': t('colocataire'),
       'proprietaire': t('proprietaire'),
+      'agent': t('agent'),
       'moderateur': t('moderateur'),
       'admin': t('admin'),
       'superadmin': t('superadmin'),

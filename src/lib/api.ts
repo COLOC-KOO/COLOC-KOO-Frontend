@@ -6,7 +6,7 @@ const API_BASE_URL = API_URL.replace(/\/api\/?$/, '')
 const TOKEN_KEY = 'colockoo_token'
 const USER_KEY = 'colockoo_user'
 
-export type Poste = 'superadmin' | 'admin' | 'moderateur' | 'proprietaire' | 'colocataire'
+export type Poste = 'superadmin' | 'admin' | 'moderateur' | 'proprietaire' | 'agent' | 'colocataire'
 
 export interface AuthUser {
     id: number
