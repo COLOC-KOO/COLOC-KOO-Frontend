@@ -1,4 +1,4 @@
-{
+﻿{
   "title": "Listings",
   "results": "results",
   "found": "found",
@@ -23,6 +23,10 @@
     "noServices": "No active services",
     "city": {
       "all": "All cities"
+    },
+    "district": {
+      "title": "Neighborhood",
+      "placeholder": "Ex: Ankorondrano"
     }
   }
 }
