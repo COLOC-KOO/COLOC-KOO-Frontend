@@ -31,6 +31,7 @@ import AdminStatistiquesColocation from './pages/admin/AdminStatistiqueColoc'
 import AdminTechnique from './pages/admin/AdminTechnique'
 import AdminSuiviMissions from './pages/admin/AdminsuiviMission'
 import AdminServicesColockoo from './pages/admin/AdminServicecoloc'
+import AdminBooster from './pages/admin/AdminBooster'
 import AdminContratsEDL from './pages/admin/AdminContrat'
 import { useAuth } from './lib/auth'
 import { ConfigProvider } from './lib/config'
@@ -79,6 +80,7 @@ export default function App() {
       <Route path="/admin/technique" element={<AdminRoute><AdminTechnique /></AdminRoute>} />
       <Route path="/admin/suivi-missions" element={<AdminRoute><AdminSuiviMissions /></AdminRoute>} />
       <Route path="/admin/services-colockoo" element={<AdminRoute><AdminServicesColockoo /></AdminRoute>} />
+      <Route path="/admin/boost-annonce" element={<AdminRoute><AdminBooster /></AdminRoute>} />
       <Route path="/admin/contrats-edl" element={<AdminRoute><AdminContratsEDL /></AdminRoute>} />
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
