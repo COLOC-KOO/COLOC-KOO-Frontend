@@ -99,6 +99,33 @@ export interface ApiCandidature {
     utilisateur_id?: number
 }
 
+export interface ApiProfilRechercheLogement {
+    id_utilisateur: number
+    nom: string
+    prenom: string
+    age: number | null
+    bio: string | null
+    profile_picture: string | null
+    profession: string | null
+    est_verifie: boolean
+    date_inscription: string
+    ville_actuelle: string | null
+    ville_origine: string | null
+    ville_recherchee: string
+    demandes_count: number
+    derniere_demande: string
+    annonces_demandees: string[]
+    email: string | null
+    telephone: string | null
+}
+
+export interface ApiProfilsRechercheResponse {
+    ville: string
+    months: number
+    total: number
+    profiles: ApiProfilRechercheLogement[]
+}
+
 // ===== TYPES POUR LES ÉQUIPES =====
 export interface ApiEquipe {
     id_equipe: number
@@ -895,6 +922,19 @@ export const api = {
     },
     candidatures() {
         return request<ApiCandidature[]>('/candidatures')
+    },
+    profilsRechercheLogement(params: {
+        ville: string
+        q?: string
+        profession?: string
+        maxAge?: number
+        months?: number
+    }) {
+        const search = new URLSearchParams()
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== '') search.set(key, String(value))
+        })
+        return request<ApiProfilsRechercheResponse>(`/candidatures/profils?${search.toString()}`)
     },
     createCandidature(payload: CreateCandidaturePayload) {
         return request<ApiCandidature>('/candidatures', {
