@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
   Building2,
@@ -27,362 +27,395 @@ import {
   BarChart,
   Code,
   Trash2,
-  EyeOff
-} from 'lucide-react'
-import { Logo } from '../Logo'
-import { roleLevel, useAuth } from '../../lib/auth'
-import { api, type ApiPartenaireRequest, type BackofficeMember, type DemandeServiceStaffItem } from '../../lib/api'
+  Rocket,
+  EyeOff,
+} from "lucide-react";
+import { Logo } from "../Logo";
+import { roleLevel, useAuth } from "../../lib/auth";
+import {
+  api,
+  type ApiPartenaireRequest,
+  type BackofficeMember,
+  type DemandeServiceStaffItem,
+} from "../../lib/api";
 
 interface ContactMessageItem {
-  id_message: number
-  nom: string
-  email: string
-  sujet: string
-  message: string
-  statut: string
-  date_creation: string
+  id_message: number;
+  nom: string;
+  email: string;
+  sujet: string;
+  message: string;
+  statut: string;
+  date_creation: string;
 }
 
 // Interface pour les éléments de navigation
 interface NavItem {
-  to: string
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-  badge?: number
-  minRole: number
-  description: string
-  exact?: boolean
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: number;
+  minRole: number;
+  description: string;
+  exact?: boolean;
 }
 
 interface NavSection {
-  section: string
-  minRole?: number
-  items: NavItem[]
+  section: string;
+  minRole?: number;
+  items: NavItem[];
 }
 
 // Tous les éléments de navigation de la maquette
 const navItems: NavSection[] = [
   {
-    section: 'Modération',
+    section: "Modération",
     items: [
-      { 
-        to: '/admin', 
-        label: 'Tableau de bord', 
-        icon: Gauge, 
-        exact: true, 
+      {
+        to: "/admin",
+        label: "Tableau de bord",
+        icon: Gauge,
+        exact: true,
         minRole: 1,
-        description: 'Vue d\'ensemble et objectifs'
+        description: "Vue d'ensemble et objectifs",
       },
-      { 
-        to: '/admin/annonces', 
-        label: 'File de validation des annonces', 
-        icon: ListChecks, 
-        // badge: 5, 
+      {
+        to: "/admin/annonces",
+        label: "File de validation des annonces",
+        icon: ListChecks,
+        // badge: 5,
         minRole: 1,
-        description: 'Annonces en attente de modération'
+        description: "Annonces en attente de modération",
       },
-      { 
-        to: '/admin/signalements-conversations', 
-        label: 'Signalements conversations', 
-        icon: MessageCircleWarning, 
-        // badge: 2, 
+      {
+        to: "/admin/signalements-conversations",
+        label: "Signalements conversations",
+        icon: MessageCircleWarning,
+        // badge: 2,
         minRole: 1,
-        description: 'Conversations signalées'
+        description: "Conversations signalées",
       },
-      { 
-        to: '/admin/utilisateurs', 
-        label: 'Comptes', 
-        icon: Users, 
+      {
+        to: "/admin/utilisateurs",
+        label: "Comptes",
+        icon: Users,
         minRole: 1,
-        description: 'Gestion des utilisateurs'
+        description: "Gestion des utilisateurs",
       },
-      { 
-        to: '/admin/messages', 
-        label: 'Messages', 
-        icon: MessageSquare, 
+      {
+        to: "/admin/messages",
+        label: "Messages",
+        icon: MessageSquare,
         minRole: 1,
-        description: 'Modèles et historiques'
+        description: "Modèles et historiques",
       },
-      { 
-        to: '/admin/journal-actions', 
-        label: 'Journal d\'actions', 
-        icon: History, 
+      {
+        to: "/admin/journal-actions",
+        label: "Journal d'actions",
+        icon: History,
         minRole: 1,
-        description: 'Traçabilité des actions'
+        description: "Traçabilité des actions",
       },
-    ]
+    ],
   },
   {
-    section: 'Gestion',
+    section: "Gestion",
     minRole: 2,
     items: [
-      { 
-        to: '/admin/suivi-missions', 
-        label: 'Suivi missions', 
-        icon: BarChart3, 
+      {
+        to: "/admin/suivi-missions",
+        label: "Suivi missions",
+        icon: BarChart3,
         minRole: 2,
-        description: 'Tableau de bord des missions'
+        description: "Tableau de bord des missions",
       },
-      { 
-        to: '/admin/services-colockoo', 
-        label: 'Services Coloc\'KOO', 
-        icon: Wrench, 
-        // badge: 3, 
+      {
+        to: "/admin/services-colockoo",
+        label: "Services Coloc'KOO",
+        icon: Wrench,
+        // badge: 3,
         minRole: 2,
-        description: 'Acquisition et offres'
+        description: "Acquisition et offres",
       },
-      { 
-        to: '/admin/contrats-edl', 
-        label: 'Contrats & EDL', 
-        icon: FileText, 
+      {
+        to: "/admin/boost-annonce", // <-- NOUVEAU
+        label: "Boost Annonce",
+        icon: Rocket, // <-- Utilisez Rocket ou Zap
         minRole: 2,
-        description: 'Documents et états des lieux'
+        description: "Gestion des offres de boost",
       },
-      { 
-        to: '/admin/partenaires', 
-        label: 'Partenaires', 
-        icon: Store, 
+      {
+        to: "/admin/contrats-edl",
+        label: "Contrats & EDL",
+        icon: FileText,
         minRole: 2,
-        description: 'Comptes et campagnes'
+        description: "Documents et états des lieux",
       },
-    ]
+      {
+        to: "/admin/partenaires",
+        label: "Partenaires",
+        icon: Store,
+        minRole: 2,
+        description: "Comptes et campagnes",
+      },
+    ],
   },
   {
-    section: 'Administration',
+    section: "Administration",
     minRole: 3,
     items: [
-      { 
-        to: '/admin/versements', 
-        label: 'Versements', 
-        icon: Banknote, 
+      {
+        to: "/admin/versements",
+        label: "Versements",
+        icon: Banknote,
         minRole: 3,
-        description: 'Suivi des paiements'
+        description: "Suivi des paiements",
       },
-      { 
-        to: '/admin/equipe-objectifs', 
-        label: 'Équipe & objectifs', 
-        icon: UserCog, 
+      {
+        to: "/admin/equipe-objectifs",
+        label: "Équipe & objectifs",
+        icon: UserCog,
         minRole: 3,
-        description: 'Gestion des membres'
+        description: "Gestion des membres",
       },
-      { 
-        to: '/admin/configuration', 
-        label: 'Configuration', 
-        icon: Settings, 
+      {
+        to: "/admin/configuration",
+        label: "Configuration",
+        icon: Settings,
         minRole: 3,
-        description: 'Paramètres globaux'
+        description: "Paramètres globaux",
       },
-      { 
-        to: '/admin/performances', 
-        label: 'Performance', 
-        icon: Activity, 
+      {
+        to: "/admin/performances",
+        label: "Performance",
+        icon: Activity,
         minRole: 3,
-        description: 'Qualité de service'
+        description: "Qualité de service",
       },
-      { 
-        to: '/admin/statistiques-colocation', 
-        label: 'Statistiques colocation', 
-        icon: BarChart, 
+      {
+        to: "/admin/statistiques-colocation",
+        label: "Statistiques colocation",
+        icon: BarChart,
         minRole: 3,
-        description: 'Analyse des données'
+        description: "Analyse des données",
       },
-      { 
-        to: '/admin/technique', 
-        label: 'Technique (dév.)', 
-        icon: Code, 
+      {
+        to: "/admin/technique",
+        label: "Technique (dév.)",
+        icon: Code,
         minRole: 3,
-        description: 'Indicateurs développeur'
+        description: "Indicateurs développeur",
       },
-    ]
-  }
-]
+    ],
+  },
+];
 
 // Données simulées pour le header
 interface AdminLayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [notificationOpen, setNotificationOpen] = useState(false)
-  const [showPartnerModal, setShowPartnerModal] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<BackofficeMember[]>([])
-  const [partnerRequests, setPartnerRequests] = useState<ApiPartenaireRequest[]>([])
-  const [contactMessages, setContactMessages] = useState<ContactMessageItem[]>([])
-  const [serviceDemandes, setServiceDemandes] = useState<DemandeServiceStaffItem[]>([])
-  const [loadingSearch, setLoadingSearch] = useState(false)
-  const [loadingNotifications, setLoadingNotifications] = useState(false)
-  const { user, logout } = useAuth()
-  const viewRole = roleLevel(user?.poste)
-  const location = useLocation()
-  const navigate = useNavigate()
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<BackofficeMember[]>([]);
+  const [partnerRequests, setPartnerRequests] = useState<
+    ApiPartenaireRequest[]
+  >([]);
+  const [contactMessages, setContactMessages] = useState<ContactMessageItem[]>(
+    [],
+  );
+  const [serviceDemandes, setServiceDemandes] = useState<
+    DemandeServiceStaffItem[]
+  >([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const { user, logout } = useAuth();
+  const viewRole = roleLevel(user?.poste);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Filtrer les éléments de navigation selon le rôle
   const filteredNav = navItems
-    .filter(section => section.minRole === undefined || viewRole >= section.minRole)
-    .map(section => ({
+    .filter(
+      (section) => section.minRole === undefined || viewRole >= section.minRole,
+    )
+    .map((section) => ({
       ...section,
-      items: section.items.filter(item => viewRole >= (item.minRole || 1))
+      items: section.items.filter((item) => viewRole >= (item.minRole || 1)),
     }))
-    .filter(section => section.items.length > 0)
+    .filter((section) => section.items.length > 0);
 
   useEffect(() => {
-    let active = true
+    let active = true;
     const loadNotifications = async () => {
-      setLoadingNotifications(true)
+      setLoadingNotifications(true);
       try {
         const [requests, messages] = await Promise.all([
           api.backofficePartenaireRequests(),
           api.backofficeContactMessages(),
-        ])
+        ]);
         if (active) {
-          setPartnerRequests(requests)
-          setContactMessages(messages)
+          setPartnerRequests(requests);
+          setContactMessages(messages);
         }
       } catch {
         if (active) {
-          setPartnerRequests([])
-          setContactMessages([])
+          setPartnerRequests([]);
+          setContactMessages([]);
         }
       } finally {
-        if (active) setLoadingNotifications(false)
+        if (active) setLoadingNotifications(false);
       }
       // Demandes de service : chargées à part pour ne pas impacter les autres
       // sources si l'appel échoue (ex. rôle sans accès).
       try {
-        const demandes = await api.backofficeDemandesService()
-        if (active) setServiceDemandes(demandes)
+        const demandes = await api.backofficeDemandesService();
+        if (active) setServiceDemandes(demandes);
       } catch {
-        if (active) setServiceDemandes([])
+        if (active) setServiceDemandes([]);
       }
-    }
+    };
 
-    loadNotifications()
+    loadNotifications();
     return () => {
-      active = false
-    }
-  }, [])
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (notificationOpen) {
-      void refreshNotifications()
+      void refreshNotifications();
     }
-  }, [notificationOpen])
+  }, [notificationOpen]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setSearchResults([])
-      setSearchOpen(false)
-      return
+      setSearchResults([]);
+      setSearchOpen(false);
+      return;
     }
 
     const timer = window.setTimeout(async () => {
-      setLoadingSearch(true)
+      setLoadingSearch(true);
       try {
-        const results = await api.backofficeMembers({ q: searchQuery.trim() })
-        setSearchResults(results.slice(0, 5))
-        setSearchOpen(true)
+        const results = await api.backofficeMembers({ q: searchQuery.trim() });
+        setSearchResults(results.slice(0, 5));
+        setSearchOpen(true);
       } catch {
-        setSearchResults([])
-        setSearchOpen(true)
+        setSearchResults([]);
+        setSearchOpen(true);
       } finally {
-        setLoadingSearch(false)
+        setLoadingSearch(false);
       }
-    }, 250)
+    }, 250);
 
-    return () => window.clearTimeout(timer)
-  }, [searchQuery])
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
-  const pendingPartnerRequests = partnerRequests.filter((item) => item.statut === 'en_attente')
-  const pendingServiceDemandes = serviceDemandes.filter((item) => item.statut === 'nouvelle')
+  const pendingPartnerRequests = partnerRequests.filter(
+    (item) => item.statut === "en_attente",
+  );
+  const pendingServiceDemandes = serviceDemandes.filter(
+    (item) => item.statut === "nouvelle",
+  );
   const notificationCount =
     pendingPartnerRequests.length +
-    contactMessages.filter((item) => item.statut === 'new').length +
-    pendingServiceDemandes.length
+    contactMessages.filter((item) => item.statut === "new").length +
+    pendingServiceDemandes.length;
 
   const openPartnerRequestsModal = () => {
-    setNotificationOpen(false)
-    setShowPartnerModal(true)
-  }
+    setNotificationOpen(false);
+    setShowPartnerModal(true);
+  };
 
   const handleSignalementNavigation = () => {
-    setNotificationOpen(false)
-    navigate('/admin/signalements-conversations')
-  }
+    setNotificationOpen(false);
+    navigate("/admin/signalements-conversations");
+  };
 
   const refreshNotifications = async () => {
-    setLoadingNotifications(true)
+    setLoadingNotifications(true);
     try {
       const [requests, messages] = await Promise.all([
         api.backofficePartenaireRequests(),
         api.backofficeContactMessages(),
-      ])
-      setPartnerRequests(requests)
-      setContactMessages(messages)
+      ]);
+      setPartnerRequests(requests);
+      setContactMessages(messages);
     } catch {
-      setPartnerRequests([])
-      setContactMessages([])
+      setPartnerRequests([]);
+      setContactMessages([]);
     } finally {
-      setLoadingNotifications(false)
+      setLoadingNotifications(false);
     }
     try {
-      setServiceDemandes(await api.backofficeDemandesService())
+      setServiceDemandes(await api.backofficeDemandesService());
     } catch {
-      setServiceDemandes([])
+      setServiceDemandes([]);
     }
-  }
+  };
 
   const handleDeleteContactMessage = async (id: number) => {
     try {
-      await api.deleteBackofficeContactMessage(id)
-      await refreshNotifications()
+      await api.deleteBackofficeContactMessage(id);
+      await refreshNotifications();
     } catch {
       // ignore
     }
-  }
+  };
 
   const handleDeletePartnerRequest = async (id: number) => {
     try {
-      await api.deleteBackofficePartenaireRequest(id)
-      await refreshNotifications()
+      await api.deleteBackofficePartenaireRequest(id);
+      await refreshNotifications();
     } catch {
       // ignore
     }
-  }
+  };
 
   // Masquer une demande de service de la cloche : on la passe en « en-cours »
   // (prise en compte) — elle disparaît des notifications « à vérifier ».
   const handleHideServiceDemande = async (reference: string) => {
     setServiceDemandes((prev) =>
-      prev.map((item) => (item.reference === reference ? { ...item, statut: 'en-cours' } : item)),
-    )
+      prev.map((item) =>
+        item.reference === reference ? { ...item, statut: "en-cours" } : item,
+      ),
+    );
     try {
-      await api.updateDemandeServiceStatut(reference, 'en-cours')
+      await api.updateDemandeServiceStatut(reference, "en-cours");
     } catch {
-      await refreshNotifications()
+      await refreshNotifications();
     }
-  }
+  };
 
   // Obtenir le titre de la page active
   const getPageTitle = () => {
     for (const section of filteredNav) {
       for (const item of section.items) {
-        if (item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to)) {
-          return item.label
+        if (
+          item.exact
+            ? location.pathname === item.to
+            : location.pathname.startsWith(item.to)
+        ) {
+          return item.label;
         }
       }
     }
-    return 'Tableau de bord'
-  }
+    return "Tableau de bord";
+  };
 
   return (
     <div className="min-h-screen bg-[oklch(0.18_0.005_260)] text-white/90">
       <div className="bg-black border-b border-white/10 px-4 py-2 flex items-center gap-4 flex-wrap text-xs sticky top-0 z-50">
-        <span className="font-bold text-brand-olive tracking-wider">BACK-OFFICE</span>
+        <span className="font-bold text-brand-olive tracking-wider">
+          BACK-OFFICE
+        </span>
         <span className="px-3 py-1 rounded border text-[11px] uppercase tracking-wider font-semibold bg-brand-cyan border-brand-cyan text-[oklch(0.15_0_0)]">
-          {user?.poste || 'admin'}
+          {user?.poste || "admin"}
         </span>
         <span className="ml-auto text-white/50">
           Connecte : <b className="text-white">{user?.name}</b>
@@ -396,7 +429,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Sidebar - comme dans la maquette */}
         <aside
           className={`${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0 fixed lg:sticky top-[41px] left-0 h-[calc(100vh-41px)] w-64 bg-[oklch(0.22_0.005_260)] border-r border-white/10 z-50 transition-transform flex flex-col overflow-y-auto`}
         >
           {/* Brand - comme dans la maquette */}
@@ -417,35 +450,39 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   {section.section}
                 </div>
                 {section.items.map((item) => {
-                  const isActive = item.exact 
-                    ? location.pathname === item.to 
-                    : location.pathname.startsWith(item.to)
-                  
+                  const isActive = item.exact
+                    ? location.pathname === item.to
+                    : location.pathname.startsWith(item.to);
+
                   return (
                     <Link
                       key={item.to}
                       to={item.to}
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition group ${
-                        isActive 
-                          ? 'bg-brand-cyan/15 text-brand-cyan font-semibold' 
-                          : 'text-white/70 hover:bg-white/5 hover:text-white'
+                        isActive
+                          ? "bg-brand-cyan/15 text-brand-cyan font-semibold"
+                          : "text-white/70 hover:bg-white/5 hover:text-white"
                       }`}
                       title={item.description}
                     >
-                      <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-brand-cyan' : 'text-white/50'}`} />
+                      <item.icon
+                        className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-brand-cyan" : "text-white/50"}`}
+                      />
                       <span className="flex-1">{item.label}</span>
                       {item.badge && (
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                            isActive ? 'bg-brand-cyan/20 text-brand-cyan' : 'bg-brand-magenta text-white'
+                            isActive
+                              ? "bg-brand-cyan/20 text-brand-cyan"
+                              : "bg-brand-magenta text-white"
                           }`}
                         >
                           {item.badge}
                         </span>
                       )}
                     </Link>
-                  )
+                  );
                 })}
               </div>
             ))}
@@ -453,7 +490,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
           {/* Footer sidebar - comme dans la maquette */}
           <div className="p-3 border-t border-white/10">
-            <button 
+            <button
               onClick={logout}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-white w-full transition"
             >
@@ -466,11 +503,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div className="flex-1 min-w-0">
           {/* Header - comme dans la maquette */}
           <header className="h-14 border-b border-white/10 bg-[oklch(0.22_0.005_260)] flex items-center px-4 gap-3 sticky top-[41px] z-30">
-            <button 
+            <button
               className="lg:hidden p-1 rounded hover:bg-white/5 transition"
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {sidebarOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
 
             {/* Titre de la page */}
@@ -486,7 +527,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => searchQuery.trim() && setSearchOpen(true)}
-                  onBlur={() => window.setTimeout(() => setSearchOpen(false), 150)}
+                  onBlur={() =>
+                    window.setTimeout(() => setSearchOpen(false), 150)
+                  }
                   placeholder="Rechercher un utilisateur..."
                   className="flex-1 bg-transparent outline-none text-sm placeholder:text-white/40"
                 />
@@ -495,9 +538,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
-                      setSearchQuery('')
-                      setSearchResults([])
-                      setSearchOpen(false)
+                      setSearchQuery("");
+                      setSearchResults([]);
+                      setSearchOpen(false);
                     }}
                     className="text-white/40 hover:text-white/70 text-xs p-1"
                   >
@@ -509,22 +552,39 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               {searchOpen && (
                 <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-white/10 bg-[oklch(0.20_0.005_260)] shadow-2xl z-40 overflow-hidden">
                   {loadingSearch ? (
-                    <div className="px-3 py-3 text-sm text-white/60">Recherche en cours...</div>
+                    <div className="px-3 py-3 text-sm text-white/60">
+                      Recherche en cours...
+                    </div>
                   ) : searchResults.length > 0 ? (
                     <div className="max-h-72 overflow-y-auto">
                       {searchResults.map((result) => {
-                        const fullName = [result.prenom, result.nom].filter(Boolean).join(' ').trim() || result.email
+                        const fullName =
+                          [result.prenom, result.nom]
+                            .filter(Boolean)
+                            .join(" ")
+                            .trim() || result.email;
                         return (
-                          <div key={result.id} className="px-3 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-0">
-                            <div className="text-sm font-medium text-white">{fullName}</div>
-                            <div className="text-xs text-white/50">{result.email}</div>
-                            <div className="text-[11px] uppercase tracking-wider text-brand-cyan mt-1">{result.role}</div>
+                          <div
+                            key={result.id}
+                            className="px-3 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-0"
+                          >
+                            <div className="text-sm font-medium text-white">
+                              {fullName}
+                            </div>
+                            <div className="text-xs text-white/50">
+                              {result.email}
+                            </div>
+                            <div className="text-[11px] uppercase tracking-wider text-brand-cyan mt-1">
+                              {result.role}
+                            </div>
                           </div>
-                        )
+                        );
                       })}
                     </div>
                   ) : (
-                    <div className="px-3 py-3 text-sm text-white/60">Aucun résultat pour “{searchQuery}”.</div>
+                    <div className="px-3 py-3 text-sm text-white/60">
+                      Aucun résultat pour “{searchQuery}”.
+                    </div>
                   )}
                 </div>
               )}
@@ -549,83 +609,178 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-white/10 bg-[oklch(0.20_0.005_260)] shadow-2xl z-40 overflow-hidden">
                   <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-white">Notifications</div>
-                      <div className="text-xs text-white/50">{loadingNotifications ? 'Chargement...' : `${notificationCount} élément(s) à vérifier`}</div>
+                      <div className="text-sm font-semibold text-white">
+                        Notifications
+                      </div>
+                      <div className="text-xs text-white/50">
+                        {loadingNotifications
+                          ? "Chargement..."
+                          : `${notificationCount} élément(s) à vérifier`}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button type="button" onClick={openPartnerRequestsModal} className="text-xs text-brand-cyan hover:text-brand-cyan/90">Demandes</button>
-                      <button type="button" onClick={handleSignalementNavigation} className="text-xs text-white/60 hover:text-white">Signalements</button>
+                      <button
+                        type="button"
+                        onClick={openPartnerRequestsModal}
+                        className="text-xs text-brand-cyan hover:text-brand-cyan/90"
+                      >
+                        Demandes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSignalementNavigation}
+                        className="text-xs text-white/60 hover:text-white"
+                      >
+                        Signalements
+                      </button>
                     </div>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
                     {loadingNotifications ? (
-                      <div className="px-4 py-4 text-sm text-white/60">Chargement des notifications...</div>
-                    ) : partnerRequests.length === 0 && contactMessages.length === 0 && pendingServiceDemandes.length === 0 ? (
-                      <div className="px-4 py-4 text-sm text-white/60">Aucune notification pour le moment.</div>
+                      <div className="px-4 py-4 text-sm text-white/60">
+                        Chargement des notifications...
+                      </div>
+                    ) : partnerRequests.length === 0 &&
+                      contactMessages.length === 0 &&
+                      pendingServiceDemandes.length === 0 ? (
+                      <div className="px-4 py-4 text-sm text-white/60">
+                        Aucune notification pour le moment.
+                      </div>
                     ) : (
                       <>
                         {partnerRequests.map((item) => (
-                          <div key={item.id_demande} className="w-full px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5">
-                            <button type="button" onClick={openPartnerRequestsModal} className="w-full text-left">
+                          <div
+                            key={item.id_demande}
+                            className="w-full px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5"
+                          >
+                            <button
+                              type="button"
+                              onClick={openPartnerRequestsModal}
+                              className="w-full text-left"
+                            >
                               <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <div className="text-sm font-medium text-white">{item.nom_entreprise || item.nom_contact}</div>
-                                  <div className="text-xs text-white/50 mt-1">{item.email}</div>
+                                  <div className="text-sm font-medium text-white">
+                                    {item.nom_entreprise || item.nom_contact}
+                                  </div>
+                                  <div className="text-xs text-white/50 mt-1">
+                                    {item.email}
+                                  </div>
                                 </div>
-                                <span className="text-[10px] uppercase tracking-wider text-brand-cyan">{item.niveau_souhaite || 'À définir'}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-brand-cyan">
+                                  {item.niveau_souhaite || "À définir"}
+                                </span>
                               </div>
-                              <p className="mt-2 text-xs text-white/60 line-clamp-2">{item.message || 'Nouvelle demande de partenariat reçue.'}</p>
-                              <div className="mt-2 text-[11px] text-white/40">{new Date(item.date_creation).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                              <p className="mt-2 text-xs text-white/60 line-clamp-2">
+                                {item.message ||
+                                  "Nouvelle demande de partenariat reçue."}
+                              </p>
+                              <div className="mt-2 text-[11px] text-white/40">
+                                {new Date(item.date_creation).toLocaleString(
+                                  "fr-FR",
+                                  { dateStyle: "medium", timeStyle: "short" },
+                                )}
+                              </div>
                             </button>
                             <div className="mt-2 flex justify-end">
-                              <button type="button" onClick={() => handleDeletePartnerRequest(item.id_demande)} className="rounded p-1.5 text-white/50 hover:bg-white/10 hover:text-white" title="Supprimer la notification">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeletePartnerRequest(item.id_demande)
+                                }
+                                className="rounded p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
+                                title="Supprimer la notification"
+                              >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </div>
                         ))}
                         {contactMessages.map((item) => (
-                          <div key={item.id_message} className="w-full px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5">
+                          <div
+                            key={item.id_message}
+                            className="w-full px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5"
+                          >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <div className="text-sm font-medium text-white">{item.sujet}</div>
-                                <div className="text-xs text-white/50 mt-1">{item.nom} · {item.email}</div>
-                                <p className="mt-2 text-xs text-white/60 line-clamp-3">{item.message}</p>
+                                <div className="text-sm font-medium text-white">
+                                  {item.sujet}
+                                </div>
+                                <div className="text-xs text-white/50 mt-1">
+                                  {item.nom} · {item.email}
+                                </div>
+                                <p className="mt-2 text-xs text-white/60 line-clamp-3">
+                                  {item.message}
+                                </p>
                               </div>
-                              <button type="button" onClick={() => handleDeleteContactMessage(item.id_message)} className="rounded p-1.5 text-white/50 hover:bg-white/10 hover:text-white" title="Supprimer la notification">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteContactMessage(item.id_message)
+                                }
+                                className="rounded p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
+                                title="Supprimer la notification"
+                              >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                             <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/40">
-                              <span>{new Date(item.date_creation).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</span>
-                              <span className={`rounded-full px-2 py-0.5 ${item.statut === 'new' ? 'bg-brand-cyan/15 text-brand-cyan' : 'bg-white/10 text-white/70'}`}>
-                                {item.statut === 'new' ? 'Nouveau' : item.statut}
+                              <span>
+                                {new Date(item.date_creation).toLocaleString(
+                                  "fr-FR",
+                                  { dateStyle: "medium", timeStyle: "short" },
+                                )}
+                              </span>
+                              <span
+                                className={`rounded-full px-2 py-0.5 ${item.statut === "new" ? "bg-brand-cyan/15 text-brand-cyan" : "bg-white/10 text-white/70"}`}
+                              >
+                                {item.statut === "new"
+                                  ? "Nouveau"
+                                  : item.statut}
                               </span>
                             </div>
                           </div>
                         ))}
                         {pendingServiceDemandes.map((item) => (
-                          <div key={item.reference} className="w-full px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5">
+                          <div
+                            key={item.reference}
+                            className="w-full px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5"
+                          >
                             <button
                               type="button"
-                              onClick={() => { handleHideServiceDemande(item.reference); setNotificationOpen(false); navigate('/admin/services-colockoo') }}
+                              onClick={() => {
+                                handleHideServiceDemande(item.reference);
+                                setNotificationOpen(false);
+                                navigate("/admin/services-colockoo");
+                              }}
                               className="w-full text-left"
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                  <div className="text-sm font-medium text-white">Demande de service · {item.demandeur}</div>
-                                  <p className="mt-1 text-xs text-white/60 line-clamp-2">{item.services.join(', ')}</p>
+                                  <div className="text-sm font-medium text-white">
+                                    Demande de service · {item.demandeur}
+                                  </div>
+                                  <p className="mt-1 text-xs text-white/60 line-clamp-2">
+                                    {item.services.join(", ")}
+                                  </p>
                                 </div>
-                                <span className="text-[10px] uppercase tracking-wider text-brand-green whitespace-nowrap">{item.total.toLocaleString('fr-FR')} Ar</span>
+                                <span className="text-[10px] uppercase tracking-wider text-brand-green whitespace-nowrap">
+                                  {item.total.toLocaleString("fr-FR")} Ar
+                                </span>
                               </div>
                               <div className="mt-2 text-[11px] text-white/40">
-                                {new Date(item.date_creation).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}
+                                {new Date(item.date_creation).toLocaleString(
+                                  "fr-FR",
+                                  { dateStyle: "medium", timeStyle: "short" },
+                                )}
                               </div>
                             </button>
                             <div className="mt-2 flex justify-end">
                               <button
                                 type="button"
-                                onClick={() => handleHideServiceDemande(item.reference)}
+                                onClick={() =>
+                                  handleHideServiceDemande(item.reference)
+                                }
                                 className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] text-white/50 hover:bg-white/10 hover:text-white"
                                 title="Masquer cette notification"
                               >
@@ -643,7 +798,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
             {/* Avatar - comme dans la maquette */}
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-[oklch(0.15_0_0)] text-sm font-bold flex-shrink-0">
-              {user?.initials || 'A'}
+              {user?.initials || "A"}
             </div>
           </header>
 
@@ -657,10 +812,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-[oklch(0.20_0.005_260)] shadow-2xl overflow-hidden">
             <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
               <div>
-                <h3 className="text-lg font-semibold text-white">Demandes de partenariat</h3>
-                <p className="text-sm text-white/60">Consultez toutes les demandes envoyées via le formulaire public.</p>
+                <h3 className="text-lg font-semibold text-white">
+                  Demandes de partenariat
+                </h3>
+                <p className="text-sm text-white/60">
+                  Consultez toutes les demandes envoyées via le formulaire
+                  public.
+                </p>
               </div>
-              <button type="button" onClick={() => setShowPartnerModal(false)} className="rounded-lg p-2 hover:bg-white/5 text-white/70">
+              <button
+                type="button"
+                onClick={() => setShowPartnerModal(false)}
+                className="rounded-lg p-2 hover:bg-white/5 text-white/70"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -671,24 +835,57 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
               ) : (
                 partnerRequests.map((item) => (
-                  <div key={item.id_demande} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <div
+                    key={item.id_demande}
+                    className="rounded-xl border border-white/10 bg-white/5 p-4"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <div className="text-sm font-semibold text-white">{item.nom_entreprise || item.nom_contact}</div>
-                        <div className="text-xs text-white/50">{item.email}</div>
+                        <div className="text-sm font-semibold text-white">
+                          {item.nom_entreprise || item.nom_contact}
+                        </div>
+                        <div className="text-xs text-white/50">
+                          {item.email}
+                        </div>
                       </div>
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider ${item.statut === 'en_attente' ? 'bg-brand-cyan/15 text-brand-cyan' : 'bg-white/10 text-white/70'}`}>
-                        {item.statut === 'en_attente' ? 'En attente' : item.statut}
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider ${item.statut === "en_attente" ? "bg-brand-cyan/15 text-brand-cyan" : "bg-white/10 text-white/70"}`}
+                      >
+                        {item.statut === "en_attente"
+                          ? "En attente"
+                          : item.statut}
                       </span>
                     </div>
                     <div className="mt-3 grid gap-2 text-sm text-white/70 sm:grid-cols-2">
-                      <div><span className="text-white/40">Téléphone :</span> {item.telephone ? `${item.telephone_code || '+261'} ${item.telephone}` : 'Non renseigné'}</div>
-                      <div><span className="text-white/40">Secteur :</span> {item.secteur || 'Non précisé'}</div>
-                      <div><span className="text-white/40">Niveau :</span> {item.niveau_souhaite || 'À définir'}</div>
-                      <div><span className="text-white/40">Rappel :</span> {item.souhaite_rappel ? 'Oui' : 'Non'}</div>
+                      <div>
+                        <span className="text-white/40">Téléphone :</span>{" "}
+                        {item.telephone
+                          ? `${item.telephone_code || "+261"} ${item.telephone}`
+                          : "Non renseigné"}
+                      </div>
+                      <div>
+                        <span className="text-white/40">Secteur :</span>{" "}
+                        {item.secteur || "Non précisé"}
+                      </div>
+                      <div>
+                        <span className="text-white/40">Niveau :</span>{" "}
+                        {item.niveau_souhaite || "À définir"}
+                      </div>
+                      <div>
+                        <span className="text-white/40">Rappel :</span>{" "}
+                        {item.souhaite_rappel ? "Oui" : "Non"}
+                      </div>
                     </div>
-                    <p className="mt-3 text-sm text-white/70">{item.message || 'Aucun message détaillé.'}</p>
-                    <div className="mt-3 text-[11px] text-white/40">Reçue le {new Date(item.date_creation).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                    <p className="mt-3 text-sm text-white/70">
+                      {item.message || "Aucun message détaillé."}
+                    </p>
+                    <div className="mt-3 text-[11px] text-white/40">
+                      Reçue le{" "}
+                      {new Date(item.date_creation).toLocaleString("fr-FR", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </div>
                   </div>
                 ))
               )}
@@ -699,11 +896,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Overlay pour mobile */}
       {sidebarOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
     </div>
-  )
+  );
 }
