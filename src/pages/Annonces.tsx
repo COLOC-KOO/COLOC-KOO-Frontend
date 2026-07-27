@@ -173,6 +173,11 @@ export default function Annonces() {
     return count;
   }, [city, district, type, selectedServiceIds, maxPrice, colocFilter]);
 
+  const emptyMessage =
+    city || query
+      ? `Aucun profil n'a demande cette ville mais n'hesites pas a proposer ton logement, on ne sait jamais !`
+      : t("annonces:emptySub");
+
   // Composant filtres mobile avec les couleurs du thème
   const MobileFilters = () => (
     <div
@@ -743,7 +748,7 @@ export default function Annonces() {
                 {t("annonces:empty")}
               </h3>
               <p className="text-[var(--muted-foreground)] mt-1 text-xs sm:text-sm">
-                {t("annonces:emptySub")}
+                {emptyMessage}
               </p>
             </div>
           )}

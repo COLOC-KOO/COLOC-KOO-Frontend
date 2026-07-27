@@ -7,6 +7,7 @@ import Deposer from './pages/Deposer'
 import Partenaires from './pages/Partenaires'
 import Contact from './pages/Contact'
 import Services from './pages/Services'
+import ProfilsRechercheLogement from './pages/ProfilsRechercheLogement'
 import Auth from './pages/Auth'
 import Compte from './pages/Compte'
 import Candidatures from './pages/Candidatures'
@@ -53,6 +54,7 @@ export default function App() {
       <Route path="/partenaires" element={<Partenaires />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/services" element={<Services />} />
+      <Route path="/profils-recherche-logement" element={<ProfilsRechercheLogement />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/compte" element={<Compte />} />
       <Route path="/candidatures" element={<Candidatures />} />

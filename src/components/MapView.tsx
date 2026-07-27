@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-l
 import { Icon, LatLngExpression, LatLngBounds } from 'leaflet';
 import { Listing } from '../types';
 import { geocodeAddress } from '../lib/geocoding';
+import { formatAr } from '../lib/utils';
 import { MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
@@ -345,7 +346,7 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
                     </p>
                     {listing.price && (
                       <p className="text-sm font-bold text-brand-cyan mt-2">
-                        {listing.price} € / mois
+                        {formatAr(listing.price)} / mois
                       </p>
                     )}
                   </div>
@@ -367,7 +368,7 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
                   </p>
                   {listing.price && (
                     <p className="text-lg font-bold text-brand-cyan mt-2">
-                      {listing.price} € <span className="text-sm font-normal text-muted-foreground">/ mois</span>
+                      {formatAr(listing.price)} <span className="text-sm font-normal text-muted-foreground">/ mois</span>
                     </p>
                   )}
                   <button
@@ -393,7 +394,7 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
             {activeListing.city}
           </p>
           {activeListing.price ? (
-            <p className="font-semibold text-brand-cyan">{activeListing.price} € / mois</p>
+            <p className="font-semibold text-brand-cyan">{formatAr(activeListing.price)} / mois</p>
           ) : (
             <p className="font-semibold text-gray-700">Prix non renseigné</p>
           )}
@@ -408,3 +409,4 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
     </div>
   );
 }
+

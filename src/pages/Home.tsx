@@ -83,6 +83,7 @@ export default function Home() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
   const autoPlayInterval = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [heroMode, setHeroMode] = useState<"chercher" | "proposer">("chercher");
 
   // Nombre de partenaires à afficher par slide (responsive)
   const getItemsPerSlide = () => {
@@ -257,6 +258,19 @@ export default function Home() {
 
   const handleSearch = () => {
     const query = searchTerm.trim();
+
+    // === Mode "Je propose un logement" ===
+    // On affiche les profils des candidats qui recherchent une colocation dans la ville.
+    if (heroMode === "proposer") {
+      const params = new URLSearchParams();
+      if (query) {
+        params.set("ville", query.replace(/\s+/g, " ").trim());
+      }
+      navigate(`/profils-recherche-logement${params.toString() ? `?${params.toString()}` : ""}`);
+      return;
+    }
+
+    // === Mode "Je cherche un logement" (comportement original) ===
     if (!query) {
       navigate("/annonces");
       return;
@@ -330,18 +344,29 @@ export default function Home() {
           <div className="mt-6 flex flex-wrap gap-3 max-w-3xl">
             <button
               type="button"
-              onClick={handleSearch}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-2xl hover:from-cyan-600 hover:to-blue-700 hover:shadow-2xl hover:scale-105 border border-white/20"
+              onClick={() => setHeroMode("chercher")}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-2xl hover:shadow-2xl hover:scale-105 border ${
+                heroMode === "chercher"
+                  ? "bg-gradient-to-r from-cyan-800 to-blue-900 text-white border-white/40 ring-2 ring-white/50"
+                  : "bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-white/20 hover:from-cyan-600 hover:to-blue-700"
+              }`}
             >
               <MapPin className="w-4 h-4" />
               {t("home:hero.search")}
             </button>
-            <Link to="/deposer">
-              <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-2xl hover:from-green-600 hover:to-emerald-700 hover:shadow-2xl hover:scale-105 border border-white/20">
-                <KeyRound className="w-4 h-4" />
-                {t("home:hero.propose")}
-              </button>
-            </Link>
+
+            <button
+              type="button"
+              onClick={() => setHeroMode("proposer")}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-2xl hover:shadow-2xl hover:scale-105 border ${
+                heroMode === "proposer"
+                  ? "bg-gradient-to-r from-green-800 to-emerald-900 text-white border-white/40 ring-2 ring-white/50"
+                  : "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-white/20 hover:from-green-600 hover:to-emerald-700"
+              }`}
+            >
+              <KeyRound className="w-4 h-4" />
+              {t("home:hero.propose")}
+            </button>
           </div>
 
           <div className="mt-5 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-2 flex flex-col md:flex-row gap-2 max-w-3xl border border-white/20">
@@ -357,7 +382,12 @@ export default function Home() {
                     handleSearch();
                   }
                 }}
-                placeholder={t("home:hero.placeholder")}
+                // placeholder={t("home:hero.placeholder")}
+                placeholder={
+                  heroMode === "chercher"
+                    ? "Où recherchez-vous un logement ?"
+                    : "Indique la ville ou le quartier"
+                }
                 className="flex-1 bg-transparent text-gray-800 outline-none text-sm placeholder-gray-500"
               />
               <datalist id="hero-search-options">
