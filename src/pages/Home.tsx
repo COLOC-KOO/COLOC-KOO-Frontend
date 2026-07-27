@@ -25,11 +25,13 @@ import { MapView } from "../components/MapView";
 import { api, annonceToListing, type ApiPartenaireCampagne } from "../lib/api";
 import { CityInfo, Listing } from "../types";
 import { motion } from "framer-motion";
-import { LazyImage } from '../components/ui/LazyImage'
+import { LazyImage } from "../components/ui/LazyImage";
 
 const heroImage =
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80";
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:4000/api").replace(/\/api\/?$/, "");
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:4000/api"
+).replace(/\/api\/?$/, "");
 
 function normalizeImageUrl(value: string | null | undefined) {
   if (!value) return "";
@@ -63,9 +65,9 @@ const steps = [
 ];
 
 export default function Home() {
-  const { t } = useTranslation(['home', 'common']);
-  const heroTitle = t('home:hero.title');
-  const [heroTitleLead, ...heroTitleRest] = heroTitle.split(',');
+  const { t } = useTranslation(["home", "common"]);
+  const heroTitle = t("home:hero.title");
+  const [heroTitleLead, ...heroTitleRest] = heroTitle.split(",");
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("");
@@ -134,9 +136,11 @@ export default function Home() {
 
         const dedupedCampaignPartners = Array.isArray(campagnes)
           ? campagnes.filter((item, index, array) => {
-            const firstIndex = array.findIndex((candidate) => candidate.id_partenaire === item.id_partenaire);
-            return firstIndex === index;
-          })
+              const firstIndex = array.findIndex(
+                (candidate) => candidate.id_partenaire === item.id_partenaire,
+              );
+              return firstIndex === index;
+            })
           : [];
 
         setFeaturedListings(mapped.slice(0, 6));
@@ -144,11 +148,11 @@ export default function Home() {
           dynamicCities.length > 0
             ? dynamicCities
             : villes.slice(0, 6).map((v) => ({
-              name: v.nom_ville,
-              count: 0,
-              image:
-                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
-            })),
+                name: v.nom_ville,
+                count: 0,
+                image:
+                  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+              })),
         );
         setPartners(dedupedCampaignPartners);
 
@@ -244,20 +248,21 @@ export default function Home() {
   const maxIndex = Math.max(0, partners.length - itemsPerSlide);
 
   const summaryText = useMemo(() => {
-    if (loading) return t('common:common.loading');
-    const cityLabel = cityCards.length > 1 ? t('home:cities.subtitle').split(' ')[0] : "ville";
+    if (loading) return t("common:common.loading");
+    const cityLabel =
+      cityCards.length > 1 ? t("home:cities.subtitle").split(" ")[0] : "ville";
     const annonceLabel = featuredListings.length > 1 ? "annonces" : "annonce";
-    return `${cityCards.length} ${t('home:cities.subtitle').split(' ')[0]}${cityCards.length > 1 ? 's' : ''} couvertes, ${featuredListings.length} ${annonceLabel} validées`;
+    return `${cityCards.length} ${t("home:cities.subtitle").split(" ")[0]}${cityCards.length > 1 ? "s" : ""} couvertes, ${featuredListings.length} ${annonceLabel} validées`;
   }, [cityCards.length, featuredListings.length, loading, t]);
 
   const handleSearch = () => {
     const query = searchTerm.trim();
     if (!query) {
-      navigate('/annonces');
+      navigate("/annonces");
       return;
     }
 
-    const normalizedQuery = query.replace(/\s+/g, ' ').trim();
+    const normalizedQuery = query.replace(/\s+/g, " ").trim();
     const knownCities = cityCards.map((city) => city.name.toLowerCase());
     const exactCityMatch = knownCities.find(
       (name) => name === normalizedQuery.toLowerCase(),
@@ -265,12 +270,12 @@ export default function Home() {
 
     const params = new URLSearchParams();
     if (exactCityMatch) {
-      params.set('ville', normalizedQuery);
+      params.set("ville", normalizedQuery);
     } else {
-      params.set('q', normalizedQuery);
+      params.set("q", normalizedQuery);
     }
     if (searchType) {
-      params.set('type', searchType);
+      params.set("type", searchType);
     }
 
     navigate(`/annonces?${params.toString()}`);
@@ -290,7 +295,11 @@ export default function Home() {
       {/* Hero - Hauteur réduite */}
       <section className="relative min-h-[400px] sm:min-h-[450px] w-full">
         <div className="absolute inset-0">
-          <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
+          <LazyImage
+            src={heroImage}
+            alt=""
+            className="w-full h-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
           <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
         </div>
@@ -304,17 +313,17 @@ export default function Home() {
             <h1 className="bebas text-3xl md:text-5xl leading-tight mb-4 drop-shadow-2xl">
               <span className="text-[var(--brand-cyan)]">
                 {heroTitleLead}
-                {heroTitleRest.length > 0 ? ',' : ''}
+                {heroTitleRest.length > 0 ? "," : ""}
               </span>
               {heroTitleRest.length > 0 && (
                 <span className="text-[var(--brand-green)]">
-                  {heroTitleRest.join(',')}
+                  {heroTitleRest.join(",")}
                 </span>
               )}
             </h1>
 
             <p className="mt-4 text-lg md:text-xl font-bold text-white max-w-lg bg-black/15 backdrop-blur-md p-3 rounded-xl">
-              {t('home:hero.subtitle')}
+              {t("home:hero.subtitle")}
             </p>
           </div>
 
@@ -325,12 +334,12 @@ export default function Home() {
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-2xl hover:from-cyan-600 hover:to-blue-700 hover:shadow-2xl hover:scale-105 border border-white/20"
             >
               <MapPin className="w-4 h-4" />
-              {t('home:hero.search')}
+              {t("home:hero.search")}
             </button>
             <Link to="/deposer">
               <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-2xl hover:from-green-600 hover:to-emerald-700 hover:shadow-2xl hover:scale-105 border border-white/20">
                 <KeyRound className="w-4 h-4" />
-                {t('home:hero.propose')}
+                {t("home:hero.propose")}
               </button>
             </Link>
           </div>
@@ -343,12 +352,12 @@ export default function Home() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     handleSearch();
                   }
                 }}
-                placeholder={t('home:hero.placeholder')}
+                placeholder={t("home:hero.placeholder")}
                 className="flex-1 bg-transparent text-gray-800 outline-none text-sm placeholder-gray-500"
               />
               <datalist id="hero-search-options">
@@ -363,17 +372,17 @@ export default function Home() {
               onChange={(e) => setSearchType(e.target.value)}
               className="px-4 py-2.5 bg-transparent text-gray-800 text-sm outline-none cursor-pointer"
             >
-              <option value="">{t('home:hero.allTypes')}</option>
-              <option value="chambre">{t('home:hero.room')}</option>
-              <option value="appartement">{t('home:hero.apartment')}</option>
-              <option value="maison">{t('home:hero.house')}</option>
+              <option value="">{t("home:hero.allTypes")}</option>
+              <option value="chambre">{t("home:hero.room")}</option>
+              <option value="appartement">{t("home:hero.apartment")}</option>
+              <option value="maison">{t("home:hero.house")}</option>
             </select>
             <button
               type="button"
               onClick={handleSearch}
               className="w-full md:w-auto bg-gradient-to-r from-brand-cyan to-cyan-600 hover:from-brand-cyan-dark hover:to-cyan-700 text-white h-full px-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
             >
-              <Search className="w-4 h-4" /> {t('common:common.search')}
+              <Search className="w-4 h-4" /> {t("common:common.search")}
             </button>
           </div>
 
@@ -401,11 +410,15 @@ export default function Home() {
           <div className="flex items-end justify-between mb-6">
             <div>
               <h2 className="bebas text-3xl">
-                <span className="text-[--brand-cyan-dark]">{t('home:featured.title').split(' ')[0]} </span>
-                <span className="text-[--brand-green-dark]">{t('home:featured.title').split(' ').slice(1).join(' ')}</span>
+                <span className="text-[--brand-cyan-dark]">
+                  {t("home:featured.title").split(" ")[0]}{" "}
+                </span>
+                <span className="text-[--brand-green-dark]">
+                  {t("home:featured.title").split(" ").slice(1).join(" ")}
+                </span>
               </h2>
               <p className="text-gray-500 text-sm mt-1">
-                {t('home:featured.subtitle')}
+                {t("home:featured.subtitle")}
               </p>
             </div>
 
@@ -413,23 +426,29 @@ export default function Home() {
             <div className="flex gap-1 bg-gray-100/80 p-1 rounded-xl">
               <button
                 onClick={() => setViewMode("list")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "list"
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  viewMode === "list"
                     ? "bg-white shadow-sm text-gray-900"
                     : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                  }`}
+                }`}
               >
                 <List className="w-4 h-4" />
-                <span className="hidden sm:inline">{t('home:featured.list')}</span>
+                <span className="hidden sm:inline">
+                  {t("home:featured.list")}
+                </span>
               </button>
               <button
                 onClick={() => setViewMode("map")}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === "map"
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  viewMode === "map"
                     ? "bg-white shadow-sm text-gray-900"
                     : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                  }`}
+                }`}
               >
                 <Map className="w-4 h-4" />
-                <span className="hidden sm:inline">{t('home:featured.map')}</span>
+                <span className="hidden sm:inline">
+                  {t("home:featured.map")}
+                </span>
               </button>
             </div>
           </div>
@@ -473,7 +492,7 @@ export default function Home() {
 
                       {/* Badge "Vérifiée" */}
                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-medium text-gray-700 shadow-sm">
-                        ✓ {t('home:featured.verified')}
+                        ✓ {t("home:featured.verified")}
                       </div>
 
                       {/* PRIX SUR LA CARTE - Style Airbnb */}
@@ -481,11 +500,11 @@ export default function Home() {
                         <span className="text-sm font-bold text-gray-900">
                           {l.price
                             ? `${(l.price / 1000).toFixed(0)}k Ar`
-                            : t('common:common.none')}
+                            : t("common:common.none")}
                         </span>
                         {l.price && (
                           <span className="text-[10px] text-gray-500 ml-1">
-                            {t('home:featured.pricePerMonth')}
+                            {t("home:featured.pricePerMonth")}
                           </span>
                         )}
                       </div>
@@ -515,46 +534,32 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
                 {/* =========================
         CARTE INTERACTIVE
     ========================== */}
                 <div className="h-[450px] lg:h-[600px] rounded-2xl overflow-hidden bg-gray-100 shadow-inner lg:sticky lg:top-4">
-
                   <MapView
                     listings={featuredListings}
                     activeListingId={hoveredListingId}
-
                     onListingHover={(listing) => {
-                      setHoveredListingId(
-                        listing?.id ?? null
-                      );
+                      setHoveredListingId(listing?.id ?? null);
                     }}
-
                     onListingClick={(listing) => {
-                      navigate(
-                        `/annonces/${listing.id}`
-                      );
+                      navigate(`/annonces/${listing.id}`);
                     }}
                   />
-
                 </div>
-
 
                 {/* =========================
         LISTE DES ANNONCES
     ========================== */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-
                   {featuredListings.map((l) => {
-
-                    const isHovered =
-                      hoveredListingId === l.id;
+                    const isHovered = hoveredListingId === l.id;
 
                     return (
                       <div
                         key={l.id}
-
                         className={`
               group cursor-pointer
               overflow-hidden
@@ -564,51 +569,40 @@ export default function Home() {
               transition-all
               duration-300
 
-              ${isHovered
-                            ? `
+              ${
+                isHovered
+                  ? `
                     border-[var(--brand-cyan)]
                     ring-2
                     ring-[var(--brand-cyan)]/20
                     shadow-xl
                     -translate-y-1
                   `
-                            : `
+                  : `
                     border-transparent
                     shadow-sm
                     hover:shadow-lg
                   `
-                          }
+              }
             `}
-
                         onClick={() => {
-                          navigate(
-                            `/annonces/${l.id}`
-                          );
+                          navigate(`/annonces/${l.id}`);
                         }}
-
                         onMouseEnter={() => {
                           setHoveredListingId(l.id);
                         }}
-
                         onMouseLeave={() => {
                           setHoveredListingId(null);
                         }}
                       >
-
                         {/* =========================
                 IMAGE
             ========================== */}
                         <div className="relative h-40 overflow-hidden bg-gray-100">
-
                           {l.image ? (
-
                             <LazyImage
                               src={l.image}
-                              alt={
-                                l.title ||
-                                "Annonce"
-                              }
-
+                              alt={l.title || "Annonce"}
                               className={`
                     w-full
                     h-full
@@ -616,17 +610,11 @@ export default function Home() {
                     transition-transform
                     duration-500
 
-                    ${isHovered
-                                  ? "scale-110"
-                                  : "group-hover:scale-105"
-                                }
+                    ${isHovered ? "scale-110" : "group-hover:scale-105"}
                   `}
                             />
-
                           ) : (
-
                             <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-
                               <Building2
                                 className="
                       w-10
@@ -634,76 +622,49 @@ export default function Home() {
                       text-gray-400
                     "
                               />
-
                             </div>
-
                           )}
-
 
                           {/* =========================
                   BADGE LOCALISATION
               ========================== */}
                           <div className="absolute top-3 left-3">
-
                             <span className="inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-medium text-gray-700 shadow-sm">
-
                               <MapPin className="w-3 h-3" />
 
-                              {l.district ||
-                                l.city ||
-                                "Localisation"}
-
+                              {l.district || l.city || "Localisation"}
                             </span>
-
                           </div>
-
 
                           {/* =========================
                   PRIX
               ========================== */}
                           <div className="absolute bottom-3 right-3">
-
                             <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-xl shadow-md">
-
                               <span className="text-sm font-bold text-gray-900">
-
                                 {l.price
-                                  ? `${(
-                                    l.price / 1000
-                                  ).toFixed(0)}k Ar`
+                                  ? `${(l.price / 1000).toFixed(0)}k Ar`
                                   : "Prix ?"}
-
                               </span>
-
                             </div>
-
                           </div>
-
 
                           {/* =========================
                   OVERLAY
               ========================== */}
                           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-
                         </div>
-
 
                         {/* =========================
                 INFORMATIONS
             ========================== */}
                         <div className="p-4 space-y-2">
-
                           <div className="flex items-start justify-between gap-2">
-
                             <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 flex-1">
-
-                              {l.title ||
-                                "Annonce sans titre"}
-
+                              {l.title || "Annonce sans titre"}
                             </h3>
 
                             <div className="flex items-center gap-1 text-xs text-gray-600 shrink-0">
-
                               <Star
                                 className="
                       w-3.5
@@ -713,87 +674,55 @@ export default function Home() {
                     "
                               />
 
-                              <span>
-                                4.8
-                              </span>
-
+                              <span>4.8</span>
                             </div>
-
                           </div>
-
 
                           {/* LOCALISATION */}
                           <div className="flex items-center gap-1 text-xs text-gray-500">
-
                             <MapPin className="w-3.5 h-3.5" />
 
                             <span>
+                              {l.district ? `${l.district}, ` : ""}
 
-                              {l.district
-                                ? `${l.district}, `
-                                : ""}
-
-                              {l.city ||
-                                "Ville non spécifiée"}
-
+                              {l.city || "Ville non spécifiée"}
                             </span>
-
                           </div>
-
 
                           {/* DESCRIPTION */}
                           {l.description && (
-
                             <p className="text-xs text-gray-500 line-clamp-2">
-
                               {l.description}
-
                             </p>
-
                           )}
-
 
                           {/* PRIX */}
                           <div className="pt-2 flex items-center justify-between">
-
                             <span className="text-xs text-gray-400">
-
-                              {t(
-                                "home:featured.pricePerMonth"
-                              )}
-
+                              {t("home:featured.pricePerMonth")}
                             </span>
 
                             <span className="text-sm font-bold text-[var(--brand-cyan-dark)]">
-
                               {l.price
-                                ? `${(
-                                  l.price / 1000
-                                ).toFixed(0)}k Ar`
+                                ? `${(l.price / 1000).toFixed(0)}k Ar`
                                 : "Prix ?"}
-
                             </span>
-
                           </div>
-
                         </div>
-
                       </div>
                     );
                   })}
-
                 </div>
-
               </div>
             )
           ) : (
             <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-12 text-center">
               <div className="text-4xl mb-3">🏠</div>
               <h3 className="text-lg font-medium text-gray-700">
-                {t('home:featured.empty')}
+                {t("home:featured.empty")}
               </h3>
               <p className="text-gray-500 text-sm mt-1">
-                {t('home:featured.emptySub')}
+                {t("home:featured.emptySub")}
               </p>
             </div>
           )}
@@ -806,8 +735,12 @@ export default function Home() {
           <div className="flex items-end justify-between mb-6">
             <div>
               <h2 className="bebas text-3xl">
-                <span className="text-[--brand-cyan-dark]">{t('home:cities.title').split(' ')[0]} </span>
-                <span className="text-[--brand-green-dark]">{t('home:cities.title').split(' ').slice(1).join(' ')}</span>
+                <span className="text-[--brand-cyan-dark]">
+                  {t("home:cities.title").split(" ")[0]}{" "}
+                </span>
+                <span className="text-[--brand-green-dark]">
+                  {t("home:cities.title").split(" ").slice(1).join(" ")}
+                </span>
               </h2>
               <p className="text-muted-foreground text-sm mt-1">
                 {summaryText}
@@ -817,7 +750,7 @@ export default function Home() {
               to="/annonces"
               className="hidden md:inline-flex items-center gap-1 text-sm font-medium text-[--brand-cyan-dark] hover:gap-2 transition-all duration-300"
             >
-              {t('home:cities.viewAll')} <ArrowRight className="w-4 h-4" />
+              {t("home:cities.viewAll")} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
@@ -845,11 +778,14 @@ export default function Home() {
                   </div>
                   <div className="w-8 h-0.5 bg-border group-hover:bg-[--brand-cyan] rounded-full transition-all duration-300 my-2" />
                   <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-300">
-                    {c.count} {c.count > 1 ? t('home:cities.annonces') : t('home:cities.annonce')}
+                    {c.count}{" "}
+                    {c.count > 1
+                      ? t("home:cities.annonces")
+                      : t("home:cities.annonce")}
                   </div>
                   <div className="mt-3 overflow-hidden">
                     <span className="inline-block text-xs font-medium text-[--brand-cyan-dark] opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                      {t('home:cities.explore')} →
+                      {t("home:cities.explore")} →
                     </span>
                   </div>
                 </div>
@@ -869,18 +805,22 @@ export default function Home() {
           <div className="flex items-end justify-between mb-6">
             <div>
               <h2 className="bebas text-3xl">
-                <span className="text-[--brand-cyan-dark]">{t('home:howItWorks.title').split(' ')[0]} </span>
-                <span className="text-[--brand-green-dark]">{t('home:howItWorks.title').split(' ').slice(1).join(' ')}</span>
+                <span className="text-[--brand-cyan-dark]">
+                  {t("home:howItWorks.title").split(" ")[0]}{" "}
+                </span>
+                <span className="text-[--brand-green-dark]">
+                  {t("home:howItWorks.title").split(" ").slice(1).join(" ")}
+                </span>
               </h2>
               <p className="text-muted-foreground text-sm mt-1">
-                {t('home:howItWorks.subtitle')}
+                {t("home:howItWorks.subtitle")}
               </p>
             </div>
             <Link
               to="/annonces"
               className="hidden md:inline-flex items-center gap-1 text-sm font-medium text-[--brand-cyan-dark] hover:gap-2 transition-all duration-300"
             >
-              {t('home:howItWorks.viewAll')} <ArrowRight className="w-4 h-4" />
+              {t("home:howItWorks.viewAll")} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
@@ -933,7 +873,7 @@ export default function Home() {
               to="/annonces"
               className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-[--brand-cyan-dark] transition-colors duration-300 group"
             >
-              <span>{t('home:howItWorks.startSearch')}</span>
+              <span>{t("home:howItWorks.startSearch")}</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
@@ -945,24 +885,28 @@ export default function Home() {
         <div className="flex items-end justify-between mb-4">
           <div>
             <h2 className="bebas text-3xl">
-              <span className="text-[--brand-cyan-dark]">{t('home:partners.title').split(' ')[0]} </span>
-              <span className="text-[--brand-green-dark]">{t('home:partners.title').split(' ').slice(1).join(' ')}</span>
+              <span className="text-[--brand-cyan-dark]">
+                {t("home:partners.title").split(" ")[0]}{" "}
+              </span>
+              <span className="text-[--brand-green-dark]">
+                {t("home:partners.title").split(" ").slice(1).join(" ")}
+              </span>
             </h2>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {t('home:partners.subtitle')}
+              {t("home:partners.subtitle")}
             </p>
           </div>
           <Link
             to="/partenaires"
             className="inline-flex items-center gap-1 text-sm font-medium text-brand-cyan-dark hover:gap-2 transition-all"
           >
-            {t('home:partners.viewAll')} <ArrowRight className="w-4 h-4" />
+            {t("home:partners.viewAll")} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {partners.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
-            {loading ? t('home:partners.loading') : t('home:partners.empty')}
+            {loading ? t("home:partners.loading") : t("home:partners.empty")}
           </div>
         ) : (
           <div
@@ -989,13 +933,21 @@ export default function Home() {
                         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-cyan-light/40 to-brand-cyan/10 flex items-center justify-center overflow-hidden shrink-0">
                           {partner.logo || partner.visuel ? (
                             <LazyImage
-                              src={normalizeImageUrl(partner.logo || partner.visuel)}
-                              alt={partner.partenaire_nom || partner.titre || "Partenaire"}
+                              src={normalizeImageUrl(
+                                partner.logo || partner.visuel,
+                              )}
+                              alt={
+                                partner.partenaire_nom ||
+                                partner.titre ||
+                                "Partenaire"
+                              }
                               className="h-full w-full object-cover"
                               onError={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
+                                const target =
+                                  e.currentTarget as HTMLImageElement;
                                 target.style.display = "none";
-                                const fallback = target.nextElementSibling as HTMLElement | null;
+                                const fallback =
+                                  target.nextElementSibling as HTMLElement | null;
                                 if (fallback) fallback.style.display = "flex";
                               }}
                             />
@@ -1004,15 +956,23 @@ export default function Home() {
                             className="hidden h-full w-full items-center justify-center text-2xl font-bold text-brand-cyan-dark"
                             data-fallback
                           >
-                            {(partner.partenaire_nom || partner.titre || "P").charAt(0)}
+                            {(
+                              partner.partenaire_nom ||
+                              partner.titre ||
+                              "P"
+                            ).charAt(0)}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-base font-semibold truncate">
-                            {partner.partenaire_nom || partner.titre || "Partenaire"}
+                            {partner.partenaire_nom ||
+                              partner.titre ||
+                              "Partenaire"}
                           </div>
                           <div className="text-sm text-muted-foreground truncate">
-                            {partner.secteur || partner.emplacement || "Partenaire"}
+                            {partner.secteur ||
+                              partner.emplacement ||
+                              "Partenaire"}
                           </div>
                         </div>
                       </div>
@@ -1041,7 +1001,9 @@ export default function Home() {
 
                       <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <span className="text-[10px] font-medium text-brand-cyan-dark bg-brand-cyan-light/50 px-2.5 py-0.5 rounded-full">
-                          {partner.partenaire_niveau || partner.niveau || "Partenaire"}
+                          {partner.partenaire_niveau ||
+                            partner.niveau ||
+                            "Partenaire"}
                         </span>
                       </div>
                     </div>
@@ -1055,14 +1017,14 @@ export default function Home() {
                 <button
                   onClick={goToPrevious}
                   className="absolute top-1/2 -left-3 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border/50 z-10"
-                  aria-label={t('common:common.previous')}
+                  aria-label={t("common:common.previous")}
                 >
                   <ChevronLeft className="w-4 h-4 text-foreground" />
                 </button>
                 <button
                   onClick={goToNext}
                   className="absolute top-1/2 -right-3 -translate-y-1/2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-50 transition-all duration-200 hover:scale-110 border border-border/50 z-10"
-                  aria-label={t('common:common.next')}
+                  aria-label={t("common:common.next")}
                 >
                   <ChevronRight className="w-4 h-4 text-foreground" />
                 </button>
@@ -1076,10 +1038,11 @@ export default function Home() {
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`transition-all duration-300 rounded-full ${index === Math.floor(currentPartnerIndex)
+                      className={`transition-all duration-300 rounded-full ${
+                        index === Math.floor(currentPartnerIndex)
                           ? "w-6 h-1.5 bg-brand-cyan"
                           : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
-                        }`}
+                      }`}
                       aria-label={`Aller à la slide ${index + 1}`}
                     />
                   ),
@@ -1101,10 +1064,10 @@ export default function Home() {
           <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
           <div className="relative text-white">
             <h2 className="bebas text-3xl md:text-3xl">
-              {t('home:cta.title')}
+              {t("home:cta.title")}
             </h2>
             <p className="mt-2 text-white/80 text-sm">
-              {t('home:cta.subtitle')}
+              {t("home:cta.subtitle")}
             </p>
           </div>
           <div className="relative flex md:justify-end gap-3 flex-wrap">
@@ -1115,7 +1078,7 @@ export default function Home() {
                   backgroundColor: "oklch(68% 0.17 130)",
                 }}
               >
-                {t('home:cta.deposer')}
+                {t("home:cta.deposer")}
               </Button>
             </Link>
             <Link to="/partenaires">
@@ -1123,7 +1086,7 @@ export default function Home() {
                 variant="outline"
                 className="border-white/30 text-white bg-white/10 hover:bg-white/20 transition-all duration-300"
               >
-                {t('home:cta.partenaire')}
+                {t("home:cta.partenaire")}
               </Button>
             </Link>
           </div>

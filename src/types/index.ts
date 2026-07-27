@@ -9,6 +9,7 @@ export interface Owner {
   name: string
   verified: boolean
   since: string
+  profilePicture?: string; 
 }
 
 export type ListingType = 'chambre' | 'appartement' | 'maison'

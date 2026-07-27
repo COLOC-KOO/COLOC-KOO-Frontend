@@ -68,7 +68,7 @@ function MapInitializer({ listings }: { listings: Listing[] }) {
 // Composant pour gérer le survol SANS déplacer la carte
 function MapHoverHandler({ activeListingId, listings }: { activeListingId?: string | null; listings: Listing[] }) {
   const map = useMap();
-  const previousActiveId = useRef<string | null>(null);
+  const previousActiveId = useRef<string | null | undefined>(null);
 
   useEffect(() => {
     // Si l'ID actif change et qu'on a une annonce active
@@ -81,7 +81,7 @@ function MapHoverHandler({ activeListingId, listings }: { activeListingId?: stri
       // Optionnel : zoomer légèrement si l'annonce est hors écran
       if (active && active.latitude && active.longitude) {
         const bounds = map.getBounds();
-        const point = [active.latitude, active.longitude];
+        const point: LatLngExpression = [active.latitude, active.longitude];
         
         // Vérifier si le point est dans la vue actuelle
         if (!bounds.contains(point)) {
