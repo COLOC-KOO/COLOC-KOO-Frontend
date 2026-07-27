@@ -50,6 +50,27 @@ const fadeInUp = {
   transition: { duration: 0.5 },
 }
 
+const boostOffers = [
+  {
+    title: 'Remontez votre annonce',
+    recommended: true,
+    description: 'Remontez automatiquement votre annonce dans les resultats de recherche de votre categorie.',
+    options: [
+      ['Chaque jour pendant 7 jours', 179550],
+      ['Chaque jour pendant 30 jours', 472050],
+      ['Chaque semaine pendant 8 semaines', 202095],
+    ],
+  },
+  {
+    title: 'Annonce urgente',
+    recommended: false,
+    description: 'Ressortez dans les resultats et profitez du filtre pour etre trouve facilement.',
+    options: [
+      ['Pendant toute la duree de votre annonce', 58095],
+    ],
+  },
+]
+
 export default function Services() {
   const { t } = useTranslation(['services', 'common'])
   const heroTitle = t('services:hero.title')
@@ -207,6 +228,56 @@ export default function Services() {
             </div>
           )}
         </motion.div>
+
+        {/* ===== BOOSTER UNE ANNONCE ===== */}
+        <motion.section {...fadeInUp} className="mb-12 border border-border bg-white overflow-hidden">
+          <div className="bg-purple-50 px-4 py-7 text-center">
+            <h2 className="text-2xl font-extrabold text-foreground">Boostez votre annonce !</h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-5 max-w-5xl mx-auto px-4 py-8">
+            {boostOffers.map((offer) => (
+              <div key={offer.title} className="relative border border-border bg-white shadow-sm rounded-lg p-6">
+                {offer.recommended && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-cyan-dark text-white text-xs font-bold px-3 py-1 rounded-full">
+                    Recommande
+                  </span>
+                )}
+                <div className="h-28 flex items-center justify-center">
+                  <div className="relative w-40 h-20 bg-muted rounded-lg border border-border">
+                    <div className="absolute left-4 top-4 w-12 h-10 bg-white border border-border rounded-md" />
+                    <div className="absolute left-20 top-5 w-16 h-2 bg-gray-200 rounded" />
+                    <div className="absolute left-20 top-9 w-20 h-2 bg-gray-200 rounded" />
+                    <div className="absolute right-4 bottom-3 w-9 h-9 rounded-full bg-brand-cyan/15 grid place-items-center">
+                      <Zap className="w-4 h-4 text-brand-cyan-dark" />
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-center text-lg font-bold text-foreground mt-3">{offer.title}</h3>
+                <p className="text-center text-sm text-muted-foreground mt-3 min-h-[48px]">{offer.description}</p>
+                <button type="button" className="mx-auto mt-2 block text-sm font-semibold underline text-foreground">
+                  En savoir plus
+                </button>
+                <div className="mt-6 space-y-3">
+                  {offer.options.map(([label, price]) => (
+                    <label key={String(label)} className="flex items-center gap-3 rounded-lg bg-muted/70 px-4 py-4 cursor-pointer hover:bg-brand-cyan/10 transition-colors">
+                      <input type="checkbox" className="w-5 h-5 accent-brand-cyan" />
+                      <span className="text-sm text-foreground flex-1">{label}</span>
+                      <span className="text-sm font-extrabold text-foreground">{formatAr(Number(price))}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-border px-4 py-4 flex justify-end">
+            <Button
+              onClick={() => navigate('/deposer')}
+              className="rounded-lg bg-orange-500 hover:bg-orange-600 text-white"
+            >
+              Deposer sans booster mon annonce
+            </Button>
+          </div>
+        </motion.section>
 
         {/* ===== CATALOGUE + PANIER ===== */}
         <div className="grid lg:grid-cols-3 gap-8 items-start">
