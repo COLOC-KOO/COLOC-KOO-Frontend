@@ -10,7 +10,7 @@ import {
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../lib/auth'
-import { api, ServiceCatalogueItem, DemandeServiceGroup } from '../lib/api'
+import { api, ServiceCatalogueItem, DemandeServiceGroup, ApiServiceCkoo } from '../lib/api'
 import { cn } from '../lib/utils'
 import { LazyImage } from '../components/ui/LazyImage'
 
@@ -50,24 +50,26 @@ const fadeInUp = {
   transition: { duration: 0.5 },
 }
 
-const boostOffers = [
+// Métadonnées d'affichage (titre / description / recommandé) pour chaque
+// famille de boost. Les OPTIONS réelles (libellé + prix) proviennent de
+// la table services_ckoo via api.services(), filtrées par préfixe de cle_service.
+const BOOST_SECTIONS: Array<{
+  key: 'boost' | 'boosturgent'
+  title: string
+  recommended: boolean
+  description: string
+}> = [
   {
+    key: 'boost',
     title: 'Remontez votre annonce',
     recommended: true,
     description: 'Remontez automatiquement votre annonce dans les resultats de recherche de votre categorie.',
-    options: [
-      ['Chaque jour pendant 7 jours', 179550],
-      ['Chaque jour pendant 30 jours', 472050],
-      ['Chaque semaine pendant 8 semaines', 202095],
-    ],
   },
   {
+    key: 'boosturgent',
     title: 'Annonce urgente',
     recommended: false,
     description: 'Ressortez dans les resultats et profitez du filtre pour etre trouve facilement.',
-    options: [
-      ['Pendant toute la duree de votre annonce', 58095],
-    ],
   },
 ]
 
@@ -81,6 +83,14 @@ export default function Services() {
   const [catalogue, setCatalogue] = useState<ServiceCatalogueItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // ===== Services de boost (données réelles depuis services_ckoo) =====
+  const [boostServices, setBoostServices] = useState<ApiServiceCkoo[]>([])
+  const [boostLoading, setBoostLoading] = useState(true)
+  const [boostError, setBoostError] = useState('')
+  // Sélection de l'option de boost cochée (une seule à la fois, tous préfixes
+  // confondus : cocher une offre décoche automatiquement les autres).
+  const [selectedBoost, setSelectedBoost] = useState<number | null>(null)
 
   // Sélection multiple (sans quantité) : ensemble d'id_service cochés.
   const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -98,6 +108,23 @@ export default function Services() {
       .catch((e) => setError(e instanceof Error ? e.message : t('services:errors.load')))
       .finally(() => setLoading(false))
   }, [t])
+
+  // Charge tous les services (table services_ckoo) puis ne garde que ceux
+  // dont la cle_service commence par "boost_" ou "boosturgent_".
+  useEffect(() => {
+    api
+      .services()
+      .then((all) => {
+        setBoostServices(
+          all.filter((s) => {
+            const cle = s.cle_service || ''
+            return cle.startsWith('boost_') || cle.startsWith('boosturgent_')
+          }),
+        )
+      })
+      .catch((e) => setBoostError(e instanceof Error ? e.message : 'Erreur de chargement des boosts'))
+      .finally(() => setBoostLoading(false))
+  }, [])
 
   useEffect(() => {
     if (user?.telephone) setTelephone((prev) => prev || user.telephone || '')
@@ -125,6 +152,27 @@ export default function Services() {
       return next
     })
   const clearCart = () => setSelected(new Set())
+
+  // Cocher une offre décoche automatiquement toute autre offre sélectionnée ;
+  // recocher la même offre la décoche (retour à l'état initial).
+  const toggleBoost = (id: number) =>
+    setSelectedBoost((prev) => (prev === id ? null : id))
+
+  // Construit les 2 sections de boost à partir des données réelles,
+  // en respectant les préfixes demandés :
+  //   - "boost_"       -> Remontez votre annonce
+  //   - "boosturgent_" -> Annonce urgente
+  const boostOffers = useMemo(() => {
+    return BOOST_SECTIONS.map((section) => {
+      const items = boostServices.filter((s) => {
+        const cle = s.cle_service || ''
+        if (section.key === 'boosturgent') return cle.startsWith('boosturgent_')
+        // "boost_" mais on exclut explicitement "boosturgent_" pour ne pas les mélanger
+        return cle.startsWith('boost_') && !cle.startsWith('boosturgent_')
+      })
+      return { ...section, items }
+    })
+  }, [boostServices])
 
   async function handleSubmit() {
     if (!user) {
@@ -168,9 +216,6 @@ export default function Services() {
         </div>
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24 text-white">
           <motion.div {...fadeInUp} className="max-w-2xl">
-            {/* <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-sm font-medium mb-5">
-              <ConciergeBell className="w-4 h-4" /> {t('services:hero.badge')}
-            </span> */}
             <h1 className="bebas text-3xl md:text-5xl leading-tight mb-4 drop-shadow-2xl">
               <span className="text-[var(--brand-cyan)]">
                 {heroTitleLead}
@@ -229,52 +274,92 @@ export default function Services() {
           )}
         </motion.div>
 
-        {/* ===== BOOSTER UNE ANNONCE ===== */}
+        {/* ===== BOOSTER UNE ANNONCE (données réelles services_ckoo) ===== */}
         <motion.section {...fadeInUp} className="mb-12 border border-border bg-white overflow-hidden">
           <div className="bg-purple-50 px-4 py-7 text-center">
             <h2 className="text-2xl font-extrabold text-foreground">Boostez votre annonce !</h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-5 max-w-5xl mx-auto px-4 py-8">
-            {boostOffers.map((offer) => (
-              <div key={offer.title} className="relative border border-border bg-white shadow-sm rounded-lg p-6">
-                {offer.recommended && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-cyan-dark text-white text-xs font-bold px-3 py-1 rounded-full">
-                    Recommande
-                  </span>
-                )}
-                <div className="h-28 flex items-center justify-center">
-                  <div className="relative w-40 h-20 bg-muted rounded-lg border border-border">
-                    <div className="absolute left-4 top-4 w-12 h-10 bg-white border border-border rounded-md" />
-                    <div className="absolute left-20 top-5 w-16 h-2 bg-gray-200 rounded" />
-                    <div className="absolute left-20 top-9 w-20 h-2 bg-gray-200 rounded" />
-                    <div className="absolute right-4 bottom-3 w-9 h-9 rounded-full bg-brand-cyan/15 grid place-items-center">
-                      <Zap className="w-4 h-4 text-brand-cyan-dark" />
+
+          {boostLoading ? (
+            <div className="grid md:grid-cols-2 gap-5 max-w-5xl mx-auto px-4 py-8">
+              {[0, 1].map((i) => (
+                <div key={i} className="h-64 rounded-lg bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : boostError ? (
+            <p className="text-center text-red-600 py-8">{boostError}</p>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-5 max-w-5xl mx-auto px-4 py-8">
+              {boostOffers.map((offer) => (
+                <div key={offer.key} className="relative border border-border bg-white shadow-sm rounded-lg p-6">
+                  {offer.recommended && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-cyan-dark text-white text-xs font-bold px-3 py-1 rounded-full">
+                      Recommande
+                    </span>
+                  )}
+                  <div className="h-28 flex items-center justify-center">
+                    <div className="relative w-40 h-20 bg-muted rounded-lg border border-border">
+                      <div className="absolute left-4 top-4 w-12 h-10 bg-white border border-border rounded-md" />
+                      <div className="absolute left-20 top-5 w-16 h-2 bg-gray-200 rounded" />
+                      <div className="absolute left-20 top-9 w-20 h-2 bg-gray-200 rounded" />
+                      <div className="absolute right-4 bottom-3 w-9 h-9 rounded-full bg-brand-cyan/15 grid place-items-center">
+                        <Zap className="w-4 h-4 text-brand-cyan-dark" />
+                      </div>
                     </div>
                   </div>
+                  <h3 className="text-center text-lg font-bold text-foreground mt-3">{offer.title}</h3>
+                  <p className="text-center text-sm text-muted-foreground mt-3 min-h-[48px]">{offer.description}</p>
+                  <button type="button" className="mx-auto mt-2 block text-sm font-semibold underline text-foreground">
+                    En savoir plus
+                  </button>
+                  <div className="mt-6 space-y-3">
+                    {offer.items.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-4">
+                        Aucune offre disponible pour le moment.
+                      </p>
+                    ) : (
+                      offer.items.map((item) => {
+                        const active = selectedBoost === item.id_service
+                        const uniteLabel = item.unite ? UNITE_LABEL[item.unite] || item.unite : ''
+                        return (
+                          <label
+                            key={item.id_service}
+                            className={cn(
+                              'flex items-center gap-3 rounded-lg px-4 py-4 cursor-pointer transition-colors',
+                              active ? 'bg-brand-cyan/15 ring-1 ring-brand-cyan/40' : 'bg-muted/70 hover:bg-brand-cyan/10',
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              className="w-5 h-5 accent-brand-cyan"
+                              checked={active}
+                              onChange={() => toggleBoost(item.id_service)}
+                            />
+                            <span className="text-sm text-foreground flex-1">
+                              {item.nom}
+                              {item.description && (
+                                <span className="block text-xs text-muted-foreground">{item.description}</span>
+                              )}
+                            </span>
+                            <span className="text-sm font-extrabold text-foreground whitespace-nowrap">
+                              {formatAr(Number(item.prix))}{uniteLabel ? ` ${uniteLabel}` : ''}
+                            </span>
+                          </label>
+                        )
+                      })
+                    )}
+                  </div>
                 </div>
-                <h3 className="text-center text-lg font-bold text-foreground mt-3">{offer.title}</h3>
-                <p className="text-center text-sm text-muted-foreground mt-3 min-h-[48px]">{offer.description}</p>
-                <button type="button" className="mx-auto mt-2 block text-sm font-semibold underline text-foreground">
-                  En savoir plus
-                </button>
-                <div className="mt-6 space-y-3">
-                  {offer.options.map(([label, price]) => (
-                    <label key={String(label)} className="flex items-center gap-3 rounded-lg bg-muted/70 px-4 py-4 cursor-pointer hover:bg-brand-cyan/10 transition-colors">
-                      <input type="checkbox" className="w-5 h-5 accent-brand-cyan" />
-                      <span className="text-sm text-foreground flex-1">{label}</span>
-                      <span className="text-sm font-extrabold text-foreground">{formatAr(Number(price))}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+
           <div className="border-t border-border px-4 py-4 flex justify-end">
             <Button
-              onClick={() => navigate('/deposer')}
+              onClick={() => navigate(selectedBoost ? `/deposer?boost=${selectedBoost}` : '/deposer')}
               className="rounded-lg bg-orange-500 hover:bg-orange-600 text-white"
             >
-              Deposer sans booster mon annonce
+              {selectedBoost ? 'Deposer avec ce booster' : 'Deposer sans booster mon annonce'}
             </Button>
           </div>
         </motion.section>
