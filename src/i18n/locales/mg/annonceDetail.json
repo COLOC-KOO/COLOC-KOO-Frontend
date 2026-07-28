@@ -16,6 +16,9 @@
   "sections": {
     "description": "Famaritana",
     "amenities": "Fitaovana",
+    "propertyDetails": "Antsipiriany ny trano",
+    "rules": "Fitsipika ny trano fiarahamonina",
+    "features": "Fitaovana manankaja",
     "candidatesTitle": "Mpiara-monina mifandray amin'ity fanambarana ity",
     "candidatesSubtitle": "Ity fizarana ity dia mampiseho ny fangatahana voarakitra ao amin'ny base ho an'ity fanambarana ity.",
     "candidatesSingular": "fangatahana voarakitra",
@@ -32,6 +35,36 @@
     "individualDesc": "Samy manao ny azy ny mpiara-monina tsirairay miaraka amin'ny tompon-trano.",
     "withSolidarityDesc": " Miara-mandraikitra ny vidin-trano ny mpiara-monina rehetra.",
     "withoutSolidarityDesc": " Samy tompon'andraikitra amin'ny ampahany ny mpiara-monina tsirairay."
+  },
+  "property": {
+    "furnished": "Meublé",
+    "unfurnished": "Tsy meublé",
+    "available": "Azo ampiasina hatry ny {date}",
+    "bedrooms": "Fombatra",
+    "charges": "Fandaniana",
+    "chargesUnit": "Ar/volana",
+    "address": "Adiresy",
+    "announcementType": "Karazana fanambarana",
+    "announcementTypeExisting": "Mpiara-monina efa misy",
+    "announcementTypeCreate": "Mpiara-monina hoforonina"
+  },
+  "features": {
+    "internet": "Internet",
+    "parking": "Fariaty",
+    "parkingCars": "{count} toerana fariaty",
+    "parkingMotorcycles": "{count} toerana fariaty moto",
+    "parkingCovered": "Fariaty voafetra",
+    "elevator": "Elevator",
+    "petsAllowed": "Omby azo ampiasaina",
+    "smokersAllowed": "Fumeurs azo ampiasaina",
+    "womenOnly": "Vavy fotsiny",
+    "menOnly": "Lehilahy fotsiny",
+    "noFeatures": "Tsy misy fitaovana manankaja nisy."
+  },
+  "energy": {
+    "class": "Klasa energitrika",
+    "ghg": "Klasa GES",
+    "noData": "Tsy voafidina"
   },
   "candidates": {
     "defaultName": "Mpifaninana",
