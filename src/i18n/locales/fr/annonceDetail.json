@@ -16,11 +16,14 @@
   "sections": {
     "description": "Description",
     "amenities": "Équipements",
+    "propertyDetails": "Détails du bien",
+    "rules": "Règles de la colocation",
+    "features": "Équipements supplémentaires",
     "candidatesTitle": "Colocataires liés à cette annonce",
     "candidatesSubtitle": "Cette section affiche les candidatures réellement enregistrées dans la base pour cette annonce.",
     "candidatesSingular": "candidature enregistrée",
     "candidatesPlural": "candidatures enregistrées",
-    "noCandidates": "Aucune candidature n’est encore enregistrée pour cette annonce.",
+    "noCandidates": "Aucune candidature n'est encore enregistrée pour cette annonce.",
     "leaseType": "Type de bail"
   },
   "lease": {
@@ -32,6 +35,36 @@
     "individualDesc": "Chaque colocataire signe son propre contrat avec le propriétaire.",
     "withSolidarityDesc": " Tous les colocataires sont solidaires du loyer.",
     "withoutSolidarityDesc": " Chaque colocataire reste responsable de sa part."
+  },
+  "property": {
+    "furnished": "Meublé",
+    "unfurnished": "Non meublé",
+    "available": "Disponible depuis le {date}",
+    "bedrooms": "Chambre(s)",
+    "charges": "Charges",
+    "chargesUnit": "Ar/mois",
+    "address": "Adresse",
+    "announcementType": "Type d'annonce",
+    "announcementTypeExisting": "Colocataires existants",
+    "announcementTypeCreate": "Colocataires à créer"
+  },
+  "features": {
+    "internet": "Internet",
+    "parking": "Parking",
+    "parkingCars": "{count} place(s) de parking",
+    "parkingMotorcycles": "{count} place(s) pour motos",
+    "parkingCovered": "Parking couvert",
+    "elevator": "Ascenseur",
+    "petsAllowed": "Animaux acceptés",
+    "smokersAllowed": "Fumeurs acceptés",
+    "womenOnly": "Femmes uniquement",
+    "menOnly": "Hommes uniquement",
+    "noFeatures": "Aucun équipement supplémentaire précisé."
+  },
+  "energy": {
+    "class": "Classe énergétique",
+    "ghg": "Classe GES",
+    "noData": "Non spécifié"
   },
   "candidates": {
     "defaultName": "Candidat",
@@ -55,7 +88,7 @@
     "placeholder": "Présentez-vous et ajoutez un message pour le propriétaire...",
     "submit": "Postuler à cette coloc",
     "loginToApply": "Se connecter pour postuler",
-    "error": "Impossible d’envoyer la candidature."
+    "error": "Impossible d'envoyer la candidature."
   },
   "contact": {
     "defaultSubject": "Demande à propos de votre annonce",
@@ -97,13 +130,13 @@
     "ownerTitle": "Gestion des candidatures",
     "ownerDesc": "La gestion des candidatures se fait depuis la page dédiée.",
     "applied": "Votre candidature a bien été enregistrée.",
-    "appliedDesc": "Vous pouvez suivre l’avancement et voir les autres candidats de cette annonce.",
+    "appliedDesc": "Vous pouvez suivre l'avancement et voir les autres candidats de cette annonce.",
     "viewApplication": "Voir ma candidature",
     "myApplication": "Ma candidature",
     "status": "Statut actuel :",
     "statusPending": "en_attente",
     "noMessage": "Aucun message ajouté.",
     "otherCandidates": "Autres candidats",
-    "noOtherCandidates": "Aucun autre candidat pour l’instant."
+    "noOtherCandidates": "Aucun autre candidat pour l'instant."
   }
 }

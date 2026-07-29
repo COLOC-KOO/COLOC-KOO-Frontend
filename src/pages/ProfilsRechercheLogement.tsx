@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Briefcase, CalendarClock, Heart, Mail, MapPin, MessageCircle, Phone, Search, ShieldCheck, SlidersHorizontal, UserRound, Users } from 'lucide-react'
+import { Briefcase, Building2, CalendarClock, Heart, Mail, MapPin, MessageCircle, Phone, Search, ShieldCheck, SlidersHorizontal, UserRound, Users } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api, ApiProfilRechercheLogement } from '../lib/api'
@@ -33,6 +33,7 @@ export default function ProfilsRechercheLogement() {
   const [error, setError] = useState('')
   const [selectedProfile, setSelectedProfile] = useState<ApiProfilRechercheLogement | null>(null)
   const [messageStatus, setMessageStatus] = useState('')
+  const [currentUserProfile, setCurrentUserProfile] = useState<ApiProfilRechercheLogement | null>(null)
 
   const normalizedCity = city.trim()
 
@@ -71,6 +72,33 @@ export default function ProfilsRechercheLogement() {
       })
       .finally(() => setLoading(false))
   }, [normalizedCity, q, profession, maxAge])
+
+  useEffect(() => {
+    if (!user) return
+    api.me()
+      .then((u) => {
+        setCurrentUserProfile({
+          id_utilisateur: u.id,
+          nom: u.nom || '',
+          prenom: u.prenom || '',
+          age: u.age ?? null,
+          bio: u.bio ?? null,
+          profile_picture: u.profilePicture ?? null,
+          profession: u.profession ?? null,
+          est_verifie: false,
+          date_inscription: u.createdAt ?? '',
+          ville_actuelle: u.villeActuelle ?? null,
+          ville_origine: u.villeOrigine ?? null,
+          ville_recherchee: normalizedCity,
+          demandes_count: 0,
+          derniere_demande: '',
+          annonces_demandees: [],
+          email: u.email ?? null,
+          telephone: u.telephone ?? null,
+        })
+      })
+      .catch(() => {})
+  }, [user, normalizedCity])
 
   const activeFilterCount = useMemo(() => {
     return [q.trim(), profession.trim(), maxAge > 0 ? String(maxAge) : ''].filter(Boolean).length
@@ -111,20 +139,22 @@ export default function ProfilsRechercheLogement() {
         <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-8">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
             <div>
-              <p className="text-sm font-semibold text-brand-cyan-dark">Profils candidats</p>
-              <h1 className="bebas text-3xl md:text-5xl text-foreground mt-1">
-                {normalizedCity ? `Colocataires qui cherchent a ${normalizedCity}` : 'Trouver vos prochains locataires'}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-2">
-                {loading ? 'Chargement...' : `${total} personne${total > 1 ? 's' : ''} recherche${total > 1 ? 'nt' : ''} actuellement un logement dans cette ville, sur les 3 derniers mois.`}
-              </p>
-            </div>
-            <Button
-              onClick={() => navigate(`/deposer${normalizedCity ? `?ville=${encodeURIComponent(normalizedCity)}` : ''}`)}
-              className="rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white"
-            >
-              Cliquer ici pour deposer une annonce et trouver gratuitement vos prochains locataires
-            </Button>
+               <p className="text-sm font-semibold text-brand-cyan-dark">Mise en relation</p>
+               <h1 className="bebas text-3xl md:text-5xl text-foreground mt-1">
+                 {normalizedCity ? `Profils a ${normalizedCity}` : 'Trouver vos prochains colocataires'}
+               </h1>
+               <p className="text-sm text-muted-foreground mt-2">
+                 {loading
+                   ? 'Chargement...'
+                   : `${total} personne${total > 1 ? 's' : ''} recherche${total > 1 ? 'nt' : ''} actuellement un logement dans cette ville, sur la base des annonces de moins de 3 mois.`}
+               </p>
+             </div>
+             <Button
+               onClick={() => navigate(`/deposer${normalizedCity ? `?ville=${encodeURIComponent(normalizedCity)}` : ''}`)}
+               className="rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white"
+             >
+               Je propose un logement
+             </Button>
           </div>
 
           <form onSubmit={submitSearch} className="mt-6 grid lg:grid-cols-[1.3fr_1fr_180px_140px] gap-3">
@@ -187,15 +217,25 @@ export default function ProfilsRechercheLogement() {
       </section>
 
       <section className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6">
-        <div className="mb-5 border border-brand-cyan/25 bg-brand-cyan/5 px-4 py-3 text-sm text-foreground flex flex-col md:flex-row md:items-center gap-3">
-          <div className="flex items-center gap-2 font-semibold">
-            <Users className="w-4 h-4 text-brand-cyan-dark" />
-            Mise en relation entre colocataires candidats
-          </div>
-          <p className="text-muted-foreground md:ml-auto">
-            Ces profils peuvent aussi se regrouper pour creer leur propre colocation.
-          </p>
-        </div>
+         <div className="mb-5 border border-brand-cyan/25 bg-brand-cyan/5 px-4 py-3 text-sm text-foreground flex flex-col md:flex-row md:items-center gap-3">
+           <div className="flex items-center gap-2 font-semibold">
+             <Users className="w-4 h-4 text-brand-cyan-dark" />
+             Mise en relation entre colocataires
+           </div>
+           <p className="text-muted-foreground md:ml-auto">
+             Ces profils peuvent aussi se regrouper pour creer leur propre colocation.
+           </p>
+         </div>
+
+         <div className="mb-4 rounded-xl bg-brand-green/5 border border-brand-green/20 px-4 py-3 text-sm text-foreground flex flex-col md:flex-row md:items-center gap-3">
+           <div className="flex items-center gap-2 font-semibold">
+             <Building2 className="w-4 h-4 text-brand-green-dark" />
+             Agences immobilières
+           </div>
+           <p className="text-muted-foreground md:ml-auto">
+             Les agences peuvent consulter les profils des candidats et proposer des logements adaptés.
+           </p>
+         </div>
 
         {error && <div className="border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
@@ -214,6 +254,37 @@ export default function ProfilsRechercheLogement() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {currentUserProfile && (
+              <div className="group text-left bg-brand-cyan-light/30 border-2 border-brand-cyan/40 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+                  <LazyImage
+                    src={currentUserProfile.profile_picture || FALLBACK_AVATAR}
+                    alt={profileName(currentUserProfile)}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <span className="absolute top-3 left-3 bg-brand-cyan text-white text-xs font-semibold px-2 py-1 inline-flex items-center gap-1">
+                    <UserRound className="w-3 h-3" />
+                    Mon profil
+                  </span>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-lg leading-tight">{profileName(currentUserProfile)}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {currentUserProfile.age ? `${currentUserProfile.age} ans` : 'Age non precise'}
+                    {currentUserProfile.profession ? ` - ${currentUserProfile.profession}` : ''}
+                  </p>
+                  <p className="mt-2 text-sm line-clamp-3 text-foreground">
+                    {currentUserProfile.bio || 'Ce profil cherche une colocation dans cette ville.'}
+                  </p>
+                  {currentUserProfile.telephone && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-brand-cyan-dark font-semibold">
+                      <Phone className="w-3 h-3" />
+                      {currentUserProfile.telephone}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             {profiles.map((profile) => (
               <button
                 key={profile.id_utilisateur}
@@ -250,6 +321,12 @@ export default function ProfilsRechercheLogement() {
                     <span>{profile.demandes_count} demande{profile.demandes_count > 1 ? 's' : ''}</span>
                     <span>Depuis {formatDate(profile.derniere_demande)}</span>
                   </div>
+                  {profile.telephone && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-brand-cyan-dark font-semibold">
+                      <Phone className="w-3 h-3" />
+                      {profile.telephone}
+                    </div>
+                  )}
                 </div>
               </button>
             ))}
@@ -275,45 +352,62 @@ export default function ProfilsRechercheLogement() {
               <p className="text-muted-foreground">
                 {selectedProfile.profession || 'Colocataire candidat'}{selectedProfile.age ? `, ${selectedProfile.age} ans` : ''}
               </p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
-                  <MapPin className="w-3 h-3" />
-                  Recherche a {selectedProfile.ville_recherchee || normalizedCity}
-                </span>
-                <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
-                  <CalendarClock className="w-3 h-3" />
-                  Derniere demande le {formatDate(selectedProfile.derniere_demande)}
-                </span>
-                {selectedProfile.ville_actuelle && (
-                  <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
-                    <Briefcase className="w-3 h-3" />
-                    Ville actuelle : {selectedProfile.ville_actuelle}
-                  </span>
-                )}
-              </div>
-              <p className="mt-6 whitespace-pre-line text-sm leading-7">
-                {selectedProfile.bio || 'Ce candidat n a pas encore complete sa presentation.'}
-              </p>
+               <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                 <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
+                   <MapPin className="w-3 h-3" />
+                   Recherche a {selectedProfile.ville_recherchee || normalizedCity}
+                 </span>
+                 <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
+                   <CalendarClock className="w-3 h-3" />
+                   Derniere demande le {formatDate(selectedProfile.derniere_demande)}
+                 </span>
+                 {selectedProfile.ville_actuelle && (
+                   <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
+                     <Briefcase className="w-3 h-3" />
+                     Ville actuelle : {selectedProfile.ville_actuelle}
+                   </span>
+                 )}
+               </div>
 
-              <div className="mt-6 border-t border-border pt-5 grid sm:grid-cols-2 gap-3">
-                {user ? (
-                  <>
-                    <a href={selectedProfile.telephone ? `tel:${selectedProfile.telephone}` : undefined} className="inline-flex items-center justify-center gap-2 bg-brand-green text-white px-4 py-3 font-semibold">
-                      <Phone className="w-4 h-4" />
-                      {selectedProfile.telephone || 'Numero non renseigne'}
-                    </a>
-                    <Button onClick={() => sendMessage(selectedProfile)} className="rounded-none bg-brand-cyan text-white">
-                      <Mail className="w-4 h-4 mr-2" />
-                      Envoyer un message
-                    </Button>
-                  </>
-                ) : (
-                  <Link to={`/auth?mode=signin&redirect=${encodeURIComponent(`/profils-recherche-logement?ville=${normalizedCity}`)}`} className="sm:col-span-2 inline-flex items-center justify-center gap-2 bg-brand-cyan text-white px-4 py-3 font-semibold">
-                    <MessageCircle className="w-4 h-4" />
-                    Connectez-vous pour contacter cette personne
-                  </Link>
-                )}
-              </div>
+               <div className="mt-6 border-t border-border pt-5">
+                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                   <UserRound className="w-4 h-4 text-brand-cyan" />
+                   Profil du candidat
+                 </h3>
+                 <p className="mt-3 whitespace-pre-line text-sm leading-7">
+                   {selectedProfile.bio || 'Ce candidat n a pas encore complete sa presentation.'}
+                 </p>
+                 {selectedProfile.profession && (
+                   <p className="mt-2 text-sm text-muted-foreground">
+                     Profession : <span className="text-foreground font-medium">{selectedProfile.profession}</span>
+                   </p>
+                 )}
+                 {selectedProfile.age && (
+                   <p className="text-sm text-muted-foreground">
+                     Age : <span className="text-foreground font-medium">{selectedProfile.age} ans</span>
+                   </p>
+                 )}
+               </div>
+
+               <div className="mt-6 border-t border-border pt-5 grid sm:grid-cols-2 gap-3">
+                 {user ? (
+                   <>
+                     <a href={selectedProfile.telephone ? `tel:${selectedProfile.telephone}` : undefined} className="inline-flex items-center justify-center gap-2 bg-brand-green text-white px-4 py-3 font-semibold">
+                       <Phone className="w-4 h-4" />
+                       {selectedProfile.telephone || 'Numero non renseigne'}
+                     </a>
+                     <Button onClick={() => sendMessage(selectedProfile)} className="rounded-none bg-brand-cyan text-white">
+                       <Mail className="w-4 h-4 mr-2" />
+                       Envoyer un message
+                     </Button>
+                   </>
+                 ) : (
+                   <Link to={`/auth?mode=signin&redirect=${encodeURIComponent(`/profils-recherche-logement?ville=${normalizedCity}`)}`} className="sm:col-span-2 inline-flex items-center justify-center gap-2 bg-brand-cyan text-white px-4 py-3 font-semibold">
+                     <MessageCircle className="w-4 h-4" />
+                     Connectez-vous pour contacter cette personne
+                   </Link>
+                 )}
+               </div>
               {messageStatus && <p className="mt-3 text-sm font-medium text-brand-cyan-dark">{messageStatus}</p>}
               <button
                 type="button"

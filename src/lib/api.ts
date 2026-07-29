@@ -63,14 +63,41 @@ export interface ApiAnnonce {
     chambre: {
         surface: number | null
         prix_loyer: number
+        prix_charges: number | null
         date_disponibilite: string
-        est_meuble?: number | null
+        est_meuble?: string | number | null
     } | null
     services: string[]
     regles: string[]
+    amenities?: string[]
     photos: string[]
     date_creation: string
     date_publication?: string
+    mode_annonce?: string
+    latitude?: number | null
+    longitude?: number | null
+    internet?: string | null
+    parking_voitures?: number
+    parking_motos?: number
+    parking_couvert?: boolean
+    services_communs?: any
+    booster?: boolean
+    date_modification?: string | null
+    date_expiration?: string | null
+    energy_class?: string | null
+    ghg_class?: string | null
+    elevator?: boolean
+    pets_allowed?: boolean
+    smokers_allowed?: boolean
+    women_only?: boolean
+    men_only?: boolean
+    rooms?: {
+        surface?: number | null
+        prix_loyer?: number | null
+        prix_charges?: number | null
+        est_meuble?: string | null
+        bed_type?: string | null
+    }[]
 }
 
 export interface ApiFavoriResponse {
@@ -1552,11 +1579,11 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         city: a.ville,
         district: a.quartier || a.region || 'Madagascar',
         price,
-        charges: 0,
+        charges: Number(a.chambre?.prix_charges || 0),
         rooms: a.total_colocataires || 1,
         bedrooms: 1,
         surface: Number(a.chambre?.surface || a.surface_totale || 0),
-        furnished: true,
+        furnished: Boolean(a.chambre?.est_meuble != null && String(a.chambre.est_meuble).toLowerCase() === 'oui'),
         available: String(a.chambre?.date_disponibilite || '').slice(0, 10),
         type: a.type_propriete === 'maison' ? 'maison' : a.type_propriete === 'appartement' ? 'appartement' : 'chambre',
         image,
@@ -1576,5 +1603,20 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         clauseSolidarite: a.clause_solidarite ?? null,
         candidatureCount: a.candidature_count != null ? Number(a.candidature_count) : undefined,
         address: a.adresse_exacte ?? undefined,
+        regles: a.regles ?? [],
+        internet: a.internet != null ? String(a.internet).toLowerCase() === 'oui' : false,
+        parkingVoitures: a.parking_voitures ?? 0,
+        parkingMotos: a.parking_motos ?? 0,
+        parkingCouvert: a.parking_couvert ?? false,
+        elevator: a.elevator ?? false,
+        petsAllowed: a.pets_allowed ?? false,
+        smokersAllowed: a.smokers_allowed ?? false,
+        womenOnly: a.women_only ?? false,
+        menOnly: a.men_only ?? false,
+        energyClass: a.energy_class ?? null,
+        ghgClass: a.ghg_class ?? null,
+        modeAnnonce: a.mode_annonce ?? undefined,
+        dateExpiration: a.date_expiration ?? null,
+        region: a.region ?? undefined,
     }
 }

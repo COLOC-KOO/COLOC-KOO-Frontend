@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CheckCircle, Eye, Pencil, RefreshCw, Search, Save, Trash2, X, XCircle } from 'lucide-react'
+import { CheckCircle, Eye, Pencil, RefreshCw, Search, Save, Trash2, X, XCircle, Home, Users, Ruler, Bed, Wifi, Car, Dog, Shield } from 'lucide-react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { ApiAnnonce, api } from '../../lib/api'
 import { formatAr } from '../../lib/utils'
@@ -21,7 +21,24 @@ export default function AdminAnnonces() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showRejectionModal, setShowRejectionModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
-  const [editForm, setEditForm] = useState({ titre: '', description: '', prix_loyer: '' })
+   const [editForm, setEditForm] = useState({
+     titre: '',
+     description: '',
+     prix_loyer: '',
+     type_propriete: 'appartement',
+     type_bail: 'collectif',
+     surface_totale: '',
+     total_colocataires: '',
+     est_meuble: 'Oui',
+     date_disponibilite: '',
+     energy_class: '',
+     ghg_class: '',
+     elevator: false,
+     pets_allowed: false,
+     smokers_allowed: false,
+     women_only: false,
+     men_only: false,
+   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -58,26 +75,55 @@ export default function AdminAnnonces() {
     setRejectionReason('')
   }
 
-  function openEdit(annonce: ApiAnnonce) {
-    setSelectedAnnonce(annonce)
-    setEditForm({
-      titre: annonce.titre,
-      description: annonce.description || '',
-      prix_loyer: String(annonce.chambre?.prix_loyer || ''),
-    })
-    setShowEditModal(true)
-  }
+   function openEdit(annonce: ApiAnnonce) {
+     setSelectedAnnonce(annonce)
+     setEditForm({
+       titre: annonce.titre,
+       description: annonce.description || '',
+       prix_loyer: String(annonce.chambre?.prix_loyer || ''),
+       type_propriete: annonce.type_propriete || 'appartement',
+       type_bail: annonce.type_bail || 'collectif',
+       surface_totale: String(annonce.surface_totale || ''),
+       total_colocataires: String(annonce.total_colocataires || ''),
+       est_meuble: annonce.chambre?.est_meuble != null ? String(annonce.chambre.est_meuble) : 'Oui',
+       date_disponibilite: annonce.chambre?.date_disponibilite || '',
+       energy_class: annonce.energy_class || '',
+       ghg_class: annonce.ghg_class || '',
+       elevator: Boolean(annonce.elevator),
+       pets_allowed: Boolean(annonce.pets_allowed),
+       smokers_allowed: Boolean(annonce.smokers_allowed),
+       women_only: Boolean(annonce.women_only),
+       men_only: Boolean(annonce.men_only),
+     })
+     setShowEditModal(true)
+   }
 
-  async function saveEdit() {
-    if (!selectedAnnonce) return
-    const updated = await api.updateAnnonce(selectedAnnonce.id, {
-      titre: editForm.titre,
-      description: editForm.description,
-    })
-    setAnnonces((current) => current.map((item) => (item.id === selectedAnnonce.id ? updated : item)))
-    setShowEditModal(false)
-    setSelectedAnnonce(null)
-  }
+   async function saveEdit() {
+     if (!selectedAnnonce) return
+     const updated = await api.updateAnnonce(selectedAnnonce.id, {
+       titre: editForm.titre,
+       description: editForm.description,
+       type_propriete: editForm.type_propriete,
+       type_bail: editForm.type_bail,
+       surface_totale: editForm.surface_totale ? Number(editForm.surface_totale) : null,
+       total_colocataires: editForm.total_colocataires ? Number(editForm.total_colocataires) : null,
+       chambre: {
+         est_meuble: editForm.est_meuble,
+         prix_loyer: Number(editForm.prix_loyer) || null,
+         date_disponibilite: editForm.date_disponibilite || null,
+       },
+       energy_class: editForm.energy_class || null,
+       ghg_class: editForm.ghg_class || null,
+       elevator: editForm.elevator,
+       pets_allowed: editForm.pets_allowed,
+       smokers_allowed: editForm.smokers_allowed,
+       women_only: editForm.women_only,
+       men_only: editForm.men_only,
+     })
+     setAnnonces((current) => current.map((item) => (item.id === selectedAnnonce.id ? updated : item)))
+     setShowEditModal(false)
+     setSelectedAnnonce(null)
+   }
 
   async function confirmDelete() {
     if (!selectedAnnonce) return
@@ -143,72 +189,80 @@ export default function AdminAnnonces() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-xs uppercase text-white/40 border-b border-white/10">
-                <tr>
-                  <th className="text-left p-4 font-medium">Annonce</th>
-                  <th className="text-left font-medium">Ville</th>
-                  <th className="text-left font-medium">Prix</th>
-                  <th className="text-left font-medium">Proprietaire</th>
-                  <th className="text-left font-medium">Statut</th>
-                  <th className="text-left font-medium">Date</th>
-                  <th className="text-right p-4 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAnnonces.map((annonce) => (
-                  <tr key={annonce.id} className="border-b border-white/5 hover:bg-white/5 transition">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={annonce.photos[0] || 'https://picsum.photos/seed/colockoo/200/200'}
-                          className="w-10 h-10 rounded-lg object-cover"
-                          alt=""
-                        />
-                        <div className="min-w-0">
-                          <div className="font-medium truncate max-w-[260px] text-white">{annonce.titre}</div>
-                          <div className="text-xs text-white/40">{annonce.reference}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="text-white/70">{annonce.ville}</td>
-                    <td className="text-white/70 font-semibold">{formatAr(Number(annonce.chambre?.prix_loyer || 0))}</td>
-                    <td className="text-white/70">{annonce.auteur || '-'}</td>
-                    <td>
-                      <StatusBadge status={annonce.statut} />
-                    </td>
-                    <td className="text-white/50 text-xs">{new Date(annonce.date_creation).toLocaleDateString('fr-FR')}</td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-1 flex-wrap">
-                        <button onClick={() => { setSelectedAnnonce(annonce); setShowViewModal(true) }} className="p-1.5 hover:bg-white/10 rounded text-white/70 hover:text-white" title="Voir">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {annonce.statut === 'pending' && (
-                          <>
-                            <button onClick={() => changeStatus(annonce, 'active')} className="p-1.5 hover:bg-white/10 rounded text-brand-green" title="Valider">
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => { setSelectedAnnonce(annonce); setShowRejectionModal(true) }} className="p-1.5 hover:bg-white/10 rounded text-brand-magenta" title="Refuser">
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
-                        {annonce.statut === 'active' && (
-                          <button onClick={() => openEdit(annonce)} className="p-1.5 hover:bg-white/10 rounded text-brand-cyan" title="Modifier">
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                        )}
-                        {annonce.statut === 'rejected' && (
-                          <button onClick={() => changeStatus(annonce, 'pending')} className="p-1.5 hover:bg-white/10 rounded text-brand-yellow" title="Reactiver">
-                            <RefreshCw className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button onClick={() => { setSelectedAnnonce(annonce); setShowDeleteModal(true) }} className="p-1.5 hover:bg-white/10 rounded text-brand-magenta" title="Supprimer">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+           <thead className="text-xs uppercase text-white/40 border-b border-white/10">
+                 <tr>
+                   <th className="text-left p-4 font-medium">Annonce</th>
+                   <th className="text-left font-medium">Ville</th>
+                   <th className="text-left font-medium">Type</th>
+                   <th className="text-left font-medium">Bail</th>
+                   <th className="text-left font-medium">Surface</th>
+                   <th className="text-left font-medium">Colocs</th>
+                   <th className="text-left font-medium">Prix</th>
+                   <th className="text-left font-medium">Proprietaire</th>
+                   <th className="text-left font-medium">Statut</th>
+                   <th className="text-left font-medium">Date</th>
+                   <th className="text-right p-4 font-medium">Actions</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {filteredAnnonces.map((annonce) => (
+                   <tr key={annonce.id} className="border-b border-white/5 hover:bg-white/5 transition">
+                     <td className="p-4">
+                       <div className="flex items-center gap-3">
+                         <img
+                           src={annonce.photos[0] || 'https://picsum.photos/seed/colockoo/200/200'}
+                           className="w-10 h-10 rounded-lg object-cover"
+                           alt=""
+                         />
+                         <div className="min-w-0">
+                           <div className="font-medium truncate max-w-[200px] text-white">{annonce.titre}</div>
+                           <div className="text-xs text-white/40">{annonce.reference}</div>
+                         </div>
+                       </div>
+                     </td>
+                     <td className="text-white/70">{annonce.ville}</td>
+                     <td className="text-white/70">{annonce.type_propriete}</td>
+                     <td className="text-white/70">{annonce.type_bail || '-'}</td>
+                     <td className="text-white/70">{annonce.surface_totale ? `${annonce.surface_totale} m²` : '-'}</td>
+                     <td className="text-white/70">{annonce.total_colocataires || '-'}</td>
+                     <td className="text-white/70 font-semibold">{formatAr(Number(annonce.chambre?.prix_loyer || 0))}</td>
+                     <td className="text-white/70">{annonce.auteur || '-'}</td>
+                     <td>
+                       <StatusBadge status={annonce.statut} />
+                     </td>
+                     <td className="text-white/50 text-xs">{new Date(annonce.date_creation).toLocaleDateString('fr-FR')}</td>
+                     <td className="p-4 text-right">
+                       <div className="flex justify-end gap-1 flex-wrap">
+                         <button onClick={() => { setSelectedAnnonce(annonce); setShowViewModal(true) }} className="p-1.5 hover:bg-white/10 rounded text-white/70 hover:text-white" title="Voir">
+                           <Eye className="w-4 h-4" />
+                         </button>
+                         {annonce.statut === 'pending' && (
+                           <>
+                             <button onClick={() => changeStatus(annonce, 'active')} className="p-1.5 hover:bg-white/10 rounded text-brand-green" title="Valider">
+                               <CheckCircle className="w-4 h-4" />
+                             </button>
+                             <button onClick={() => { setSelectedAnnonce(annonce); setShowRejectionModal(true) }} className="p-1.5 hover:bg-white/10 rounded text-brand-magenta" title="Refuser">
+                               <XCircle className="w-4 h-4" />
+                             </button>
+                           </>
+                         )}
+                         {annonce.statut === 'active' && (
+                           <button onClick={() => openEdit(annonce)} className="p-1.5 hover:bg-white/10 rounded text-brand-cyan" title="Modifier">
+                             <Pencil className="w-4 h-4" />
+                           </button>
+                         )}
+                         {annonce.statut === 'rejected' && (
+                           <button onClick={() => changeStatus(annonce, 'pending')} className="p-1.5 hover:bg-white/10 rounded text-brand-yellow" title="Reactiver">
+                             <RefreshCw className="w-4 h-4" />
+                           </button>
+                         )}
+                         <button onClick={() => { setSelectedAnnonce(annonce); setShowDeleteModal(true) }} className="p-1.5 hover:bg-white/10 rounded text-brand-magenta" title="Supprimer">
+                           <Trash2 className="w-4 h-4" />
+                         </button>
+                       </div>
+                     </td>
+                   </tr>
+                 ))}
                 {!loading && filteredAnnonces.length === 0 && (
                   <tr>
                     <td colSpan={7} className="text-center py-8 text-white/40">Aucune annonce trouvee</td>
@@ -225,18 +279,53 @@ export default function AdminAnnonces() {
         </div>
       </div>
 
-      {showViewModal && selectedAnnonce && (
-        <Modal title="Details de l'annonce" onClose={() => setShowViewModal(false)}>
-          <img src={selectedAnnonce.photos[0] || 'https://picsum.photos/seed/colockoo/900/400'} className="w-full h-48 object-cover rounded-lg" alt="" />
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <Info label="Titre" value={selectedAnnonce.titre} />
-            <Info label="Ville" value={selectedAnnonce.ville} />
-            <Info label="Prix" value={formatAr(Number(selectedAnnonce.chambre?.prix_loyer || 0))} />
-            <Info label="Proprietaire" value={selectedAnnonce.auteur || '-'} />
-          </div>
-          <p className="mt-4 text-sm text-white/70">{selectedAnnonce.description || 'Aucune description.'}</p>
-        </Modal>
-      )}
+       {showViewModal && selectedAnnonce && (
+         <Modal title="Details de l'annonce" onClose={() => setShowViewModal(false)}>
+           <img src={selectedAnnonce.photos[0] || 'https://picsum.photos/seed/colockoo/900/400'} className="w-full h-48 object-cover rounded-lg" alt="" />
+           <div className="grid grid-cols-2 gap-4 mt-4">
+             <Info label="Titre" value={selectedAnnonce.titre} />
+             <Info label="Ville" value={selectedAnnonce.ville} />
+             <Info label="Type" value={selectedAnnonce.type_propriete} />
+             <Info label="Bail" value={selectedAnnonce.type_bail || '-'} />
+             <Info label="Surface" value={selectedAnnonce.surface_totale ? `${selectedAnnonce.surface_totale} m²` : '-'} />
+             <Info label="Colocataires" value={String(selectedAnnonce.total_colocataires || '-')} />
+             <Info label="Prix" value={formatAr(Number(selectedAnnonce.chambre?.prix_loyer || 0))} />
+             <Info label="Proprietaire" value={selectedAnnonce.auteur || '-'} />
+             <Info label="Ref" value={selectedAnnonce.reference} />
+             <Info label="Meuble" value={selectedAnnonce.chambre?.est_meuble != null ? String(selectedAnnonce.chambre.est_meuble) : '-'} />
+           </div>
+           {selectedAnnonce.amenities && selectedAnnonce.amenities.length > 0 && (
+             <div className="mt-4">
+               <label className="text-white/40 text-xs">Equipements</label>
+               <div className="flex flex-wrap gap-1 mt-1">
+                 {selectedAnnonce.amenities.map((a, i) => (
+                   <span key={i} className="text-xs bg-brand-cyan/10 text-brand-cyan px-2 py-0.5 rounded-full">{a}</span>
+                 ))}
+               </div>
+             </div>
+           )}
+           {selectedAnnonce.regles && selectedAnnonce.regles.length > 0 && (
+             <div className="mt-4">
+               <label className="text-white/40 text-xs">Regles</label>
+               <div className="flex flex-wrap gap-1 mt-1">
+                 {selectedAnnonce.regles.map((r, i) => (
+                   <span key={i} className="text-xs bg-brand-green/10 text-brand-green px-2 py-0.5 rounded-full">{r}</span>
+                 ))}
+               </div>
+             </div>
+           )}
+           <div className="mt-4 flex flex-wrap gap-2">
+             {selectedAnnonce.elevator && <span className="text-xs bg-white/5 text-white/70 px-2 py-1 rounded-full flex items-center gap-1"><Home className="w-3 h-3" /> Ascenseur</span>}
+             {selectedAnnonce.pets_allowed && <span className="text-xs bg-white/5 text-white/70 px-2 py-1 rounded-full flex items-center gap-1"><Dog className="w-3 h-3" /> Animaux</span>}
+             {selectedAnnonce.smokers_allowed && <span className="text-xs bg-white/5 text-white/70 px-2 py-1 rounded-full flex items-center gap-1">🚬 Fumeurs</span>}
+             {selectedAnnonce.women_only && <span className="text-xs bg-white/5 text-white/70 px-2 py-1 rounded-full flex items-center gap-1">👩 Femmes</span>}
+             {selectedAnnonce.men_only && <span className="text-xs bg-white/5 text-white/70 px-2 py-1 rounded-full flex items-center gap-1">👨 Hommes</span>}
+             {selectedAnnonce.energy_class && <span className="text-xs bg-white/5 text-white/70 px-2 py-1 rounded-full">Energy: {selectedAnnonce.energy_class}</span>}
+             {selectedAnnonce.ghg_class && <span className="text-xs bg-white/5 text-white/70 px-2 py-1 rounded-full">GHG: {selectedAnnonce.ghg_class}</span>}
+           </div>
+           <p className="mt-4 text-sm text-white/70">{selectedAnnonce.description || 'Aucune description.'}</p>
+         </Modal>
+       )}
 
       {showRejectionModal && selectedAnnonce && (
         <Modal title="Refuser l'annonce" onClose={() => setShowRejectionModal(false)} narrow>
@@ -255,23 +344,62 @@ export default function AdminAnnonces() {
         </Modal>
       )}
 
-      {showEditModal && selectedAnnonce && (
-        <Modal title="Modifier l'annonce" onClose={() => setShowEditModal(false)}>
-          <div className="space-y-4">
-            <EditInput label="Titre" value={editForm.titre} onChange={(value) => setEditForm({ ...editForm, titre: value })} />
-            <div>
-              <label className="block text-sm text-white/60 mb-1">Description</label>
-              <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none text-white" rows={3} />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white/80">Annuler</button>
-              <button onClick={saveEdit} className="flex-1 px-4 py-2 bg-brand-cyan text-[oklch(0.15_0_0)] rounded-lg text-sm font-semibold flex items-center justify-center gap-2">
-                <Save className="w-4 h-4" /> Enregistrer
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
+       {showEditModal && selectedAnnonce && (
+         <Modal title="Modifier l'annonce" onClose={() => setShowEditModal(false)}>
+           <div className="space-y-4">
+             <EditInput label="Titre" value={editForm.titre} onChange={(value) => setEditForm({ ...editForm, titre: value })} />
+             <div>
+               <label className="block text-sm text-white/60 mb-1">Description</label>
+               <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none text-white" rows={3} />
+             </div>
+             <div className="grid grid-cols-2 gap-3">
+               <EditInput label="Type de bien" value={editForm.type_propriete} onChange={(value) => setEditForm({ ...editForm, type_propriete: value })} />
+               <EditInput label="Type de bail" value={editForm.type_bail} onChange={(value) => setEditForm({ ...editForm, type_bail: value })} />
+             </div>
+             <div className="grid grid-cols-2 gap-3">
+               <EditInput label="Surface totale (m²)" value={editForm.surface_totale} onChange={(value) => setEditForm({ ...editForm, surface_totale: value })} />
+               <EditInput label="Total colocataires" value={editForm.total_colocataires} onChange={(value) => setEditForm({ ...editForm, total_colocataires: value })} />
+             </div>
+             <div className="grid grid-cols-2 gap-3">
+               <EditInput label="Meuble" value={editForm.est_meuble} onChange={(value) => setEditForm({ ...editForm, est_meuble: value })} />
+               <EditInput label="Date dispo" value={editForm.date_disponibilite} onChange={(value) => setEditForm({ ...editForm, date_disponibilite: value })} />
+             </div>
+             <div className="grid grid-cols-2 gap-3">
+               <EditInput label="Prix loyer (Ar)" value={editForm.prix_loyer} onChange={(value) => setEditForm({ ...editForm, prix_loyer: value })} />
+               <EditInput label="Classe énergie" value={editForm.energy_class} onChange={(value) => setEditForm({ ...editForm, energy_class: value })} />
+             </div>
+             <EditInput label="Classe GHG" value={editForm.ghg_class} onChange={(value) => setEditForm({ ...editForm, ghg_class: value })} />
+             <div className="flex flex-wrap gap-4">
+               <label className="flex items-center gap-2 text-sm text-white/70">
+                 <input type="checkbox" checked={editForm.elevator} onChange={(e) => setEditForm({ ...editForm, elevator: e.target.checked })} />
+                 Ascenseur
+               </label>
+               <label className="flex items-center gap-2 text-sm text-white/70">
+                 <input type="checkbox" checked={editForm.pets_allowed} onChange={(e) => setEditForm({ ...editForm, pets_allowed: e.target.checked })} />
+                 Animaux
+               </label>
+               <label className="flex items-center gap-2 text-sm text-white/70">
+                 <input type="checkbox" checked={editForm.smokers_allowed} onChange={(e) => setEditForm({ ...editForm, smokers_allowed: e.target.checked })} />
+                 Fumeurs
+               </label>
+               <label className="flex items-center gap-2 text-sm text-white/70">
+                 <input type="checkbox" checked={editForm.women_only} onChange={(e) => setEditForm({ ...editForm, women_only: e.target.checked })} />
+                 Femmes uniquement
+               </label>
+               <label className="flex items-center gap-2 text-sm text-white/70">
+                 <input type="checkbox" checked={editForm.men_only} onChange={(e) => setEditForm({ ...editForm, men_only: e.target.checked })} />
+                 Hommes uniquement
+               </label>
+             </div>
+             <div className="flex gap-3">
+               <button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white/80">Annuler</button>
+               <button onClick={saveEdit} className="flex-1 px-4 py-2 bg-brand-cyan text-[oklch(0.15_0_0)] rounded-lg text-sm font-semibold flex items-center justify-center gap-2">
+                 <Save className="w-4 h-4" /> Enregistrer
+               </button>
+             </div>
+           </div>
+         </Modal>
+       )}
 
       {showDeleteModal && selectedAnnonce && (
         <Modal title="Supprimer l'annonce" onClose={() => setShowDeleteModal(false)} narrow>

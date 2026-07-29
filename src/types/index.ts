@@ -34,14 +34,29 @@ export interface Listing {
   candidatureCount?: number
   image: string
   address?: string
-  latitude?: number    // <-- Ajoutez cette ligne
-  longitude?: number    // <-- Ajoutez cette ligne
+  latitude?: number
+  longitude?: number
   gallery: string[]
   description: string
   amenities: string[]
   colocs: Coloc[]
   owner: Owner
   tags: ListingTag[]
+  regles?: string[]
+  internet?: boolean
+  parkingVoitures?: number
+  parkingMotos?: number
+  parkingCouvert?: boolean
+  elevator?: boolean
+  petsAllowed?: boolean
+  smokersAllowed?: boolean
+  womenOnly?: boolean
+  menOnly?: boolean
+  energyClass?: string | null
+  ghgClass?: string | null
+  modeAnnonce?: string
+  dateExpiration?: string | null
+  region?: string
 }
 
 export interface CityInfo {

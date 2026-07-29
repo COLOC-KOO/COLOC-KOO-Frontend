@@ -6,7 +6,8 @@ import {
   ArrowLeft, BedDouble, Calendar, Check, ChevronDown, Eye, Heart, 
   MessageSquare, MapPin, Send, Share2, Shield, Users, Building2, X,
   User, Phone, Mail, Briefcase, MapPin as MapPinIcon, Calendar as CalendarIcon,
-  Award, Star, ExternalLink
+  Award, Star, ExternalLink, Wifi, Car, Home, PawPrint,
+  Flame, ArrowUp, Circle, Bike, DollarSign, Zap, Cloud
 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
@@ -599,6 +600,66 @@ export default function AnnonceDetail() {
             />
           </div>
 
+          {/* Property Details */}
+          <section className="mt-8">
+            <h2 className="bebas text-2xl">{t('annonceDetail:sections.propertyDetails')}</h2>
+            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="flex items-center gap-2 text-sm">
+                <Shield className="w-4 h-4 text-brand-cyan-dark" />
+                <span className="text-foreground">
+                  {listing.furnished ? t('annonceDetail:property.furnished') : t('annonceDetail:property.unfurnished')}
+                </span>
+              </div>
+              {listing.available ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <CalendarIcon className="w-4 h-4 text-brand-cyan-dark" />
+                  <span className="text-foreground">{t('annonceDetail:property.available', { date: listing.available })}</span>
+                </div>
+              ) : null}
+              {listing.bedrooms > 0 ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <BedDouble className="w-4 h-4 text-brand-cyan-dark" />
+                  <span className="text-foreground">{listing.bedrooms} {t('annonceDetail:property.bedrooms')}</span>
+                </div>
+              ) : null}
+              {listing.charges > 0 ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <DollarSign className="w-4 h-4 text-brand-cyan-dark" />
+                  <span className="text-foreground">{t('annonceDetail:property.charges')}: {formatAr(listing.charges)} {t('annonceDetail:property.chargesUnit')}</span>
+                </div>
+              ) : null}
+              {listing.address ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPinIcon className="w-4 h-4 text-brand-cyan-dark" />
+                  <span className="text-foreground">{listing.address}</span>
+                </div>
+              ) : null}
+              {listing.annonceType ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <Star className="w-4 h-4 text-brand-cyan-dark" />
+                  <span className="text-foreground">{t('annonceDetail:property.announcementType')}: {listing.annonceType === 'existante' ? t('annonceDetail:property.announcementTypeExisting') : t('annonceDetail:property.announcementTypeCreate')}</span>
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          {listing.energyClass || listing.ghgClass ? (
+            <section className="mt-6">
+              <div className="flex flex-wrap gap-2">
+                {listing.energyClass ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold bg-brand-olive/10 text-brand-olive-dark px-3 py-1 rounded-full border border-brand-olive/30">
+                    <Zap className="w-3 h-3" /> {t('annonceDetail:energy.class')}: {listing.energyClass}
+                  </span>
+                ) : null}
+                {listing.ghgClass ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold bg-brand-green/10 text-brand-green-dark px-3 py-1 rounded-full border border-brand-green/30">
+                    <Cloud className="w-3 h-3" /> {t('annonceDetail:energy.ghg')}: {listing.ghgClass}
+                  </span>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+
           <section className="mt-8">
             <h2 className="bebas text-2xl">{t('annonceDetail:sections.description')}</h2>
             <p className="mt-3 text-muted-foreground leading-relaxed">{listing.description || t('annonceDetail:noDescription')}</p>
@@ -612,6 +673,78 @@ export default function AnnonceDetail() {
                   <Check className="w-4 h-4 text-brand-green-dark" /> {a}
                 </div>
               ))}
+            </div>
+          </section>
+
+          {/* Rules */}
+          {listing.regles && listing.regles.length > 0 && (
+            <section className="mt-8">
+              <h2 className="bebas text-2xl">{t('annonceDetail:sections.rules')}</h2>
+              <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                {listing.regles.map((r) => (
+                  <div key={r} className="flex items-center gap-2 text-sm">
+                    <Shield className="w-4 h-4 text-brand-cyan-dark" /> {r}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Features */}
+          <section className="mt-8">
+            <h2 className="bebas text-2xl">{t('annonceDetail:sections.features')}</h2>
+            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+              {(listing.internet || (listing.parkingVoitures ?? 0) > 0 || (listing.parkingMotos ?? 0) > 0 || listing.parkingCouvert || listing.elevator || listing.petsAllowed || listing.smokersAllowed || listing.womenOnly || listing.menOnly) ? (
+                <>
+                  {listing.internet ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Wifi className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.internet')}
+                    </div>
+                  ) : null}
+                  {(listing.parkingVoitures ?? 0) > 0 ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Car className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.parkingCars', { count: listing.parkingVoitures })}
+                    </div>
+                  ) : null}
+                  {(listing.parkingMotos ?? 0) > 0 ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Bike className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.parkingMotorcycles', { count: listing.parkingMotos })}
+                    </div>
+                  ) : null}
+                  {listing.parkingCouvert ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Home className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.parkingCovered')}
+                    </div>
+                  ) : null}
+                  {listing.elevator ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <ArrowUp className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.elevator')}
+                    </div>
+                  ) : null}
+                  {listing.petsAllowed ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <PawPrint className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.petsAllowed')}
+                    </div>
+                  ) : null}
+                  {listing.smokersAllowed ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Flame className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.smokersAllowed')}
+                    </div>
+                  ) : null}
+                  {listing.womenOnly ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Circle className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.womenOnly')}
+                    </div>
+                  ) : null}
+                  {listing.menOnly ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Circle className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.menOnly')}
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <div className="text-sm text-muted-foreground">{t('annonceDetail:features.noFeatures')}</div>
+              )}
             </div>
           </section>
 

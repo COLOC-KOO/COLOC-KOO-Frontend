@@ -16,6 +16,9 @@
   "sections": {
     "description": "Description",
     "amenities": "Amenities",
+    "propertyDetails": "Property details",
+    "rules": "Colocation rules",
+    "features": "Additional features",
     "candidatesTitle": "Housemates linked to this listing",
     "candidatesSubtitle": "This section displays the applications actually recorded in the database for this listing.",
     "candidatesSingular": "application recorded",
@@ -32,6 +35,36 @@
     "individualDesc": "Each housemate signs their own contract with the landlord.",
     "withSolidarityDesc": " All housemates are jointly liable for the rent.",
     "withoutSolidarityDesc": " Each housemate remains responsible for their share."
+  },
+  "property": {
+    "furnished": "Furnished",
+    "unfurnished": "Unfurnished",
+    "available": "Available from {date}",
+    "bedrooms": "Bedroom(s)",
+    "charges": "Charges",
+    "chargesUnit": "Ar/month",
+    "address": "Address",
+    "announcementType": "Listing type",
+    "announcementTypeExisting": "Existing housemates",
+    "announcementTypeCreate": "Housemates to create"
+  },
+  "features": {
+    "internet": "Internet",
+    "parking": "Parking",
+    "parkingCars": "{count} parking spot(s)",
+    "parkingMotorcycles": "{count} motorcycle spot(s)",
+    "parkingCovered": "Covered parking",
+    "elevator": "Elevator",
+    "petsAllowed": "Pets allowed",
+    "smokersAllowed": "Smokers allowed",
+    "womenOnly": "Women only",
+    "menOnly": "Men only",
+    "noFeatures": "No additional features specified."
+  },
+  "energy": {
+    "class": "Energy class",
+    "ghg": "GHG class",
+    "noData": "Not specified"
   },
   "candidates": {
     "defaultName": "Candidate",
