@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Annonces from './pages/Annonces'
 import AnnonceDetail from './pages/AnnonceDetail'
 import Deposer from './pages/Deposer'
+import DepotAnnonce from './pages/DepotAnnonce'
 import Partenaires from './pages/Partenaires'
 import Contact from './pages/Contact'
 import Services from './pages/Services'
@@ -52,6 +53,7 @@ export default function App() {
       <Route path="/annonces" element={<Annonces />} />
       <Route path="/annonces/:id" element={<AnnonceDetail />} />
       <Route path="/deposer" element={<Deposer />} />
+      <Route path="/depot_annonce" element={<DepotAnnonce />} />
       <Route path="/partenaires" element={<Partenaires />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/services" element={<Services />} />

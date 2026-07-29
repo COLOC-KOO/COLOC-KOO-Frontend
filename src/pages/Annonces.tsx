@@ -22,7 +22,12 @@ export default function Annonces() {
   const [district, setDistrict] = useState("");
   const [type, setType] = useState("");
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
+  const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
+  const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(0);
+  const [minSurface, setMinSurface] = useState(0);
+  const [maxSurface, setMaxSurface] = useState(0);
+  const [bedrooms, setBedrooms] = useState("");
   const [query, setQuery] = useState("");
   const [colocFilter, setColocFilter] = useState("");
   const [listings, setListings] = useState<Listing[]>([]);
@@ -35,12 +40,39 @@ export default function Annonces() {
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [showColocMenu, setShowColocMenu] = useState(false);
   const [showServicesMenu, setShowServicesMenu] = useState(false);
+  const [showEquipmentsMenu, setShowEquipmentsMenu] = useState(false);
+  const [showBedroomsMenu, setShowBedroomsMenu] = useState(false);
   const [showCityMenu, setShowCityMenu] = useState(false);
 
   const typeRef = useRef<HTMLDivElement>(null);
   const colocRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
+  const equipmentsRef = useRef<HTMLDivElement>(null);
+  const bedroomsRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<HTMLDivElement>(null);
+
+  const equipmentOptions = useMemo(
+    () => [
+      { value: "accessibilite_handicape", label: "Accessibilité handicapé" },
+      { value: "air_conditionne", label: "Air conditionné" },
+      { value: "ascenseur", label: "Ascenseur" },
+      { value: "balcon", label: "Balcon" },
+      { value: "garage", label: "Garage" },
+      { value: "jardin", label: "Jardin" },
+      { value: "lave_vaisselle", label: "Lave-vaisselle" },
+      { value: "machine_laver", label: "Machine à laver" },
+      { value: "meuble", label: "Meublé" },
+      { value: "parking", label: "Parking" },
+      { value: "piscine", label: "Piscine" },
+      { value: "wifi", label: "Wifi" },
+    ],
+    [],
+  );
+
+  const bedroomOptions = useMemo(
+    () => ["1", "2", "3", "4", "5", "6+"],
+    [],
+  );
 
   const typeOptions = useMemo(
     () => [
@@ -70,7 +102,13 @@ export default function Annonces() {
     const urlColoc = params.get("coloc") || "";
     const urlServices =
       params.get("services")?.split(",").map(Number).filter(Boolean) || [];
+    const urlEquipments =
+      params.get("equipements")?.split(",").map((item) => item.trim()).filter(Boolean) || [];
+    const urlMinPrice = Number(params.get("minPrice") || 0);
     const urlMaxPrice = Number(params.get("maxPrice") || 0);
+    const urlMinSurface = Number(params.get("minSurface") || 0);
+    const urlMaxSurface = Number(params.get("maxSurface") || 0);
+    const urlBedrooms = params.get("chambres") || "";
 
     setQuery(urlQuery);
     setType(urlType);
@@ -78,7 +116,12 @@ export default function Annonces() {
     setDistrict(urlDistrict);
     setColocFilter(urlColoc);
     setSelectedServiceIds(urlServices);
+    setSelectedEquipments(urlEquipments);
+    setMinPrice(urlMinPrice);
     setMaxPrice(urlMaxPrice);
+    setMinSurface(urlMinSurface);
+    setMaxSurface(urlMaxSurface);
+    setBedrooms(urlBedrooms);
   }, [location.search]);
 
   useEffect(() => {
@@ -89,6 +132,7 @@ export default function Annonces() {
       ville: city || undefined,
       quartier: district || undefined,
       type: type || undefined,
+      minPrice: minPrice || undefined,
       maxPrice: maxPrice || undefined,
       q: query || undefined,
       coloc: colocFilter || undefined,
@@ -105,13 +149,13 @@ export default function Annonces() {
       .then(([annonces, villesList, servicesList]) => {
         setListings(annonces.map(annonceToListing));
         setVilles(villesList);
-        setServices(Array.isArray(servicesList) ? servicesList : []);
+        setServices(Array.isArray(servicesList) ? servicesList.filter((service) => String(service.cle_service || "").startsWith("service_")) : []);
       })
       .catch((err) =>
         setError(err instanceof Error ? err.message : t("common:common.error")),
       )
       .finally(() => setLoading(false));
-  }, [city, type, selectedServiceIds, maxPrice, query, colocFilter, t]);
+  }, [city, type, selectedServiceIds, minPrice, maxPrice, query, colocFilter, t]);
 
   const citiesList = useMemo(() => {
     const fromDb = villes.map((v) => v.nom_ville);
@@ -119,9 +163,45 @@ export default function Annonces() {
     return [...new Set([...fromDb, ...fromListings])];
   }, [listings, villes]);
 
+  const visibleListings = useMemo(() => {
+    return listings.filter((listing) => {
+      if (minSurface && listing.surface < minSurface) return false;
+      if (maxSurface && listing.surface > maxSurface) return false;
+      if (bedrooms) {
+        const minBedrooms = bedrooms === "6+" ? 6 : Number(bedrooms);
+        const listingBedrooms = Number(listing.bedrooms || listing.rooms || 0);
+        if (bedrooms === "6+") {
+          if (listingBedrooms < minBedrooms) return false;
+        } else if (listingBedrooms !== minBedrooms) {
+          return false;
+        }
+      }
+      if (selectedEquipments.length > 0) {
+        const normalizedAmenities = listing.amenities.map((item) =>
+          item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_"),
+        );
+        const hasEveryEquipment = selectedEquipments.every((equipment) => {
+          if (equipment === "wifi" && listing.internet) return true;
+          if (equipment === "ascenseur" && listing.elevator) return true;
+          if (equipment === "parking" && ((listing.parkingVoitures ?? 0) > 0 || listing.parkingCouvert)) return true;
+          if (equipment === "animaux_acceptes" && listing.petsAllowed) return true;
+          return normalizedAmenities.some((amenity) => amenity.includes(equipment));
+        });
+        if (!hasEveryEquipment) return false;
+      }
+      return true;
+    });
+  }, [listings, minSurface, maxSurface, bedrooms, selectedEquipments]);
+
   const toggleService = (id: number) => {
     setSelectedServiceIds((prev) =>
       prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id],
+    );
+  };
+
+  const toggleEquipment = (value: string) => {
+    setSelectedEquipments((prev) =>
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
     );
   };
 
@@ -130,7 +210,12 @@ export default function Annonces() {
     setDistrict("");
     setType("");
     setSelectedServiceIds([]);
+    setSelectedEquipments([]);
+    setMinPrice(0);
     setMaxPrice(0);
+    setMinSurface(0);
+    setMaxSurface(0);
+    setBedrooms("");
     setQuery("");
     setColocFilter("");
     setShowMobileFilters(false);
@@ -147,6 +232,16 @@ export default function Annonces() {
         !servicesRef.current.contains(e.target as Node)
       )
         setShowServicesMenu(false);
+      if (
+        equipmentsRef.current &&
+        !equipmentsRef.current.contains(e.target as Node)
+      )
+        setShowEquipmentsMenu(false);
+      if (
+        bedroomsRef.current &&
+        !bedroomsRef.current.contains(e.target as Node)
+      )
+        setShowBedroomsMenu(false);
       if (cityRef.current && !cityRef.current.contains(e.target as Node))
         setShowCityMenu(false);
     };
@@ -161,6 +256,7 @@ export default function Annonces() {
     colocOptions.find((c) => c.value === val)?.label ||
     t("annonces:filters.coloc.all");
   const getCityLabel = (val: string) => val || t("annonces:filters.city.all");
+  const getBedroomsLabel = (val: string) => val ? `${val} chambre${val === "1" ? "" : "s"}` : "Chambres";
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -168,10 +264,15 @@ export default function Annonces() {
     if (district) count++;
     if (type) count++;
     if (selectedServiceIds.length > 0) count++;
+    if (selectedEquipments.length > 0) count++;
+    if (minPrice > 0) count++;
     if (maxPrice > 0) count++;
+    if (minSurface > 0) count++;
+    if (maxSurface > 0) count++;
+    if (bedrooms) count++;
     if (colocFilter) count++;
     return count;
-  }, [city, district, type, selectedServiceIds, maxPrice, colocFilter]);
+  }, [city, district, type, selectedServiceIds, selectedEquipments, minPrice, maxPrice, minSurface, maxSurface, bedrooms, colocFilter]);
 
   const emptyMessage =
     city || query
@@ -281,24 +382,72 @@ export default function Annonces() {
           {/* Budget */}
           <div>
             <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
-              {t("annonces:filters.budget")}
+              Budget
             </label>
-            <div className="flex items-center gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <input
-                type="range"
+                type="number"
                 min={0}
-                max={1000000}
-                step={50000}
+                value={minPrice || ""}
+                onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                placeholder="Minimum"
+                className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+              />
+              <input
+                type="number"
+                min={0}
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(Number(e.target.value))}
-                className="flex-1 accent-[var(--brand-cyan)] h-1.5 bg-[var(--border)] rounded-full appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, var(--brand-cyan) 0%, var(--brand-cyan) ${(maxPrice / 1000000) * 100}%, var(--border) ${(maxPrice / 1000000) * 100}%, var(--border) 100%)`,
-                }}
+                placeholder="Maximum"
+                className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
               />
-              <span className="text-sm font-semibold text-[var(--foreground)] min-w-[80px] text-right">
-                {maxPrice ? `${(maxPrice / 1000).toFixed(0)}k Ar` : "0 Ar"}
-              </span>
+            </div>
+          </div>
+
+          {/* Surface */}
+          <div>
+            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+              Surface
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="number"
+                min={0}
+                value={minSurface || ""}
+                onChange={(e) => setMinSurface(Number(e.target.value) || 0)}
+                placeholder="Minimum"
+                className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+              />
+              <input
+                type="number"
+                min={0}
+                value={maxSurface || ""}
+                onChange={(e) => setMaxSurface(Number(e.target.value) || 0)}
+                placeholder="Maximum"
+                className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+              />
+            </div>
+          </div>
+
+          {/* Chambres */}
+          <div>
+            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+              Nombre de chambres
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {bedroomOptions.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setBedrooms(bedrooms === opt ? "" : opt)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    bedrooms === opt
+                      ? "bg-[var(--brand-cyan)] text-white shadow-md"
+                      : "bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--border)]"
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -323,6 +472,28 @@ export default function Annonces() {
                     {service.nom}
                   </button>
                 ))}
+            </div>
+          </div>
+
+          {/* Equipements */}
+          <div>
+            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+              Equipement
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {equipmentOptions.map((equipment) => (
+                <button
+                  key={equipment.value}
+                  onClick={() => toggleEquipment(equipment.value)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    selectedEquipments.includes(equipment.value)
+                      ? "bg-[var(--brand-cyan)] text-white shadow-md"
+                      : "bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--border)]"
+                  }`}
+                >
+                  {equipment.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -378,7 +549,7 @@ export default function Annonces() {
           <p className="text-white/80 text-xs sm:text-sm md:text-base drop-shadow mt-1">
             {loading
               ? t("common:common.loading")
-              : `${listings.length} ${t("annonces:results")}`}
+              : `${visibleListings.length} ${t("annonces:results")}`}
           </p>
 
           {/* Barre de recherche - Déplacée sous le titre, sans border-radius */}
@@ -488,29 +659,45 @@ export default function Annonces() {
           </div>
 
           {/* Budget */}
-          <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5">
-            <span className="text-sm font-medium text-[var(--foreground)] hidden sm:inline">
-              {t("annonces:filters.budget")}
-            </span>
-            <div className="relative">
-              <input
-                type="range"
-                min={0}
-                max={1000000}
-                step={50000}
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(Number(e.target.value))}
-                className="w-20 sm:w-28 accent-[var(--brand-cyan)] h-1 bg-[var(--border)] appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, var(--brand-cyan) 0%, var(--brand-cyan) ${(maxPrice / 1000000) * 100}%, var(--border) ${(maxPrice / 1000000) * 100}%, var(--border) 100%)`,
-                }}
-              />
-            </div>
-            <span className="text-sm font-medium text-[var(--foreground)] min-w-[60px] sm:min-w-[70px]">
-              {maxPrice
-                ? `${(maxPrice / 1000).toFixed(0)}k`
-                : t("annonces:filters.budget")}
-            </span>
+          <div className="flex items-center gap-2 px-2 py-1.5">
+            <span className="text-sm font-medium text-[var(--foreground)]">Budget</span>
+            <input
+              type="number"
+              min={0}
+              value={minPrice || ""}
+              onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+              placeholder="Min"
+              className="w-24 text-sm px-3 py-2 border border-[var(--border)] bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
+            />
+            <input
+              type="number"
+              min={0}
+              value={maxPrice || ""}
+              onChange={(e) => setMaxPrice(Number(e.target.value) || 0)}
+              placeholder="Max"
+              className="w-24 text-sm px-3 py-2 border border-[var(--border)] bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
+            />
+          </div>
+
+          {/* Surface */}
+          <div className="flex items-center gap-2 px-2 py-1.5">
+            <span className="text-sm font-medium text-[var(--foreground)]">Surface</span>
+            <input
+              type="number"
+              min={0}
+              value={minSurface || ""}
+              onChange={(e) => setMinSurface(Number(e.target.value) || 0)}
+              placeholder="Min"
+              className="w-20 text-sm px-3 py-2 border border-[var(--border)] bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
+            />
+            <input
+              type="number"
+              min={0}
+              value={maxSurface || ""}
+              onChange={(e) => setMaxSurface(Number(e.target.value) || 0)}
+              placeholder="Max"
+              className="w-20 text-sm px-3 py-2 border border-[var(--border)] bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
+            />
           </div>
 
           {/* Services */}
@@ -552,6 +739,78 @@ export default function Annonces() {
                     {t("annonces:filters.noServices")}
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Equipements */}
+          <div className="relative" ref={equipmentsRef}>
+            <button
+              onClick={() => setShowEquipmentsMenu(!showEquipmentsMenu)}
+              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+            >
+              Equipement
+              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+              {selectedEquipments.length > 0 && (
+                <span className="ml-1 bg-[var(--brand-cyan)] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center">
+                  {selectedEquipments.length}
+                </span>
+              )}
+            </button>
+            {showEquipmentsMenu && (
+              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-3 z-20 w-64 max-h-72 overflow-y-auto">
+                {equipmentOptions.map((equipment) => (
+                  <label
+                    key={equipment.value}
+                    className="flex items-center gap-3 px-2 py-2.5 hover:bg-[var(--muted)] cursor-pointer text-sm transition-colors text-[var(--foreground)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedEquipments.includes(equipment.value)}
+                      onChange={() => toggleEquipment(equipment.value)}
+                      className="w-4 h-4 accent-[var(--brand-cyan)]"
+                    />
+                    <span>{equipment.label}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Nombre de chambres */}
+          <div className="relative" ref={bedroomsRef}>
+            <button
+              onClick={() => setShowBedroomsMenu(!showBedroomsMenu)}
+              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+            >
+              {getBedroomsLabel(bedrooms)}
+              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+            </button>
+            {showBedroomsMenu && (
+              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-44">
+                <div
+                  onClick={() => {
+                    setBedrooms("");
+                    setShowBedroomsMenu(false);
+                  }}
+                  className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${bedrooms === "" ? "bg-[var(--muted)]" : ""}`}
+                >
+                  <span>Toutes</span>
+                  {bedrooms === "" && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
+                </div>
+                {bedroomOptions.map((option) => (
+                  <div
+                    key={option}
+                    onClick={() => {
+                      setBedrooms(option);
+                      setShowBedroomsMenu(false);
+                    }}
+                    className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${bedrooms === option ? "bg-[var(--muted)]" : ""}`}
+                  >
+                    <span>{option} chambre{option === "1" ? "" : "s"}</span>
+                    {bedrooms === option && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -662,13 +921,56 @@ export default function Annonces() {
                 </button>
               </span>
             )}
+            {selectedEquipments.length > 0 && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
+                {selectedEquipments.length} equipement{selectedEquipments.length > 1 ? "s" : ""}
+                <button
+                  onClick={() => setSelectedEquipments([])}
+                  className="hover:text-[var(--brand-cyan)]"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {minPrice > 0 && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
+                Budget min {`${(minPrice / 1000).toFixed(0)}k Ar`}
+                <button onClick={() => setMinPrice(0)} className="hover:text-[var(--brand-cyan)]">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
             {maxPrice > 0 && (
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                {`${(maxPrice / 1000).toFixed(0)}k Ar`}
+                Budget max {`${(maxPrice / 1000).toFixed(0)}k Ar`}
                 <button
                   onClick={() => setMaxPrice(0)}
                   className="hover:text-[var(--brand-cyan)]"
                 >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {minSurface > 0 && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
+                Surface min {minSurface} m2
+                <button onClick={() => setMinSurface(0)} className="hover:text-[var(--brand-cyan)]">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {maxSurface > 0 && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
+                Surface max {maxSurface} m2
+                <button onClick={() => setMaxSurface(0)} className="hover:text-[var(--brand-cyan)]">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {bedrooms && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
+                {getBedroomsLabel(bedrooms)}
+                <button onClick={() => setBedrooms("")} className="hover:text-[var(--brand-cyan)]">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -694,7 +996,7 @@ export default function Annonces() {
             <span>
               {loading
                 ? t("annonces:loading")
-                : `${listings.length} ${t("annonces:results")}`}
+                : `${visibleListings.length} ${t("annonces:results")}`}
             </span>
           </div>
           <div className="text-xs sm:text-sm text-[var(--muted-foreground)]">
@@ -726,7 +1028,7 @@ export default function Annonces() {
 
           {!loading && !error && (
             <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
-              {listings.map((l, index) => (
+              {visibleListings.map((l, index) => (
                 <div
                   key={l.id}
                   className="animate-fade-in-up cursor-pointer hover:opacity-80 transition-opacity"
@@ -741,7 +1043,7 @@ export default function Annonces() {
             </div>
           )}
 
-          {!loading && !error && listings.length === 0 && (
+          {!loading && !error && visibleListings.length === 0 && (
             <div className="text-center py-12 sm:py-20">
               <div className="text-4xl sm:text-5xl mb-4">🏠</div>
               <h3 className="bebas text-lg sm:text-xl text-[var(--foreground)]">

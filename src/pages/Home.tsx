@@ -8,6 +8,7 @@ import {
   Shield,
   Sparkles,
   Star,
+  Heart,
   Users,
   Map,
   List,
@@ -26,6 +27,7 @@ import { api, annonceToListing, type ApiPartenaireCampagne } from "../lib/api";
 import { CityInfo, Listing } from "../types";
 import { motion } from "framer-motion";
 import { LazyImage } from "../components/ui/LazyImage";
+import { useAuth } from "../lib/auth";
 
 const heroImage =
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80";
@@ -69,6 +71,7 @@ export default function Home() {
   const heroTitle = t("home:hero.title");
   const [heroTitleLead, ...heroTitleRest] = heroTitle.split(",");
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
@@ -79,6 +82,8 @@ export default function Home() {
   const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [hoveredListingId, setHoveredListingId] = useState<string | null>(null);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [favoriteMessage, setFavoriteMessage] = useState("");
   const [currentPartnerIndex, setCurrentPartnerIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -187,6 +192,50 @@ export default function Home() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setFavoriteIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    api.favoris()
+      .then((items) => {
+        if (!cancelled) setFavoriteIds(new Set(items.map((item) => String(item.id))));
+      })
+      .catch(() => {
+        if (!cancelled) setFavoriteIds(new Set());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!favoriteMessage) return;
+    const timer = window.setTimeout(() => setFavoriteMessage(""), 3000);
+    return () => window.clearTimeout(timer);
+  }, [favoriteMessage]);
+
+  const handleFavorite = async (event: React.MouseEvent, listingId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!user) {
+      navigate("/auth?mode=signin&redirect=/");
+      return;
+    }
+    if (favoriteIds.has(String(listingId))) {
+      setFavoriteMessage("Cette annonce est déjà dans vos favoris.");
+      return;
+    }
+    try {
+      await api.addFavori(listingId);
+      setFavoriteIds((prev) => new Set([...prev, String(listingId)]));
+      setFavoriteMessage("Ajouté aux favoris.");
+    } catch (err) {
+      setFavoriteMessage(err instanceof Error ? err.message : "Impossible d'ajouter ce favori.");
+    }
+  };
 
   // Auto-play du carrousel - INFINI ET LENT
   useEffect(() => {
@@ -306,6 +355,11 @@ export default function Home() {
 
   return (
     <SiteLayout>
+      {favoriteMessage && (
+        <div className="fixed right-5 top-5 z-[80] rounded-xl border border-[var(--brand-cyan-dark)]/20 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-2xl">
+          {favoriteMessage}
+        </div>
+      )}
       {/* Hero - Hauteur réduite */}
       <section className="relative min-h-[400px] sm:min-h-[450px] w-full">
         <div className="absolute inset-0">
@@ -1101,7 +1155,7 @@ export default function Home() {
             </p>
           </div>
           <div className="relative flex md:justify-end gap-3 flex-wrap">
-            <Link to="/deposer">
+            <Link to="/depot_annonce">
               <Button
                 className="text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 style={{
