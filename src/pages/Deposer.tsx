@@ -1,14 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { 
   ArrowLeft, ArrowRight, Camera, Check, House, Info, MapPin, 
   Upload, X, Image, Trash2, Sparkles, Shield, Clock, Users, Ruler, Bed, 
   Wifi, Coffee, Car, Dog, AlertCircle, Building2, CheckCircle2, 
-  Loader2, PartyPopper, Home, Key, Heart, Star, Award, Zap, Search, Banknote
+  Loader2, PartyPopper, Home, Key, Heart, Star, Award, Zap, Search, Banknote,
+  Mail, Phone, Link2
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
+import { MapView } from '../components/MapView'
 import { api, Ville } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -74,20 +76,31 @@ export default function Deposer() {
     type_bail: 'collectif',
     clause_solidarite: 'sans',
     type_bailleur: 'membre',
+    type_annonce_form: 'creation' as 'creation' | 'existante',
     id_ville: 1,
     quartier: '',
     adresse_exacte: '',
-    surface_totale: '',
+    nombre_pieces: '',
     total_colocataires: '',
-    surface_chambre: '',
-    est_meuble: 'Oui',
     date_disponibilite: '',
     prix_loyer: '',
     prix_charges: '',
     montant_garantie: '',
     services: 'Wi-Fi, Cuisine équipée',
-    regles: 'Non fumeur',
     photos: [] as string[],
+    rules: [] as string[],
+    energy_class: '',
+    ghg_class: '',
+    elevator: false,
+    pets_allowed: false,
+    smokers_allowed: false,
+    women_only: false,
+    men_only: false,
+    contact_email: '',
+    contact_phone: '',
+    visite_3d_url: '',
+    message: '',
+    rooms: [] as { surface: string; cost_rent: string; cost_charges: string; furnished: string; bed_type: string }[],
   })
 
   useEffect(() => {
@@ -104,7 +117,40 @@ export default function Deposer() {
     })
   }, [])
 
-  function update(name: string, value: string | number) {
+  const mapListing = useMemo(() => {
+    const selectedCity = villes.find((v) => v.id_ville === form.id_ville)?.nom_ville || ''
+    const address = form.adresse_exacte || [form.quartier, selectedCity].filter(Boolean).join(', ')
+    return [{
+      id: 'deposer-map',
+      title: form.titre || 'Logement',
+      city: selectedCity,
+      district: form.quartier,
+      price: form.prix_loyer ? Number(form.prix_loyer) : 0,
+      charges: form.prix_charges ? Number(form.prix_charges) : 0,
+      rooms: form.nombre_pieces ? Number(form.nombre_pieces) : 0,
+      bedrooms: 0,
+      surface: form.rooms.reduce((sum, room) => sum + (Number(room.surface) || 0), 0),
+      furnished: form.rooms.some((room) => room.furnished === 'Oui'),
+      available: form.date_disponibilite || '',
+      type: form.type_propriete === 'autre' ? 'appartement' : (form.type_propriete as any),
+      annonceType: form.type_annonce_form,
+      typeBail: form.type_bail as 'individuel' | 'collectif' | null,
+      clauseSolidarite: form.clause_solidarite as 'avec' | 'sans' | null,
+      candidatureCount: 0,
+      image: '',
+      address,
+      latitude: undefined,
+      longitude: undefined,
+      gallery: [],
+      description: form.description || '',
+      amenities: [],
+      colocs: [],
+      owner: { id: 0, name: '', verified: false, since: '', profilePicture: '' },
+      tags: [] as any[],
+    }]
+  }, [form, villes])
+
+  function update(name: string, value: string | number | boolean | string[] | object[]) {
     setForm((current) => ({ ...current, [name]: value }))
   }
 
@@ -176,25 +222,37 @@ export default function Deposer() {
         titre: form.titre,
         description: form.description,
         type_bailleur: form.type_bailleur,
-        type_annonce: user.poste === 'proprietaire' ? 'creation' : 'existante',
+        type_annonce: form.type_annonce_form,
         type_propriete: form.type_propriete,
         type_bail: form.type_bail,
         clause_solidarite: form.clause_solidarite,
         total_colocataires: form.total_colocataires ? Number(form.total_colocataires) : null,
-        surface_totale: form.surface_totale ? Number(form.surface_totale) : null,
+        nombre_pieces: form.nombre_pieces ? Number(form.nombre_pieces) : null,
         adresse_exacte: form.adresse_exacte || null,
         quartier: form.quartier || null,
         id_ville: Number(form.id_ville),
         chambres: {
-          surface: form.surface_chambre ? Number(form.surface_chambre) : null,
-          est_meuble: form.est_meuble,
+          surface: form.rooms[0]?.surface ? Number(form.rooms[0].surface) : null,
+          est_meuble: form.rooms[0]?.furnished || null,
           prix_loyer: Number(form.prix_loyer),
           prix_charges: form.prix_charges ? Number(form.prix_charges) : null,
           montant_garantie: form.montant_garantie ? Number(form.montant_garantie) : null,
           date_disponibilite: form.date_disponibilite,
         },
         services: form.services.split(',').map((item) => item.trim()).filter(Boolean),
-        regles: form.regles.split(',').map((item) => item.trim()).filter(Boolean),
+        regles: form.rules,
+        energy_class: form.energy_class || null,
+        ghg_class: form.ghg_class || null,
+        elevator: form.elevator,
+        pets_allowed: form.pets_allowed,
+        smokers_allowed: form.smokers_allowed,
+        women_only: form.women_only,
+        men_only: form.men_only,
+        contact_email: form.contact_email || null,
+        contact_phone: form.contact_phone || null,
+        visite_3d_url: form.visite_3d_url || null,
+        message: form.message || null,
+        rooms: form.rooms.filter((r) => r.surface || r.cost_rent),
         photos: form.photos.filter((photo) => Boolean(photo)),
       })
       
@@ -209,20 +267,31 @@ export default function Deposer() {
           type_bail: 'collectif',
           clause_solidarite: 'sans',
           type_bailleur: 'membre',
+          type_annonce_form: 'creation',
           id_ville: form.id_ville,
           quartier: '',
           adresse_exacte: '',
-          surface_totale: '',
+          nombre_pieces: '',
           total_colocataires: '',
-          surface_chambre: '',
-          est_meuble: 'Oui',
           date_disponibilite: '',
           prix_loyer: '',
           prix_charges: '',
           montant_garantie: '',
           services: 'Wi-Fi, Cuisine équipée',
-          regles: 'Non fumeur',
           photos: [],
+          rules: [],
+          energy_class: '',
+          ghg_class: '',
+          elevator: false,
+          pets_allowed: false,
+          smokers_allowed: false,
+          women_only: false,
+          men_only: false,
+          contact_email: '',
+          contact_phone: '',
+          visite_3d_url: '',
+          message: '',
+          rooms: [],
         })
         setStep(1)
         setShowSuccessAnimation(false)
@@ -421,38 +490,40 @@ export default function Deposer() {
                     </div>
                   </motion.div>
 
-                  <motion.div 
-                    className="grid md:grid-cols-3 gap-3"
-                    variants={itemVariants}
-                  >
-                    {[
-                      ['appartement', 'Appartement', '🏢'],
-                      ['maison', 'Maison', '🏠'],
-                      ['autre', 'Autre', '🏘️'],
-                    ].map(([value, label, emoji]) => (
-                      <label 
-                        key={value} 
-                        className={`
-                          border-2 rounded-2xl p-5 cursor-pointer transition-all duration-300
-                          ${form.type_propriete === value 
-                            ? 'border-brand-cyan bg-brand-cyan-light shadow-md' 
-                            : 'border-border hover:border-brand-cyan/30 hover:bg-muted/50'
-                          }
-                        `}
-                      >
-                        <input
-                          type="radio"
-                          name="type_propriete"
-                          value={value}
-                          checked={form.type_propriete === value}
-                          onChange={(e) => update('type_propriete', e.target.value)}
-                          className="sr-only"
-                        />
-                        <div className="text-4xl">{emoji}</div>
-                        <div className="mt-2 font-semibold">{label}</div>
-                      </label>
-                    ))}
-                  </motion.div>
+                  <Field label="Type de logement" required help="Sélectionnez le type de bien que vous souhaitez proposer.">
+                    <select
+                      className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all"
+                      value={form.type_propriete}
+                      onChange={(e) => update('type_propriete', e.target.value)}
+                    >
+                      <option value="appartement">Appartement</option>
+                      <option value="maison">Maison</option>
+                      <option value="autre">Autre</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Vous êtes" required help="Choisissez votre profil pour mieux qualifier l’annonce.">
+                    <select
+                      className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all"
+                      value={form.type_bailleur}
+                      onChange={(e) => update('type_bailleur', e.target.value)}
+                    >
+                      <option value="proprietaire">Propriétaire</option>
+                      <option value="membre">Colocataire / membre</option>
+                      <option value="agent">Agent / professionnel</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Type d’annonce" required help="Indiquez si vous proposez un logement ou une chambre.">
+                    <select
+                      className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all"
+                      value={form.type_annonce_form}
+                      onChange={(e) => update('type_annonce_form', e.target.value)}
+                    >
+                      <option value="creation">Je propose un logement</option>
+                      <option value="existante">Je propose une chambre / espace</option>
+                    </select>
+                  </Field>
 
                   <Field label={t('deposer:step1.titleField')} required help={t('deposer:step1.titleHelp')}>
                     <input 
@@ -499,6 +570,16 @@ export default function Deposer() {
                         <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.adresse_exacte} onChange={(e) => update('adresse_exacte', e.target.value)} placeholder={t('deposer:step2.addressPlaceholder')} />
                       </Field>
                     </div>
+                    <div className="md:col-span-2 rounded-2xl border border-cyan-100 bg-cyan-50 p-3 text-sm text-cyan-800">
+                      L’adresse exacte n’est pas affichée publiquement, mais elle permet de mieux localiser le bien sur la carte et d’améliorer la qualité des matchs.
+                    </div>
+                    <div className="md:col-span-2">
+                      <Field label="Localisation sur la carte" help="Ajustez l’adresse ou le quartier pour centrer la carte." >
+                        <div className="h-72 rounded-3xl overflow-hidden border border-border">
+                          <MapView listings={mapListing} />
+                        </div>
+                      </Field>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -522,10 +603,10 @@ export default function Deposer() {
                   </motion.div>
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Field label={t('deposer:step3.surface')}>
+                    <Field label="Nombre de pièces">
                       <div className="relative">
-                        <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.surface_totale} onChange={(e) => update('surface_totale', e.target.value)} placeholder="45" />
+                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.nombre_pieces} onChange={(e) => update('nombre_pieces', e.target.value)} placeholder="3" />
                       </div>
                     </Field>
                     <Field label={t('deposer:step3.colocataires')}>
@@ -533,20 +614,6 @@ export default function Deposer() {
                         <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.total_colocataires} onChange={(e) => update('total_colocataires', e.target.value)} placeholder="3" />
                       </div>
-                    </Field>
-                    <Field label={t('deposer:step3.roomSurface')}>
-                      <div className="relative">
-                        <Bed className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.surface_chambre} onChange={(e) => update('surface_chambre', e.target.value)} placeholder="12" />
-                      </div>
-                    </Field>
-                    <Field label={t('deposer:step3.furnished')}>
-                      <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.est_meuble} onChange={(e) => update('est_meuble', e.target.value)}>
-                        <option value="Oui">✅ {t('deposer:step3.furnishedYes')}</option>
-                        <option value="Partiellement">🔶 {t('deposer:step3.furnishedPartial')}</option>
-                        <option value="Non">❌ {t('deposer:step3.furnishedNo')}</option>
-                        <option value="Rachat">🔄 {t('deposer:step3.furnishedBuyout')}</option>
-                      </select>
                     </Field>
                     <Field label={t('deposer:step3.availability')} required>
                       <div className="relative">
@@ -557,20 +624,105 @@ export default function Deposer() {
                     <Field label={t('deposer:step3.services')} help={t('deposer:step3.servicesHelp')}>
                       <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.services} onChange={(e) => update('services', e.target.value)} placeholder={t('deposer:step3.servicesPlaceholder')} />
                     </Field>
-                    <div className="md:col-span-2">
-                      <Field label={t('deposer:step3.description')}>
-                        <textarea 
-                          rows={4} 
-                          className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all resize-none" 
-                          value={form.description} 
-                          onChange={(e) => update('description', e.target.value)} 
-                          placeholder={t('deposer:step3.descriptionPlaceholder')}
-                        />
-                      </Field>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                     <div className="md:col-span-2">
+                       <Field label={t('deposer:step3.description')}>
+                         <textarea 
+                           rows={4} 
+                           className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all resize-none" 
+                           value={form.description} 
+                           onChange={(e) => update('description', e.target.value)} 
+                           placeholder={t('deposer:step3.descriptionPlaceholder')}
+                         />
+                       </Field>
+                     </div>
+                     <div className="md:col-span-2">
+                       <Field label="Règles de la maison">
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                           {[
+                             { value: 'no_smoking', label: '🚭 Non-fumeur' },
+                             { value: 'no_pets', label: '🐾 Pas d\'animaux' },
+                             { value: 'women_only', label: '👩 Femmes uniquement' },
+                             { value: 'men_only', label: '👨 Hommes uniquement' },
+                             { value: 'quiet_hours', label: '🔇 Heures calmes' },
+                             { value: 'no_parties', label: '🎉 Pas de fêtes' },
+                           ].map((item) => (
+                             <label key={item.value} className="flex items-center gap-2 border border-border rounded-xl px-3 py-2 cursor-pointer hover:border-brand-cyan/50 transition-colors">
+                               <input
+                                 type="checkbox"
+                                 checked={form.rules.includes(item.value)}
+                                 onChange={(e) => {
+                                   const updated = e.target.checked
+                                     ? [...form.rules, item.value]
+                                     : form.rules.filter((r) => r !== item.value)
+                                   update('rules', updated)
+                                 }}
+                                 className="rounded border-border"
+                               />
+                               <span className="text-sm">{item.label}</span>
+                             </label>
+                           ))}
+                         </div>
+                       </Field>
+                     </div>
+                     <div className="md:col-span-2">
+                       <Field label="Chambres">
+                         <div className="space-y-3">
+                           {form.rooms.map((room, index) => (
+                             <div key={index} className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
+                               <div>
+                                 <label className="text-xs text-muted-foreground">Surface (m²)</label>
+                                 <input type="number" className="w-full rounded-xl border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50" value={room.surface} onChange={(e) => {
+                                   const updated = [...form.rooms]
+                                   updated[index].surface = e.target.value
+                                   update('rooms', updated)
+                                 }} placeholder="12" />
+                               </div>
+                               <div>
+                                 <label className="text-xs text-muted-foreground">Loyer (Ar)</label>
+                                 <input type="number" className="w-full rounded-xl border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50" value={room.cost_rent} onChange={(e) => {
+                                   const updated = [...form.rooms]
+                                   updated[index].cost_rent = e.target.value
+                                   update('rooms', updated)
+                                 }} placeholder="150000" />
+                               </div>
+                               <div>
+                                 <label className="text-xs text-muted-foreground">Charges (Ar)</label>
+                                 <input type="number" className="w-full rounded-xl border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50" value={room.cost_charges} onChange={(e) => {
+                                   const updated = [...form.rooms]
+                                   updated[index].cost_charges = e.target.value
+                                   update('rooms', updated)
+                                 }} placeholder="20000" />
+                               </div>
+                               <div>
+                                 <label className="text-xs text-muted-foreground">Meublé</label>
+                                 <select className="w-full rounded-xl border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50" value={room.furnished} onChange={(e) => {
+                                   const updated = [...form.rooms]
+                                   updated[index].furnished = e.target.value
+                                   update('rooms', updated)
+                                 }}>
+                                   <option value="Oui">Oui</option>
+                                   <option value="Non">Non</option>
+                                 </select>
+                               </div>
+                               <div>
+                                 <label className="text-xs text-muted-foreground">Type lit</label>
+                                 <input type="text" className="w-full rounded-xl border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50" value={room.bed_type} onChange={(e) => {
+                                   const updated = [...form.rooms]
+                                   updated[index].bed_type = e.target.value
+                                   update('rooms', updated)
+                                 }} placeholder="Double" />
+                               </div>
+                             </div>
+                           ))}
+                           <Button type="button" variant="outline" onClick={() => update('rooms', [...form.rooms, { surface: '', cost_rent: '', cost_charges: '', furnished: 'Oui', bed_type: '' }])} className="rounded-xl border-dashed">
+                             + Ajouter une chambre
+                           </Button>
+                         </div>
+                       </Field>
+                     </div>
+                   </div>
+                 </motion.div>
+               )}
 
               {step === 4 && (
                 <motion.div 
@@ -589,6 +741,13 @@ export default function Deposer() {
                       <p className="text-sm text-muted-foreground">{t('deposer:step4.subtitle')}</p>
                     </div>
                   </motion.div>
+
+                  <Field label="Lien de visite 3D (optionnel)" help="Ajoutez un lien vers une visite virtuelle si vous en avez un.">
+                    <div className="relative">
+                      <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.visite_3d_url} onChange={(e) => update('visite_3d_url', e.target.value)} placeholder="https://..." />
+                    </div>
+                  </Field>
 
                   <motion.div
                     className={`
@@ -713,9 +872,6 @@ export default function Deposer() {
                         <input type="number" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.montant_garantie} onChange={(e) => update('montant_garantie', e.target.value)} placeholder="500 000" />
                       </div>
                     </Field>
-                    <Field label={t('deposer:step5.rules')} help={t('deposer:step5.rulesHelp')}>
-                      <input className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.regles} onChange={(e) => update('regles', e.target.value)} placeholder={t('deposer:step5.rulesPlaceholder')} />
-                    </Field>
                     <Field label={t('deposer:step5.leaseType')} help={t('deposer:step5.leaseHelp')}>
                       <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.type_bail} onChange={(e) => update('type_bail', e.target.value)}>
                         <option value="collectif">{t('deposer:step5.leaseCollective')}</option>
@@ -728,6 +884,26 @@ export default function Deposer() {
                         <option value="avec">{t('deposer:step5.solidarityWith')}</option>
                       </select>
                     </Field>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <Field label="Email de contact">
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input type="email" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.contact_email} onChange={(e) => update('contact_email', e.target.value)} placeholder="vous@example.com" />
+                      </div>
+                    </Field>
+                    <Field label="Téléphone (optionnel)">
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input type="tel" className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.contact_phone} onChange={(e) => update('contact_phone', e.target.value)} placeholder="034 00 000 00" />
+                      </div>
+                    </Field>
+                    <div className="md:col-span-2">
+                      <Field label="Message de présentation">
+                        <textarea rows={3} className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all resize-none" value={form.message} onChange={(e) => update('message', e.target.value)} placeholder="Décrivez rapidement ce qui rend votre logement intéressant pour les colocataires." />
+                      </Field>
+                    </div>
                   </div>
 
                   <motion.div 
