@@ -364,6 +364,18 @@ export default function AnnonceDetail() {
     ? roleLevel(user.poste) >= 2 || Number(listing?.owner.id) === Number(user.id)
     : false
   const canViewCandidatures = Boolean(user) && (isOwnerOrAdmin || hasApplied || Boolean(myCandidature))
+  const equipmentCards = listing ? [
+    { key: 'bedrooms', label: `${listing.bedrooms || listing.rooms || 1} chambre${(listing.bedrooms || listing.rooms || 1) > 1 ? 's' : ''}`, icon: <BedDouble /> },
+    listing.charges > 0 ? { key: 'charges', label: `${formatAr(listing.charges)} charges`, icon: <DollarSign /> } : null,
+    listing.elevator ? { key: 'elevator', label: 'Ascenseur', icon: <ArrowUp /> } : null,
+    listing.internet ? { key: 'wifi', label: 'Wifi', icon: <Wifi /> } : null,
+    (listing.parkingVoitures ?? 0) > 0 || listing.parkingCouvert ? { key: 'parking', label: 'Parking', icon: <Car /> } : null,
+    ...(listing.amenities || []).slice(0, 8).map((amenity, index) => ({
+      key: `amenity-${index}-${amenity}`,
+      label: amenity,
+      icon: <Check />,
+    })),
+  ].filter(Boolean) as Array<{ key: string; label: string; icon: React.ReactNode }> : []
 
   const handleViewMyCandidature = () => {
     if (!user) {
@@ -508,13 +520,92 @@ export default function AnnonceDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-[2fr_1fr] gap-3 aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden">
-          <img src={listing.gallery[0]} alt={listing.title} className="w-full h-full object-cover" />
-          <div className="hidden md:grid grid-rows-2 gap-3">
+        <div className="grid gap-6 lg:grid-cols-[1.45fr_0.78fr_380px]">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted shadow-sm">
+            <img src={listing.gallery[0]} alt={listing.title} className="h-full w-full object-cover" />
+            <div className="absolute bottom-5 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg">
+              <Eye className="h-4 w-4" /> {listing.gallery.length} Photos
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             {listing.gallery.slice(1, 3).map((g, i) => (
-              <img key={i} src={g} alt="" className="w-full h-full object-cover" />
+              <img key={i} src={g} alt="" className="h-full min-h-[190px] w-full rounded-lg object-cover shadow-sm" />
             ))}
-            {listing.gallery.length < 3 && <div className="bg-muted" />}
+            {listing.gallery.length < 3 && <div className="min-h-[190px] rounded-lg bg-muted" />}
+          </div>
+          <aside className="relative bg-white p-7 text-center shadow-sm">
+            <div className="mx-auto -mt-14 h-28 w-28 overflow-hidden rounded-full border-2 border-slate-300 bg-white shadow-sm">
+              {listing.owner.profilePicture ? (
+                <img src={listing.owner.profilePicture} alt={listing.owner.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--brand-cyan-dark)] to-[var(--brand-green-dark)] text-3xl font-bold text-white">
+                  {listing.owner.name.charAt(0)}
+                </div>
+              )}
+            </div>
+            <h2 className="mt-7 text-2xl font-bold tracking-wide text-slate-950">{listing.owner.name}</h2>
+            <p className="mt-3 text-lg leading-tight text-slate-700">
+              Créateur de l'annonce
+              <span className="block text-base">à {listing.city}</span>
+            </p>
+            <div className="mt-8 flex justify-center gap-3">
+              <Button size="sm" className="h-12 w-12 rounded-lg bg-[var(--brand-cyan-dark)] p-0 text-white hover:bg-[var(--brand-green-dark)]">
+                <Phone className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                className="h-12 w-12 rounded-lg bg-[var(--brand-green-dark)] p-0 text-white hover:bg-[var(--brand-cyan-dark)]"
+                onClick={() => {
+                  if (!user) {
+                    navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
+                    return
+                  }
+                  if (listing.owner.id) {
+                    setMessageModalCandidate({
+                      id: -1,
+                      userId: Number(listing.owner.id),
+                      name: listing.owner.name,
+                    })
+                  }
+                }}
+              >
+                <Mail className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button className="mt-9 rounded-none bg-[var(--brand-cyan-dark)] px-8 text-white hover:bg-[var(--brand-green-dark)]">
+              Voir tous les biens
+            </Button>
+          </aside>
+        </div>
+        <div className="mt-8">
+          <h1 className="text-3xl font-extrabold tracking-wide text-slate-950">{listing.title}</h1>
+          <div className="mt-3 flex flex-wrap items-baseline gap-3">
+            <span className="text-3xl font-bold text-[var(--brand-cyan-dark)]">{formatAr(listing.price)}</span>
+            {listing.surface ? (
+              <span className="text-lg text-slate-500">{Math.round(listing.price / Math.max(listing.surface, 1)).toLocaleString('fr-FR')} Ar / m2</span>
+            ) : null}
+          </div>
+        </div>
+        <div className="mt-6 grid gap-4 border-t border-slate-200 pt-5 md:grid-cols-2">
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--brand-cyan-dark)]">Commodités</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(listing.amenities.length ? listing.amenities : ['Aucune commodité renseignée']).map((item) => (
+                <span key={item} className="rounded-full border border-[var(--brand-cyan-dark)]/20 bg-white px-3 py-1 text-sm text-slate-700">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--brand-green-dark)]">Règles</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {((listing.regles && listing.regles.length > 0) ? listing.regles : ['Aucune règle renseignée']).map((item) => (
+                <span key={item} className="rounded-full border border-[var(--brand-green-dark)]/20 bg-white px-3 py-1 text-sm text-slate-700">
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -665,15 +756,22 @@ export default function AnnonceDetail() {
             <p className="mt-3 text-muted-foreground leading-relaxed">{listing.description || t('annonceDetail:noDescription')}</p>
           </section>
 
-          <section className="mt-8">
-            <h2 className="bebas text-2xl">{t('annonceDetail:sections.amenities')}</h2>
-            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
-              {(listing.amenities.length ? listing.amenities : [t('annonceDetail:noAmenities')]).map((a) => (
-                <div key={a} className="flex items-center gap-2 text-sm">
-                  <Check className="w-4 h-4 text-brand-green-dark" /> {a}
-                </div>
-              ))}
-            </div>
+          <section className="mt-8 border-t border-slate-200 pt-8">
+            <h2 className="text-xl font-extrabold text-slate-950">Equipements</h2>
+            {equipmentCards.length > 0 ? (
+              <div className="mt-5 flex flex-wrap gap-7">
+                {equipmentCards.map((item) => (
+                  <div key={item.key} className="w-24 text-center">
+                    <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-slate-100 text-slate-900 [&>svg]:h-8 [&>svg]:w-8">
+                      {item.icon}
+                    </div>
+                    <div className="mt-3 text-xs leading-snug text-slate-900">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3 text-sm text-muted-foreground">{t('annonceDetail:noAmenities')}</div>
+            )}
           </section>
 
           {/* Rules */}

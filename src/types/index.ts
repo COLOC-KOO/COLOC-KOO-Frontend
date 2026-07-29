@@ -10,6 +10,9 @@ export interface Owner {
   verified: boolean
   since: string
   profilePicture?: string; 
+  email?: string
+  phone?: string
+  city?: string
 }
 
 export type ListingType = 'chambre' | 'appartement' | 'maison'
