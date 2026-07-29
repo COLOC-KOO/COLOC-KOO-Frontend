@@ -15,7 +15,7 @@ const LITE_MODE_STORAGE_KEY = 'colockoo_lite_mode'
 
 const navItems = [
   { to: '/annonces', label: 'announcements', icon: Search },
-  { to: '/deposer', label: 'post', icon: Plus },
+  { to: '/depot_annonce', label: 'post', icon: Plus },
   { to: '/partenaires', label: 'partners', icon: Users },
   { to: '/contact', label: 'contact', icon: Phone },
   { to: '/services', label: 'services', icon: ConciergeBell }

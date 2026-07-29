@@ -51,6 +51,7 @@ export interface ApiAnnonce {
     type_bail?: 'individuel' | 'collectif' | null
     clause_solidarite?: 'avec' | 'sans' | null
     total_colocataires: number | null
+    bedrooms_count?: number | null
     candidature_count?: number
     surface_totale: number | null
     adresse_exacte: string | null
@@ -60,6 +61,9 @@ export interface ApiAnnonce {
     id_ville: number
     id_utilisateur?: number
     auteur?: string
+    auteur_email?: string | null
+    auteur_telephone?: string | null
+    auteur_profile_picture?: string | null
     chambre: {
         surface: number | null
         prix_loyer: number
@@ -434,6 +438,44 @@ export interface ApiBackofficeSuiviMissions {
     }>
 }
 
+export interface DepotAnnonceRoomPayload {
+    loyer: number | string
+    charges?: number | string | null
+    caution?: number | string | null
+    surface?: number | string | null
+    meublee?: string | null
+    disponible_a_partir?: string | null
+}
+
+export interface CreateDepotAnnoncePayload {
+    adresse: string
+    ville?: string
+    quartier?: string
+    latitude?: number | null
+    longitude?: number | null
+    type_annonce: string
+    logement: string
+    nombre_pieces: string
+    surface?: number | string | null
+    commodites?: string[]
+    regles?: string[]
+    chambres: DepotAnnonceRoomPayload[]
+    email: string
+    telephone_code?: string
+    telephone?: string
+    message?: string
+    visite_3d?: string
+    photos?: string[]
+    boost_service_id?: number | null
+}
+
+export interface DepotAnnonceResponse {
+    id_depot_annonce: number
+    id_annonce: number
+    reference: string
+    message: string
+}
+
 export interface BackofficeAdministration {
     versements: ApiPaiement[]
     objectifs: Array<{
@@ -673,6 +715,18 @@ export const api = {
         return request<{ profilePicture: string; user: AuthUser }>('/auth/me/upload', {
             method: 'POST',
             body: formData,
+        })
+    },
+    uploadDepotAnnoncePhotos(formData: FormData) {
+        return request<{ photos: string[] }>('/depot-annonce/upload', {
+            method: 'POST',
+            body: formData,
+        })
+    },
+    createDepotAnnonce(payload: CreateDepotAnnoncePayload) {
+        return request<DepotAnnonceResponse>('/depot-annonce', {
+            method: 'POST',
+            body: JSON.stringify(payload),
         })
     },
     changePassword(payload: { mot_de_passe_actuel: string; nouveau_mot_de_passe: string }) {
@@ -1581,7 +1635,7 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         price,
         charges: Number(a.chambre?.prix_charges || 0),
         rooms: a.total_colocataires || 1,
-        bedrooms: 1,
+        bedrooms: Number(a.bedrooms_count || a.rooms?.length || 1),
         surface: Number(a.chambre?.surface || a.surface_totale || 0),
         furnished: Boolean(a.chambre?.est_meuble != null && String(a.chambre.est_meuble).toLowerCase() === 'oui'),
         available: String(a.chambre?.date_disponibilite || '').slice(0, 10),
@@ -1596,6 +1650,10 @@ export function annonceToListing(a: ApiAnnonce): Listing {
             name: a.auteur || 'Proprietaire',
             verified: a.statut === 'active',
             since: '2026',
+            profilePicture: a.auteur_profile_picture ?? undefined,
+            email: a.auteur_email ?? undefined,
+            phone: a.auteur_telephone ?? undefined,
+            city: a.ville,
         },
         tags: a.statut === 'active' ? ['verifie'] : [],
         annonceType: a.type_annonce || 'existante',

@@ -150,7 +150,7 @@ export default function ProfilsRechercheLogement() {
                </p>
              </div>
              <Button
-               onClick={() => navigate(`/deposer${normalizedCity ? `?ville=${encodeURIComponent(normalizedCity)}` : ''}`)}
+               onClick={() => navigate(`/depot_annonce${normalizedCity ? `?ville=${encodeURIComponent(normalizedCity)}` : ''}`)}
                className="rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white"
              >
                Je propose un logement
