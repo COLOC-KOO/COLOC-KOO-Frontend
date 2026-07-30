@@ -356,7 +356,7 @@ export default function Home() {
   return (
     <SiteLayout>
       {favoriteMessage && (
-        <div className="fixed right-5 top-5 z-[80] rounded-xl border border-[var(--brand-cyan-dark)]/20 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-2xl">
+        <div className="fixed bottom-5 right-5 z-[80] rounded-xl border border-[var(--brand-cyan-dark)]/20 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-2xl">
           {favoriteMessage}
         </div>
       )}
@@ -555,6 +555,9 @@ export default function Home() {
             viewMode === "list" ? (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {featuredListings.map((l) => (
+                  <ListingCard key={l.id} l={l} compact />
+                ))}
+                {false && featuredListings.map((l) => (
                   <div
                     key={l.id}
                     className="group cursor-pointer"
