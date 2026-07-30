@@ -436,6 +436,7 @@ export default function Candidatures() {
     try {
       const data = await api.createEquipe({
         id_annonce: parseInt(annonceId),
+        id_depot_annonce: parseInt(annonceId),
         nom: newEquipeNom.trim(),
         ambiance: newEquipeAmbiance.trim() || null,
         statut: 'forming'
@@ -541,6 +542,7 @@ export default function Candidatures() {
     try {
       const payload = {
         id_annonce: parseInt(annonceId),
+        id_depot_annonce: parseInt(annonceId),
         message:
           candidatureMessage || "Je souhaite postuler à cette colocation",
         statut: "envoyee",

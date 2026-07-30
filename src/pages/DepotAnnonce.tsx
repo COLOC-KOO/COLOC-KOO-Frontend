@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import emailjs from '@emailjs/browser'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
 import { Icon, LatLngExpression } from 'leaflet'
@@ -167,6 +168,7 @@ export default function DepotAnnonce() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [toastMessage, setToastMessage] = useState('')
 
   useEffect(() => {
     setForm((prev) => ({
@@ -181,6 +183,12 @@ export default function DepotAnnonce() {
     setPhotoPreviews(urls)
     return () => urls.forEach((url) => URL.revokeObjectURL(url))
   }, [photos])
+
+  useEffect(() => {
+    if (!toastMessage) return
+    const timer = window.setTimeout(() => setToastMessage(''), 4200)
+    return () => window.clearTimeout(timer)
+  }, [toastMessage])
 
   const canSubmit = useMemo(() => {
     return Boolean(
@@ -266,8 +274,11 @@ export default function DepotAnnonce() {
         photos: uploadedPhotos,
         boost_service_id: boost ? Number(boost) : null,
       })
-      setSuccess(`Votre annonce ${response.reference} a été publiée et envoyée en validation.`)
+      const successMessage = "Annonce ajouté avec succés, en attente de validation par l'admin"
+      setSuccess(`${successMessage}. Référence: ${response.reference}`)
+      setToastMessage(successMessage)
       setPhotos([])
+      void sendDepotAnnonceEmails(response.reference)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossible de publier l'annonce.")
     } finally {
@@ -275,8 +286,45 @@ export default function DepotAnnonce() {
     }
   }
 
+  async function sendDepotAnnonceEmails(reference: string) {
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'contact@colockoo.com'
+    if (!publicKey || !serviceId || !templateId) return
+
+    const templateParams = {
+      reference,
+      to_email: form.email,
+      admin_email: adminEmail,
+      user_email: form.email,
+      reply_to: form.email,
+      telephone: `${form.telephone_code || ''} ${form.telephone || ''}`.trim(),
+      annonce_titre: `${form.type_annonce || 'Annonce'} - ${form.logement || 'Logement'}`,
+      adresse: form.adresse,
+      ville: form.ville,
+      quartier: form.quartier,
+      message: "Annonce ajouté avec succés, en attente de validation par l'admin",
+    }
+
+    try {
+      emailjs.init(publicKey)
+      await Promise.all([
+        emailjs.send(serviceId, templateId, templateParams, publicKey),
+        emailjs.send(serviceId, templateId, { ...templateParams, to_email: adminEmail }, publicKey),
+      ])
+    } catch {
+      // L'annonce est creee meme si le service email est momentanement indisponible.
+    }
+  }
+
   return (
     <SiteLayout>
+      {toastMessage ? (
+        <div className="fixed bottom-5 right-5 z-[90] max-w-sm rounded-xl border border-[var(--brand-cyan-dark)]/20 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-2xl">
+          {toastMessage}
+        </div>
+      ) : null}
       <main className="min-h-screen bg-gradient-to-br from-[var(--brand-cyan-light)] via-white to-[var(--brand-green-light)] py-10">
         <div className="mx-auto w-full max-w-5xl px-4">
           <div className="mb-8 text-center">
@@ -488,9 +536,9 @@ export default function DepotAnnonce() {
               type="button"
               disabled={!canSubmit || submitting}
               onClick={handleSubmit}
-              className="h-12 min-w-[290px] rounded-xl border border-[var(--brand-green-dark)]/25 bg-white text-[var(--brand-cyan-dark)] shadow-sm hover:bg-[var(--brand-green-dark)] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-14 min-w-[320px] rounded-xl bg-[var(--brand-cyan-dark)] px-8 text-base font-extrabold text-white shadow-xl shadow-cyan-900/20 ring-2 ring-white hover:bg-[var(--brand-green-dark)] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? <Loader2 className="mr-3 h-4 w-4 animate-spin" /> : <Pencil className="mr-3 h-4 w-4 text-[var(--brand-cyan-dark)]" />}
+              {submitting ? <Loader2 className="mr-3 h-4 w-4 animate-spin" /> : <Pencil className="mr-3 h-4 w-4" />}
               Publier votre annonce
             </Button>
           </div>
@@ -604,10 +652,20 @@ function CheckboxRow({
 }) {
   return (
     <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-700">
-      <span className={cn('grid h-4 w-4 place-items-center rounded border border-[var(--brand-cyan-dark)]/35 bg-white', checked && 'border-[var(--brand-green-dark)] bg-[var(--brand-green-dark)] text-white')}>
-        {checked && <Check className="h-3 w-3" />}
+      <span className={cn(
+        'grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 transition-all duration-200',
+        checked 
+          ? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/25' 
+          : 'border-[var(--brand-cyan-dark)] bg-white hover:border-blue-400'
+      )}>
+        {checked && <Check className="h-4 w-4 stroke-[3]" />}
       </span>
-      <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
+      <input 
+        type="checkbox" 
+        checked={checked} 
+        onChange={onChange} 
+        className="sr-only" 
+      />
       <span className="inline-flex items-center gap-2">{children}</span>
     </label>
   )

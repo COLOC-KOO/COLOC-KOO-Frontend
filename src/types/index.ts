@@ -20,6 +20,8 @@ export type ListingTag = 'vedette' | 'verifie' | 'nouveau'
 
 export interface Listing {
   id: string
+  depotAnnonceId?: number
+  annonceId?: number
   title: string
   city: string
   district: string

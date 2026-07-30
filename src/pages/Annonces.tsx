@@ -65,6 +65,10 @@ export default function Annonces() {
       { value: "parking", label: "Parking" },
       { value: "piscine", label: "Piscine" },
       { value: "wifi", label: "Wifi" },
+      { value: "filles_uniquement", label: "Règle - Filles uniquement" },
+      { value: "garcons_uniquement", label: "Règle - Garçons uniquement" },
+      { value: "fumeurs_acceptes", label: "Règle - Fumeurs acceptés" },
+      { value: "animaux_acceptes", label: "Règle - Animaux acceptés" },
     ],
     [],
   );
@@ -140,6 +144,10 @@ export default function Annonces() {
     if (selectedServiceIds.length > 0) {
       params.service = selectedServiceIds.join(",");
     }
+    if (selectedEquipments.length > 0) {
+      params.equipements = selectedEquipments.join(",");
+      params.regles = selectedEquipments.join(",");
+    }
 
     Promise.all([
       api.annonces(params),
@@ -155,7 +163,7 @@ export default function Annonces() {
         setError(err instanceof Error ? err.message : t("common:common.error")),
       )
       .finally(() => setLoading(false));
-  }, [city, type, selectedServiceIds, minPrice, maxPrice, query, colocFilter, t]);
+  }, [city, district, type, selectedServiceIds, selectedEquipments, minPrice, maxPrice, query, colocFilter, t]);
 
   const citiesList = useMemo(() => {
     const fromDb = villes.map((v) => v.nom_ville);
@@ -180,12 +188,18 @@ export default function Annonces() {
         const normalizedAmenities = listing.amenities.map((item) =>
           item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_"),
         );
+        const normalizedRules = (listing.regles || []).map((item) =>
+          item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_"),
+        );
         const hasEveryEquipment = selectedEquipments.every((equipment) => {
           if (equipment === "wifi" && listing.internet) return true;
           if (equipment === "ascenseur" && listing.elevator) return true;
           if (equipment === "parking" && ((listing.parkingVoitures ?? 0) > 0 || listing.parkingCouvert)) return true;
           if (equipment === "animaux_acceptes" && listing.petsAllowed) return true;
-          return normalizedAmenities.some((amenity) => amenity.includes(equipment));
+          if (equipment === "fumeurs_acceptes" && listing.smokersAllowed) return true;
+          if (equipment === "filles_uniquement" && listing.womenOnly) return true;
+          if (equipment === "garcons_uniquement" && listing.menOnly) return true;
+          return normalizedAmenities.some((amenity) => amenity.includes(equipment)) || normalizedRules.some((rule) => rule.includes(equipment));
         });
         if (!hasEveryEquipment) return false;
       }
