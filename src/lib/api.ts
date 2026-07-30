@@ -41,6 +41,8 @@ export interface Langue {
 
 export interface ApiAnnonce {
     id: number
+    id_depot_annonce?: number
+    id_annonce?: number
     reference: string
     titre: string
     description: string | null
@@ -161,6 +163,7 @@ export interface ApiProfilsRechercheResponse {
 export interface ApiEquipe {
     id_equipe: number
     id_annonce: number
+    id_depot_annonce?: number
     nom: string
     ambiance: string | null
     statut: 'forming' | 'selected' | 'rejected' | 'complete'
@@ -307,6 +310,7 @@ export interface ApiPaiement {
 
 export interface CreateCandidaturePayload {
     id_annonce: number | string
+    id_depot_annonce?: number | string
     message?: string
     statut?: string
     membres?: Array<Record<string, unknown>>
@@ -617,6 +621,18 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
         throw new Error(data?.message || 'Erreur API')
     }
     return data as T
+}
+
+async function requestWithFallback<T>(primaryPath: string, fallbackPath: string, options: RequestInit = {}): Promise<T> {
+    try {
+        return await request<T>(primaryPath, options)
+    } catch (primaryError) {
+        try {
+            return await request<T>(fallbackPath, options)
+        } catch {
+            throw primaryError
+        }
+    }
 }
 
 export const api = {
@@ -956,10 +972,10 @@ export const api = {
             if (value !== undefined && value !== '') search.set(key, String(value))
         })
         const query = search.toString()
-        return request<ApiAnnonce[]>(`/annonces${query ? `?${query}` : ''}`)
+        return requestWithFallback<ApiAnnonce[]>(`/depot-annonce${query ? `?${query}` : ''}`, `/annonces${query ? `?${query}` : ''}`)
     },
     annonce(id: string | number) {
-        return request<ApiAnnonce>(`/annonces/${id}`)
+        return requestWithFallback<ApiAnnonce>(`/depot-annonce/${id}`, `/annonces/${id}`)
     },
     favoris() {
         return request<ApiAnnonce[]>('/favoris')
@@ -993,13 +1009,13 @@ export const api = {
         })
     },
     updateAnnonceStatus(id: string | number, statut: string) {
-        return request<ApiAnnonce>(`/annonces/${id}/status`, {
+        return requestWithFallback<ApiAnnonce>(`/depot-annonce/${id}/status`, `/annonces/${id}/status`, {
             method: 'PATCH',
             body: JSON.stringify({statut}),
         })
     },
     deleteAnnonce(id: string | number) {
-        return request<{ message: string }>(`/annonces/${id}`, {method: 'DELETE'})
+        return requestWithFallback<{ message: string }>(`/depot-annonce/${id}`, `/annonces/${id}`, {method: 'DELETE'})
     },
     candidatures() {
         return request<ApiCandidature[]>('/candidatures')
@@ -1026,7 +1042,7 @@ export const api = {
 
     // ===== CANDIDATURES =====
     getCandidaturesByAnnonce(annonceId: string | number) {
-        return request<ApiCandidature[]>(`/candidatures/annonce/${annonceId}`)
+        return requestWithFallback<ApiCandidature[]>(`/candidatures/depot-annonce/${annonceId}`, `/candidatures/annonce/${annonceId}`)
     },
 
     checkUserApplied(annonceId: string | number, userId: string | number) {
@@ -1039,7 +1055,7 @@ export const api = {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        return fetch(`${API_URL}/candidatures/verifier?annonceId=${annonceId}&userId=${userId}`, {
+        return fetch(`${API_URL}/candidatures/verifier?annonceId=${annonceId}&depotAnnonceId=${annonceId}&userId=${userId}`, {
             method: 'GET',
             headers,
         }).then(async (response) => {
@@ -1077,7 +1093,7 @@ export const api = {
         })
     },
     launchColocation(annonceId: string | number) {
-        return request<{ message: string; equipeId?: number }>(`/candidatures/annonce/${annonceId}/launch`, {
+        return requestWithFallback<{ message: string; equipeId?: number }>(`/candidatures/depot-annonce/${annonceId}/launch`, `/candidatures/annonce/${annonceId}/launch`, {
             method: 'POST',
         })
     },
@@ -1091,10 +1107,10 @@ export const api = {
             edl_service_id?: number | null
         } = {},
     ) {
-        return request<{
+        return requestWithFallback<{
             contratIds: number[];
             contracts: ApiBackofficeContratDetails[]
-        }>(`/candidatures/annonce/${annonceId}/contrats`, {
+        }>(`/candidatures/depot-annonce/${annonceId}/contrats`, `/candidatures/annonce/${annonceId}/contrats`, {
             method: 'POST',
             body: JSON.stringify({mode, ...options}),
         })
@@ -1115,12 +1131,12 @@ export const api = {
         }>(`/meta/contract-config`)
     },
     lancerColocationOfficielle(annonceId: string | number) {
-        return request<{ message: string; statut: string }>(`/candidatures/annonce/${annonceId}/lancer-officiel`, {
+        return requestWithFallback<{ message: string; statut: string }>(`/candidatures/depot-annonce/${annonceId}/lancer-officiel`, `/candidatures/annonce/${annonceId}/lancer-officiel`, {
             method: 'POST',
         })
     },
     myContractsForAnnonce(annonceId: string | number) {
-        return request<Array<{
+        return requestWithFallback<Array<{
             id_contrat: number
             reference: string | null
             type: 'contrat' | 'edl'
@@ -1130,7 +1146,7 @@ export const api = {
             paidCount: number
             total: number
             peut_payer: boolean
-        }>>(`/candidatures/annonce/${annonceId}/mes-contrats`)
+        }>>(`/candidatures/depot-annonce/${annonceId}/mes-contrats`, `/candidatures/annonce/${annonceId}/mes-contrats`)
     },
     async getContractDocument(contratId: string | number) {
         const token = getToken()
@@ -1160,7 +1176,7 @@ export const api = {
 
     // Récupérer toutes les équipes d'une annonce
     getEquipesByAnnonce(annonceId: string | number): Promise<ApiEquipe[]> {
-        return request<ApiEquipe[]>(`/equipes/annonces/${annonceId}`)
+        return requestWithFallback<ApiEquipe[]>(`/equipes/depot-annonce/${annonceId}`, `/equipes/annonces/${annonceId}`)
     },
 
     // Récupérer une équipe par son ID
@@ -1171,6 +1187,7 @@ export const api = {
     // Créer une équipe
     createEquipe(data: {
         id_annonce: number;
+        id_depot_annonce?: number;
         nom: string;
         ambiance?: string | null;
         statut?: 'forming' | 'selected' | 'rejected' | 'complete'
@@ -1620,61 +1637,71 @@ function normalizePhotos(value: unknown): string[] {
 }
 
 export function annonceToListing(a: ApiAnnonce): Listing {
+    const row = a as ApiAnnonce & Record<string, any>
     const photos = normalizePhotos(a.photos)
     const normalizedPhotos = photos.map((photo) => {
         if (photo.startsWith('http://') || photo.startsWith('https://')) return photo
         return `${API_BASE_URL}${photo.startsWith('/') ? '' : '/'}${photo}`
     })
     const image = normalizedPhotos[0] || FALLBACK_IMAGE
-    const price = Number(a.chambre?.prix_loyer || 0)
+    const firstRoom = row.chambre || row.chambres?.[0] || row.rooms?.[0] || null
+    const amenities = Array.isArray(row.commodites) ? row.commodites : (Array.isArray(row.services) ? row.services : Array.isArray(row.amenities) ? row.amenities : [])
+    const regles = Array.isArray(row.regles) ? row.regles : Array.isArray(row.rules) ? row.rules : []
+    const price = Number(firstRoom?.prix_loyer || firstRoom?.loyer || 0)
+    const charges = Number(firstRoom?.prix_charges || firstRoom?.charges || 0)
+    const surface = Number(firstRoom?.surface || row.surface_totale || row.surface || 0)
+    const ownerName = row.auteur || [row.prenom, row.nom].filter(Boolean).join(' ').trim() || row.createur_nom || 'Proprietaire'
+    const id = row.id_depot_annonce ?? row.id ?? row.id_annonce
     return {
-        id: String(a.id),
-        title: a.titre,
-        city: a.ville,
-        district: a.quartier || a.region || 'Madagascar',
+        id: String(id),
+        depotAnnonceId: row.id_depot_annonce != null ? Number(row.id_depot_annonce) : undefined,
+        annonceId: row.id_annonce != null ? Number(row.id_annonce) : row.id != null ? Number(row.id) : undefined,
+        title: row.titre || row.logement || row.type_annonce || 'Annonce',
+        city: row.ville || 'Madagascar',
+        district: row.quartier || row.region || 'Madagascar',
         price,
-        charges: Number(a.chambre?.prix_charges || 0),
-        rooms: a.total_colocataires || 1,
-        bedrooms: Number(a.bedrooms_count || a.rooms?.length || 1),
-        surface: Number(a.chambre?.surface || a.surface_totale || 0),
-        furnished: Boolean(a.chambre?.est_meuble != null && String(a.chambre.est_meuble).toLowerCase() === 'oui'),
-        available: String(a.chambre?.date_disponibilite || '').slice(0, 10),
-        type: a.type_propriete === 'maison' ? 'maison' : a.type_propriete === 'appartement' ? 'appartement' : 'chambre',
+        charges,
+        rooms: Number(row.total_colocataires || row.nombre_pieces || 1),
+        bedrooms: Number(row.bedrooms_count || row.chambres?.length || row.rooms?.length || row.nombre_pieces || 1),
+        surface,
+        furnished: Boolean(firstRoom?.est_meuble != null && String(firstRoom.est_meuble).toLowerCase() === 'oui') || Boolean(firstRoom?.meublee != null && String(firstRoom.meublee).toLowerCase() === 'oui'),
+        available: String(firstRoom?.date_disponibilite || firstRoom?.disponible_a_partir || '').slice(0, 10),
+        type: row.type_propriete === 'maison' || row.logement === 'Maison' ? 'maison' : row.type_propriete === 'appartement' || row.logement === 'Appartement' ? 'appartement' : 'chambre',
         image,
         gallery: normalizedPhotos.length ? normalizedPhotos : [image],
-        description: a.description || '',
-        amenities: a.services,
+        description: row.description || row.message || '',
+        amenities,
         colocs: [],
         owner: {
-            id: a.id_utilisateur,
-            name: a.auteur || 'Proprietaire',
-            verified: a.statut === 'active',
+            id: row.id_utilisateur,
+            name: ownerName,
+            verified: row.statut === 'active',
             since: '2026',
-            profilePicture: a.auteur_profile_picture ?? undefined,
-            email: a.auteur_email ?? undefined,
-            phone: a.auteur_telephone ?? undefined,
-            city: a.ville,
+            profilePicture: row.auteur_profile_picture ?? row.profile_picture ?? undefined,
+            email: row.auteur_email ?? row.email ?? undefined,
+            phone: row.auteur_telephone ?? row.telephone ?? undefined,
+            city: row.ville,
         },
-        tags: a.statut === 'active' ? ['verifie'] : [],
-        annonceType: a.type_annonce || 'existante',
-        typeBail: a.type_bail ?? null,
-        clauseSolidarite: a.clause_solidarite ?? null,
-        candidatureCount: a.candidature_count != null ? Number(a.candidature_count) : undefined,
-        address: a.adresse_exacte ?? undefined,
-        regles: a.regles ?? [],
-        internet: a.internet != null ? String(a.internet).toLowerCase() === 'oui' : false,
-        parkingVoitures: a.parking_voitures ?? 0,
-        parkingMotos: a.parking_motos ?? 0,
-        parkingCouvert: a.parking_couvert ?? false,
-        elevator: a.elevator ?? false,
-        petsAllowed: a.pets_allowed ?? false,
-        smokersAllowed: a.smokers_allowed ?? false,
-        womenOnly: a.women_only ?? false,
-        menOnly: a.men_only ?? false,
-        energyClass: a.energy_class ?? null,
-        ghgClass: a.ghg_class ?? null,
-        modeAnnonce: a.mode_annonce ?? undefined,
-        dateExpiration: a.date_expiration ?? null,
-        region: a.region ?? undefined,
+        tags: row.statut === 'active' ? ['verifie'] : [],
+        annonceType: row.type_annonce || 'existante',
+        typeBail: row.type_bail ?? null,
+        clauseSolidarite: row.clause_solidarite ?? null,
+        candidatureCount: row.candidature_count != null ? Number(row.candidature_count) : undefined,
+        address: row.adresse_exacte ?? row.adresse ?? undefined,
+        regles,
+        internet: row.internet != null ? String(row.internet).toLowerCase() === 'oui' : amenities.includes('wifi'),
+        parkingVoitures: row.parking_voitures ?? (amenities.includes('parking') ? 1 : 0),
+        parkingMotos: row.parking_motos ?? 0,
+        parkingCouvert: row.parking_couvert ?? amenities.includes('garage'),
+        elevator: row.elevator ?? amenities.includes('ascenseur'),
+        petsAllowed: row.pets_allowed ?? regles.includes('animaux_acceptes'),
+        smokersAllowed: row.smokers_allowed ?? regles.includes('fumeurs_acceptes'),
+        womenOnly: row.women_only ?? regles.includes('filles_uniquement'),
+        menOnly: row.men_only ?? regles.includes('garcons_uniquement'),
+        energyClass: row.energy_class ?? null,
+        ghgClass: row.ghg_class ?? null,
+        modeAnnonce: row.mode_annonce ?? undefined,
+        dateExpiration: row.date_expiration ?? null,
+        region: row.region ?? undefined,
     }
 }

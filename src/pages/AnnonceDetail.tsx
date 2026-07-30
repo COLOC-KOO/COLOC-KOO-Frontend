@@ -206,6 +206,7 @@ export default function AnnonceDetail() {
   const [showMyCandidature, setShowMyCandidature] = useState(false)
   const [messageToCandidate, setMessageToCandidate] = useState<Record<number, string>>({})
   const [messageModalCandidate, setMessageModalCandidate] = useState<null | { id: number; userId: number; name: string }>(null)
+  const [showOwnerPhone, setShowOwnerPhone] = useState(false)
 
   // Modal profil utilisateur
   const [profileModal, setProfileModal] = useState<{
@@ -247,7 +248,7 @@ export default function AnnonceDetail() {
     const loadAnnonce = async () => {
       try {
         const annonce = await api.annonce(id)
-        if (annonce.statut !== 'active') {
+        if (!['active', 'valide', 'validee', 'publiée', 'publiee'].includes(String(annonce.statut))) {
           setNotFound(true)
           return
         }
@@ -310,6 +311,7 @@ export default function AnnonceDetail() {
     try {
       await api.createCandidature({
         id_annonce: Number(id),
+        id_depot_annonce: Number(id),
         message: message.trim() || undefined,
         statut: 'en_attente',
       })
@@ -364,19 +366,6 @@ export default function AnnonceDetail() {
     ? roleLevel(user.poste) >= 2 || Number(listing?.owner.id) === Number(user.id)
     : false
   const canViewCandidatures = Boolean(user) && (isOwnerOrAdmin || hasApplied || Boolean(myCandidature))
-  const equipmentCards = listing ? [
-    { key: 'bedrooms', label: `${listing.bedrooms || listing.rooms || 1} chambre${(listing.bedrooms || listing.rooms || 1) > 1 ? 's' : ''}`, icon: <BedDouble /> },
-    listing.charges > 0 ? { key: 'charges', label: `${formatAr(listing.charges)} charges`, icon: <DollarSign /> } : null,
-    listing.elevator ? { key: 'elevator', label: 'Ascenseur', icon: <ArrowUp /> } : null,
-    listing.internet ? { key: 'wifi', label: 'Wifi', icon: <Wifi /> } : null,
-    (listing.parkingVoitures ?? 0) > 0 || listing.parkingCouvert ? { key: 'parking', label: 'Parking', icon: <Car /> } : null,
-    ...(listing.amenities || []).slice(0, 8).map((amenity, index) => ({
-      key: `amenity-${index}-${amenity}`,
-      label: amenity,
-      icon: <Check />,
-    })),
-  ].filter(Boolean) as Array<{ key: string; label: string; icon: React.ReactNode }> : []
-
   const handleViewMyCandidature = () => {
     if (!user) {
       navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
@@ -549,7 +538,12 @@ export default function AnnonceDetail() {
               <span className="block text-base">à {listing.city}</span>
             </p>
             <div className="mt-8 flex justify-center gap-3">
-              <Button size="sm" className="h-12 w-12 rounded-lg bg-[var(--brand-cyan-dark)] p-0 text-white hover:bg-[var(--brand-green-dark)]">
+              <Button
+                size="sm"
+                className="h-12 w-12 rounded-lg bg-[var(--brand-cyan-dark)] p-0 text-white hover:bg-[var(--brand-green-dark)]"
+                onClick={() => setShowOwnerPhone((current) => !current)}
+                title={listing.owner.phone || 'Numéro non renseigné'}
+              >
                 <Phone className="h-4 w-4" />
               </Button>
               <Button
@@ -572,9 +566,11 @@ export default function AnnonceDetail() {
                 <Mail className="h-4 w-4" />
               </Button>
             </div>
-            <Button className="mt-9 rounded-none bg-[var(--brand-cyan-dark)] px-8 text-white hover:bg-[var(--brand-green-dark)]">
-              Voir tous les biens
-            </Button>
+            {showOwnerPhone ? (
+              <div className="mt-5 rounded-xl border border-[var(--brand-cyan-dark)]/20 bg-[var(--brand-cyan-light)] px-4 py-3 text-sm font-semibold text-slate-800">
+                {listing.owner.phone || 'Numéro non renseigné'}
+              </div>
+            ) : null}
           </aside>
         </div>
         <div className="mt-8">
@@ -611,51 +607,75 @@ export default function AnnonceDetail() {
       </div>
 
       {messageModalCandidate ? (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-border bg-white p-5 shadow-2xl">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-lg font-semibold text-foreground">{t('annonceDetail:modal.title', { name: messageModalCandidate.name })}</div>
-                <p className="mt-1 text-sm text-muted-foreground">{t('annonceDetail:modal.subtitle')}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMessageModalCandidate(null)}
-                className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mt-4 space-y-3">
-              <textarea
-                rows={5}
-                value={messageToCandidate[messageModalCandidate.id] || ''}
-                onChange={(event) => setMessageToCandidate((prev) => ({ ...prev, [messageModalCandidate.id]: event.target.value }))}
-                placeholder={t('annonceDetail:modal.placeholder', { name: messageModalCandidate.name })}
-                className="w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
-              />
-              {contactError ? <p className="text-sm text-red-600">{contactError}</p> : null}
-              {contactSuccess ? <p className="text-sm text-brand-cyan-dark">{contactSuccess}</p> : null}
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setMessageModalCandidate(null)}>
-                {t('common:common.cancel')}
-              </Button>
-              <Button
-                type="button"
-                className="bg-brand-cyan text-white hover:bg-brand-cyan-dark"
-                onClick={() => {
-                  void handleSendMessageToCandidate(messageModalCandidate.id, messageModalCandidate.userId)
-                  setMessageModalCandidate(null)
-                }}
-                disabled={contactSubmitting}
-              >
-                <Send className="mr-2 h-4 w-4" /> {t('common:common.send')}
-              </Button>
-            </div>
+  <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
+    <div className="w-full max-w-md rounded-3xl border border-border bg-white p-5 shadow-2xl">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-lg font-semibold text-foreground">
+            {messageModalCandidate.id === -1
+              ? `Message à ${messageModalCandidate.name} (Propriétaire)`
+              : `Message à ${messageModalCandidate.name}`}
           </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {messageModalCandidate.id === -1
+              ? "Envoyez un message au propriétaire de l'annonce"
+              : "Envoyez un message à ce candidat"}
+          </p>
         </div>
-      ) : null}
+        <button
+          type="button"
+          onClick={() => setMessageModalCandidate(null)}
+          className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="mt-4 space-y-3">
+        <textarea
+          rows={5}
+          value={messageToCandidate[messageModalCandidate.id] || ""}
+          onChange={(event) =>
+            setMessageToCandidate((prev) => ({
+              ...prev,
+              [messageModalCandidate.id]: event.target.value,
+            }))
+          }
+          placeholder={`Votre message pour ${messageModalCandidate.name}...`}
+          className="w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
+        />
+        {contactError ? (
+          <p className="text-sm text-red-600">{contactError}</p>
+        ) : null}
+        {contactSuccess ? (
+          <p className="text-sm text-brand-cyan-dark">{contactSuccess}</p>
+        ) : null}
+      </div>
+      <div className="mt-5 flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setMessageModalCandidate(null)}
+        >
+          Annuler
+        </Button>
+        <Button
+          type="button"
+          className="bg-brand-cyan text-white hover:bg-brand-cyan-dark"
+          onClick={() => {
+            void handleSendMessageToCandidate(
+              messageModalCandidate.id,
+              messageModalCandidate.userId,
+            );
+            setMessageModalCandidate(null);
+          }}
+          disabled={contactSubmitting}
+        >
+          <Send className="mr-2 h-4 w-4" /> Envoyer
+        </Button>
+      </div>
+    </div>
+  </div>
+) : null}
 
       <div className="max-w-7xl mx-auto px-6 py-10 grid lg:grid-cols-[1fr_380px] gap-10">
         <div>
@@ -754,24 +774,6 @@ export default function AnnonceDetail() {
           <section className="mt-8">
             <h2 className="bebas text-2xl">{t('annonceDetail:sections.description')}</h2>
             <p className="mt-3 text-muted-foreground leading-relaxed">{listing.description || t('annonceDetail:noDescription')}</p>
-          </section>
-
-          <section className="mt-8 border-t border-slate-200 pt-8">
-            <h2 className="text-xl font-extrabold text-slate-950">Equipements</h2>
-            {equipmentCards.length > 0 ? (
-              <div className="mt-5 flex flex-wrap gap-7">
-                {equipmentCards.map((item) => (
-                  <div key={item.key} className="w-24 text-center">
-                    <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-slate-100 text-slate-900 [&>svg]:h-8 [&>svg]:w-8">
-                      {item.icon}
-                    </div>
-                    <div className="mt-3 text-xs leading-snug text-slate-900">{item.label}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-3 text-sm text-muted-foreground">{t('annonceDetail:noAmenities')}</div>
-            )}
           </section>
 
           {/* Rules */}
@@ -1107,8 +1109,8 @@ export default function AnnonceDetail() {
                     memberSince: '1 an',
                     avatar: listing.owner.profilePicture || undefined,
                     bio: t('annonceDetail:profile.ownerBio', { name: listing.owner.name }),
-                    email: 'proprietaire@email.com',
-                    phone: '+33 6 98 76 54 32',
+                    email: listing.owner.email || undefined,
+                    phone: listing.owner.phone || undefined,
                     profession: t('annonceDetail:profile.ownerProfession'),
                     city: listing.city,
                     origin: 'Antananarivo',

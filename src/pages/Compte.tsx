@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, Calendar, Bed, Building2, Users, Image as ImageIcon, Heart } from 'lucide-react'
+import { 
+  ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, 
+  Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, 
+  Calendar, Bed, Building2, Users, Image as ImageIcon, Heart, Search 
+} from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api, ApiAnnonce, Langue } from '../lib/api'
@@ -863,7 +867,18 @@ function TabMesFavoris() {
 function TabNotif() {
   const { t } = useTranslation('compte')
   const navigate = useNavigate()
-  const [notifications, setNotifications] = useState<Array<{ id_notification: number; titre: string; texte: string; est_lue: number; type_notification: string; date_creation: string; lien: string | null }>>([])
+  const [notifications, setNotifications] = useState<Array<{ 
+    id_notification: number
+    titre: string
+    texte: string
+    est_lue: number
+    type_notification: string
+    date_creation: string
+    lien: string | null
+    id_annonce?: number | null
+    id_message?: number | null
+    id_candidature?: number | null
+  }>>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -874,17 +889,46 @@ function TabNotif() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleMarkOne = async (id: number) => {
+  const handleNotificationClick = async (notification: typeof notifications[0]) => {
     try {
-      await api.markNotificationRead(id)
-      await api.deleteNotification(id)
-      setNotifications((prev) => prev.filter((n) => n.id_notification !== id))
+      // Marquer comme lu
+      await api.markNotificationRead(notification.id_notification)
+      
+      // Construire l'URL de redirection en fonction du type
+      let redirectUrl = '/compte?tab=notif'
+      
+      if (notification.lien) {
+        // Si un lien est déjà fourni, l'utiliser
+        redirectUrl = notification.lien
+      } else if (notification.type_notification === 'message' && notification.id_message) {
+        // Rediriger vers la messagerie
+        redirectUrl = '/compte?tab=paiements'
+      } else if (notification.type_notification === 'candidature' && notification.id_candidature) {
+        // Rediriger vers les candidatures
+        redirectUrl = '/compte?tab=dossier'
+      } else if (notification.type_notification === 'annonce' && notification.id_annonce) {
+        // Rediriger vers l'annonce
+        redirectUrl = `/annonces/${notification.id_annonce}`
+      } else if (notification.type_notification === 'favori') {
+        // Rediriger vers les favoris
+        redirectUrl = '/compte?tab=favoris'
+      }
+      
+      // Supprimer la notification de la liste
+      setNotifications((prev) => prev.filter((n) => n.id_notification !== notification.id_notification))
+      
+      // Naviguer vers la destination
+      navigate(redirectUrl)
     } catch {
-      // ignore
+      // En cas d'erreur, naviguer quand même
+      if (notification.lien) {
+        navigate(notification.lien)
+      }
     }
   }
 
-  const handleDeleteNotification = async (id: number) => {
+  const handleDeleteNotification = async (id: number, event: React.MouseEvent) => {
+    event.stopPropagation()
     if (!window.confirm(t('deleteConversationConfirm'))) return
     try {
       await api.deleteNotification(id)
@@ -904,6 +948,16 @@ function TabNotif() {
     }
   }
 
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'message': return <MessageSquare className="w-4 h-4 text-brand-cyan" />
+      case 'candidature': return <Users className="w-4 h-4 text-brand-green" />
+      case 'annonce': return <Home className="w-4 h-4 text-brand-cyan-dark" />
+      case 'favori': return <Heart className="w-4 h-4 text-red-500" />
+      default: return <Bell className="w-4 h-4 text-muted-foreground" />
+    }
+  }
+
   return (
     <div>
       <h2 className="bebas text-2xl">{t('notifications')}</h2>
@@ -911,74 +965,65 @@ function TabNotif() {
         {loading ? (
           <p className="text-sm text-muted-foreground">{t('loading')}</p>
         ) : notifications.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('noNotifications')}</p>
+          <div className="text-center py-10">
+            <Bell className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">{t('noNotifications')}</p>
+          </div>
         ) : (
           notifications.map((item) => (
             <div
               key={item.id_notification}
-              role="button"
-              tabIndex={0}
-              onClick={() => {
-                if (item.lien) {
-                  navigate(item.lien)
-                }
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  if (item.lien) {
-                    navigate(item.lien)
-                  }
-                }
-              }}
-              className="w-full text-left"
+              onClick={() => handleNotificationClick(item)}
+              className={`w-full text-left rounded-xl border p-4 transition-all cursor-pointer ${
+                item.est_lue 
+                  ? 'border-border bg-white hover:border-brand-cyan/30 hover:shadow-sm' 
+                  : 'border-brand-cyan/20 bg-brand-cyan-light/10 hover:border-brand-cyan/40 hover:shadow-md'
+              }`}
             >
-              <div className="flex items-start justify-between gap-3 rounded-xl border border-border p-4 hover:border-brand-cyan hover:bg-brand-cyan-light/10 transition-colors cursor-pointer">
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium">{item.titre}</div>
-                  <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{item.texte}</div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1">
+                  {getNotificationIcon(item.type_notification)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium text-foreground">
+                      {item.titre}
+                    </div>
+                    {!item.est_lue && (
+                      <span className="inline-block w-2 h-2 rounded-full bg-brand-cyan animate-pulse"></span>
+                    )}
+                  </div>
+                  <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+                    {item.texte}
+                  </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="rounded-full bg-muted px-2.5 py-1 font-medium">
-                      {item.type_notification === 'message' ? t('messageContact') : t('notification')}
+                      {item.type_notification === 'message' ? t('messageContact') : 
+                       item.type_notification === 'candidature' ? 'Candidature' :
+                       item.type_notification === 'annonce' ? 'Annonce' :
+                       item.type_notification === 'favori' ? 'Favori' : t('notification')}
                     </span>
                     <span>{new Date(item.date_creation).toLocaleString('fr-FR')}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      handleMarkOne(item.id_notification)
-                    }}
-                    title={t('markAsRead')}
-                    className="p-1.5 hover:bg-white/5 rounded text-sm text-muted-foreground"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      handleDeleteNotification(item.id_notification)
-                    }}
-                    title={t('delete')}
-                    className="p-1.5 hover:bg-white/5 rounded text-red-500"
-                  >
-                    <Trash className="w-4 h-4" />
-                  </button>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.est_lue ? 'bg-muted text-muted-foreground' : 'bg-brand-cyan-light text-brand-cyan-dark'}`}>
-                    {item.est_lue ? t('read') : t('new')}
-                  </span>
-                </div>
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteNotification(item.id_notification, e)}
+                  title={t('delete')}
+                  className="p-1.5 hover:bg-red-50 rounded text-red-500 transition-colors"
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
               </div>
             </div>
           ))
         )}
       </div>
-      <Button className="mt-6 bg-brand-cyan text-white hover:bg-brand-cyan-dark" onClick={handleReadAll} disabled={saving}>
-        {saving ? t('updating') : t('markAllAsRead')}
-      </Button>
+      {notifications.length > 0 && (
+        <Button className="mt-6 bg-brand-cyan text-white hover:bg-brand-cyan-dark" onClick={handleReadAll} disabled={saving}>
+          {saving ? t('updating') : t('markAllAsRead')}
+        </Button>
+      )}
     </div>
   )
 }
@@ -1023,6 +1068,7 @@ function TabMessages() {
     dernier_message: string
     total_messages: number
     non_lus: number
+    date_dernier_message: string
   }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -1032,18 +1078,24 @@ function TabMessages() {
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setLoading(true)
-    api.messagesThreads()
-      .then((data) => setThreads(data))
+    Promise.all([
+      api.messagesThreads(),
+      api.superadmin().catch(() => null)
+    ])
+      .then(([threadsData, superadminData]) => {
+        setThreads(threadsData)
+        setSuperadmin(superadminData)
+        if (threadsData.length > 0) {
+          setActiveThread(threadsData[0].interlocuteur_id)
+        }
+      })
       .catch((err) => setError(err instanceof Error ? err.message : t('updateError')))
       .finally(() => setLoading(false))
-
-    api.superadmin()
-      .then((data) => setSuperadmin(data))
-      .catch(() => setSuperadmin(null))
   }, [t])
 
   useEffect(() => {
@@ -1055,12 +1107,6 @@ function TabMessages() {
       .catch(() => setMessages([]))
       .finally(() => setMsgLoading(false))
   }, [activeThread])
-
-  const openSuperadminThread = () => {
-    if (superadmin) {
-      setActiveThread(superadmin.id)
-    }
-  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -1104,82 +1150,165 @@ function TabMessages() {
     try {
       await api.deleteThread(interlocutorId)
       setThreads((prev) => prev.filter((t) => t.interlocuteur_id !== interlocutorId))
-      if (activeThread === interlocutorId) setActiveThread(null)
+      if (activeThread === interlocutorId) {
+        const remaining = threads.filter(t => t.interlocuteur_id !== interlocutorId)
+        setActiveThread(remaining.length > 0 ? remaining[0].interlocuteur_id : null)
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : t('deleteConversationError'))
     }
   }
 
-  const activeThreadInfo = threads.find((t) => t.interlocuteur_id === activeThread)
-  const currentThreadName = activeThreadInfo
-    ? `${activeThreadInfo.interlocuteur_prenom} ${activeThreadInfo.interlocuteur_nom}`
-    : superadmin && activeThread === superadmin.id
-      ? `${superadmin.prenom} ${superadmin.nom}`
-      : t('conversationWithSuperadmin')
-  
+  const filteredThreads = searchQuery 
+    ? threads.filter(t => 
+        `${t.interlocuteur_prenom} ${t.interlocuteur_nom}`.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : threads
+
+  const getInitials = (prenom: string, nom: string) => {
+    return `${(prenom || '?')[0]}${(nom || '?')[0]}`.toUpperCase()
+  }
+
+  // Si un thread est sélectionné, afficher la vue de conversation
   if (activeThread !== null) {
+    const activeThreadInfo = threads.find((t) => t.interlocuteur_id === activeThread)
+    const isSuperadmin = superadmin && activeThread === superadmin.id
+    const displayName = activeThreadInfo 
+      ? `${activeThreadInfo.interlocuteur_prenom} ${activeThreadInfo.interlocuteur_nom}`
+      : isSuperadmin 
+        ? `${superadmin.prenom} ${superadmin.nom}`
+        : 'Utilisateur'
+
     return (
-      <div className="flex flex-col h-[600px]">
-        <div className="flex items-center gap-3 pb-4 border-b border-border">
-          <button
-            onClick={() => setActiveThread(null)}
-            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm">
-            {((activeThreadInfo?.interlocuteur_prenom?.[0] || activeThreadInfo?.interlocuteur_nom?.[0]) || (superadmin && activeThread === superadmin.id ? superadmin.prenom?.[0] || superadmin.nom?.[0] : '?'))?.toUpperCase()}
+      <div className="flex flex-col h-[700px] -m-6 rounded-b-2xl overflow-hidden">
+        {/* En-tête de la conversation */}
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-border bg-white/95 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveThread(null)}
+              className="lg:hidden p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-lg shadow-md">
+              {getInitials(
+                activeThreadInfo?.interlocuteur_prenom || superadmin?.prenom || 'U',
+                activeThreadInfo?.interlocuteur_nom || superadmin?.nom || 'S'
+              )}
+            </div>
+            <div>
+              <div className="text-base font-semibold text-foreground flex items-center gap-2">
+                {displayName}
+                {activeThreadInfo?.non_lus ? (
+                  <span className="inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-brand-cyan rounded-full">
+                    {activeThreadInfo.non_lus}
+                  </span>
+                ) : null}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <span className={`w-2 h-2 rounded-full ${activeThreadInfo?.non_lus ? 'bg-brand-cyan animate-pulse' : 'bg-green-500'}`}></span>
+                  {activeThreadInfo?.non_lus ? 'En ligne' : 'Dernière connexion récente'}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
+                <span>{activeThreadInfo?.total_messages || 0} messages</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm font-semibold">
-              {currentThreadName}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {activeThreadInfo ? `${activeThreadInfo.total_messages} ${activeThreadInfo.total_messages > 1 ? t('messagesCount') : t('message')}` : t('conversationWithSuperadmin')}
-            </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => activeThreadInfo && handleDeleteConversation(activeThreadInfo.interlocuteur_id)}
+              className="p-2 rounded-full hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+              title="Supprimer la conversation"
+            >
+              <Trash className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4 space-y-3">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3">
           {msgLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{t('loading')}</p>
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="inline-block w-8 h-8 border-4 border-brand-cyan/30 border-t-brand-cyan rounded-full animate-spin"></div>
+                <p className="mt-2 text-sm text-muted-foreground">Chargement des messages...</p>
+              </div>
+            </div>
           ) : messages.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{t('noConversations')}</p>
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <MessageSquare className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Aucun message</p>
+                <p className="text-xs text-muted-foreground/70">Démarrez la conversation !</p>
+              </div>
+            </div>
           ) : (
-            messages.map((msg) => {
+            messages.map((msg, index) => {
               const isMe = msg.id_expediteur === user?.id
               const senderName = isMe
-                ? t('profile')
+                ? 'Moi'
                 : `${msg.expediteur_prenom} ${msg.expediteur_nom}`
-              const isAdmin = !isMe && (msg.expediteur_nom?.toLowerCase().includes('admin') || msg.expediteur_prenom?.toLowerCase().includes('admin') || msg.expediteur_nom?.toLowerCase().includes('super'))
+              const isAdmin = !isMe && (msg.expediteur_nom?.toLowerCase().includes('admin') || msg.expediteur_prenom?.toLowerCase().includes('admin'))
+              const time = new Date(msg.date_envoi).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+              const date = new Date(msg.date_envoi).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+              
+              // Afficher la date si différente du message précédent
+              const prevDate = index > 0 ? new Date(messages[index - 1].date_envoi).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
+              const showDate = index === 0 || date !== prevDate
+
               return (
-                <div key={msg.id_message} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
-                    isMe
-                      ? 'bg-brand-cyan text-white rounded-br-sm'
-                      : isAdmin
-                        ? 'bg-brand-green-light text-brand-green-dark border border-brand-green/30 rounded-bl-sm'
-                        : 'bg-muted text-foreground rounded-bl-sm'
-                  }`}>
-                    {!isMe && (
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs font-semibold mb-0.5 opacity-80">
-                          {senderName}
-                          {isAdmin && <span className="ml-1.5 inline-flex items-center gap-0.5 text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full">Admin</span>}
+                <div key={msg.id_message}>
+                  {showDate && (
+                    <div className="flex justify-center my-4">
+                      <span className="text-xs text-muted-foreground bg-white px-3 py-1 rounded-full shadow-sm">
+                        {date}
+                      </span>
+                    </div>
+                  )}
+                  <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[75%] ${isMe ? 'order-2' : 'order-2'}`}>
+                      {!isMe && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium text-foreground/80">
+                            {senderName}
+                          </span>
+                          {isAdmin && (
+                            <span className="text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full font-semibold">
+                              Admin
+                            </span>
+                          )}
                         </div>
-                          <div className="ml-3">
-                            <button title={t('reportMessage')} onClick={() => handleReportMessage(msg.id_message)} className="p-1.5 hover:bg-white/5 rounded text-muted-foreground">
-                              <AlertTriangle className="w-4 h-4" />
-                            </button>
-                          </div>
+                      )}
+                      <div
+                        className={`relative rounded-2xl px-4 py-2.5 shadow-sm ${
+                          isMe
+                            ? 'bg-brand-cyan text-white rounded-br-none'
+                            : isAdmin
+                              ? 'bg-brand-green-light text-brand-green-dark border border-brand-green/20 rounded-bl-none'
+                              : 'bg-white text-foreground border border-border rounded-bl-none'
+                        }`}
+                      >
+                        <div className="text-sm whitespace-pre-wrap break-words">
+                          {msg.contenu}
+                        </div>
+                        <div className={`flex items-center justify-end gap-2 mt-1 ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>
+                          <span className="text-[10px]">{time}</span>
+                          {isMe && (
+                            <span className="text-[10px]">
+                              {msg.est_lu ? '✓✓' : '✓'}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    {msg.sujet && (
-                      <div className="text-xs font-medium mb-1 opacity-70 italic">Re: {msg.sujet}</div>
-                    )}
-                    <div className="text-sm whitespace-pre-wrap break-words">{msg.contenu}</div>
-                    <div className={`text-[10px] mt-1 ${isMe ? 'text-white/70' : 'text-muted-foreground'}`}>
-                      {new Date(msg.date_envoi).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      {!isMe && (
+                        <button
+                          onClick={() => handleReportMessage(msg.id_message)}
+                          className="mt-1 text-[10px] text-muted-foreground/50 hover:text-red-500 transition-colors"
+                        >
+                          Signaler
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1189,107 +1318,177 @@ function TabMessages() {
           <div ref={messagesEndRef} />
         </div>
 
-        {sendError && <p className="text-sm text-red-600 mb-2">{sendError}</p>}
-
-        <div className="flex items-center gap-2 pt-3 border-t border-border">
-          <input
-            type="text"
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-            placeholder={t('typeMessage')}
-            className="flex-1 border border-border rounded-full px-4 py-2.5 text-sm bg-white outline-none focus:border-brand-cyan"
-            disabled={sending}
-          />
-          <button
-            onClick={handleSend}
-            disabled={sending || !reply.trim()}
-            className="w-10 h-10 rounded-full bg-brand-cyan hover:bg-brand-cyan-dark text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+        {/* Zone de saisie */}
+        <div className="border-t border-border bg-white/95 backdrop-blur-sm px-6 py-4">
+          {sendError && (
+            <p className="text-sm text-red-600 mb-2 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              {sendError}
+            </p>
+          )}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+              placeholder="Écrire un message..."
+              className="flex-1 border border-border rounded-full px-4 py-2.5 text-sm bg-muted/30 outline-none focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all"
+              disabled={sending}
+            />
+            <button
+              onClick={handleSend}
+              disabled={sending || !reply.trim()}
+              className="w-11 h-11 rounded-full bg-brand-cyan hover:bg-brand-cyan-dark text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shrink-0 transition-colors shadow-lg shadow-brand-cyan/20"
+            >
+              {sending ? (
+                <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
+  // Vue liste des conversations
   return (
-    <div>
-      <h2 className="bebas text-2xl">{t('messages')}</h2>
-      <p className="text-sm text-muted-foreground mt-1">
-        {t('messagesDesc')}
-      </p>
+    <div className="-m-6">
+      <div className="flex flex-col lg:flex-row h-[700px]">
+        {/* Sidebar des conversations */}
+        <div className="w-full lg:w-80 border-r border-border bg-muted/10 flex flex-col">
+          <div className="p-4 border-b border-border">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-brand-cyan" />
+              Messages
+              {threads.length > 0 && (
+                <span className="ml-auto text-xs bg-brand-cyan text-white px-2 py-0.5 rounded-full">
+                  {threads.reduce((acc, t) => acc + t.non_lus, 0)} non lus
+                </span>
+              )}
+            </h3>
+            <div className="mt-2 relative">
+              <input
+                type="text"
+                placeholder="Rechercher une conversation..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full border border-border rounded-full px-4 py-2 text-sm bg-white outline-none focus:border-brand-cyan pl-9"
+              />
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+            </div>
+          </div>
 
-      <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">{t('startConversation')}</p>
-        </div>
-        <button
-          type="button"
-          onClick={openSuperadminThread}
-          disabled={!superadmin}
-          className="inline-flex items-center justify-center rounded-full bg-brand-cyan px-4 py-2 text-sm font-semibold text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {superadmin ? `${t('contact')} ${superadmin.prenom}` : t('superadminUnavailable')}
-        </button>
-      </div>
-
-      {loading ? (
-        <p className="mt-5 text-sm text-muted-foreground">{t('loading')}</p>
-      ) : error ? (
-        <p className="mt-5 text-sm text-red-600">{error}</p>
-      ) : threads.length === 0 ? (
-        <div className="mt-5 rounded-3xl border border-border bg-white p-5">
-          <p className="text-sm text-muted-foreground">{t('noConversations')} {t('contact')} {superadmin ? superadmin.prenom : t('superadmin')}{t('toStart')}</p>
-        </div>
-      ) : (
-        <div className="mt-5 space-y-3">
-          {threads.map((thread) => {
-            const isAdmin = thread.interlocuteur_nom?.toLowerCase().includes('admin') || thread.interlocuteur_prenom?.toLowerCase().includes('admin') || thread.interlocuteur_nom?.toLowerCase().includes('super')
-            return (
-              <div
-                key={thread.interlocuteur_id}
-                onClick={() => setActiveThread(thread.interlocuteur_id)}
-                role="button"
-                className="w-full text-left rounded-2xl border border-border p-4 bg-white shadow-sm hover:shadow-md hover:border-brand-cyan/30 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm shrink-0">
-                    {(thread.interlocuteur_prenom?.[0] || thread.interlocuteur_nom?.[0] || '?').toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold truncate">
-                        {thread.interlocuteur_prenom} {thread.interlocuteur_nom}
-                      </span>
-                      {isAdmin && (
-                        <span className="text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full font-semibold">{t('admin')}</span>
-                      )}
-                      {thread.non_lus > 0 && (
-                        <span className="text-[10px] bg-brand-cyan text-white px-1.5 py-0.5 rounded-full font-semibold">
-                          {thread.non_lus} {thread.non_lus > 1 ? t('unreads') : t('unread')}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
-                      {thread.total_messages} {thread.total_messages > 1 ? t('messagesCount') : t('message')} · {t('lastActivity')} {new Date(thread.dernier_message).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                  <div className="ml-4">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteConversation(thread.interlocuteur_id) }}
-                      title={t('deleteConversation')}
-                      className="p-1.5 hover:bg-white/5 rounded text-red-500"
-                    >
-                      <Trash className="w-4 h-4" />
-                    </button>
-                  </div>
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-brand-cyan/30 border-t-brand-cyan rounded-full animate-spin"></div>
+                  <p className="mt-2 text-sm text-muted-foreground">Chargement...</p>
                 </div>
               </div>
-            )
-          })}
+            ) : error ? (
+              <div className="p-4 text-sm text-red-600">{error}</div>
+            ) : filteredThreads.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                <MessageSquare className="w-12 h-12 text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  {searchQuery ? 'Aucun résultat trouvé' : 'Aucune conversation'}
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  {searchQuery ? 'Essayez une autre recherche' : 'Commencez une nouvelle conversation'}
+                </p>
+                {superadmin && !searchQuery && (
+                  <button
+                    onClick={() => setActiveThread(superadmin.id)}
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-cyan hover:text-brand-cyan-dark"
+                  >
+                    <Send className="w-4 h-4" />
+                    Contacter {superadmin.prenom}
+                  </button>
+                )}
+              </div>
+            ) : (
+              filteredThreads.map((thread) => {
+                const isActive = activeThread === thread.interlocuteur_id
+                const displayName = `${thread.interlocuteur_prenom} ${thread.interlocuteur_nom}`
+                const initials = getInitials(thread.interlocuteur_prenom, thread.interlocuteur_nom)
+                const isAdmin = thread.interlocuteur_nom?.toLowerCase().includes('admin') || thread.interlocuteur_prenom?.toLowerCase().includes('admin')
+                const lastMessage = thread.dernier_message?.substring(0, 50) || 'Aucun message'
+                const time = new Date(thread.date_dernier_message || thread.dernier_message).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+
+                return (
+                  <button
+                    key={thread.interlocuteur_id}
+                    onClick={() => setActiveThread(thread.interlocuteur_id)}
+                    className={`w-full text-left p-4 border-b border-border/50 transition-all hover:bg-muted/50 ${
+                      isActive ? 'bg-brand-cyan-light/20 border-l-4 border-l-brand-cyan' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm">
+                          {initials}
+                        </div>
+                        {thread.non_lus > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+                            {thread.non_lus}
+                          </span>
+                        )}
+                        <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                          thread.non_lus > 0 ? 'bg-brand-cyan animate-pulse' : 'bg-green-500'
+                        }`}></span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold text-foreground truncate flex items-center gap-1.5">
+                            {displayName}
+                            {isAdmin && (
+                              <span className="text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full font-semibold">
+                                Admin
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground shrink-0">{time}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 mt-0.5">
+                          <span className={`text-xs truncate ${thread.non_lus > 0 ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
+                            {lastMessage}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Zone de conversation vide */}
+        <div className="flex-1 hidden lg:flex items-center justify-center bg-muted/5">
+          <div className="text-center">
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="w-10 h-10 text-muted-foreground/50" />
+            </div>
+            <h4 className="text-lg font-semibold text-foreground">Messagerie</h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              Sélectionnez une conversation pour commencer
+            </p>
+            {superadmin && threads.length === 0 && (
+              <button
+                onClick={() => setActiveThread(superadmin.id)}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-brand-cyan text-white rounded-lg hover:bg-brand-cyan-dark transition-colors text-sm font-medium"
+              >
+                <Send className="w-4 h-4" />
+                Nouvelle conversation
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1382,50 +1581,95 @@ export default function Compte() {
 
   return (
     <SiteLayout>
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-xl">
-              {initials}
-            </div>
-            <div>
-              <h1 className="bebas text-3xl">{loading ? t('loadingProfile') : fullName}</h1>
-              <div className="text-sm text-muted-foreground">
-                {user ? `${user.email} · ${roleLabel}` : t('connectToSeeProfile')}
-                {profileMeta ? <div className="mt-1">{profileMeta}</div> : null}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* En-tête amélioré */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-cyan/10 via-white to-brand-green/10 p-6 md:p-8 border border-border/50">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-white">
+                {loading ? '...' : initials}
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {loading ? 'Chargement...' : fullName}
+                </h1>
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <span className="text-sm text-muted-foreground">{user?.email}</span>
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
+                  <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-cyan-dark bg-brand-cyan-light px-2.5 py-0.5 rounded-full">
+                    {roleLabel}
+                  </span>
+                  {user?.verification && (
+                    <span className="inline-flex items-center gap-1 text-sm text-green-700 bg-green-50 px-2.5 py-0.5 rounded-full">
+                      <Check className="w-3 h-3" /> Vérifié
+                    </span>
+                  )}
+                </div>
+                {profileMeta && (
+                  <div className="mt-1 text-sm text-muted-foreground">{profileMeta}</div>
+                )}
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {user && isAdmin ? (
-              <Button variant="outline" onClick={() => navigate('/admin')}>
-                {t('goToBackOffice')}
-              </Button>
-            ) : null}
-            {user ? (
-              <Button variant="outline" onClick={() => { logout(); navigate('/auth?mode=signin') }}>
-                {t('logout')}
-              </Button>
-            ) : null}
+            <div className="flex items-center gap-2 flex-wrap">
+              {user && isAdmin && (
+                <Button variant="outline" onClick={() => navigate('/admin')} className="gap-2">
+                  <Building2 className="w-4 h-4" /> Administration
+                </Button>
+              )}
+              {user ? (
+                <Button variant="outline" onClick={() => { logout(); navigate('/auth?mode=signin') }} className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
+                  Déconnexion
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
 
-        <div className="mt-8 grid md:grid-cols-[220px_1fr] gap-6">
-          <aside className="space-y-1">
+        {/* Statistiques rapides */}
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-white rounded-xl border border-border p-4 text-center">
+            <div className="text-2xl font-bold text-brand-cyan-dark">12</div>
+            <div className="text-xs text-muted-foreground">Annonces vues</div>
+          </div>
+          <div className="bg-white rounded-xl border border-border p-4 text-center">
+            <div className="text-2xl font-bold text-brand-cyan-dark">5</div>
+            <div className="text-xs text-muted-foreground">Favoris</div>
+          </div>
+          <div className="bg-white rounded-xl border border-border p-4 text-center">
+            <div className="text-2xl font-bold text-brand-cyan-dark">3</div>
+            <div className="text-xs text-muted-foreground">Messages</div>
+          </div>
+          <div className="bg-white rounded-xl border border-border p-4 text-center">
+            <div className="text-2xl font-bold text-brand-cyan-dark">2</div>
+            <div className="text-xs text-muted-foreground">Candidatures</div>
+          </div>
+        </div>
+
+        {/* Tabs et contenu */}
+        <div className="mt-8 grid md:grid-cols-[240px_1fr] gap-6">
+          <aside className="space-y-1 bg-white rounded-2xl border border-border p-2">
             {tabs.map((t) => (
-            <Link
-              key={t.id}
-              to={`/compte?tab=${t.id}`}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                tab === t.id ? 'bg-brand-cyan-light text-brand-cyan-dark' : 'hover:bg-muted text-foreground/70'
-              }`}
-            >
-              <t.icon className="w-4 h-4" /> {t.label}
-            </Link>
-          ))}
+              <Link
+                key={t.id}
+                to={`/compte?tab=${t.id}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                  tab === t.id 
+                    ? 'bg-brand-cyan text-white shadow-lg shadow-brand-cyan/20' 
+                    : 'hover:bg-muted text-foreground/70 hover:text-foreground'
+                }`}
+              >
+                <t.icon className={`w-4 h-4 ${tab === t.id ? 'text-white' : ''}`} /> 
+                {t.label}
+                {tab === t.id && (
+                  <span className="ml-auto">
+                    <Check className="w-3 h-3" />
+                  </span>
+                )}
+              </Link>
+            ))}
           </aside>
 
-          <div className="bg-card border border-border rounded-2xl p-6">
+          <div className="bg-white border border-border rounded-2xl p-6 shadow-sm">
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
