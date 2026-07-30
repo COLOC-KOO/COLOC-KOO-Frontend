@@ -116,7 +116,7 @@ export function ListingCard({ l, compact = false }: ListingCardProps) {
       favoriteIdsCache.add(String(l.id))
       favoriteIdsUserId = user.id
       favoriteIdsPromise = Promise.resolve(favoriteIdsCache)
-      showToast(response.alreadyExists ? "c'est déjà dans votre favoris" : 'Ajouté comme favoris avec succès')
+      showToast(response.alreadyExists ? 'Cette annonce est déjà dans vos favoris.' : 'Annonce ajouté dans votre favoris avec succés')
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Impossible d'ajouter ce favori.")
     } finally {
@@ -144,7 +144,7 @@ export function ListingCard({ l, compact = false }: ListingCardProps) {
       className="group relative block w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl"
     >
       {toastMessage ? (
-        <div className="fixed right-5 top-5 z-50 max-w-sm rounded-xl border border-border bg-white px-4 py-3 text-sm font-medium text-foreground shadow-2xl">
+        <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-xl border border-border bg-white px-4 py-3 text-sm font-medium text-foreground shadow-2xl">
           {toastMessage}
         </div>
       ) : null}
@@ -250,6 +250,11 @@ export function ListingCard({ l, compact = false }: ListingCardProps) {
           <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1">
             {equipmentPreview.length > 0 ? equipmentPreview.join(', ') : 'Equipements à préciser'}
           </span>
+          {l.regles && l.regles.length > 0 ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1">
+              Règles: {l.regles.slice(0, 2).join(', ')}
+            </span>
+          ) : null}
         </div>
       </div>
     </Link>
