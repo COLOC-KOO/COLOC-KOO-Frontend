@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { 
   ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, 
   Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, 
-  Calendar, Bed, Building2, Users, Image as ImageIcon, Heart, Search 
+  Calendar, Bed, Building2, Users, Image as ImageIcon, Heart, Search, Plus,
+  Menu, ChevronLeft, UserPlus
 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
-import { api, ApiAnnonce, Langue } from '../lib/api'
+import { api, ApiAnnonce, AuthUser, getWebSocketUrl, Langue } from '../lib/api'
 import { useAuth } from '../lib/auth'
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80'
@@ -899,7 +900,9 @@ function TabNotif() {
       
       if (notification.lien) {
         // Si un lien est déjà fourni, l'utiliser
-        redirectUrl = notification.lien
+        redirectUrl = notification.lien.startsWith('/messages/')
+          ? `/compte?tab=messages&user=${notification.lien.split('/').filter(Boolean).pop()}`
+          : notification.lien
       } else if (notification.type_notification === 'message' && notification.id_message) {
         // Rediriger vers la messagerie
         redirectUrl = '/compte?tab=paiements'
@@ -922,7 +925,9 @@ function TabNotif() {
     } catch {
       // En cas d'erreur, naviguer quand même
       if (notification.lien) {
-        navigate(notification.lien)
+        navigate(notification.lien.startsWith('/messages/')
+          ? `/compte?tab=messages&user=${notification.lien.split('/').filter(Boolean).pop()}`
+          : notification.lien)
       }
     }
   }
@@ -1079,6 +1084,10 @@ function TabMessages() {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [showNewGroupModal, setShowNewGroupModal] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [newGroupMembers, setNewGroupMembers] = useState<string>('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -1159,6 +1168,23 @@ function TabMessages() {
     }
   }
 
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim() || !newGroupMembers.trim()) {
+      alert('Veuillez remplir tous les champs')
+      return
+    }
+    try {
+      // Ici vous pouvez appeler votre API pour créer un groupe
+      // Pour l'instant, on simule et on ferme le modal
+      alert(`Groupe "${newGroupName}" créé avec ${newGroupMembers}`)
+      setShowNewGroupModal(false)
+      setNewGroupName('')
+      setNewGroupMembers('')
+    } catch (err) {
+      alert('Erreur lors de la création du groupe')
+    }
+  }
+
   const filteredThreads = searchQuery 
     ? threads.filter(t => 
         `${t.interlocuteur_prenom} ${t.interlocuteur_nom}`.toLowerCase().includes(searchQuery.toLowerCase())
@@ -1169,215 +1195,50 @@ function TabMessages() {
     return `${(prenom || '?')[0]}${(nom || '?')[0]}`.toUpperCase()
   }
 
-  // Si un thread est sélectionné, afficher la vue de conversation
-  if (activeThread !== null) {
-    const activeThreadInfo = threads.find((t) => t.interlocuteur_id === activeThread)
-    const isSuperadmin = superadmin && activeThread === superadmin.id
-    const displayName = activeThreadInfo 
-      ? `${activeThreadInfo.interlocuteur_prenom} ${activeThreadInfo.interlocuteur_nom}`
-      : isSuperadmin 
-        ? `${superadmin.prenom} ${superadmin.nom}`
-        : 'Utilisateur'
-
-    return (
-      <div className="flex flex-col h-[700px] -m-6 rounded-b-2xl overflow-hidden">
-        {/* En-tête de la conversation */}
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-border bg-white/95 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setActiveThread(null)}
-              className="lg:hidden p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-lg shadow-md">
-              {getInitials(
-                activeThreadInfo?.interlocuteur_prenom || superadmin?.prenom || 'U',
-                activeThreadInfo?.interlocuteur_nom || superadmin?.nom || 'S'
-              )}
-            </div>
-            <div>
-              <div className="text-base font-semibold text-foreground flex items-center gap-2">
-                {displayName}
-                {activeThreadInfo?.non_lus ? (
-                  <span className="inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-brand-cyan rounded-full">
-                    {activeThreadInfo.non_lus}
-                  </span>
-                ) : null}
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <span className={`w-2 h-2 rounded-full ${activeThreadInfo?.non_lus ? 'bg-brand-cyan animate-pulse' : 'bg-green-500'}`}></span>
-                  {activeThreadInfo?.non_lus ? 'En ligne' : 'Dernière connexion récente'}
-                </span>
-                <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
-                <span>{activeThreadInfo?.total_messages || 0} messages</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => activeThreadInfo && handleDeleteConversation(activeThreadInfo.interlocuteur_id)}
-              className="p-2 rounded-full hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
-              title="Supprimer la conversation"
-            >
-              <Trash className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3">
-          {msgLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="inline-block w-8 h-8 border-4 border-brand-cyan/30 border-t-brand-cyan rounded-full animate-spin"></div>
-                <p className="mt-2 text-sm text-muted-foreground">Chargement des messages...</p>
-              </div>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <MessageSquare className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Aucun message</p>
-                <p className="text-xs text-muted-foreground/70">Démarrez la conversation !</p>
-              </div>
-            </div>
-          ) : (
-            messages.map((msg, index) => {
-              const isMe = msg.id_expediteur === user?.id
-              const senderName = isMe
-                ? 'Moi'
-                : `${msg.expediteur_prenom} ${msg.expediteur_nom}`
-              const isAdmin = !isMe && (msg.expediteur_nom?.toLowerCase().includes('admin') || msg.expediteur_prenom?.toLowerCase().includes('admin'))
-              const time = new Date(msg.date_envoi).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-              const date = new Date(msg.date_envoi).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-              
-              // Afficher la date si différente du message précédent
-              const prevDate = index > 0 ? new Date(messages[index - 1].date_envoi).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
-              const showDate = index === 0 || date !== prevDate
-
-              return (
-                <div key={msg.id_message}>
-                  {showDate && (
-                    <div className="flex justify-center my-4">
-                      <span className="text-xs text-muted-foreground bg-white px-3 py-1 rounded-full shadow-sm">
-                        {date}
-                      </span>
-                    </div>
-                  )}
-                  <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[75%] ${isMe ? 'order-2' : 'order-2'}`}>
-                      {!isMe && (
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium text-foreground/80">
-                            {senderName}
-                          </span>
-                          {isAdmin && (
-                            <span className="text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full font-semibold">
-                              Admin
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      <div
-                        className={`relative rounded-2xl px-4 py-2.5 shadow-sm ${
-                          isMe
-                            ? 'bg-brand-cyan text-white rounded-br-none'
-                            : isAdmin
-                              ? 'bg-brand-green-light text-brand-green-dark border border-brand-green/20 rounded-bl-none'
-                              : 'bg-white text-foreground border border-border rounded-bl-none'
-                        }`}
-                      >
-                        <div className="text-sm whitespace-pre-wrap break-words">
-                          {msg.contenu}
-                        </div>
-                        <div className={`flex items-center justify-end gap-2 mt-1 ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>
-                          <span className="text-[10px]">{time}</span>
-                          {isMe && (
-                            <span className="text-[10px]">
-                              {msg.est_lu ? '✓✓' : '✓'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {!isMe && (
-                        <button
-                          onClick={() => handleReportMessage(msg.id_message)}
-                          className="mt-1 text-[10px] text-muted-foreground/50 hover:text-red-500 transition-colors"
-                        >
-                          Signaler
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Zone de saisie */}
-        <div className="border-t border-border bg-white/95 backdrop-blur-sm px-6 py-4">
-          {sendError && (
-            <p className="text-sm text-red-600 mb-2 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              {sendError}
-            </p>
-          )}
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-              placeholder="Écrire un message..."
-              className="flex-1 border border-border rounded-full px-4 py-2.5 text-sm bg-muted/30 outline-none focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all"
-              disabled={sending}
-            />
-            <button
-              onClick={handleSend}
-              disabled={sending || !reply.trim()}
-              className="w-11 h-11 rounded-full bg-brand-cyan hover:bg-brand-cyan-dark text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shrink-0 transition-colors shadow-lg shadow-brand-cyan/20"
-            >
-              {sending ? (
-                <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Vue liste des conversations
+  // Sidebar toujours visible
   return (
-    <div className="-m-6">
-      <div className="flex flex-col lg:flex-row h-[700px]">
-        {/* Sidebar des conversations */}
-        <div className="w-full lg:w-80 border-r border-border bg-muted/10 flex flex-col">
+    <div className="w-full">
+      <div className="flex flex-col lg:flex-row h-[700px] w-full">
+        {/* Sidebar des conversations - toujours visible */}
+        <div className={`${isSidebarOpen ? 'w-full lg:w-80' : 'w-0 lg:w-0'} border-r border-border bg-muted/10 flex flex-col transition-all duration-300 overflow-hidden shrink-0`}>
           <div className="p-4 border-b border-border">
-            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-brand-cyan" />
-              Messages
-              {threads.length > 0 && (
-                <span className="ml-auto text-xs bg-brand-cyan text-white px-2 py-0.5 rounded-full">
-                  {threads.reduce((acc, t) => acc + t.non_lus, 0)} non lus
-                </span>
-              )}
-            </h3>
-            <div className="mt-2 relative">
-              <input
-                type="text"
-                placeholder="Rechercher une conversation..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full border border-border rounded-full px-4 py-2 text-sm bg-white outline-none focus:border-brand-cyan pl-9"
-              />
-              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-brand-cyan" />
+                Messages
+                {threads.length > 0 && (
+                  <span className="ml-auto text-xs bg-brand-cyan text-white px-2 py-0.5 rounded-full">
+                    {threads.reduce((acc, t) => acc + t.non_lus, 0)} non lus
+                  </span>
+                )}
+              </h3>
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="lg:hidden p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Barre de recherche et bouton nouveau groupe */}
+            <div className="mt-2 flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full border border-border rounded-full px-4 py-2 text-sm bg-white outline-none focus:border-brand-cyan pl-9"
+                />
+                <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+              </div>
+              <button
+                onClick={() => setShowNewGroupModal(true)}
+                className="p-2 rounded-full bg-brand-cyan text-white hover:bg-brand-cyan-dark transition-colors shadow-md hover:shadow-lg"
+                title="Créer un groupe de discussion"
+              >
+                <UserPlus className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -1422,7 +1283,12 @@ function TabMessages() {
                 return (
                   <button
                     key={thread.interlocuteur_id}
-                    onClick={() => setActiveThread(thread.interlocuteur_id)}
+                    onClick={() => {
+                      setActiveThread(thread.interlocuteur_id)
+                      if (window.innerWidth < 1024) {
+                        setIsSidebarOpen(false)
+                      }
+                    }}
                     className={`w-full text-left p-4 border-b border-border/50 transition-all hover:bg-muted/50 ${
                       isActive ? 'bg-brand-cyan-light/20 border-l-4 border-l-brand-cyan' : ''
                     }`}
@@ -1467,28 +1333,774 @@ function TabMessages() {
           </div>
         </div>
 
-        {/* Zone de conversation vide */}
-        <div className="flex-1 hidden lg:flex items-center justify-center bg-muted/5">
-          <div className="text-center">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <MessageSquare className="w-10 h-10 text-muted-foreground/50" />
+        {/* Zone de conversation */}
+        <div className="flex-1 flex flex-col bg-white min-w-0">
+          {/* En-tête de la conversation */}
+          {activeThread !== null ? (
+            <>
+              <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-border bg-white/95 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="lg:hidden p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Menu className="w-5 h-5" />
+                  </button>
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-lg shadow-md">
+                    {(() => {
+                      const threadInfo = threads.find((t) => t.interlocuteur_id === activeThread)
+                      const isSuperadmin = superadmin && activeThread === superadmin.id
+                      return getInitials(
+                        threadInfo?.interlocuteur_prenom || superadmin?.prenom || 'U',
+                        threadInfo?.interlocuteur_nom || superadmin?.nom || 'S'
+                      )
+                    })()}
+                  </div>
+                  <div>
+                    <div className="text-base font-semibold text-foreground flex items-center gap-2">
+                      {(() => {
+                        const threadInfo = threads.find((t) => t.interlocuteur_id === activeThread)
+                        const isSuperadmin = superadmin && activeThread === superadmin.id
+                        return threadInfo 
+                          ? `${threadInfo.interlocuteur_prenom} ${threadInfo.interlocuteur_nom}`
+                          : isSuperadmin 
+                            ? `${superadmin.prenom} ${superadmin.nom}`
+                            : 'Utilisateur'
+                      })()}
+                      {threads.find(t => t.interlocuteur_id === activeThread)?.non_lus ? (
+                        <span className="inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-brand-cyan rounded-full">
+                          {threads.find(t => t.interlocuteur_id === activeThread)?.non_lus}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className={`w-2 h-2 rounded-full ${threads.find(t => t.interlocuteur_id === activeThread)?.non_lus ? 'bg-brand-cyan animate-pulse' : 'bg-green-500'}`}></span>
+                        {threads.find(t => t.interlocuteur_id === activeThread)?.non_lus ? 'En ligne' : 'Dernière connexion récente'}
+                      </span>
+                      <span className="w-1 h-1 rounded-full bg-muted-foreground/30"></span>
+                      <span>{threads.find(t => t.interlocuteur_id === activeThread)?.total_messages || 0} messages</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      const threadInfo = threads.find((t) => t.interlocuteur_id === activeThread)
+                      if (threadInfo) handleDeleteConversation(threadInfo.interlocuteur_id)
+                    }}
+                    className="p-2 rounded-full hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                    title="Supprimer la conversation"
+                  >
+                    <Trash className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3">
+                {msgLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="inline-block w-8 h-8 border-4 border-brand-cyan/30 border-t-brand-cyan rounded-full animate-spin"></div>
+                      <p className="mt-2 text-sm text-muted-foreground">Chargement des messages...</p>
+                    </div>
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <MessageSquare className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">Aucun message</p>
+                      <p className="text-xs text-muted-foreground/70">Démarrez la conversation !</p>
+                    </div>
+                  </div>
+                ) : (
+                  messages.map((msg, index) => {
+                    const isMe = msg.id_expediteur === user?.id
+                    const senderName = isMe
+                      ? 'Moi'
+                      : `${msg.expediteur_prenom} ${msg.expediteur_nom}`
+                    const isAdmin = !isMe && (msg.expediteur_nom?.toLowerCase().includes('admin') || msg.expediteur_prenom?.toLowerCase().includes('admin'))
+                    const time = new Date(msg.date_envoi).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                    const date = new Date(msg.date_envoi).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    
+                    // Afficher la date si différente du message précédent
+                    const prevDate = index > 0 ? new Date(messages[index - 1].date_envoi).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
+                    const showDate = index === 0 || date !== prevDate
+
+                    return (
+                      <div key={msg.id_message}>
+                        {showDate && (
+                          <div className="flex justify-center my-4">
+                            <span className="text-xs text-muted-foreground bg-white px-3 py-1 rounded-full shadow-sm">
+                              {date}
+                            </span>
+                          </div>
+                        )}
+                        <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[75%] ${isMe ? 'order-2' : 'order-2'}`}>
+                            {!isMe && (
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-medium text-foreground/80">
+                                  {senderName}
+                                </span>
+                                {isAdmin && (
+                                  <span className="text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full font-semibold">
+                                    Admin
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            <div
+                              className={`relative rounded-2xl px-4 py-2.5 shadow-sm ${
+                                isMe
+                                  ? 'bg-brand-cyan text-white rounded-br-none'
+                                  : isAdmin
+                                    ? 'bg-brand-green-light text-brand-green-dark border border-brand-green/20 rounded-bl-none'
+                                    : 'bg-white text-foreground border border-border rounded-bl-none'
+                              }`}
+                            >
+                              <div className="text-sm whitespace-pre-wrap break-words">
+                                {msg.contenu}
+                              </div>
+                              <div className={`flex items-center justify-end gap-2 mt-1 ${isMe ? 'text-white/60' : 'text-muted-foreground'}`}>
+                                <span className="text-[10px]">{time}</span>
+                                {isMe && (
+                                  <span className="text-[10px]">
+                                    {msg.est_lu ? '✓✓' : '✓'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {!isMe && (
+                              <button
+                                onClick={() => handleReportMessage(msg.id_message)}
+                                className="mt-1 text-[10px] text-muted-foreground/50 hover:text-red-500 transition-colors"
+                              >
+                                Signaler
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Zone de saisie */}
+              <div className="border-t border-border bg-white/95 backdrop-blur-sm px-6 py-4">
+                {sendError && (
+                  <p className="text-sm text-red-600 mb-2 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    {sendError}
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={reply}
+                    onChange={(e) => setReply(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+                    placeholder="Écrire un message..."
+                    className="flex-1 border border-border rounded-full px-4 py-2.5 text-sm bg-muted/30 outline-none focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 transition-all"
+                    disabled={sending}
+                  />
+                  <button
+                    onClick={handleSend}
+                    disabled={sending || !reply.trim()}
+                    className="w-11 h-11 rounded-full bg-brand-cyan hover:bg-brand-cyan-dark text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shrink-0 transition-colors shadow-lg shadow-brand-cyan/20"
+                  >
+                    {sending ? (
+                      <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            // Vue vide quand aucun thread n'est sélectionné
+            <div className="flex-1 flex items-center justify-center bg-muted/5">
+              <div className="text-center p-8">
+                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-12 h-12 text-muted-foreground/30" />
+                </div>
+                <h4 className="text-lg font-semibold text-foreground">Messagerie</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Sélectionnez une conversation pour commencer
+                </p>
+                <button
+                  onClick={() => setShowNewGroupModal(true)}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-brand-cyan text-white rounded-lg hover:bg-brand-cyan-dark transition-colors text-sm font-medium shadow-md hover:shadow-lg"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Créer un nouveau groupe
+                </button>
+                {superadmin && threads.length === 0 && (
+                  <button
+                    onClick={() => setActiveThread(superadmin.id)}
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-brand-cyan hover:text-brand-cyan-dark ml-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    Contacter {superadmin.prenom}
+                  </button>
+                )}
+              </div>
             </div>
-            <h4 className="text-lg font-semibold text-foreground">Messagerie</h4>
-            <p className="text-sm text-muted-foreground mt-1">
-              Sélectionnez une conversation pour commencer
-            </p>
-            {superadmin && threads.length === 0 && (
-              <button
-                onClick={() => setActiveThread(superadmin.id)}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-brand-cyan text-white rounded-lg hover:bg-brand-cyan-dark transition-colors text-sm font-medium"
-              >
-                <Send className="w-4 h-4" />
-                Nouvelle conversation
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Modal Nouveau Groupe */}
+      {showNewGroupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-6 animate-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-brand-cyan" />
+                Nouveau groupe de discussion
+              </h3>
+              <button
+                onClick={() => setShowNewGroupModal(false)}
+                className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1.5">
+                  Nom du groupe
+                </label>
+                <input
+                  type="text"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Ex: Colocataires - Appartement 12"
+                  className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition-all"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1.5">
+                  Membres (séparés par des virgules)
+                </label>
+                <input
+                  type="text"
+                  value={newGroupMembers}
+                  onChange={(e) => setNewGroupMembers(e.target.value)}
+                  placeholder="john@email.com, marie@email.com, pierre@email.com"
+                  className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20 outline-none transition-all"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Entrez les emails des personnes à ajouter
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setShowNewGroupModal(false)}
+                className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCreateGroup}
+                className="flex-1 rounded-xl bg-brand-cyan text-white px-4 py-2.5 text-sm font-semibold hover:bg-brand-cyan-dark transition-colors shadow-md hover:shadow-lg"
+              >
+                Créer le groupe
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+type Conversation =
+  | {
+      key: string
+      type: 'direct'
+      id: number
+      name: string
+      initials: string
+      lastMessage: string
+      total: number
+      unread: number
+      date: string | null
+    }
+  | {
+      key: string
+      type: 'group'
+      id: number
+      name: string
+      initials: string
+      lastMessage: string
+      total: number
+      unread: number
+      date: string | null
+    }
+
+type UnifiedMessage = {
+  id_message: number
+  id_expediteur: number
+  contenu: string
+  date_envoi: string
+  est_lu?: number
+  signalement_abus?: number
+  expediteur_nom?: string
+  expediteur_prenom?: string
+}
+
+function UserSearchList({
+  query,
+  onQueryChange,
+  selected,
+  onToggle,
+  onPick,
+}: {
+  query: string
+  onQueryChange: (value: string) => void
+  selected?: number[]
+  onToggle?: (user: AuthUser) => void
+  onPick?: (user: AuthUser) => void
+}) {
+  const [users, setUsers] = useState<AuthUser[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    const timer = window.setTimeout(() => {
+      api.searchUsers(query)
+        .then(setUsers)
+        .catch(() => setUsers([]))
+        .finally(() => setLoading(false))
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [query])
+
+  return (
+    <div>
+      <div className="relative">
+        <input
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Rechercher un utilisateur..."
+          className="w-full rounded-xl border border-border px-4 py-2.5 pl-10 text-sm outline-none focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/20"
+        />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      </div>
+      <div className="mt-3 max-h-64 overflow-y-auto rounded-xl border border-border">
+        {loading ? (
+          <div className="p-4 text-sm text-muted-foreground">Recherche...</div>
+        ) : users.length === 0 ? (
+          <div className="p-4 text-sm text-muted-foreground">Aucun utilisateur trouve</div>
+        ) : users.map((item) => {
+          const checked = selected?.includes(item.id) || false
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onPick ? onPick(item) : onToggle?.(item)}
+              className="flex w-full items-center gap-3 border-b border-border/60 px-4 py-3 text-left last:border-b-0 hover:bg-muted/50"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-xs font-bold text-white">
+                {item.initials || `${item.prenom?.[0] || ''}${item.nom?.[0] || ''}`.toUpperCase() || 'U'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold text-foreground">{item.prenom} {item.nom}</div>
+                <div className="truncate text-xs text-muted-foreground">{item.email}</div>
+              </div>
+              {onToggle ? (
+                <span className={`flex h-5 w-5 items-center justify-center rounded border ${checked ? 'border-brand-cyan bg-brand-cyan text-white' : 'border-border'}`}>
+                  {checked ? <Check className="h-3 w-3" /> : null}
+                </span>
+              ) : (
+                <Plus className="h-4 w-4 text-brand-cyan" />
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function TabMessagesV2() {
+  const { user } = useAuth()
+  const location = useLocation()
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [active, setActive] = useState<Conversation | null>(null)
+  const [messages, setMessages] = useState<UnifiedMessage[]>([])
+  const [loading, setLoading] = useState(true)
+  const [msgLoading, setMsgLoading] = useState(false)
+  const [reply, setReply] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sendError, setSendError] = useState('')
+  const [showGroupModal, setShowGroupModal] = useState(false)
+  const [showDirectModal, setShowDirectModal] = useState(false)
+  const [groupName, setGroupName] = useState('')
+  const [userSearch, setUserSearch] = useState('')
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([])
+  const [typingUsers, setTypingUsers] = useState<number[]>([])
+  const wsRef = useRef<WebSocket | null>(null)
+  const typingTimerRef = useRef<number | null>(null)
+  const endRef = useRef<HTMLDivElement>(null)
+
+  const appendMessage = (message: UnifiedMessage) => {
+    setMessages((prev) => prev.some((item) => item.id_message === message.id_message) ? prev : [...prev, message])
+  }
+
+  const loadConversations = async () => {
+    const [directThreads, groups] = await Promise.all([
+      api.messagesThreads().catch(() => []),
+      api.groupThreads().catch(() => []),
+    ])
+    const direct = directThreads.map((thread): Conversation => ({
+      key: `direct:${thread.interlocuteur_id}`,
+      type: 'direct',
+      id: thread.interlocuteur_id,
+      name: `${thread.interlocuteur_prenom} ${thread.interlocuteur_nom}`.trim() || 'Utilisateur',
+      initials: `${thread.interlocuteur_prenom?.[0] || ''}${thread.interlocuteur_nom?.[0] || ''}`.toUpperCase() || 'U',
+      lastMessage: thread.dernier_message || 'Aucun message',
+      total: Number(thread.total_messages || 0),
+      unread: Number(thread.non_lus || 0),
+      date: thread.date_dernier_message || thread.dernier_message || null,
+    }))
+    const groupItems = groups.map((group): Conversation => ({
+      key: `group:${group.id_groupe}`,
+      type: 'group',
+      id: group.id_groupe,
+      name: group.nom,
+      initials: 'GR',
+      lastMessage: group.dernier_message || 'Aucun message',
+      total: Number(group.total_messages || 0),
+      unread: Number(group.non_lus || 0),
+      date: group.date_dernier_message || group.date_creation || null,
+    }))
+    const merged = [...direct, ...groupItems].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
+    setConversations(merged)
+    return merged
+  }
+
+  useEffect(() => {
+    setLoading(true)
+    loadConversations()
+      .then((items) => {
+        const params = new URLSearchParams(location.search)
+        const groupId = params.get('group')
+        const userId = params.get('user')
+        const requested = groupId ? `group:${groupId}` : userId ? `direct:${userId}` : ''
+        setActive(items.find((item) => item.key === requested) || items[0] || null)
+      })
+      .finally(() => setLoading(false))
+  }, [location.search])
+
+  useEffect(() => {
+    if (!active) {
+      setMessages([])
+      return
+    }
+    setMsgLoading(true)
+    const loader = active.type === 'group' ? api.groupMessages(active.id) : api.messagesThread(active.id)
+    loader.then((data) => setMessages(data as UnifiedMessage[])).catch(() => setMessages([])).finally(() => setMsgLoading(false))
+  }, [active?.key])
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, typingUsers])
+
+  useEffect(() => {
+    if (!user) return
+    const ws = new WebSocket(getWebSocketUrl())
+    wsRef.current = ws
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data)
+        if (payload.type === 'direct_message' && payload.message) {
+          const otherId = payload.message.id_expediteur === user.id ? payload.message.id_destinataire : payload.message.id_expediteur
+          if (active?.type === 'direct' && active.id === otherId) appendMessage(payload.message)
+          void loadConversations()
+        }
+        if (payload.type === 'group_message' && payload.message) {
+          if (active?.type === 'group' && active.id === Number(payload.groupId)) appendMessage(payload.message)
+          void loadConversations()
+        }
+        if (payload.type === 'group_created') {
+          if (payload.conversation) {
+            setConversations((prev) => {
+              const exists = prev.some((item) => item.key === payload.conversation.key)
+              return exists ? prev : [payload.conversation, ...prev]
+            })
+          }
+          void loadConversations()
+          window.dispatchEvent(new Event('colockoo:counters-refresh'))
+        }
+        if (payload.type === 'typing') {
+          const sameDirect = active?.type === 'direct' && active.id === Number(payload.fromUserId)
+          const sameGroup = active?.type === 'group' && active.id === Number(payload.targetId)
+          if (sameDirect || sameGroup) {
+            setTypingUsers((prev) => payload.isTyping ? [...new Set([...prev, Number(payload.fromUserId)])] : prev.filter((id) => id !== Number(payload.fromUserId)))
+          }
+        }
+        if (payload.type === 'notification') {
+          void loadConversations()
+          window.dispatchEvent(new Event('colockoo:counters-refresh'))
+        }
+      } catch {
+        // Ignore malformed websocket payloads.
+      }
+    }
+    return () => ws.close()
+  }, [user?.id, active?.key])
+
+  const emitTyping = (isTyping: boolean) => {
+    if (!active || wsRef.current?.readyState !== WebSocket.OPEN) return
+    wsRef.current.send(JSON.stringify({
+      type: 'typing',
+      conversationType: active.type === 'group' ? 'group' : 'direct',
+      targetId: active.id,
+      isTyping,
+    }))
+  }
+
+  const handleReplyChange = (value: string) => {
+    setReply(value)
+    emitTyping(Boolean(value.trim()))
+    if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current)
+    typingTimerRef.current = window.setTimeout(() => emitTyping(false), 1200)
+  }
+
+  const handleSend = async () => {
+    if (!active || !reply.trim()) return
+    const contenu = reply.trim()
+    setReply('')
+    setSendError('')
+    emitTyping(false)
+    try {
+      const sent = active.type === 'group'
+        ? await api.sendGroupMessage(active.id, contenu)
+        : await api.sendMessage({ id_destinataire: active.id, contenu })
+      appendMessage(sent as UnifiedMessage)
+      void loadConversations()
+      window.dispatchEvent(new Event('colockoo:counters-refresh'))
+    } catch (err) {
+      setReply(contenu)
+      setSendError(err instanceof Error ? err.message : 'Impossible d envoyer le message.')
+    }
+  }
+
+  const toggleSelectedUser = (item: AuthUser) => {
+    setSelectedUsers((prev) => prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id])
+  }
+
+  const createGroup = async () => {
+    if (!groupName.trim() || selectedUsers.length === 0) {
+      setSendError('Veuillez nommer le groupe et selectionner au moins un membre.')
+      return
+    }
+    const created = await api.createGroup({ nom: groupName.trim(), membres: selectedUsers })
+    const items = await loadConversations()
+    const createdConversation: Conversation = {
+      key: `group:${created.id_groupe}`,
+      type: 'group',
+      id: created.id_groupe,
+      name: created.nom,
+      initials: 'GR',
+      lastMessage: 'Aucun message',
+      total: 0,
+      unread: 0,
+      date: new Date().toISOString(),
+    }
+    setConversations((prev) => prev.some((item) => item.key === createdConversation.key) ? prev : [createdConversation, ...prev])
+    setActive(items.find((item) => item.key === `group:${created.id_groupe}`) || createdConversation)
+    setGroupName('')
+    setSelectedUsers([])
+    setUserSearch('')
+    setSearchQuery('')
+    setShowGroupModal(false)
+    window.dispatchEvent(new Event('colockoo:counters-refresh'))
+  }
+
+  const startDirect = (item: AuthUser) => {
+    const existing = conversations.find((conversation) => conversation.key === `direct:${item.id}`)
+    const next = existing || {
+      key: `direct:${item.id}`,
+      type: 'direct' as const,
+      id: item.id,
+      name: `${item.prenom} ${item.nom}`.trim() || item.email,
+      initials: item.initials || `${item.prenom?.[0] || ''}${item.nom?.[0] || ''}`.toUpperCase() || 'U',
+      lastMessage: 'Aucun message',
+      total: 0,
+      unread: 0,
+      date: null,
+    }
+    if (!existing) setConversations((prev) => [next, ...prev])
+    setActive(next)
+    setShowDirectModal(false)
+    setUserSearch('')
+  }
+
+  const filtered = searchQuery
+    ? conversations.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : conversations
+
+  return (
+    <div className="flex h-[calc(100vh-180px)] min-h-[620px] w-full flex-col lg:h-[700px] lg:flex-row">
+      <div className="h-72 w-full shrink-0 border-b border-border bg-muted/10 lg:h-auto lg:w-80 lg:border-b-0 lg:border-r">
+        <div className="border-b border-border p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-lg font-semibold">
+              <MessageSquare className="h-5 w-5 text-brand-cyan" />
+              Messages
+              {conversations.some((item) => item.unread > 0) ? (
+                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">{conversations.reduce((sum, item) => sum + item.unread, 0)}</span>
+              ) : null}
+            </h3>
+            <div className="flex gap-1">
+              <button title="Nouvelle discussion" onClick={() => setShowDirectModal(true)} className="rounded-full bg-white p-2 text-brand-cyan shadow-sm hover:bg-muted">
+                <Plus className="h-4 w-4" />
+              </button>
+              <button title="Creer un groupe" onClick={() => setShowGroupModal(true)} className="rounded-full bg-brand-cyan p-2 text-white shadow-sm hover:bg-brand-cyan-dark">
+                <UserPlus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="relative mt-3">
+            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Rechercher..." className="w-full rounded-full border border-border bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-cyan" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
+        </div>
+        <div className="h-[calc(100%-93px)] overflow-y-auto">
+          {loading ? (
+            <div className="p-4 text-sm text-muted-foreground">Chargement...</div>
+          ) : filtered.length === 0 ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">Aucune conversation</div>
+          ) : filtered.map((item) => (
+            <button key={item.key} onClick={() => setActive(item)} className={`w-full border-b border-border/60 p-4 text-left hover:bg-muted/50 ${active?.key === item.key ? 'bg-brand-cyan-light/20' : ''}`}>
+              <div className="flex items-center gap-3">
+                <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-sm font-bold text-white">
+                  {item.type === 'group' ? <Users className="h-5 w-5" /> : item.initials}
+                  {item.unread > 0 ? <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] text-white">{item.unread}</span> : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-semibold">{item.name}</span>
+                    <span className="shrink-0 text-[10px] text-muted-foreground">{item.date ? new Date(item.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">{item.lastMessage}</div>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
+        {active ? (
+          <>
+            <div className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-6 sm:py-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-sm font-bold text-white">
+                {active.type === 'group' ? <Users className="h-5 w-5" /> : active.initials}
+              </div>
+              <div>
+                <div className="font-semibold">{active.name}</div>
+                <div className="text-xs text-muted-foreground">{active.type === 'group' ? 'Groupe de discussion' : `${active.total} messages`}</div>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-4 py-4 sm:px-6">
+              {msgLoading ? (
+                <div className="text-sm text-muted-foreground">Chargement des messages...</div>
+              ) : messages.length === 0 ? (
+                <div className="grid h-full place-items-center text-center text-sm text-muted-foreground">Demarrez la conversation.</div>
+              ) : messages.map((msg, index) => {
+                const isMe = msg.id_expediteur === user?.id
+                const date = new Date(msg.date_envoi).toLocaleDateString('fr-FR')
+                const prevDate = index > 0 ? new Date(messages[index - 1].date_envoi).toLocaleDateString('fr-FR') : null
+                return (
+                  <div key={`${active.key}:${msg.id_message}:${index}`}>
+                    {date !== prevDate ? <div className="my-4 text-center text-xs text-muted-foreground"><span className="rounded-full bg-white px-3 py-1">{date}</span></div> : null}
+                    <div className={`mb-3 flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className="max-w-[88%] sm:max-w-[75%]">
+                        {!isMe ? <div className="mb-1 text-xs font-medium text-muted-foreground">{msg.expediteur_prenom} {msg.expediteur_nom}</div> : null}
+                        <div className={`rounded-2xl px-4 py-2.5 text-sm shadow-sm ${isMe ? 'rounded-br-none bg-brand-cyan text-white' : 'rounded-bl-none border border-border bg-white text-foreground'}`}>
+                          <div className="whitespace-pre-wrap break-words">{msg.contenu}</div>
+                          <div className={`mt-1 text-right text-[10px] ${isMe ? 'text-white/70' : 'text-muted-foreground'}`}>{new Date(msg.date_envoi).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              {typingUsers.length > 0 ? (
+                <div className="mb-2 flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>En train d'ecrire</span>
+                  <span className="flex gap-0.5">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.2s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.1s]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground" />
+                  </span>
+                </div>
+              ) : null}
+              <div ref={endRef} />
+            </div>
+            <div className="border-t border-border px-4 py-3 sm:px-6 sm:py-4">
+              {sendError ? <div className="mb-2 text-sm text-red-600">{sendError}</div> : null}
+              <div className="flex gap-2">
+                <input value={reply} onChange={(e) => handleReplyChange(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void handleSend() }} placeholder="Ecrire un message..." className="flex-1 rounded-full border border-border bg-muted/30 px-4 py-2.5 text-sm outline-none focus:border-brand-cyan" />
+                <button onClick={handleSend} disabled={!reply.trim()} className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-cyan text-white disabled:opacity-50">
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid flex-1 place-items-center text-center">
+            <div>
+              <MessageSquare className="mx-auto mb-3 h-12 w-12 text-muted-foreground/30" />
+              <div className="font-semibold">Messagerie</div>
+              <div className="mt-1 text-sm text-muted-foreground">Selectionnez ou creez une discussion.</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {showGroupModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-6">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold">Nouveau groupe</h3>
+              <button onClick={() => setShowGroupModal(false)} className="rounded-full p-2 hover:bg-muted"><X className="h-5 w-5" /></button>
+            </div>
+            <label className="mb-1.5 block text-sm font-semibold">Nom du groupe</label>
+            <input value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder="Ex: Colocataires appartement 12" className="mb-4 w-full rounded-xl border border-border px-4 py-2.5 text-sm outline-none focus:border-brand-cyan" />
+            <label className="mb-1.5 block text-sm font-semibold">Membres</label>
+            <UserSearchList query={userSearch} onQueryChange={setUserSearch} selected={selectedUsers} onToggle={toggleSelectedUser} />
+            <div className="mt-5 flex gap-3">
+              <button onClick={() => setShowGroupModal(false)} className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold">Annuler</button>
+              <button onClick={createGroup} className="flex-1 rounded-xl bg-brand-cyan px-4 py-2.5 text-sm font-semibold text-white">Creer</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showDirectModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-6">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold">Nouvelle discussion</h3>
+              <button onClick={() => setShowDirectModal(false)} className="rounded-full p-2 hover:bg-muted"><X className="h-5 w-5" /></button>
+            </div>
+            <UserSearchList query={userSearch} onQueryChange={setUserSearch} onPick={startDirect} />
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -1547,6 +2159,7 @@ export default function Compte() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, loading, logout, updateProfile, isAdmin } = useAuth()
+  const [counters, setCounters] = useState({ favoris: 0, notifications: 0, messages: 0 })
   const isColocataire = user?.poste === 'colocataire'
   const tabs = [
     { id: 'profil', label: t('profile'), icon: User },
@@ -1574,6 +2187,23 @@ export default function Compte() {
     setTab(getInitialTab())
   }, [location.search, isColocataire])
 
+  useEffect(() => {
+    if (!user) {
+      setCounters({ favoris: 0, notifications: 0, messages: 0 })
+      return
+    }
+    const refreshCounters = () => {
+      api.counters().then(setCounters).catch(() => setCounters({ favoris: 0, notifications: 0, messages: 0 }))
+    }
+    refreshCounters()
+    window.addEventListener('colockoo:counters-refresh', refreshCounters)
+    window.addEventListener('colockoo:favori-removed', refreshCounters)
+    return () => {
+      window.removeEventListener('colockoo:counters-refresh', refreshCounters)
+      window.removeEventListener('colockoo:favori-removed', refreshCounters)
+    }
+  }, [user])
+
   const initials = (user?.prenom?.[0] || user?.name?.[0] || 'U').toUpperCase()
   const fullName = `${user?.prenom || ''} ${user?.nom || ''}`.trim() || user?.name || t('userProfile')
   const roleLabel = user?.poste === 'proprietaire' ? t('proprietaire') : user?.poste === 'colocataire' ? t('colocataire') : user?.poste || t('member')
@@ -1581,7 +2211,7 @@ export default function Compte() {
 
   return (
     <SiteLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div className="w-full px-4 sm:px-6 py-8">
         {/* En-tête amélioré */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-cyan/10 via-white to-brand-green/10 p-6 md:p-8 border border-border/50">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1632,11 +2262,11 @@ export default function Compte() {
             <div className="text-xs text-muted-foreground">Annonces vues</div>
           </div>
           <div className="bg-white rounded-xl border border-border p-4 text-center">
-            <div className="text-2xl font-bold text-brand-cyan-dark">5</div>
+            <div className="text-2xl font-bold text-brand-cyan-dark">{counters.favoris}</div>
             <div className="text-xs text-muted-foreground">Favoris</div>
           </div>
           <div className="bg-white rounded-xl border border-border p-4 text-center">
-            <div className="text-2xl font-bold text-brand-cyan-dark">3</div>
+            <div className="text-2xl font-bold text-brand-cyan-dark">{counters.messages}</div>
             <div className="text-xs text-muted-foreground">Messages</div>
           </div>
           <div className="bg-white rounded-xl border border-border p-4 text-center">
@@ -1647,7 +2277,7 @@ export default function Compte() {
 
         {/* Tabs et contenu */}
         <div className="mt-8 grid md:grid-cols-[240px_1fr] gap-6">
-          <aside className="space-y-1 bg-white rounded-2xl border border-border p-2">
+          <aside className="space-y-1 bg-white rounded-2xl border border-border p-2 h-fit">
             {tabs.map((t) => (
               <Link
                 key={t.id}
@@ -1660,7 +2290,12 @@ export default function Compte() {
               >
                 <t.icon className={`w-4 h-4 ${tab === t.id ? 'text-white' : ''}`} /> 
                 {t.label}
-                {tab === t.id && (
+                {((t.id === 'favoris' && counters.favoris > 0) || (t.id === 'notif' && counters.notifications > 0) || (t.id === 'paiements' && counters.messages > 0)) && (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                    {t.id === 'favoris' ? counters.favoris : t.id === 'notif' ? counters.notifications : counters.messages}
+                  </span>
+                )}
+                {tab === t.id && !((t.id === 'favoris' && counters.favoris > 0) || (t.id === 'notif' && counters.notifications > 0) || (t.id === 'paiements' && counters.messages > 0)) && (
                   <span className="ml-auto">
                     <Check className="w-3 h-3" />
                   </span>
@@ -1669,12 +2304,12 @@ export default function Compte() {
             ))}
           </aside>
 
-          <div className="bg-white border border-border rounded-2xl p-6 shadow-sm">
+          <div className={tab === 'paiements' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-6 shadow-sm'}>
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
             {tab === 'notif' && <TabNotif />}
-            {tab === 'paiements' && <TabMessages />}
+            {tab === 'paiements' && <TabMessagesV2 />}
             {tab === 'secu' && <TabSecu />}
           </div>
         </div>
