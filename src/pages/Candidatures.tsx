@@ -57,14 +57,14 @@ type EquipeReelle = {
   id_annonce: number;
   nom: string;
   ambiance: string | null;
-  statut: 'forming' | 'selected' | 'rejected' | 'complete';
+  statut: "forming" | "selected" | "rejected" | "complete";
   date_creation: string;
   membres: {
     id_utilisateur: number;
     nom: string;
     prenom: string;
     email: string;
-    statut: 'pending' | 'accepted' | 'refused' | 'owner';
+    statut: "pending" | "accepted" | "refused" | "owner";
     initials: string;
   }[];
 };
@@ -81,10 +81,20 @@ function fmtAr(value: number) {
 // (configuration_backoffice, via GET /meta/contract-pricing). Ces valeurs ne
 // servent QUE de repli si l'API n'a pas encore repondu.
 type ContractTier = { maxLoyer: number | null; prix: number };
-type MobileMoneyOption = { nom: string; numero: string; couleur: string; hint: string };
+type MobileMoneyOption = {
+  nom: string;
+  numero: string;
+  couleur: string;
+  hint: string;
+};
 type ContractOption = { cle: string; titre: string; description: string };
 type ContractClause = { titre: string; description: string };
-type ContractOffer = { id: number; nom: string; description: string | null; prix: number };
+type ContractOffer = {
+  id: number;
+  nom: string;
+  description: string | null;
+  prix: number;
+};
 type ContractConfig = {
   tiers: ContractTier[];
   edlPrix: number;
@@ -106,15 +116,40 @@ const FALLBACK_TIERS: ContractTier[] = [
 ];
 const FALLBACK_EDL_PRIX = 10000;
 const FALLBACK_MOBILE_MONEY: MobileMoneyOption[] = [
-  { nom: "Orange Money", numero: "0320000000", couleur: "#ff7900", hint: "Scanne ce QR code avec l'appli Orange Money, ou compose le numéro." },
-  { nom: "MVOLA", numero: "0340000000", couleur: "#e2001a", hint: "Scanne ce QR code avec l'appli MVOLA, ou compose le numéro." },
+  {
+    nom: "Orange Money",
+    numero: "0320000000",
+    couleur: "#ff7900",
+    hint: "Scanne ce QR code avec l'appli Orange Money, ou compose le numéro.",
+  },
+  {
+    nom: "MVOLA",
+    numero: "0340000000",
+    couleur: "#e2001a",
+    hint: "Scanne ce QR code avec l'appli MVOLA, ou compose le numéro.",
+  },
 ];
 const FALLBACK_CLAUSES: ContractClause[] = [
-  { titre: "Identités & logement", description: "Colocataires, adresse du bien, date d'entrée (inclus)." },
-  { titre: "Répartition du loyer et des charges", description: "Quote-part de chacun, modalités de paiement." },
-  { titre: "Dépôt de garantie / caution solidaire", description: "Montant, conditions de restitution." },
-  { titre: "État des lieux d'entrée", description: "Annexe descriptive des parties privatives et communes." },
-  { titre: "Clause de départ anticipé", description: "Préavis, remplacement du colocataire sortant." },
+  {
+    titre: "Identités & logement",
+    description: "Colocataires, adresse du bien, date d'entrée (inclus).",
+  },
+  {
+    titre: "Répartition du loyer et des charges",
+    description: "Quote-part de chacun, modalités de paiement.",
+  },
+  {
+    titre: "Dépôt de garantie / caution solidaire",
+    description: "Montant, conditions de restitution.",
+  },
+  {
+    titre: "État des lieux d'entrée",
+    description: "Annexe descriptive des parties privatives et communes.",
+  },
+  {
+    titre: "Clause de départ anticipé",
+    description: "Préavis, remplacement du colocataire sortant.",
+  },
 ];
 const FALLBACK_OFFER = {
   titre: "Aide à la création de contrats avec les colocataires",
@@ -129,18 +164,35 @@ const FALLBACK_BODY = {
     "Il a été convenu et arrêté ce qui suit. Article 1 — Objet : le présent contrat a pour objet de définir les règles de la vie commune et la répartition…",
 };
 const FALLBACK_BAIL: ContractOption[] = [
-  { cle: "individuel", titre: "Bail individuel", description: "Chaque colocataire signe son propre contrat avec le propriétaire." },
-  { cle: "collectif", titre: "Bail collectif", description: "Un seul document signé par l'ensemble des parties." },
+  {
+    cle: "individuel",
+    titre: "Bail individuel",
+    description:
+      "Chaque colocataire signe son propre contrat avec le propriétaire.",
+  },
+  {
+    cle: "collectif",
+    titre: "Bail collectif",
+    description: "Un seul document signé par l'ensemble des parties.",
+  },
 ];
 const FALLBACK_SOLIDARITE: ContractOption[] = [
-  { cle: "avec", titre: "AVEC clause de solidarité", description: "Tous les colocataires sont solidaires : si l'un manque, les autres sont redevables de l'ensemble du loyer." },
-  { cle: "sans", titre: "SANS clause de solidarité", description: "Chaque colocataire reste responsable de sa part seulement." },
+  {
+    cle: "avec",
+    titre: "AVEC clause de solidarité",
+    description:
+      "Tous les colocataires sont solidaires : si l'un manque, les autres sont redevables de l'ensemble du loyer.",
+  },
+  {
+    cle: "sans",
+    titre: "SANS clause de solidarité",
+    description: "Chaque colocataire reste responsable de sa part seulement.",
+  },
 ];
 const FALLBACK_MAIL_NOTE = {
   contrat:
     "Le contrat finalisé te sera envoyé par e-mail à {email}. Tu n'auras plus qu'à le faire signer par l'ensemble des parties lors de la remise des clés. Pour compléter les informations nécessaires à la rédaction du contrat, rendez-vous dans ta messagerie.",
-  edl:
-    "Le document te sera envoyé par e-mail à {email}. Tu n'auras plus qu'à le faire signer par l'ensemble des parties lors de la remise des clés.",
+  edl: "Le document te sera envoyé par e-mail à {email}. Tu n'auras plus qu'à le faire signer par l'ensemble des parties lors de la remise des clés.",
 };
 function priceFromTiers(tiers: ContractTier[], loyer: number) {
   const list = tiers.length ? tiers : FALLBACK_TIERS;
@@ -201,9 +253,13 @@ export default function Candidatures() {
   const [myCandidature, setMyCandidature] = useState<any>(null);
   const [showNotAppliedMessage, setShowNotAppliedMessage] = useState(false);
   const [isAnnonceOwner, setIsAnnonceOwner] = useState(false);
-  const [candidateActionLoading, setCandidateActionLoading] = useState<number | null>(null);
+  const [candidateActionLoading, setCandidateActionLoading] = useState<
+    number | null
+  >(null);
   const [candidateActionFeedback, setCandidateActionFeedback] = useState("");
-  const [completedMembers, setCompletedMembers] = useState<Array<{ nom: string; initiales?: string; statut?: string }>>([]);
+  const [completedMembers, setCompletedMembers] = useState<
+    Array<{ nom: string; initiales?: string; statut?: string }>
+  >([]);
   const [annonceData, setAnnonceData] = useState<ApiAnnonce | null>(null);
   const TARGET = annonceData?.total_colocataires ?? 3;
 
@@ -211,8 +267,8 @@ export default function Candidatures() {
   const [equipesReelles, setEquipesReelles] = useState<EquipeReelle[]>([]);
   const [loadingEquipes, setLoadingEquipes] = useState(false);
   const [showCreateEquipe, setShowCreateEquipe] = useState(false);
-  const [newEquipeNom, setNewEquipeNom] = useState('');
-  const [newEquipeAmbiance, setNewEquipeAmbiance] = useState('');
+  const [newEquipeNom, setNewEquipeNom] = useState("");
+  const [newEquipeAmbiance, setNewEquipeAmbiance] = useState("");
 
   // États UI existants
   const [activeView, setActiveView] = useState<
@@ -237,23 +293,39 @@ export default function Candidatures() {
     "contrat",
   );
   const [createdContractIds, setCreatedContractIds] = useState<number[]>([]);
-  const [createdContracts, setCreatedContracts] = useState<ApiBackofficeContratDetails[]>([]);
+  const [createdContracts, setCreatedContracts] = useState<
+    ApiBackofficeContratDetails[]
+  >([]);
   // Assistant contrat (maquette 3 etapes)
-  const [contractStep, setContractStep] = useState<"offer" | "bail" | "contenu" | "paiement" | "done">("offer");
-  const [bailType, setBailType] = useState<"individuel" | "collectif" | null>(null);
+  const [contractStep, setContractStep] = useState<
+    "offer" | "bail" | "contenu" | "paiement" | "done"
+  >("offer");
+  const [bailType, setBailType] = useState<"individuel" | "collectif" | null>(
+    null,
+  );
   const [solidarite, setSolidarite] = useState<"avec" | "sans">("avec");
   const [wantEdl, setWantEdl] = useState(false);
   const [moyenPaiement, setMoyenPaiement] = useState<string | null>(null);
   const [payRef, setPayRef] = useState("");
   const [contractSubmitting, setContractSubmitting] = useState(false);
   const [contractError, setContractError] = useState<string | null>(null);
-  const [paymentInfo, setPaymentInfo] = useState<{ reference: string; montant: number; paidCount?: number; total?: number; allPaid?: boolean } | null>(null);
+  const [paymentInfo, setPaymentInfo] = useState<{
+    reference: string;
+    montant: number;
+    paidCount?: number;
+    total?: number;
+    allPaid?: boolean;
+  } | null>(null);
   const [pricing, setPricing] = useState<ContractConfig | null>(null);
-  const [selectedContratOffer, setSelectedContratOffer] = useState<number | null>(null);
+  const [selectedContratOffer, setSelectedContratOffer] = useState<
+    number | null
+  >(null);
   const [selectedEdlOffer, setSelectedEdlOffer] = useState<number | null>(null);
   const [payContractId, setPayContractId] = useState<number | null>(null);
   const [myShare, setMyShare] = useState<number | null>(null);
-  const [myContracts, setMyContracts] = useState<Awaited<ReturnType<typeof api.myContractsForAnnonce>>>([]);
+  const [myContracts, setMyContracts] = useState<
+    Awaited<ReturnType<typeof api.myContractsForAnnonce>>
+  >([]);
   const [launchingOfficial, setLaunchingOfficial] = useState(false);
   const [officialFeedback, setOfficialFeedback] = useState<string | null>(null);
   const [officialLaunched, setOfficialLaunched] = useState(false);
@@ -312,7 +384,8 @@ export default function Candidatures() {
   const isCurrentUserRetained =
     currentUserStatus === "acceptee" || currentUserStatus === "signature";
   const isCurrentUserRefused = currentUserStatus === "refusee";
-  const isOfficiallyLaunched = officialLaunched || annonceData?.statut === "terminee";
+  const isOfficiallyLaunched =
+    officialLaunched || annonceData?.statut === "terminee";
   const officialNotification =
     isOfficiallyLaunched && !isAnnonceOwner
       ? isCurrentUserRetained
@@ -372,7 +445,9 @@ export default function Candidatures() {
       setOwnerCandidates(formattedCandidates);
 
       if (user?.id) {
-        const myCand = data.find((c: any) => Number(c.id_utilisateur) === Number(user.id));
+        const myCand = data.find(
+          (c: any) => Number(c.id_utilisateur) === Number(user.id),
+        );
         const hasAppliedNow = !!myCand;
         console.log(
           "🔍 Ma candidature trouvée:",
@@ -396,31 +471,32 @@ export default function Candidatures() {
     if (!annonceId) return;
     try {
       setLoadingEquipes(true);
-      console.log('🔍 Chargement des équipes pour l\'annonce:', annonceId);
+      console.log("🔍 Chargement des équipes pour l'annonce:", annonceId);
 
       const data = await api.getEquipesByAnnonce(parseInt(annonceId));
-      console.log('📊 Équipes reçues:', data);
+      console.log("📊 Équipes reçues:", data);
       setEquipesReelles(data);
-      
+
       // Mettre à jour le state teams pour l'UI existante
       if (data.length > 0) {
         const formattedTeams: Team[] = data.map((equipe: EquipeReelle) => ({
           id: String(equipe.id_equipe),
           title: equipe.nom,
-          mood: equipe.ambiance || 'Ambiance à définir',
-          members: equipe.membres.map(m => {
-            const fullName = `${m.prenom} ${m.nom}`.trim() || m.email || 'Membre';
+          mood: equipe.ambiance || "Ambiance à définir",
+          members: equipe.membres.map((m) => {
+            const fullName =
+              `${m.prenom} ${m.nom}`.trim() || m.email || "Membre";
             return fullName;
           }),
-          chat: equipe.membres.map(m => ({
-            who: `${m.prenom} ${m.nom}`.trim() || m.email || 'Membre',
-            txt: `${m.statut === 'owner' ? '👑 Créateur' : m.statut === 'accepted' ? '✅ Membre' : '⏳ En attente'}`
-          }))
+          chat: equipe.membres.map((m) => ({
+            who: `${m.prenom} ${m.nom}`.trim() || m.email || "Membre",
+            txt: `${m.statut === "owner" ? "👑 Créateur" : m.statut === "accepted" ? "✅ Membre" : "⏳ En attente"}`,
+          })),
         }));
         setTeams(formattedTeams);
       }
     } catch (error) {
-      console.error('❌ Erreur chargement équipes:', error);
+      console.error("❌ Erreur chargement équipes:", error);
     } finally {
       setLoadingEquipes(false);
     }
@@ -429,7 +505,7 @@ export default function Candidatures() {
   // ===== GESTION DES ÉQUIPES =====
   const handleCreateEquipe = async () => {
     if (!annonceId || !newEquipeNom.trim()) {
-      alert('Veuillez saisir un nom pour l\'équipe.');
+      alert("Veuillez saisir un nom pour l'équipe.");
       return;
     }
 
@@ -439,52 +515,52 @@ export default function Candidatures() {
         id_depot_annonce: parseInt(annonceId),
         nom: newEquipeNom.trim(),
         ambiance: newEquipeAmbiance.trim() || null,
-        statut: 'forming'
+        statut: "forming",
       });
 
-      console.log('✅ Équipe créée:', data);
+      console.log("✅ Équipe créée:", data);
       setShowCreateEquipe(false);
-      setNewEquipeNom('');
-      setNewEquipeAmbiance('');
+      setNewEquipeNom("");
+      setNewEquipeAmbiance("");
       await loadEquipes();
-      alert('✅ Équipe créée avec succès !');
+      alert("✅ Équipe créée avec succès !");
     } catch (error: any) {
-      console.error('❌ Erreur création équipe:', error);
-      alert(error?.message || 'Erreur lors de la création de l\'équipe.');
+      console.error("❌ Erreur création équipe:", error);
+      alert(error?.message || "Erreur lors de la création de l'équipe.");
     }
   };
 
   const handleJoinEquipe = async (equipeId: number) => {
     if (!user) {
-      alert('Veuillez vous connecter pour rejoindre une équipe.');
+      alert("Veuillez vous connecter pour rejoindre une équipe.");
       return;
     }
 
     try {
       await api.addMemberToEquipe(equipeId, user.id);
       await loadEquipes();
-      alert('✅ Vous avez rejoint l\'équipe !');
+      alert("✅ Vous avez rejoint l'équipe !");
     } catch (error: any) {
-      console.error('❌ Erreur:', error);
-      alert(error?.message || 'Erreur lors de l\'inscription à l\'équipe.');
+      console.error("❌ Erreur:", error);
+      alert(error?.message || "Erreur lors de l'inscription à l'équipe.");
     }
   };
 
   const handleLeaveEquipe = async (equipeId: number) => {
     if (!user) {
-      alert('Veuillez vous connecter.');
+      alert("Veuillez vous connecter.");
       return;
     }
 
-    if (!confirm('Voulez-vous vraiment quitter cette équipe ?')) return;
-    
+    if (!confirm("Voulez-vous vraiment quitter cette équipe ?")) return;
+
     try {
       await api.removeMemberFromEquipe(equipeId, user.id);
       await loadEquipes();
-      alert('✅ Vous avez quitté l\'équipe.');
+      alert("✅ Vous avez quitté l'équipe.");
     } catch (error: any) {
-      console.error('❌ Erreur:', error);
-      alert(error?.message || 'Erreur lors du retrait de l\'équipe.');
+      console.error("❌ Erreur:", error);
+      alert(error?.message || "Erreur lors du retrait de l'équipe.");
     }
   };
 
@@ -604,7 +680,12 @@ export default function Candidatures() {
           if (candidate.id_candidature !== candidateId) return candidate;
           return {
             ...candidate,
-            statut: action === "accept" ? "signature" : action === "refuse" ? "refusee" : candidate.statut,
+            statut:
+              action === "accept"
+                ? "signature"
+                : action === "refuse"
+                  ? "refusee"
+                  : candidate.statut,
           };
         }),
       );
@@ -619,7 +700,9 @@ export default function Candidatures() {
       await loadRealCandidatures();
     } catch (error: any) {
       console.error("❌ Erreur action candidature:", error);
-      setCandidateActionFeedback(error?.message || "Impossible de traiter cette candidature.");
+      setCandidateActionFeedback(
+        error?.message || "Impossible de traiter cette candidature.",
+      );
     } finally {
       setCandidateActionLoading(null);
     }
@@ -634,11 +717,17 @@ export default function Candidatures() {
     setCandidateActionFeedback("");
     try {
       await api.deleteCandidature(candidateId);
-      setRealCandidatures((prev) => prev.filter((candidate) => candidate.id_candidature !== candidateId));
-      setOwnerCandidates((prev) => prev.filter((candidate) => candidate.id_candidature !== candidateId));
+      setRealCandidatures((prev) =>
+        prev.filter((candidate) => candidate.id_candidature !== candidateId),
+      );
+      setOwnerCandidates((prev) =>
+        prev.filter((candidate) => candidate.id_candidature !== candidateId),
+      );
       setCandidateActionFeedback("Candidature supprimée.");
     } catch (error: any) {
-      setCandidateActionFeedback(error?.message || "Impossible de supprimer cette candidature.");
+      setCandidateActionFeedback(
+        error?.message || "Impossible de supprimer cette candidature.",
+      );
     } finally {
       setCandidateActionLoading(null);
     }
@@ -650,9 +739,16 @@ export default function Candidatures() {
       const result = await api.launchColocation(annonceId);
       const members = Array.isArray((result as any).membres)
         ? (result as any).membres.map((member: any) => ({
-            nom: member.nom || member.prenom || member.email || 'Membre',
-            initiales: member.initiales || [member.prenom, member.nom].filter(Boolean).map((value: string) => value.charAt(0)).join('').slice(0, 2).toUpperCase(),
-            statut: member.statut || 'active',
+            nom: member.nom || member.prenom || member.email || "Membre",
+            initiales:
+              member.initiales ||
+              [member.prenom, member.nom]
+                .filter(Boolean)
+                .map((value: string) => value.charAt(0))
+                .join("")
+                .slice(0, 2)
+                .toUpperCase(),
+            statut: member.statut || "active",
           }))
         : [];
       setCompletedMembers(members);
@@ -660,7 +756,9 @@ export default function Candidatures() {
       await loadRealCandidatures();
       return true;
     } catch (error: any) {
-      setCandidateActionFeedback(error?.message || "Impossible de lancer la colocation.");
+      setCandidateActionFeedback(
+        error?.message || "Impossible de lancer la colocation.",
+      );
       return false;
     }
   };
@@ -711,18 +809,22 @@ export default function Candidatures() {
 
   // ===== CHARGER LES DONNÉES AU MONTAGE =====
   useEffect(() => {
-    console.log("🔄 [1] useEffect chargement - annonceId:", annonceId, "userId:", user?.id, "authLoading:", authLoading);
+    console.log(
+      "🔄 [1] useEffect chargement - annonceId:",
+      annonceId,
+      "userId:",
+      user?.id,
+      "authLoading:",
+      authLoading,
+    );
     console.log("🔄 [1] URL actuelle:", location.pathname);
 
     if (!annonceId || authLoading) return;
-    
+
     const loadAllData = async () => {
-      await Promise.all([
-        loadRealCandidatures(),
-        loadEquipes()
-      ]);
+      await Promise.all([loadRealCandidatures(), loadEquipes()]);
     };
-    
+
     loadAllData();
   }, [annonceId, user?.id, authLoading]);
 
@@ -814,7 +916,9 @@ export default function Candidatures() {
 
   async function launchColoc() {
     if (!user) {
-      setCandidateActionFeedback("Veuillez vous connecter pour lancer la colocation.");
+      setCandidateActionFeedback(
+        "Veuillez vous connecter pour lancer la colocation.",
+      );
       return;
     }
 
@@ -829,18 +933,27 @@ export default function Candidatures() {
   // Contenu du contrat : valeurs DB si chargees, sinon repli.
   const activeTiers = pricing?.tiers?.length ? pricing.tiers : FALLBACK_TIERS;
   const activeEdlPrix = pricing?.edlPrix ?? FALLBACK_EDL_PRIX;
-  const mobileMoneyList = pricing?.mobileMoney?.length ? pricing.mobileMoney : FALLBACK_MOBILE_MONEY;
+  const mobileMoneyList = pricing?.mobileMoney?.length
+    ? pricing.mobileMoney
+    : FALLBACK_MOBILE_MONEY;
   // Offres de contrat / EDL (services_ckoo). Le deposant choisit seulement le TYPE
   // (contrat / EDL / les deux) ; TOUTES les offres du type sont incluses, total = leur SOMME.
   const activeContratOffers = pricing?.contratOffers ?? [];
   const activeEdlOffers = pricing?.edlOffers ?? [];
-  const contractPrice = activeContratOffers.reduce((s, o) => s + (o.prix || 0), 0);
+  const contractPrice = activeContratOffers.reduce(
+    (s, o) => s + (o.prix || 0),
+    0,
+  );
   const edlPrice = activeEdlOffers.reduce((s, o) => s + (o.prix || 0), 0);
-  const activeClauses = pricing?.clauses?.length ? pricing.clauses : FALLBACK_CLAUSES;
+  const activeClauses = pricing?.clauses?.length
+    ? pricing.clauses
+    : FALLBACK_CLAUSES;
   const activeOffer = pricing?.offer ?? FALLBACK_OFFER;
   const activeBody = pricing?.body ?? FALLBACK_BODY;
   const activeBail = pricing?.bail?.length ? pricing.bail : FALLBACK_BAIL;
-  const activeSolidarite = pricing?.solidarite?.length ? pricing.solidarite : FALLBACK_SOLIDARITE;
+  const activeSolidarite = pricing?.solidarite?.length
+    ? pricing.solidarite
+    : FALLBACK_SOLIDARITE;
   const activeMailNote = pricing?.mailNote ?? FALLBACK_MAIL_NOTE;
 
   // Logement reel (annonce) — remplace les valeurs demo codees en dur.
@@ -853,11 +966,14 @@ export default function Candidatures() {
     .filter(Boolean)
     .join(" · ");
   const moveInLabel = annonceData?.chambre?.date_disponibilite
-    ? new Date(annonceData.chambre.date_disponibilite).toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
+    ? new Date(annonceData.chambre.date_disponibilite).toLocaleDateString(
+        "fr-FR",
+        {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        },
+      )
     : MOVEIN;
   const currentCandidateName =
     [currentUserCandidature?.prenom, currentUserCandidature?.nom]
@@ -866,7 +982,9 @@ export default function Candidatures() {
       .trim() ||
     currentUserCandidature?.email ||
     userName;
-  const retainedCandidateNames = ownerRetained.map((cand) => cand.name).filter(Boolean);
+  const retainedCandidateNames = ownerRetained
+    .map((cand) => cand.name)
+    .filter(Boolean);
   const retainedTeamLabel =
     retainedCandidateNames.length > 0
       ? retainedCandidateNames.join(", ")
@@ -882,7 +1000,8 @@ export default function Candidatures() {
       .contractConfig()
       .then((cfg) => {
         setPricing(cfg);
-        if (cfg.contratOffers?.[0]) setSelectedContratOffer(cfg.contratOffers[0].id);
+        if (cfg.contratOffers?.[0])
+          setSelectedContratOffer(cfg.contratOffers[0].id);
         if (cfg.edlOffers?.[0]) setSelectedEdlOffer(cfg.edlOffers[0].id);
       })
       .catch(() => {});
@@ -894,7 +1013,10 @@ export default function Candidatures() {
       setMyContracts([]);
       return;
     }
-    api.myContractsForAnnonce(annonceId).then(setMyContracts).catch(() => setMyContracts([]));
+    api
+      .myContractsForAnnonce(annonceId)
+      .then(setMyContracts)
+      .catch(() => setMyContracts([]));
   }
   useEffect(() => {
     refreshMyContracts();
@@ -912,14 +1034,20 @@ export default function Candidatures() {
       setAnnonceData((prev) => (prev ? { ...prev, statut: "terminee" } : prev));
       refreshMyContracts();
     } catch (error: any) {
-      setOfficialFeedback(error?.message || "Impossible de lancer officiellement la colocation.");
+      setOfficialFeedback(
+        error?.message || "Impossible de lancer officiellement la colocation.",
+      );
     } finally {
       setLaunchingOfficial(false);
     }
   }
 
   // Le colocataire ouvre directement l'etape paiement pour regler SA part.
-  function payMyShare(c: { id_contrat: number; ma_part: number; type: "contrat" | "edl" }) {
+  function payMyShare(c: {
+    id_contrat: number;
+    ma_part: number;
+    type: "contrat" | "edl";
+  }) {
     setContractMode(c.type === "edl" ? "edl" : "contrat");
     setPayContractId(c.id_contrat);
     setMyShare(c.ma_part);
@@ -966,8 +1094,12 @@ export default function Candidatures() {
     setContractMode(mode);
     setContractError(null);
     setWantEdl(mode === "both");
-    setBailType((annonceData?.type_bail as "individuel" | "collectif") || "collectif");
-    setSolidarite((annonceData?.clause_solidarite as "avec" | "sans") || "sans");
+    setBailType(
+      (annonceData?.type_bail as "individuel" | "collectif") || "collectif",
+    );
+    setSolidarite(
+      (annonceData?.clause_solidarite as "avec" | "sans") || "sans",
+    );
     setContractStep("contenu");
   }
 
@@ -990,16 +1122,26 @@ export default function Candidatures() {
     setContractError(null);
     try {
       const options =
-        effectiveMode === "edl" ? {} : { type_bail: bailType, clause_solidarite: solidarite };
-      const result = await api.createContracts(annonceId, effectiveMode, options);
+        effectiveMode === "edl"
+          ? {}
+          : { type_bail: bailType, clause_solidarite: solidarite };
+      const result = await api.createContracts(
+        annonceId,
+        effectiveMode,
+        options,
+      );
       const contracts = Array.isArray(result.contracts) ? result.contracts : [];
-      setCreatedContractIds(Array.isArray(result.contratIds) ? result.contratIds : []);
+      setCreatedContractIds(
+        Array.isArray(result.contratIds) ? result.contratIds : [],
+      );
       setCreatedContracts(contracts);
       refreshMyContracts();
       setContractModalOpen(false);
       setCelebrateOpen(true);
     } catch (error: any) {
-      setContractError(error?.message || "Impossible d'enregistrer le contrat.");
+      setContractError(
+        error?.message || "Impossible d'enregistrer le contrat.",
+      );
     } finally {
       setContractSubmitting(false);
     }
@@ -1020,7 +1162,10 @@ export default function Candidatures() {
       setContractError("Aucun contrat à régler.");
       return;
     }
-    const total = createdContracts.reduce((sum, c) => sum + Number(c.montant_total || 0), 0);
+    const total = createdContracts.reduce(
+      (sum, c) => sum + Number(c.montant_total || 0),
+      0,
+    );
     setContractSubmitting(true);
     setContractError(null);
     try {
@@ -1039,7 +1184,9 @@ export default function Candidatures() {
       setContractStep("done");
       refreshMyContracts();
     } catch (error: any) {
-      setContractError(error?.message || "Impossible d'enregistrer le paiement.");
+      setContractError(
+        error?.message || "Impossible d'enregistrer le paiement.",
+      );
     } finally {
       setContractSubmitting(false);
     }
@@ -1097,20 +1244,38 @@ export default function Candidatures() {
     });
   }
 
-  function openChat(candidate: OwnerCandidate) {
-    setSelectedCandidate(candidate);
-    setChatMessages([
-      {
-        who: "Toi",
-        txt: `Bonjour ${candidate.name.split(" ")[0]} ! J'aimerais discuter un peu avant de me décider.`,
-      },
-      {
-        who: candidate.name,
-        txt: "Bien sûr ! N'hésite pas à poser toutes tes questions.",
-      },
-    ]);
-    setChatModalOpen(true);
-  }
+function openChat(candidate: any) {
+  // Normalise : accepte soit un OwnerCandidate (name/initials/subtitle),
+  // soit un candidat brut venant de l'API (prenom/nom/email/id_candidature)
+  const normalized: OwnerCandidate = candidate.name
+    ? candidate
+    : {
+        id: String(candidate.id_candidature ?? candidate.id ?? ""),
+        id_candidature: candidate.id_candidature,
+        id_utilisateur: candidate.id_utilisateur,
+        initials: (candidate.prenom?.[0] || "") + (candidate.nom?.[0] || ""),
+        name: `${candidate.prenom || ""} ${candidate.nom || ""}`.trim() || "Candidat",
+        subtitle: candidate.email || "Candidat",
+        status: "pending",
+        email: candidate.email,
+        telephone: candidate.telephone,
+        message: candidate.message,
+        date_creation: candidate.date_creation,
+      };
+
+  setSelectedCandidate(normalized);
+  setChatMessages([
+    {
+      who: "Toi",
+      txt: `Bonjour ${normalized.name.split(" ")[0]} ! J'aimerais discuter un peu avant de me décider.`,
+    },
+    {
+      who: normalized.name,
+      txt: "Bien sûr ! N'hésite pas à poser toutes tes questions.",
+    },
+  ]);
+  setChatModalOpen(true);
+}
 
   function closeChat() {
     setChatModalOpen(false);
@@ -1123,19 +1288,17 @@ export default function Candidatures() {
     const message = newMessage.trim();
     setNewMessage("");
     try {
-      await handleCandidateDecision(selectedCandidate.id_candidature, "discuss", message);
-      setChatMessages((prev) => [
-        ...prev,
-        { who: "Toi", txt: message },
-      ]);
+      await handleCandidateDecision(
+        selectedCandidate.id_candidature,
+        "discuss",
+        message,
+      );
+      setChatMessages((prev) => [...prev, { who: "Toi", txt: message }]);
       setChatModalOpen(false);
       setSelectedCandidate(null);
-      navigate("/compte?tab=paiements");
+      navigate("/compte?tab=messages"); // ✅ redirige vers la section messages
     } catch {
-      setChatMessages((prev) => [
-        ...prev,
-        { who: "Toi", txt: message },
-      ]);
+      setChatMessages((prev) => [...prev, { who: "Toi", txt: message }]);
     }
   }
 
@@ -1268,14 +1431,20 @@ export default function Candidatures() {
           const canManageCandidate = Boolean(
             user &&
             !isCurrentUser &&
-            (user.poste === "proprietaire" || user.poste === "superadmin" || user.poste === "admin" || user.poste === "moderateur") &&
-            isAnnonceOwner
+            (user.poste === "proprietaire" ||
+              user.poste === "superadmin" ||
+              user.poste === "admin" ||
+              user.poste === "moderateur") &&
+            isAnnonceOwner,
           );
           const canDiscuss = Boolean(user);
           const canDeleteCandidate = Boolean(
             user &&
-            (user.poste === "proprietaire" || user.poste === "superadmin" || user.poste === "admin" || user.poste === "moderateur") &&
-            (isAnnonceOwner || isCurrentUser)
+            (user.poste === "proprietaire" ||
+              user.poste === "superadmin" ||
+              user.poste === "admin" ||
+              user.poste === "moderateur") &&
+            (isAnnonceOwner || isCurrentUser),
           );
           return (
             <div
@@ -1344,23 +1513,43 @@ export default function Candidatures() {
                       <button
                         type="button"
                         onClick={() => openChat(candidat as OwnerCandidate)}
-                        disabled={candidateActionLoading === candidat.id_candidature}
+                        disabled={
+                          candidateActionLoading === candidat.id_candidature
+                        }
                         className="rounded-2xl border border-border bg-card px-3 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light disabled:opacity-60"
                       >
-                        {candidateActionLoading === candidat.id_candidature ? "Traitement..." : "Discuter"}
+                        {candidateActionLoading === candidat.id_candidature
+                          ? "Traitement..."
+                          : "Discuter"}
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleCandidateDecision(candidat.id_candidature, "accept")}
-                        disabled={!canManageCandidate || candidateActionLoading === candidat.id_candidature}
+                        onClick={() =>
+                          handleCandidateDecision(
+                            candidat.id_candidature,
+                            "accept",
+                          )
+                        }
+                        disabled={
+                          !canManageCandidate ||
+                          candidateActionLoading === candidat.id_candidature
+                        }
                         className="rounded-2xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
                       >
                         Accepter
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleCandidateDecision(candidat.id_candidature, "refuse")}
-                        disabled={!canManageCandidate || candidateActionLoading === candidat.id_candidature}
+                        onClick={() =>
+                          handleCandidateDecision(
+                            candidat.id_candidature,
+                            "refuse",
+                          )
+                        }
+                        disabled={
+                          !canManageCandidate ||
+                          candidateActionLoading === candidat.id_candidature
+                        }
                         className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                       >
                         Refuser
@@ -1368,8 +1557,12 @@ export default function Candidatures() {
                       {canDeleteCandidate ? (
                         <button
                           type="button"
-                          onClick={() => handleDeleteCandidature(candidat.id_candidature)}
-                          disabled={candidateActionLoading === candidat.id_candidature}
+                          onClick={() =>
+                            handleDeleteCandidature(candidat.id_candidature)
+                          }
+                          disabled={
+                            candidateActionLoading === candidat.id_candidature
+                          }
                           className="rounded-2xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                           title="Supprimer la candidature"
                         >
@@ -1420,345 +1613,425 @@ export default function Candidatures() {
           <div className="mt-8 space-y-6">
             {activeView === "flux" && (
               <RealCandidaturesPanel
-              annonceId={annonceId}
-              candidateActionFeedback={candidateActionFeedback}
-              candidateActionLoading={candidateActionLoading}
-              hasApplied={hasApplied}
-              isAnnonceOwner={isAnnonceOwner}
-              loadingCandidatures={loadingCandidatures}
-              realCandidatures={realCandidatures}
-              showNotAppliedMessage={showNotAppliedMessage}
-              user={user}
-              onCandidateDecision={handleCandidateDecision}
-              onDeleteCandidature={handleDeleteCandidature}
-              onOpenChat={openChat}
-              onPostuler={() => setShowPostulerModal(true)}
-              onViewMyCandidature={handleViewMyCandidature}
+                annonceId={annonceId}
+                candidateActionFeedback={candidateActionFeedback}
+                candidateActionLoading={candidateActionLoading}
+                hasApplied={hasApplied}
+                isAnnonceOwner={isAnnonceOwner}
+                loadingCandidatures={loadingCandidatures}
+                realCandidatures={realCandidatures}
+                showNotAppliedMessage={showNotAppliedMessage}
+                user={user}
+                onCandidateDecision={handleCandidateDecision}
+                onDeleteCandidature={handleDeleteCandidature}
+                onOpenChat={openChat}
+                onPostuler={() => setShowPostulerModal(true)}
+                onViewMyCandidature={handleViewMyCandidature}
               />
             )}
             {/* ===== SECTION ÉQUIPES RÉELLES ===== */}
             {activeView === "cand" && (
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-              <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-                <h2 className="bebas text-2xl">Équipes en formation</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowCreateEquipe(!showCreateEquipe)}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-brand-cyan px-4 py-2 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Créer une équipe
-                  </button>
-                </div>
-              </div>
-
-              {loadingEquipes ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-cyan"></div>
-                </div>
-              ) : equipesReelles.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  🏠 Aucune équipe pour le moment. Soyez le premier à créer une équipe !
-                </div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {equipesReelles.map((equipe) => {
-                    const membres = equipe.membres || [];
-                    const totalPlaces = annonceData?.total_colocataires || 3;
-                    const isFull = membres.length >= totalPlaces;
-                    const isCurrentUserInTeam = membres.some(m => m.id_utilisateur === user?.id);
-                    const isOwner = membres.some(m => m.id_utilisateur === user?.id && m.statut === 'owner');
-                    
-                    return (
-                      <div
-                        key={equipe.id_equipe}
-                        className={`rounded-3xl border p-5 ${
-                          isCurrentUserInTeam ? 'border-brand-green bg-brand-green-light/20' : 'border-border bg-card'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <h3 className="bebas text-xl">{equipe.nom}</h3>
-                            <div className="text-sm text-muted-foreground">
-                              {membres.length}/{totalPlaces} membres
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                              equipe.statut === 'complete' 
-                                ? 'bg-green-100 text-green-700' 
-                                : equipe.statut === 'selected'
-                                ? 'bg-blue-100 text-blue-700'
-                                : equipe.statut === 'rejected'
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-yellow-100 text-yellow-700'
-                            }`}>
-                              {equipe.statut === 'complete' ? '✅ Complète' : 
-                               equipe.statut === 'selected' ? '🔵 Sélectionnée' :
-                               equipe.statut === 'rejected' ? '❌ Rejetée' : 
-                               '⏳ En formation'}
-                            </span>
-                            {isOwner && (
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                                👑 Créateur
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {equipe.ambiance && (
-                          <div className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
-                            {equipe.ambiance}
-                          </div>
-                        )}
-                        
-                        <div className="mt-4 flex flex-wrap items-center gap-3">
-                          {membres.map((membre, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ring-2 ring-white ${
-                                membre.statut === 'owner' 
-                                  ? 'bg-amber-500 text-white' 
-                                  : membre.statut === 'accepted'
-                                  ? 'bg-brand-green text-white'
-                                  : 'bg-brand-cyan text-white'
-                              }`}>
-                                {membre.initials || '?'}
-                              </div>
-                              <span className="text-xs truncate max-w-[80px]">
-                                {membre.prenom || membre.nom || membre.email?.split('@')[0] || 'Membre'}
-                                {membre.statut === 'owner' && ' 👑'}
-                              </span>
-                            </div>
-                          ))}
-                          {Array.from({ length: Math.max(0, totalPlaces - membres.length) }).map((_, idx) => (
-                            <div
-                              key={`empty-${idx}`}
-                              className="h-10 w-10 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground text-sm ring-2 ring-white"
-                            >
-                              +
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {!isCurrentUserInTeam && equipe.statut !== 'complete' && equipe.statut !== 'selected' && (
-                            <button
-                              onClick={() => handleJoinEquipe(equipe.id_equipe)}
-                              className="rounded-2xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark transition-colors"
-                            >
-                              Rejoindre
-                            </button>
-                          )}
-                          {isCurrentUserInTeam && !isOwner && (
-                            <button
-                              onClick={() => handleLeaveEquipe(equipe.id_equipe)}
-                              className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
-                            >
-                              Quitter
-                            </button>
-                          )}
-                          {isOwner && (
-                            <button
-                              onClick={() => {
-                                if (confirm('Voulez-vous vraiment supprimer cette équipe ?')) {
-                                  api.deleteEquipe(equipe.id_equipe)
-                                    .then(() => loadEquipes())
-                                    .catch((error) => {
-                                      console.error('❌ Erreur:', error);
-                                      alert('Erreur lors de la suppression de l\'équipe.');
-                                    });
-                                }
-                              }}
-                              className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                          {equipe.statut === 'complete' && (
-                            <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
-                              <Check className="h-4 w-4" />
-                              Équipe complète !
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Modal de création d'équipe */}
-              {showCreateEquipe && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                  <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-semibold">🏆 Créer une équipe</h3>
-                      <button
-                        onClick={() => {
-                          setShowCreateEquipe(false);
-                          setNewEquipeNom('');
-                          setNewEquipeAmbiance('');
-                        }}
-                        className="rounded-full p-2 hover:bg-gray-100 transition-colors"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-semibold block mb-1">
-                          Nom de l'équipe *
-                        </label>
-                        <input
-                          type="text"
-                          value={newEquipeNom}
-                          onChange={(e) => setNewEquipeNom(e.target.value)}
-                          placeholder="Ex: Les lève-tôt studieux"
-                          className="w-full rounded-2xl border border-border px-4 py-2.5 text-sm outline-none focus:border-brand-cyan transition-colors"
-                          maxLength={255}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-semibold block mb-1">
-                          Ambiance (optionnel)
-                        </label>
-                        <textarea
-                          value={newEquipeAmbiance}
-                          onChange={(e) => setNewEquipeAmbiance(e.target.value)}
-                          placeholder="Décrivez l'esprit de votre équipe..."
-                          className="w-full rounded-2xl border border-border px-4 py-2.5 text-sm outline-none focus:border-brand-cyan min-h-[100px] resize-none transition-colors"
-                          maxLength={500}
-                        />
-                      </div>
-
-                      <div className="flex gap-3 mt-4">
-                        <button
-                          onClick={() => {
-                            setShowCreateEquipe(false);
-                            setNewEquipeNom('');
-                            setNewEquipeAmbiance('');
-                          }}
-                          className="flex-1 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          onClick={handleCreateEquipe}
-                          disabled={!newEquipeNom.trim()}
-                          className="flex-1 rounded-2xl bg-brand-cyan px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Créer l'équipe
-                        </button>
-                      </div>
-                    </div>
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+                  <h2 className="bebas text-2xl">Équipes en formation</h2>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowCreateEquipe(!showCreateEquipe)}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-brand-cyan px-4 py-2 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      Créer une équipe
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
 
-            )}
-            {/* ===== PANNEAU DÉPOSANT : avancement des paiements + lancement officiel ===== */}
-            {activeView === "track" && isAnnonceOwner && myContracts.length > 0 && (() => {
-              const allPaid = myContracts.every((c) => c.paidCount >= c.total);
-              const isFinalized = annonceData?.statut === "terminee";
-              return (
-                <div className="mb-6 rounded-3xl border border-brand-cyan/30 bg-white p-6 shadow-sm">
-                  <div className="bebas text-2xl text-brand-cyan-dark">Contrat & paiements des colocataires</div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Tu ne paies rien. La colocation se lance <b>officiellement</b> quand <b>tous les colocataires</b> ont réglé leur part.
-                  </p>
-                  <div className="mt-4 space-y-2">
-                    {myContracts.map((c) => {
-                      const done = c.paidCount >= c.total;
+                {loadingEquipes ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-cyan"></div>
+                  </div>
+                ) : equipesReelles.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    🏠 Aucune équipe pour le moment. Soyez le premier à créer
+                    une équipe !
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {equipesReelles.map((equipe) => {
+                      const membres = equipe.membres || [];
+                      const totalPlaces = annonceData?.total_colocataires || 3;
+                      const isFull = membres.length >= totalPlaces;
+                      const isCurrentUserInTeam = membres.some(
+                        (m) => m.id_utilisateur === user?.id,
+                      );
+                      const isOwner = membres.some(
+                        (m) =>
+                          m.id_utilisateur === user?.id && m.statut === "owner",
+                      );
+
                       return (
-                        <div key={c.id_contrat} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border p-3 text-sm">
-                          <span>{c.type === "edl" ? "État des lieux" : "Contrat de colocation"} · réf {c.reference}</span>
-                          <div className="flex items-center gap-3">
-                            <span className={done ? "font-semibold text-brand-green-dark" : "text-muted-foreground"}>
-                              {c.paidCount}/{c.total} payé{done ? " ✓" : ""}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => openContractDocument(c.id_contrat)}
-                              className="rounded-lg border border-brand-cyan px-3 py-1.5 text-xs font-bold text-brand-cyan-dark hover:bg-brand-cyan/10"
-                            >
-                              Voir
-                            </button>
+                        <div
+                          key={equipe.id_equipe}
+                          className={`rounded-3xl border p-5 ${
+                            isCurrentUserInTeam
+                              ? "border-brand-green bg-brand-green-light/20"
+                              : "border-border bg-card"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <h3 className="bebas text-xl">{equipe.nom}</h3>
+                              <div className="text-sm text-muted-foreground">
+                                {membres.length}/{totalPlaces} membres
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                                  equipe.statut === "complete"
+                                    ? "bg-green-100 text-green-700"
+                                    : equipe.statut === "selected"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : equipe.statut === "rejected"
+                                        ? "bg-red-100 text-red-700"
+                                        : "bg-yellow-100 text-yellow-700"
+                                }`}
+                              >
+                                {equipe.statut === "complete"
+                                  ? "✅ Complète"
+                                  : equipe.statut === "selected"
+                                    ? "🔵 Sélectionnée"
+                                    : equipe.statut === "rejected"
+                                      ? "❌ Rejetée"
+                                      : "⏳ En formation"}
+                              </span>
+                              {isOwner && (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                                  👑 Créateur
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {equipe.ambiance && (
+                            <div className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
+                              {equipe.ambiance}
+                            </div>
+                          )}
+
+                          <div className="mt-4 flex flex-wrap items-center gap-3">
+                            {membres.map((membre, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-2"
+                              >
+                                <div
+                                  className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ring-2 ring-white ${
+                                    membre.statut === "owner"
+                                      ? "bg-amber-500 text-white"
+                                      : membre.statut === "accepted"
+                                        ? "bg-brand-green text-white"
+                                        : "bg-brand-cyan text-white"
+                                  }`}
+                                >
+                                  {membre.initials || "?"}
+                                </div>
+                                <span className="text-xs truncate max-w-[80px]">
+                                  {membre.prenom ||
+                                    membre.nom ||
+                                    membre.email?.split("@")[0] ||
+                                    "Membre"}
+                                  {membre.statut === "owner" && " 👑"}
+                                </span>
+                              </div>
+                            ))}
+                            {Array.from({
+                              length: Math.max(0, totalPlaces - membres.length),
+                            }).map((_, idx) => (
+                              <div
+                                key={`empty-${idx}`}
+                                className="h-10 w-10 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground text-sm ring-2 ring-white"
+                              >
+                                +
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {!isCurrentUserInTeam &&
+                              equipe.statut !== "complete" &&
+                              equipe.statut !== "selected" && (
+                                <button
+                                  onClick={() =>
+                                    handleJoinEquipe(equipe.id_equipe)
+                                  }
+                                  className="rounded-2xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark transition-colors"
+                                >
+                                  Rejoindre
+                                </button>
+                              )}
+                            {isCurrentUserInTeam && !isOwner && (
+                              <button
+                                onClick={() =>
+                                  handleLeaveEquipe(equipe.id_equipe)
+                                }
+                                className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
+                              >
+                                Quitter
+                              </button>
+                            )}
+                            {isOwner && (
+                              <button
+                                onClick={() => {
+                                  if (
+                                    confirm(
+                                      "Voulez-vous vraiment supprimer cette équipe ?",
+                                    )
+                                  ) {
+                                    api
+                                      .deleteEquipe(equipe.id_equipe)
+                                      .then(() => loadEquipes())
+                                      .catch((error) => {
+                                        console.error("❌ Erreur:", error);
+                                        alert(
+                                          "Erreur lors de la suppression de l'équipe.",
+                                        );
+                                      });
+                                  }
+                                }}
+                                className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                            {equipe.statut === "complete" && (
+                              <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                                <Check className="h-4 w-4" />
+                                Équipe complète !
+                              </span>
+                            )}
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                  <button
-                    type="button"
-                    onClick={launchOfficial}
-                    disabled={!allPaid || launchingOfficial || isFinalized}
-                    className="mt-4 w-full rounded-3xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                  >
-                    {isFinalized
-                      ? "Colocation déjà lancée ✓"
-                      : launchingOfficial
-                        ? "Lancement…"
-                        : allPaid
-                          ? "Lancer officiellement la colocation 🎉"
-                          : "En attente du paiement des colocataires"}
-                  </button>
-                  {officialFeedback && (
-                    <div className="mt-3 rounded-2xl bg-brand-green-light/50 px-4 py-3 text-sm font-semibold text-brand-green-dark">
-                      {officialFeedback}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
+                )}
 
-            {/* ===== CARTE COLOCATAIRE : payer ma part ===== */}
-            {activeView === "cand" && !isAnnonceOwner && myContracts.filter((c) => c.peut_payer).length > 0 && (
-              <div className="mb-6 rounded-3xl border border-brand-cyan/40 bg-white p-6 shadow-sm">
-                <div className="bebas text-2xl text-brand-cyan-dark">Ton contrat de colocation</div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Ta part de l'honoraire Coloc'KOO pour l'établissement du contrat.
-                </p>
-                <div className="mt-4 space-y-3">
-                  {myContracts.filter((c) => c.peut_payer).map((c) => (
-                    <div key={c.id_contrat} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border p-4">
-                      <div>
-                        <div className="font-semibold">
-                          {c.type === "edl" ? "Document d'état des lieux" : "Contrat de colocation"} · réf. {c.reference}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Ta part : <b>{fmtAr(c.ma_part)} Ar</b> — {c.paidCount}/{c.total} colocataire(s) ont réglé.
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
+                {/* Modal de création d'équipe */}
+                {showCreateEquipe && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-semibold">
+                          🏆 Créer une équipe
+                        </h3>
                         <button
-                          type="button"
-                          onClick={() => openContractDocument(c.id_contrat)}
-                          className="rounded-xl border border-brand-cyan px-4 py-2 text-sm font-bold text-brand-cyan-dark hover:bg-brand-cyan/10"
+                          onClick={() => {
+                            setShowCreateEquipe(false);
+                            setNewEquipeNom("");
+                            setNewEquipeAmbiance("");
+                          }}
+                          className="rounded-full p-2 hover:bg-gray-100 transition-colors"
                         >
-                          {c.type === "edl" ? "Lire le document" : "Lire le contrat"}
+                          <X className="h-5 w-5" />
                         </button>
-                        {c.deja_paye ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-brand-green-light px-3 py-1.5 text-sm font-semibold text-brand-green-dark">
-                            Part réglée ✓
-                          </span>
-                        ) : (
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-semibold block mb-1">
+                            Nom de l'équipe *
+                          </label>
+                          <input
+                            type="text"
+                            value={newEquipeNom}
+                            onChange={(e) => setNewEquipeNom(e.target.value)}
+                            placeholder="Ex: Les lève-tôt studieux"
+                            className="w-full rounded-2xl border border-border px-4 py-2.5 text-sm outline-none focus:border-brand-cyan transition-colors"
+                            maxLength={255}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-semibold block mb-1">
+                            Ambiance (optionnel)
+                          </label>
+                          <textarea
+                            value={newEquipeAmbiance}
+                            onChange={(e) =>
+                              setNewEquipeAmbiance(e.target.value)
+                            }
+                            placeholder="Décrivez l'esprit de votre équipe..."
+                            className="w-full rounded-2xl border border-border px-4 py-2.5 text-sm outline-none focus:border-brand-cyan min-h-[100px] resize-none transition-colors"
+                            maxLength={500}
+                          />
+                        </div>
+
+                        <div className="flex gap-3 mt-4">
                           <button
-                            type="button"
-                            onClick={() => payMyShare(c)}
-                            className="rounded-xl bg-brand-cyan px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-cyan-dark"
+                            onClick={() => {
+                              setShowCreateEquipe(false);
+                              setNewEquipeNom("");
+                              setNewEquipeAmbiance("");
+                            }}
+                            className="flex-1 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors"
                           >
-                            Payer ma part ({fmtAr(c.ma_part)} Ar)
+                            Annuler
                           </button>
-                        )}
+                          <button
+                            onClick={handleCreateEquipe}
+                            disabled={!newEquipeNom.trim()}
+                            className="flex-1 rounded-2xl bg-brand-cyan px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Créer l'équipe
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
             )}
+            {/* ===== PANNEAU DÉPOSANT : avancement des paiements + lancement officiel ===== */}
+            {activeView === "track" &&
+              isAnnonceOwner &&
+              myContracts.length > 0 &&
+              (() => {
+                const allPaid = myContracts.every(
+                  (c) => c.paidCount >= c.total,
+                );
+                const isFinalized = annonceData?.statut === "terminee";
+                return (
+                  <div className="mb-6 rounded-3xl border border-brand-cyan/30 bg-white p-6 shadow-sm">
+                    <div className="bebas text-2xl text-brand-cyan-dark">
+                      Contrat & paiements des colocataires
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Tu ne paies rien. La colocation se lance{" "}
+                      <b>officiellement</b> quand <b>tous les colocataires</b>{" "}
+                      ont réglé leur part.
+                    </p>
+                    <div className="mt-4 space-y-2">
+                      {myContracts.map((c) => {
+                        const done = c.paidCount >= c.total;
+                        return (
+                          <div
+                            key={c.id_contrat}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border p-3 text-sm"
+                          >
+                            <span>
+                              {c.type === "edl"
+                                ? "État des lieux"
+                                : "Contrat de colocation"}{" "}
+                              · réf {c.reference}
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={
+                                  done
+                                    ? "font-semibold text-brand-green-dark"
+                                    : "text-muted-foreground"
+                                }
+                              >
+                                {c.paidCount}/{c.total} payé{done ? " ✓" : ""}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openContractDocument(c.id_contrat)
+                                }
+                                className="rounded-lg border border-brand-cyan px-3 py-1.5 text-xs font-bold text-brand-cyan-dark hover:bg-brand-cyan/10"
+                              >
+                                Voir
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={launchOfficial}
+                      disabled={!allPaid || launchingOfficial || isFinalized}
+                      className="mt-4 w-full rounded-3xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                    >
+                      {isFinalized
+                        ? "Colocation déjà lancée ✓"
+                        : launchingOfficial
+                          ? "Lancement…"
+                          : allPaid
+                            ? "Lancer officiellement la colocation 🎉"
+                            : "En attente du paiement des colocataires"}
+                    </button>
+                    {officialFeedback && (
+                      <div className="mt-3 rounded-2xl bg-brand-green-light/50 px-4 py-3 text-sm font-semibold text-brand-green-dark">
+                        {officialFeedback}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+            {/* ===== CARTE COLOCATAIRE : payer ma part ===== */}
+            {activeView === "cand" &&
+              !isAnnonceOwner &&
+              myContracts.filter((c) => c.peut_payer).length > 0 && (
+                <div className="mb-6 rounded-3xl border border-brand-cyan/40 bg-white p-6 shadow-sm">
+                  <div className="bebas text-2xl text-brand-cyan-dark">
+                    Ton contrat de colocation
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Ta part de l'honoraire Coloc'KOO pour l'établissement du
+                    contrat.
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {myContracts
+                      .filter((c) => c.peut_payer)
+                      .map((c) => (
+                        <div
+                          key={c.id_contrat}
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border p-4"
+                        >
+                          <div>
+                            <div className="font-semibold">
+                              {c.type === "edl"
+                                ? "Document d'état des lieux"
+                                : "Contrat de colocation"}{" "}
+                              · réf. {c.reference}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Ta part : <b>{fmtAr(c.ma_part)} Ar</b> —{" "}
+                              {c.paidCount}/{c.total} colocataire(s) ont réglé.
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openContractDocument(c.id_contrat)}
+                              className="rounded-xl border border-brand-cyan px-4 py-2 text-sm font-bold text-brand-cyan-dark hover:bg-brand-cyan/10"
+                            >
+                              {c.type === "edl"
+                                ? "Lire le document"
+                                : "Lire le contrat"}
+                            </button>
+                            {c.deja_paye ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-brand-green-light px-3 py-1.5 text-sm font-semibold text-brand-green-dark">
+                                Part réglée ✓
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => payMyShare(c)}
+                                className="rounded-xl bg-brand-cyan px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-cyan-dark"
+                              >
+                                Payer ma part ({fmtAr(c.ma_part)} Ar)
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
 
             {/* ===== VUE FLUX (gestion — réservée au déposant) ===== */}
             {activeView === "flux" && isAnnonceOwner && (
@@ -1794,8 +2067,8 @@ export default function Candidatures() {
                       <p className="mt-3 text-sm text-muted-foreground">
                         En tant que membre de la colocation, tu valides les
                         colocataires un par un et peux échanger avec chacun·e
-                        avant d'accepter. La coloc se lance quand les {TARGET} places
-                        sont pourvues.
+                        avant d'accepter. La coloc se lance quand les {TARGET}{" "}
+                        places sont pourvues.
                       </p>
                     </div>
                     <div className="grid grid-cols-3 gap-2 md:w-1/3">
@@ -1953,7 +2226,9 @@ export default function Candidatures() {
                     return (
                       <button
                         className="w-full rounded-3xl bg-brand-green px-5 py-4 text-base font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                        disabled={ownerFilled < TARGET || contractExists || isFinalized}
+                        disabled={
+                          ownerFilled < TARGET || contractExists || isFinalized
+                        }
                         onClick={launchColoc}
                       >
                         {isFinalized
@@ -2019,14 +2294,22 @@ export default function Candidatures() {
                       </div>
                       <div className="mt-4 space-y-3">
                         {completedMembers.map((member, index) => (
-                          <div key={`${member.nom}-${index}`} className="flex items-center justify-between rounded-2xl border border-border px-4 py-3">
+                          <div
+                            key={`${member.nom}-${index}`}
+                            className="flex items-center justify-between rounded-2xl border border-border px-4 py-3"
+                          >
                             <div className="flex items-center gap-3">
                               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-cyan text-sm font-semibold text-white">
-                                {member.initiales || member.nom.slice(0, 2).toUpperCase()}
+                                {member.initiales ||
+                                  member.nom.slice(0, 2).toUpperCase()}
                               </div>
                               <div>
-                                <div className="font-semibold text-foreground">{member.nom}</div>
-                                <div className="text-xs text-muted-foreground">{member.statut || 'active'}</div>
+                                <div className="font-semibold text-foreground">
+                                  {member.nom}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {member.statut || "active"}
+                                </div>
                               </div>
                             </div>
                             <span className="rounded-full bg-brand-green-light px-2.5 py-1 text-[11px] font-semibold text-brand-green-dark">
@@ -2473,7 +2756,9 @@ export default function Candidatures() {
                         onClick={() => setWonMode(mode)}
                         className={`rounded-2xl px-4 py-2 text-sm font-semibold ${wonMode === mode ? "bg-brand-green text-white" : "border border-border bg-card text-muted-foreground"}`}
                       >
-                        {mode === "indiv" ? "Message individuel" : "Message au groupe"}
+                        {mode === "indiv"
+                          ? "Message individuel"
+                          : "Message au groupe"}
                       </button>
                     ))}
                   </div>
@@ -2488,7 +2773,9 @@ export default function Candidatures() {
                       : `Felicitations a ${retainedTeamTitle} !`}
                   </h2>
                   <p className="mt-3 text-sm text-muted-foreground">
-                    {wonMode === "indiv" ? wonIndividualMessage : wonGroupMessage}
+                    {wonMode === "indiv"
+                      ? wonIndividualMessage
+                      : wonGroupMessage}
                   </p>
                   <div className="mt-6 rounded-3xl border border-border bg-card p-5 text-left text-sm text-muted-foreground">
                     <div className="flex items-start gap-3">
@@ -2500,7 +2787,10 @@ export default function Candidatures() {
                     </div>
                     <div className="mt-4 flex items-start gap-3">
                       <MessageCircle className="h-4 w-4 text-brand-cyan-dark" />
-                      <div>Ta conversation de groupe reste ouverte pour t'organiser.</div>
+                      <div>
+                        Ta conversation de groupe reste ouverte pour
+                        t'organiser.
+                      </div>
                     </div>
                   </div>
                   <button className="mt-6 w-full rounded-3xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark">
@@ -2519,9 +2809,12 @@ export default function Candidatures() {
                   <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
                     <Sparkles className="h-8 w-8" />
                   </div>
-                  <h2 className="bebas text-3xl">Aucune notification pour le moment</h2>
+                  <h2 className="bebas text-3xl">
+                    Aucune notification pour le moment
+                  </h2>
                   <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
-                    La notification de colocataire valide sera disponible lorsque la colocation sera lancee officiellement.
+                    La notification de colocataire valide sera disponible
+                    lorsque la colocation sera lancee officiellement.
                   </p>
                 </div>
               </div>
@@ -2603,7 +2896,9 @@ export default function Candidatures() {
                         onClick={() => setLostMode(mode)}
                         className={`rounded-2xl px-4 py-2 text-sm font-semibold ${lostMode === mode ? "bg-red-500 text-white" : "border border-border bg-card text-muted-foreground"}`}
                       >
-                        {mode === "indiv" ? "Message individuel" : "Message au groupe"}
+                        {mode === "indiv"
+                          ? "Message individuel"
+                          : "Message au groupe"}
                       </button>
                     ))}
                   </div>
@@ -2613,19 +2908,29 @@ export default function Candidatures() {
                     <Shield className="h-8 w-8" />
                   </div>
                   <h2 className="bebas text-3xl">
-                    {lostMode === "indiv" ? "Ce ne sera pas cette fois" : "Merci pour votre candidature"}
+                    {lostMode === "indiv"
+                      ? "Ce ne sera pas cette fois"
+                      : "Merci pour votre candidature"}
                   </h2>
                   <p className="mt-3 text-sm text-muted-foreground">
-                    {lostMode === "indiv" ? lostIndividualMessage : lostGroupMessage}
+                    {lostMode === "indiv"
+                      ? lostIndividualMessage
+                      : lostGroupMessage}
                   </p>
                   <div className="mt-6 rounded-3xl border border-border bg-card p-5 text-left text-sm text-muted-foreground">
                     <div className="flex items-start gap-3">
                       <MapPin className="h-4 w-4 text-brand-cyan-dark" />
-                      <div>Reviens sur la carte pour trouver un logement qui te correspond encore mieux.</div>
+                      <div>
+                        Reviens sur la carte pour trouver un logement qui te
+                        correspond encore mieux.
+                      </div>
                     </div>
                     <div className="mt-4 flex items-start gap-3">
                       <Clock className="h-4 w-4 text-brand-cyan-dark" />
-                      <div>Active une alerte pour etre prevenu des nouvelles colocations qui matchent avec tes criteres.</div>
+                      <div>
+                        Active une alerte pour etre prevenu des nouvelles
+                        colocations qui matchent avec tes criteres.
+                      </div>
                     </div>
                   </div>
                   <Link
@@ -2647,9 +2952,12 @@ export default function Candidatures() {
                   <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
                     <Shield className="h-8 w-8" />
                   </div>
-                  <h2 className="bebas text-3xl">Aucune notification pour le moment</h2>
+                  <h2 className="bebas text-3xl">
+                    Aucune notification pour le moment
+                  </h2>
                   <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
-                    La notification de colocataire non retenu sera disponible lorsque la colocation sera lancee officiellement.
+                    La notification de colocataire non retenu sera disponible
+                    lorsque la colocation sera lancee officiellement.
                   </p>
                 </div>
               </div>
@@ -2780,7 +3088,9 @@ export default function Candidatures() {
           onIgnoreOffer={ignoreOffer}
           onOpenContractDocument={openContractDocument}
           onPayRefChange={setPayRef}
-          onSetContractStep={(step) => (step === "done" ? goPaiement() : setContractStep(step))}
+          onSetContractStep={(step) =>
+            step === "done" ? goPaiement() : setContractStep(step)
+          }
           onSetMoyenPaiement={setMoyenPaiement}
           onShowCelebrateAfterPayment={() => {
             setContractModalOpen(false);
