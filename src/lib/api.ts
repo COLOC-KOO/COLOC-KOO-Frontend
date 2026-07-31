@@ -786,6 +786,7 @@ export const api = {
             dernier_message: string
             total_messages: number
             non_lus: number
+            date_dernier_message: string
         }>>('/messages')
     },
     messagesThread(userId: number | string) {
