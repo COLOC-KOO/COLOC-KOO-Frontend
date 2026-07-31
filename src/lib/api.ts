@@ -598,6 +598,12 @@ export function clearSession() {
     localStorage.removeItem(USER_KEY)
 }
 
+export function getWebSocketUrl() {
+    const base = API_BASE_URL.replace(/^http/, 'ws')
+    const token = getToken()
+    return `${base}/ws${token ? `?token=${encodeURIComponent(token)}` : ''}`
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const token = getToken()
     const headers = new Headers(options.headers)
@@ -775,6 +781,13 @@ export const api = {
     deleteNotification(id: string | number) {
         return request<{ message: string }>(`/notifications/${id}`, {method: 'DELETE'})
     },
+    counters() {
+        return request<{ favoris: number; notifications: number; messages: number }>('/users/me/counters')
+    },
+    searchUsers(q = '') {
+        const query = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ''
+        return request<AuthUser[]>(`/users/search${query}`)
+    },
     deleteThread(userId: string | number) {
         return request<{ message: string }>(`/messages/thread/${userId}`, {method: 'DELETE'})
     },
@@ -827,7 +840,73 @@ export const api = {
         contenu: string;
         message_parent?: number | string | null
     }) {
-        return request<{ id_message: number }>('/messages', {
+        return request<{
+            id_message: number
+            id_expediteur: number
+            id_destinataire: number
+            contenu: string
+            date_envoi: string
+            est_lu: number
+            expediteur_nom: string
+            expediteur_prenom: string
+            destinataire_nom: string
+            destinataire_prenom: string
+        }>('/messages', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
+    groupThreads() {
+        return request<Array<{
+            id_groupe: number
+            nom: string
+            id_createur: number
+            id_annonce: number | null
+            date_creation: string
+            dernier_message: string | null
+            total_messages: number
+            non_lus: number
+            date_dernier_message: string | null
+        }>>('/groupes')
+    },
+    createGroup(payload: { nom: string; membres: number[]; id_annonce?: number | string | null }) {
+        return request<{ id_groupe: number; nom: string }>('/groupes', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
+    groupMessages(id: number | string) {
+        return request<Array<{
+            id_message: number
+            id_groupe: number
+            id_expediteur: number
+            contenu: string
+            date_envoi: string
+            signalement_abus: number
+            expediteur_nom: string
+            expediteur_prenom: string
+        }>>(`/groupes/${id}/messages`)
+    },
+    sendGroupMessage(id: number | string, contenu: string) {
+        return request<{
+            id_message: number
+            id_groupe: number
+            id_expediteur: number
+            contenu: string
+            date_envoi: string
+            signalement_abus: number
+            expediteur_nom: string
+            expediteur_prenom: string
+        }>(`/groupes/${id}/messages`, {
+            method: 'POST',
+            body: JSON.stringify({ contenu }),
+        })
+    },
+    deleteGroup(id: string | number) {
+        return request<{ message: string }>(`/groupes/${id}`, { method: 'DELETE' })
+    },
+    reportGroupMessage(groupId: string | number, messageId: string | number, payload: { raison?: string; description?: string } = {}) {
+        return request<{ id_signalement: number }>(`/groupes/${groupId}/messages/${messageId}/report`, {
             method: 'POST',
             body: JSON.stringify(payload),
         })
