@@ -1,5 +1,5 @@
 // AnnonceDetail.tsx - Version modifiée
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { 
@@ -16,6 +16,35 @@ import { roleLevel, useAuth } from '../lib/auth'
 import { Listing } from '../types'
 import { formatAr } from '../lib/utils'
 import NotFound from './NotFound'
+
+type Candidate = {
+  id_candidature: number
+  id_utilisateur: number
+  statut: string
+  message: string | null
+  nom?: string
+  prenom?: string
+  email?: string
+  telephone?: string
+  profession?: string | null
+  age?: number | null
+  profile_picture?: string | null
+  ville_actuelle?: string | null
+  ville_origine?: string | null
+  bio?: string | null
+}
+
+function dedupeCandidates(candidates: Candidate[]) {
+  const byUser = new Map<number, Candidate>()
+  candidates.forEach((candidate) => {
+    const userId = Number(candidate.id_utilisateur)
+    const current = byUser.get(userId)
+    if (!current || Number(candidate.id_candidature) > Number(current.id_candidature)) {
+      byUser.set(userId, candidate)
+    }
+  })
+  return Array.from(byUser.values())
+}
 
 function StatItem({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
@@ -198,7 +227,7 @@ export default function AnnonceDetail() {
   const [contactSuccess, setContactSuccess] = useState('')
   const [hasApplied, setHasApplied] = useState(false)
   const [myCandidature, setMyCandidature] = useState<null | { id_candidature: number; statut: string; message: string | null }>(null)
-  const [ownerCandidates, setOwnerCandidates] = useState<Array<{ id_candidature: number; id_utilisateur: number; statut: string; message: string | null; nom?: string; prenom?: string; email?: string; telephone?: string; profession?: string | null; age?: number | null; profile_picture?: string | null; ville_actuelle?: string | null; ville_origine?: string | null; bio?: string | null }>>([])
+  const [ownerCandidates, setOwnerCandidates] = useState<Candidate[]>([])
   const [candidateActionLoading, setCandidateActionLoading] = useState<number | null>(null)
   const [expandedCandidateId, setExpandedCandidateId] = useState<number | null>(null)
   const [launchLoading, setLaunchLoading] = useState(false)
@@ -258,10 +287,12 @@ export default function AnnonceDetail() {
           user?.id ? api.checkUserApplied(id, user.id) : Promise.resolve({ hasApplied: false }),
           api.getCandidaturesByAnnonce(id).catch(() => []),
         ])
-        setOwnerCandidates(candidates)
+        const uniqueCandidates = dedupeCandidates(candidates as Candidate[])
+        setOwnerCandidates(uniqueCandidates)
         if (user?.id) {
-          setHasApplied(Boolean(applied?.hasApplied))
-          setMyCandidature(applied?.hasApplied ? (candidates.find((item) => Number(item.id_utilisateur) === Number(user.id)) || null) as any : null)
+          const ownCandidate = uniqueCandidates.find((item) => Number(item.id_utilisateur) === Number(user.id)) || null
+          setHasApplied(Boolean(applied?.hasApplied) || Boolean(ownCandidate))
+          setMyCandidature(ownCandidate)
         }
       } catch {
         setNotFound(true)
@@ -305,24 +336,41 @@ export default function AnnonceDetail() {
       navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
       return
     }
+    if (hasApplied || ownerCandidates.some((candidate) => Number(candidate.id_utilisateur) === Number(user.id))) {
+      setHasApplied(true)
+      setSubmitError(t('annonceDetail:apply.alreadyApplied'))
+      setShowMyCandidature(true)
+      return
+    }
 
     setSubmitting(true)
     setSubmitError('')
     try {
-      await api.createCandidature({
+      const created = await api.createCandidature({
         id_annonce: Number(id),
         id_depot_annonce: Number(id),
         message: message.trim() || undefined,
         statut: 'en_attente',
       })
       setHasApplied(true)
-      setMyCandidature({ id_candidature: 0, statut: 'en_attente', message: message.trim() || null })
+      setMyCandidature({
+        id_candidature: created.id_candidature || 0,
+        statut: created.statut || 'en_attente',
+        message: created.message ?? (message.trim() || null),
+      })
       setShowMyCandidature(true)
       const refreshed = await api.getCandidaturesByAnnonce(id)
-      setOwnerCandidates(refreshed)
+      setOwnerCandidates(dedupeCandidates(refreshed as Candidate[]))
       setMessage('')
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : t('annonceDetail:apply.error'))
+      const errorMessage = error instanceof Error ? error.message : t('annonceDetail:apply.error')
+      if (/d[eé]j[aà]|already|existe|duplicate/i.test(errorMessage)) {
+        setHasApplied(true)
+        setShowMyCandidature(true)
+        setSubmitError(t('annonceDetail:apply.alreadyApplied'))
+      } else {
+        setSubmitError(errorMessage)
+      }
     } finally {
       setSubmitting(false)
     }
@@ -339,7 +387,7 @@ export default function AnnonceDetail() {
         setContactSuccess(action === 'accept' ? t('annonceDetail:candidates.acceptSuccess') : t('annonceDetail:candidates.refuseSuccess'))
       }
       const refreshed = await api.getCandidaturesByAnnonce(id)
-      setOwnerCandidates(refreshed)
+      setOwnerCandidates(dedupeCandidates(refreshed as Candidate[]))
     } catch (error) {
       setContactError(error instanceof Error ? error.message : t('annonceDetail:candidates.actionError'))
     } finally {
@@ -366,6 +414,10 @@ export default function AnnonceDetail() {
     ? roleLevel(user.poste) >= 2 || Number(listing?.owner.id) === Number(user.id)
     : false
   const canViewCandidatures = Boolean(user) && (isOwnerOrAdmin || hasApplied || Boolean(myCandidature))
+  const otherCandidates = useMemo(
+    () => ownerCandidates.filter((candidate) => !user?.id || Number(candidate.id_utilisateur) !== Number(user.id)),
+    [ownerCandidates, user?.id],
+  )
   const handleViewMyCandidature = () => {
     if (!user) {
       navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
@@ -1042,11 +1094,9 @@ export default function AnnonceDetail() {
                         <div className="rounded-lg border border-border bg-background p-3">
                           <div className="font-semibold text-foreground">{t('annonceDetail:user.otherCandidates')}</div>
                           <div className="mt-2 space-y-2">
-                            {ownerCandidates.filter((candidate) => Number(candidate.id_utilisateur) !== Number(user.id)).length === 0 ? (
+                            {otherCandidates.length === 0 ? (
                               <div className="text-sm text-muted-foreground">{t('annonceDetail:user.noOtherCandidates')}</div>
-                            ) : ownerCandidates
-                              .filter((candidate) => Number(candidate.id_utilisateur) !== Number(user.id))
-                              .map((candidate) => (
+                            ) : otherCandidates.map((candidate) => (
                                 <div key={candidate.id_candidature} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
                                   <div>
                                     <div className="text-sm font-semibold text-foreground">{candidate.prenom || candidate.nom || t('annonceDetail:candidates.defaultName')}</div>

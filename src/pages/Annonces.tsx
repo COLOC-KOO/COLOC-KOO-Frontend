@@ -290,7 +290,7 @@ export default function Annonces() {
 
   const emptyMessage =
     city || query
-      ? `Aucun profil n'a demande cette ville mais n'hesites pas a proposer ton logement, on ne sait jamais !`
+      ? "Aucune annonce disponible."
       : t("annonces:emptySub");
 
   // Composant filtres mobile avec les couleurs du thème
