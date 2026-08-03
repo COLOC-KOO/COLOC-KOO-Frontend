@@ -136,6 +136,8 @@ export interface ApiProfilRechercheLogement {
     id_utilisateur: number
     nom: string
     prenom: string
+    poste?: Poste | string | null
+    role?: string | null
     age: number | null
     bio: string | null
     profile_picture: string | null
@@ -148,6 +150,7 @@ export interface ApiProfilRechercheLogement {
     demandes_count: number
     derniere_demande: string
     annonces_demandees: string[]
+    sources?: string[]
     email: string | null
     telephone: string | null
 }
@@ -1106,6 +1109,8 @@ export const api = {
         profession?: string
         maxAge?: number
         months?: number
+        roles?: string
+        includeAllRoles?: boolean
     }) {
         const search = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {

@@ -5,7 +5,7 @@ import {
   ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User, 
   Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler, 
   Calendar, Bed, Building2, Users, Image as ImageIcon, Heart, Search, Plus,
-  Menu, ChevronLeft, UserPlus
+  Menu, ChevronLeft, UserPlus, Flag
 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
@@ -884,10 +884,15 @@ function TabNotif() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    api.notifications()
-      .then((data) => setNotifications(data))
-      .catch(() => setNotifications([]))
-      .finally(() => setLoading(false))
+    const refreshNotifications = () => {
+      api.notifications()
+        .then((data) => setNotifications(data))
+        .catch(() => setNotifications([]))
+        .finally(() => setLoading(false))
+    }
+    refreshNotifications()
+    window.addEventListener('colockoo:counters-refresh', refreshNotifications)
+    return () => window.removeEventListener('colockoo:counters-refresh', refreshNotifications)
   }, [])
 
   const handleNotificationClick = async (notification: typeof notifications[0]) => {
@@ -1743,6 +1748,8 @@ function TabMessagesV2() {
   const [reply, setReply] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [sendError, setSendError] = useState('')
+  const [reportingMessageId, setReportingMessageId] = useState<number | null>(null)
+  const [reportedMessageIds, setReportedMessageIds] = useState<Set<number>>(new Set())
   const [showGroupModal, setShowGroupModal] = useState(false)
   const [showDirectModal, setShowDirectModal] = useState(false)
   const [groupName, setGroupName] = useState('')
@@ -1896,6 +1903,36 @@ function TabMessagesV2() {
     }
   }
 
+  const handleReportUnifiedMessage = async (messageId: number) => {
+    if (!active || reportingMessageId) return
+    const raison = window.prompt('Raison du signalement')
+    if (raison === null) return
+
+    setReportingMessageId(messageId)
+    setSendError('')
+    try {
+      const payload = {
+        raison: raison.trim() || 'Signalement conversation',
+        description: `Signalement depuis la conversation ${active.name}`,
+      }
+      if (active.type === 'group') {
+        await api.reportGroupMessage(active.id, messageId, payload)
+        const refreshed = await api.groupMessages(active.id)
+        setMessages(refreshed as UnifiedMessage[])
+      } else {
+        await api.reportMessage(messageId, payload)
+        const refreshed = await api.messagesThread(active.id)
+        setMessages(refreshed as UnifiedMessage[])
+      }
+      setReportedMessageIds((prev) => new Set([...prev, messageId]))
+      window.dispatchEvent(new Event('colockoo:counters-refresh'))
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : 'Impossible de signaler ce message.')
+    } finally {
+      setReportingMessageId(null)
+    }
+  }
+
   const toggleSelectedUser = (item: AuthUser) => {
     setSelectedUsers((prev) => prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id])
   }
@@ -2023,6 +2060,7 @@ function TabMessagesV2() {
                 const isMe = msg.id_expediteur === user?.id
                 const date = new Date(msg.date_envoi).toLocaleDateString('fr-FR')
                 const prevDate = index > 0 ? new Date(messages[index - 1].date_envoi).toLocaleDateString('fr-FR') : null
+                const isReported = Boolean(msg.signalement_abus) || reportedMessageIds.has(msg.id_message)
                 return (
                   <div key={`${active.key}:${msg.id_message}:${index}`}>
                     {date !== prevDate ? <div className="my-4 text-center text-xs text-muted-foreground"><span className="rounded-full bg-white px-3 py-1">{date}</span></div> : null}
@@ -2033,6 +2071,22 @@ function TabMessagesV2() {
                           <div className="whitespace-pre-wrap break-words">{msg.contenu}</div>
                           <div className={`mt-1 text-right text-[10px] ${isMe ? 'text-white/70' : 'text-muted-foreground'}`}>{new Date(msg.date_envoi).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => handleReportUnifiedMessage(msg.id_message)}
+                          disabled={isReported || reportingMessageId === msg.id_message}
+                          className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] transition-colors ${
+                            isMe ? 'float-right' : ''
+                          } ${
+                            isReported
+                              ? 'bg-red-50 text-red-500'
+                              : 'text-muted-foreground/70 hover:bg-red-50 hover:text-red-600'
+                          } disabled:cursor-not-allowed disabled:opacity-70`}
+                          title={isReported ? 'Message déjà signalé' : 'Signaler la conversation'}
+                        >
+                          <Flag className="h-3 w-3" />
+                          {isReported ? 'Signalé' : reportingMessageId === msg.id_message ? '...' : 'Signaler'}
+                        </button>
                       </div>
                     </div>
                   </div>
