@@ -56,6 +56,11 @@ const typeAnnonceOptions = ['Colocation', 'Location', 'Appart-hôtel', 'Résiden
 const logementOptions = ['Appartement', 'Maison', 'Villa', 'Cabane', 'Studio', 'Chalet', 'Autre']
 const piecesOptions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '10+']
 const meubleOptions = ['Oui', 'Partiellement', 'Non', 'Rachat']
+const MAX_IMAGE_WIDTH = 1600
+const MAX_IMAGE_HEIGHT = 1200
+const INITIAL_IMAGE_QUALITY = 0.82
+const MIN_IMAGE_QUALITY = 0.58
+const TARGET_IMAGE_BYTES = 1.2 * 1024 * 1024
 
 const amenities = [
   ['accessibilite_handicape', 'Accessibilité handicapé', Accessibility],
@@ -105,6 +110,72 @@ interface FormState {
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`
+  return `${(bytes / 1024 / 1024).toFixed(1)} Mo`
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob)
+      } else {
+        reject(new Error("Impossible de compresser l'image."))
+      }
+    }, type, quality)
+  })
+}
+
+function loadImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(image)
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error(`Impossible de lire l'image ${file.name}.`))
+    }
+    image.src = url
+  })
+}
+
+async function compressImageFile(file: File) {
+  if (!file.type.startsWith('image/')) {
+    throw new Error(`${file.name} n'est pas une image valide.`)
+  }
+
+  const image = await loadImage(file)
+  const ratio = Math.min(MAX_IMAGE_WIDTH / image.width, MAX_IMAGE_HEIGHT / image.height, 1)
+  const width = Math.max(1, Math.round(image.width * ratio))
+  const height = Math.max(1, Math.round(image.height * ratio))
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d')
+  if (!context) throw new Error("Impossible de preparer la compression de l'image.")
+
+  context.drawImage(image, 0, 0, width, height)
+
+  let quality = INITIAL_IMAGE_QUALITY
+  let blob = await canvasToBlob(canvas, 'image/jpeg', quality)
+  while (blob.size > TARGET_IMAGE_BYTES && quality > MIN_IMAGE_QUALITY) {
+    quality = Math.max(MIN_IMAGE_QUALITY, quality - 0.08)
+    blob = await canvasToBlob(canvas, 'image/jpeg', quality)
+  }
+
+  const compressedName = file.name.replace(/\.[^.]+$/, '') || 'photo'
+  if (blob.size >= file.size && file.size <= TARGET_IMAGE_BYTES) return file
+
+  return new File([blob], `${compressedName}.jpg`, {
+    type: 'image/jpeg',
+    lastModified: Date.now(),
+  })
 }
 
 function DragMarker({
@@ -164,6 +235,7 @@ export default function DepotAnnonce() {
   ])
   const [photos, setPhotos] = useState<File[]>([])
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
+  const [processingPhotos, setProcessingPhotos] = useState(false)
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -213,6 +285,27 @@ export default function DepotAnnonce() {
     setRooms((prev) => prev.map((room, i) => (i === index ? { ...room, ...patch } : room)))
   }
 
+  async function handlePhotoSelection(files: File[]) {
+    if (files.length === 0 || processingPhotos) return
+
+    setProcessingPhotos(true)
+    setError('')
+    try {
+      const compressedPhotos = await Promise.all(files.map((file) => compressImageFile(file)))
+      const originalSize = files.reduce((total, file) => total + file.size, 0)
+      const compressedSize = compressedPhotos.reduce((total, file) => total + file.size, 0)
+      setPhotos((prev) => [...prev, ...compressedPhotos])
+
+      if (compressedSize < originalSize) {
+        setToastMessage(`Photos reduites de ${formatFileSize(originalSize)} a ${formatFileSize(compressedSize)} avant upload.`)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossible de compresser les photos.")
+    } finally {
+      setProcessingPhotos(false)
+    }
+  }
+
   async function localiserAdresse() {
     if (!form.adresse.trim()) return
     setLoadingLocation(true)
@@ -234,7 +327,7 @@ export default function DepotAnnonce() {
       navigate('/auth?mode=signin&redirect=/depot_annonce')
       return
     }
-    if (!canSubmit || submitting) return
+    if (!canSubmit || submitting || processingPhotos) return
     setSubmitting(true)
     setError('')
     setSuccess('')
@@ -491,16 +584,30 @@ export default function DepotAnnonce() {
                 <br />
                 <strong>(dimensions recommandées : 1200 par 900 pixels)</strong>
               </InfoBox>
-              <label className="mx-auto flex h-11 max-w-md cursor-pointer items-center justify-center gap-2 rounded-xl border border-[var(--brand-cyan-dark)]/25 bg-white text-sm font-medium text-slate-700 shadow-sm hover:border-[var(--brand-green-dark)] hover:text-[var(--brand-green-dark)]">
-                <Plus className="h-4 w-4 text-[var(--brand-cyan-dark)]" /> Ajouter des photos du logement
+              <label
+                className={cn(
+                  "mx-auto flex h-11 max-w-md cursor-pointer items-center justify-center gap-2 rounded-xl border border-[var(--brand-cyan-dark)]/25 bg-white text-sm font-medium text-slate-700 shadow-sm hover:border-[var(--brand-green-dark)] hover:text-[var(--brand-green-dark)]",
+                  processingPhotos && 'cursor-wait opacity-70',
+                )}
+              >
+                {processingPhotos ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-[var(--brand-cyan-dark)]" /> Compression des photos...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 text-[var(--brand-cyan-dark)]" /> Ajouter des photos du logement
+                  </>
+                )}
                 <input
                   type="file"
                   accept="image/*"
                   multiple
+                  disabled={processingPhotos}
                   className="hidden"
                   onChange={(event) => {
                     const files = Array.from(event.target.files || [])
-                    setPhotos((prev) => [...prev, ...files])
+                    void handlePhotoSelection(files)
                     event.target.value = ''
                   }}
                 />
@@ -534,12 +641,12 @@ export default function DepotAnnonce() {
           <div className="flex justify-center pb-10">
             <Button
               type="button"
-              disabled={!canSubmit || submitting}
+              disabled={!canSubmit || submitting || processingPhotos}
               onClick={handleSubmit}
               className="h-14 min-w-[320px] rounded-xl bg-[var(--brand-cyan-dark)] px-8 text-base font-extrabold text-white shadow-xl shadow-cyan-900/20 ring-2 ring-white hover:bg-[var(--brand-green-dark)] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? <Loader2 className="mr-3 h-4 w-4 animate-spin" /> : <Pencil className="mr-3 h-4 w-4" />}
-              Publier votre annonce
+              {submitting || processingPhotos ? <Loader2 className="mr-3 h-4 w-4 animate-spin" /> : <Pencil className="mr-3 h-4 w-4" />}
+              {processingPhotos ? 'Preparation des photos...' : 'Publier votre annonce'}
             </Button>
           </div>
         </div>
