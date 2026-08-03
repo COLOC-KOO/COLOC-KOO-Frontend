@@ -88,6 +88,7 @@
     "placeholder": "Présentez-vous et ajoutez un message pour le propriétaire...",
     "submit": "Postuler à cette coloc",
     "loginToApply": "Se connecter pour postuler",
+    "alreadyApplied": "Vous avez déjà postulé à cette annonce.",
     "error": "Impossible d'envoyer la candidature."
   },
   "contact": {

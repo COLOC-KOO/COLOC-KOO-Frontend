@@ -13,6 +13,7 @@ import {
   Map,
   List,
   KeyRound,
+  Check,
   ChevronLeft,
   ChevronRight,
   Building2,
@@ -325,18 +326,9 @@ export default function Home() {
       return;
     }
 
-    const normalizedQuery = query.replace(/\s+/g, " ").trim();
-    const knownCities = cityCards.map((city) => city.name.toLowerCase());
-    const exactCityMatch = knownCities.find(
-      (name) => name === normalizedQuery.toLowerCase(),
-    );
-
     const params = new URLSearchParams();
-    if (exactCityMatch) {
-      params.set("ville", normalizedQuery);
-    } else {
-      params.set("q", normalizedQuery);
-    }
+    const normalizedQuery = query.replace(/\s+/g, " ").trim();
+    params.set("q", normalizedQuery);
     if (searchType) {
       params.set("type", searchType);
     }
@@ -395,30 +387,32 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3 max-w-3xl">
+          <div className="mt-6 max-w-3xl rounded-2xl border border-white/35 bg-white/95 p-1.5 shadow-2xl backdrop-blur-md">
             <button
               type="button"
               onClick={() => setHeroMode("chercher")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-2xl hover:shadow-2xl hover:scale-105 border ${
+              aria-pressed={heroMode === "chercher"}
+              className={`inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all sm:w-1/2 ${
                 heroMode === "chercher"
-                  ? "bg-gradient-to-r from-cyan-800 to-blue-900 text-white border-white/40 ring-2 ring-white/50"
-                  : "bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-white/20 hover:from-cyan-600 hover:to-blue-700"
+                  ? "bg-brand-cyan text-white shadow-lg shadow-brand-cyan/25"
+                  : "bg-transparent text-slate-600 hover:bg-slate-100"
               }`}
             >
-              <MapPin className="w-4 h-4" />
+              {heroMode === "chercher" ? <Check className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
               {t("home:hero.search")}
             </button>
 
             <button
               type="button"
               onClick={() => setHeroMode("proposer")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-2xl hover:shadow-2xl hover:scale-105 border ${
+              aria-pressed={heroMode === "proposer"}
+              className={`inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all sm:w-1/2 ${
                 heroMode === "proposer"
-                  ? "bg-gradient-to-r from-green-800 to-emerald-900 text-white border-white/40 ring-2 ring-white/50"
-                  : "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-white/20 hover:from-green-600 hover:to-emerald-700"
+                  ? "bg-brand-green text-white shadow-lg shadow-brand-green/25"
+                  : "bg-transparent text-slate-600 hover:bg-slate-100"
               }`}
             >
-              <KeyRound className="w-4 h-4" />
+              {heroMode === "proposer" ? <Check className="w-4 h-4" /> : <KeyRound className="w-4 h-4" />}
               {t("home:hero.propose")}
             </button>
           </div>
