@@ -18,6 +18,10 @@ function profileName(profile: ApiProfilRechercheLogement) {
   return `${profile.prenom || ''} ${profile.nom || ''}`.trim() || 'Colocataire candidat'
 }
 
+function uniqueProfiles(profiles: ApiProfilRechercheLogement[]) {
+  return Array.from(new Map(profiles.map((profile) => [Number(profile.id_utilisateur), profile])).values())
+}
+
 export default function ProfilsRechercheLogement() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -60,9 +64,12 @@ export default function ProfilsRechercheLogement() {
       profession: profession.trim() || undefined,
       maxAge: maxAge || undefined,
       months: 3,
+      roles: 'colocataire,proprietaire,agent',
+      includeAllRoles: true,
     })
       .then((data) => {
-        setProfiles(data.profiles)
+        const unique = uniqueProfiles(data.profiles).filter((profile) => !user?.id || Number(profile.id_utilisateur) !== Number(user.id))
+        setProfiles(unique)
         setTotal(data.total)
       })
       .catch((err) => {
@@ -71,7 +78,7 @@ export default function ProfilsRechercheLogement() {
         setTotal(0)
       })
       .finally(() => setLoading(false))
-  }, [normalizedCity, q, profession, maxAge])
+  }, [normalizedCity, q, profession, maxAge, user?.id])
 
   useEffect(() => {
     if (!user) return
@@ -95,6 +102,8 @@ export default function ProfilsRechercheLogement() {
           annonces_demandees: [],
           email: u.email ?? null,
           telephone: u.telephone ?? null,
+          poste: u.poste,
+          role: u.role,
         })
       })
       .catch(() => {})
@@ -321,6 +330,15 @@ export default function ProfilsRechercheLogement() {
                     <span>{profile.demandes_count} demande{profile.demandes_count > 1 ? 's' : ''}</span>
                     <span>Depuis {formatDate(profile.derniere_demande)}</span>
                   </div>
+                  {profile.sources?.length ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {profile.sources.map((source) => (
+                        <span key={source} className="rounded-full bg-brand-cyan-light px-2 py-0.5 text-[10px] font-semibold text-brand-cyan-dark">
+                          {source === 'annonce' ? 'Depose annonce' : source === 'recherche' ? 'Recherche ce lieu' : 'A postule'}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   {profile.telephone && (
                     <div className="mt-2 flex items-center gap-1.5 text-xs text-brand-cyan-dark font-semibold">
                       <Phone className="w-3 h-3" />
@@ -350,7 +368,7 @@ export default function ProfilsRechercheLogement() {
               </button>
               <h2 className="text-2xl font-bold">{profileName(selectedProfile)}</h2>
               <p className="text-muted-foreground">
-                {selectedProfile.profession || 'Colocataire candidat'}{selectedProfile.age ? `, ${selectedProfile.age} ans` : ''}
+                   {selectedProfile.profession || selectedProfile.poste || 'Colocataire candidat'}{selectedProfile.age ? `, ${selectedProfile.age} ans` : ''}
               </p>
                <div className="mt-3 flex flex-wrap gap-2 text-xs">
                  <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
@@ -380,6 +398,11 @@ export default function ProfilsRechercheLogement() {
                  {selectedProfile.profession && (
                    <p className="mt-2 text-sm text-muted-foreground">
                      Profession : <span className="text-foreground font-medium">{selectedProfile.profession}</span>
+                   </p>
+                 )}
+                 {(selectedProfile.poste || selectedProfile.role) && (
+                   <p className="mt-2 text-sm text-muted-foreground">
+                     Type de profil : <span className="text-foreground font-medium">{selectedProfile.poste || selectedProfile.role}</span>
                    </p>
                  )}
                  {selectedProfile.age && (

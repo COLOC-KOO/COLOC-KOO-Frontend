@@ -88,6 +88,7 @@
     "placeholder": "Introduce yourself and add a message for the landlord...",
     "submit": "Apply to this colocation",
     "loginToApply": "Log in to apply",
+    "alreadyApplied": "You have already applied to this listing.",
     "error": "Unable to send application."
   },
   "contact": {
