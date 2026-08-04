@@ -16,7 +16,7 @@ export interface Owner {
 }
 
 export type ListingType = 'chambre' | 'appartement' | 'maison'
-export type ListingTag = 'vedette' | 'verifie' | 'nouveau'
+export type ListingTag = 'vedette' | 'verifie' | 'nouveau' | 'boost'
 
 export interface Listing {
   id: string
@@ -62,6 +62,8 @@ export interface Listing {
   modeAnnonce?: string
   dateExpiration?: string | null
   region?: string
+  isBoosted?: boolean
+  boostServiceId?: number | null
 }
 
 export interface CityInfo {
