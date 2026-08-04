@@ -10,7 +10,7 @@ import {
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../lib/auth'
-import { api, ServiceCatalogueItem, DemandeServiceGroup, ApiServiceCkoo } from '../lib/api'
+import { api, ServiceCatalogueItem, DemandeServiceGroup, ApiBooster } from '../lib/api'
 import { cn } from '../lib/utils'
 import { LazyImage } from '../components/ui/LazyImage'
 
@@ -35,6 +35,7 @@ const UNITE_LABEL: Record<string, string> = {
   heure: '/ heure',
   forfait: 'forfait',
   jour: '/ jour',
+  semaine: '/ semaine',
   mois: '/ mois',
   an: '/ an',
   stere: '/ stère',
@@ -85,7 +86,7 @@ export default function Services() {
   const [error, setError] = useState('')
 
   // ===== Services de boost (données réelles depuis services_ckoo) =====
-  const [boostServices, setBoostServices] = useState<ApiServiceCkoo[]>([])
+  const [boostServices, setBoostServices] = useState<ApiBooster[]>([])
   const [boostLoading, setBoostLoading] = useState(true)
   const [boostError, setBoostError] = useState('')
   // Sélection de l'option de boost cochée (une seule à la fois, tous préfixes
@@ -113,13 +114,23 @@ export default function Services() {
   // dont la cle_service commence par "boost_" ou "boosturgent_".
   useEffect(() => {
     api
-      .services()
+      .boosters()
       .then((all) => {
         setBoostServices(
-          all.filter((s) => {
+          all.filter((s: any) => {
             const cle = s.cle_service || ''
-            return cle.startsWith('boost_') || cle.startsWith('boosturgent_')
-          }),
+            return (s.est_actif ?? 0) === 1 && (cle.startsWith('boost_') || cle.startsWith('boosturgent_'))
+          }).map((s: any) => ({
+            id_booster: s.id_booster ?? s.id_service,
+            nom: s.nom,
+            description: s.description ?? null,
+            cle_service: s.cle_service ?? null,
+            duree: Number(s.duree || 1),
+            prix: Number(s.prix || 0),
+            unite: s.unite || 'jour',
+            est_actif: s.est_actif ?? 0,
+            date_creation: s.date_creation || new Date().toISOString(),
+          })),
         )
       })
       .catch((e) => setBoostError(e instanceof Error ? e.message : 'Erreur de chargement des boosts'))
@@ -319,11 +330,12 @@ export default function Services() {
                       </p>
                     ) : (
                       offer.items.map((item) => {
-                        const active = selectedBoost === item.id_service
+                        const active = selectedBoost === item.id_booster
                         const uniteLabel = item.unite ? UNITE_LABEL[item.unite] || item.unite : ''
+                        const dureeLabel = item.duree ? `${item.duree} ${item.unite}${item.duree > 1 ? 's' : ''}` : ''
                         return (
                           <label
-                            key={item.id_service}
+                            key={item.id_booster}
                             className={cn(
                               'flex items-center gap-3 rounded-lg px-4 py-4 cursor-pointer transition-colors',
                               active ? 'bg-brand-cyan/15 ring-1 ring-brand-cyan/40' : 'bg-muted/70 hover:bg-brand-cyan/10',
@@ -333,7 +345,7 @@ export default function Services() {
                               type="checkbox"
                               className="w-5 h-5 accent-brand-cyan"
                               checked={active}
-                              onChange={() => toggleBoost(item.id_service)}
+                              onChange={() => toggleBoost(item.id_booster)}
                             />
                             <span className="text-sm text-foreground flex-1">
                               {item.nom}
@@ -342,7 +354,7 @@ export default function Services() {
                               )}
                             </span>
                             <span className="text-sm font-extrabold text-foreground whitespace-nowrap">
-                              {formatAr(Number(item.prix))}{uniteLabel ? ` ${uniteLabel}` : ''}
+                              {formatAr(Number(item.prix))}{dureeLabel ? ` / ${dureeLabel}` : uniteLabel ? ` ${uniteLabel}` : ''}
                             </span>
                           </label>
                         )

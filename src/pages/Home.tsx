@@ -124,7 +124,9 @@ export default function Home() {
       .then(([annonces, villes, campagnes]) => {
         if (cancelled) return;
 
-        const mapped = annonces.map(annonceToListing);
+        const mapped = annonces
+          .map(annonceToListing)
+          .sort((a, b) => Number(Boolean(b.isBoosted)) - Number(Boolean(a.isBoosted)));
         const grouped = mapped.reduce<Record<string, CityInfo>>(
           (acc, listing) => {
             const key = listing.city || "Autres";

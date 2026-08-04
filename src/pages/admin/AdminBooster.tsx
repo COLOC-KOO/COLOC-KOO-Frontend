@@ -26,10 +26,11 @@ import {
 // ============================================================================
 
 interface ServiceBooster {
-  id_service: number
+  id_booster: number
   cle_service: string
   nom: string
   description: string | null
+  duree: number
   prix: number
   unite: string
   est_actif: 0 | 1
@@ -39,6 +40,7 @@ interface ServiceBooster {
 interface BoosterFormData {
   nom: string
   description: string
+  duree: number
   prix: number
   unite: string
   est_actif: boolean
@@ -65,6 +67,7 @@ const BoosterModal = ({
 }) => {
   const [nom, setNom] = useState('')
   const [description, setDescription] = useState('')
+  const [duree, setDuree] = useState(1)
   const [prix, setPrix] = useState(5000)
   const [unite, setUnite] = useState('jour')
   const [estActif, setEstActif] = useState(true)
@@ -73,12 +76,14 @@ const BoosterModal = ({
     if (initialData) {
       setNom(initialData.nom || '')
       setDescription(initialData.description || '')
+      setDuree(initialData.duree || 1)
       setPrix(initialData.prix || 0)
       setUnite(initialData.unite || 'jour')
       setEstActif(initialData.est_actif ?? true)
     } else {
       setNom('')
       setDescription('')
+      setDuree(1)
       setPrix(5000)
       setUnite('jour')
       setEstActif(true)
@@ -95,9 +100,14 @@ const BoosterModal = ({
       alert('Le prix doit être supérieur à 0')
       return
     }
+    if (duree <= 0) {
+      alert('La duree doit etre superieure a 0')
+      return
+    }
     onSave({
       nom: nom.trim(),
       description: description.trim(),
+      duree,
       prix,
       unite,
       est_actif: estActif,
@@ -143,6 +153,17 @@ const BoosterModal = ({
               onChange={(e) => setDescription(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50 text-white"
               placeholder="Description de l'offre..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-white/60 mb-1">Duree</label>
+            <input
+              type="number"
+              min="1"
+              required
+              value={duree}
+              onChange={(e) => setDuree(parseInt(e.target.value) || 1)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50 text-white"
             />
           </div>
           <div>
@@ -279,7 +300,7 @@ function BoosterSection({
     setLocalLoading(true)
     try {
       if (editingBooster) {
-        await onEdit(editingBooster.id_service, data)
+        await onEdit(editingBooster.id_booster, data)
       } else {
         await onCreate(data, keyPrefix)
       }
@@ -418,6 +439,9 @@ function BoosterSection({
                     Prix (MGA)
                   </th>
                   <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
+                    Duree
+                  </th>
+                  <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
                     Unité
                   </th>
                   <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
@@ -433,7 +457,7 @@ function BoosterSection({
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filteredBoosters.map((booster) => (
-                  <tr key={booster.id_service} className="hover:bg-white/5 transition">
+                  <tr key={booster.id_booster} className="hover:bg-white/5 transition">
                     <td className="p-3">
                       <div className="font-medium text-white">{booster.nom}</div>
                       {booster.description && (
@@ -442,6 +466,9 @@ function BoosterSection({
                     </td>
                     <td className="p-3 text-right font-bold text-brand-cyan tabular-nums">
                       {booster.prix.toLocaleString('fr-FR')}
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className="text-xs font-semibold text-white">{booster.duree}</span>
                     </td>
                     <td className="p-3 text-center">
                       <span className="text-xs text-white/60 capitalize">{booster.unite}</span>
@@ -463,7 +490,7 @@ function BoosterSection({
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
-                          onClick={() => onToggle(booster.id_service, booster.est_actif, booster.nom)}
+                          onClick={() => onToggle(booster.id_booster, booster.est_actif, booster.nom)}
                           className={`p-1.5 rounded-lg transition ${
                             booster.est_actif === 1
                               ? 'hover:bg-red-500/20 text-red-400/60'
@@ -483,7 +510,7 @@ function BoosterSection({
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => onDelete(booster.id_service, booster.nom)}
+                          onClick={() => onDelete(booster.id_booster, booster.nom)}
                           className="p-1.5 hover:bg-red-500/20 rounded-lg transition text-red-400/60"
                           title="Supprimer"
                           disabled={isBusy}
@@ -534,6 +561,7 @@ function BoosterSection({
         initialData={editingBooster ? {
           nom: editingBooster.nom,
           description: editingBooster.description || '',
+          duree: editingBooster.duree,
           prix: editingBooster.prix,
           unite: editingBooster.unite,
           est_actif: editingBooster.est_actif === 1,
@@ -561,17 +589,18 @@ export default function AdminBooster() {
     setLoading(true)
     setError(null)
     try {
-      const services = await api.backofficeServicesCkoo()
+      const services = await api.backofficeBoosters()
 
       const normalized = (services || [])
         .filter((s: any) => s.cle_service && (
           s.cle_service.startsWith('boost_') || s.cle_service.startsWith('boosturgent_')
         ))
         .map((s: any) => ({
-          id_service: s.id_service,
+          id_booster: s.id_booster ?? s.id_service,
           cle_service: s.cle_service || '',
           nom: s.nom || 'Service sans nom',
           description: s.description || null,
+          duree: Number(s.duree || 1),
           prix: Number(s.prix || 0),
           unite: s.unite || 'jour',
           est_actif: s.est_actif || 0,
@@ -614,12 +643,13 @@ export default function AdminBooster() {
     setError(null)
     try {
       const cleService = `${keyPrefix}${Date.now()}`
-      await api.createServiceCkoo({
+      await api.createBooster({
         cle_service: cleService,
         nom: data.nom,
         description: data.description || '',
+        duree: data.duree || 1,
         prix: data.prix,
-        unite: data.unite || 'jour',
+        unite: (data.unite || 'jour') as any,
         est_actif: data.est_actif ? 1 : 0,
       })
       await loadServices()
@@ -633,11 +663,12 @@ export default function AdminBooster() {
   const handleEdit = async (id: number, data: BoosterFormData) => {
     setError(null)
     try {
-      await api.updateServiceCkoo(String(id), {
+      await api.updateBooster(String(id), {
         nom: data.nom,
         description: data.description || '',
+        duree: data.duree || 1,
         prix: data.prix,
-        unite: data.unite || 'jour',
+        unite: (data.unite || 'jour') as any,
         est_actif: data.est_actif ? 1 : 0,
       })
       await loadServices()
@@ -653,7 +684,7 @@ export default function AdminBooster() {
     setLoading(true)
     setError(null)
     try {
-      await api.deleteServiceCkoo(String(id))
+      await api.deleteBooster(String(id))
       await loadServices()
       flashSuccess(`Offre "${nom}" supprimée avec succès`)
     } catch (err) {
@@ -668,7 +699,7 @@ export default function AdminBooster() {
     setLoading(true)
     setError(null)
     try {
-      await api.updateServiceCkoo(String(id), { est_actif: newStatus })
+      await api.updateBooster(String(id), { est_actif: newStatus })
       await loadServices()
       flashSuccess(`Offre "${nom}" ${newStatus === 1 ? 'activée' : 'désactivée'}`)
     } catch (err) {
@@ -767,3 +798,4 @@ export default function AdminBooster() {
     </AdminLayout>
   )
 }
+
