@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BedDouble, Camera, Car, Check, Heart, MapPin, UserCircle, Users, Wifi } from 'lucide-react'
+import { BedDouble, Camera, Car, Check, Heart, MapPin, Rocket, UserCircle, Users, Wifi } from 'lucide-react'
 import { Listing } from '../../types'
 import { formatAr } from '../../lib/utils'
 import { api } from '../../lib/api'
@@ -170,6 +170,11 @@ export function ListingCard({ l, compact = false }: ListingCardProps) {
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute left-3 top-3 flex gap-1.5">
+          {l.isBoosted && (
+            <span className="inline-flex items-center gap-1 bg-white/75 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-600 backdrop-blur">
+              <Rocket className="h-3 w-3" /> Boost
+            </span>
+          )}
           {l.tags.includes('vedette') && (
             <span className="bg-[var(--brand-cyan-dark)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
               Coup de coeur

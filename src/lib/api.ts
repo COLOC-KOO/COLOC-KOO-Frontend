@@ -87,7 +87,11 @@ export interface ApiAnnonce {
     parking_motos?: number
     parking_couvert?: boolean
     services_communs?: any
-    booster?: boolean
+    booster?: boolean | number | null
+    boost_service_id?: number | null
+    booster_duree?: number | null
+    booster_unite?: BoosterUnite | string | null
+    booster_date_creation?: string | null
     date_modification?: string | null
     date_expiration?: string | null
     energy_class?: string | null
@@ -422,6 +426,21 @@ export interface ApiServiceCkoo {
     prix: number
     unite?: string | null
     est_actif: 0 | 1
+    duree?: number | null
+}
+
+export type BoosterUnite = 'heure' | 'jour' | 'semaine' | 'mois'
+
+export interface ApiBooster {
+    id_booster: number
+    nom: string
+    description?: string | null
+    cle_service?: string | null
+    duree: number
+    prix: number
+    unite: BoosterUnite
+    est_actif: 0 | 1
+    date_creation: string
 }
 
 export interface ApiBackofficeSuiviMissions {
@@ -932,6 +951,9 @@ export const api = {
     services() {
         return request<ApiServiceCkoo[]>('/meta/services')
     },
+    boosters() {
+        return requestWithFallback<ApiBooster[]>('/meta/boosters', '/meta/services')
+    },
     // Catalogue des « autres services » (cle_service = service_%) — public.
     serviceCatalogue() {
         return request<ServiceCatalogueItem[]>('/demandes-service/catalogue')
@@ -1428,13 +1450,50 @@ export const api = {
     backofficeServicesCkoo() {
         return request<ApiServiceCkoo[]>('/backoffice/services-ckoo')
     },
+    backofficeBoosters() {
+        return requestWithFallback<ApiBooster[]>('/backoffice/boosters', '/backoffice/services-ckoo')
+    },
+    createBooster(payload: {
+        cle_service?: string;
+        nom: string;
+        description?: string;
+        duree: number;
+        prix?: number;
+        unite?: BoosterUnite;
+        est_actif?: 0 | 1;
+    }) {
+        return request<{ id_booster: number }>('/backoffice/boosters', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
+    updateBooster(id: string | number, payload: Partial<{
+        cle_service: string;
+        nom: string;
+        description: string;
+        duree: number;
+        prix: number;
+        unite: BoosterUnite;
+        est_actif: 0 | 1;
+    }>) {
+        return request<{ message: string }>(`/backoffice/boosters/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        })
+    },
+    deleteBooster(id: string | number) {
+        return request<{ message: string }>(`/backoffice/boosters/${id}`, {
+            method: 'DELETE',
+        })
+    },
     createServiceCkoo(payload: {
         cle_service?: string;
         nom: string;
         description?: string;
         prix?: number;
         unite?: string;
-        est_actif?: 0 | 1
+        est_actif?: 0 | 1;
+        duree?: number | null
     }) {
         return request<{ id_service: number }>('/backoffice/services-ckoo', {
             method: 'POST',
@@ -1447,7 +1506,8 @@ export const api = {
         description: string;
         prix: number;
         unite: string;
-        est_actif: 0 | 1
+        est_actif: 0 | 1;
+        duree: number | null
     }>) {
         return request<{ message: string }>(`/backoffice/services-ckoo/${id}`, {
             method: 'PATCH',
@@ -1721,6 +1781,29 @@ function normalizePhotos(value: unknown): string[] {
     return []
 }
 
+function addDuration(date: Date, duration: number, unit: string) {
+    const next = new Date(date)
+    if (unit === 'heure') next.setHours(next.getHours() + duration)
+    else if (unit === 'semaine') next.setDate(next.getDate() + duration * 7)
+    else if (unit === 'mois') next.setMonth(next.getMonth() + duration)
+    else next.setDate(next.getDate() + duration)
+    return next
+}
+
+function isBoostActive(row: Record<string, any>) {
+    const boostId = row.booster ?? row.boost_service_id
+    if (boostId === null || boostId === undefined || boostId === false || Number(boostId) === 0) return false
+
+    const duration = Number(row.booster_duree ?? row.duree_booster ?? row.boost_duree ?? 0)
+    const unit = String(row.booster_unite ?? row.unite_booster ?? row.boost_unite ?? 'jour')
+    const startedAt = row.booster_date_creation ?? row.boost_date_creation ?? row.date_publication ?? row.date_creation
+    if (!duration || !startedAt) return true
+
+    const start = new Date(startedAt)
+    if (Number.isNaN(start.getTime())) return true
+    return addDuration(start, duration, unit).getTime() >= Date.now()
+}
+
 export function annonceToListing(a: ApiAnnonce): Listing {
     const row = a as ApiAnnonce & Record<string, any>
     const photos = normalizePhotos(a.photos)
@@ -1737,6 +1820,8 @@ export function annonceToListing(a: ApiAnnonce): Listing {
     const surface = Number(firstRoom?.surface || row.surface_totale || row.surface || 0)
     const ownerName = row.auteur || [row.prenom, row.nom].filter(Boolean).join(' ').trim() || row.createur_nom || 'Proprietaire'
     const id = row.id_depot_annonce ?? row.id ?? row.id_annonce
+    const isBoosted = isBoostActive(row)
+    const boostServiceId = row.booster ?? row.boost_service_id ?? null
     return {
         id: String(id),
         depotAnnonceId: row.id_depot_annonce != null ? Number(row.id_depot_annonce) : undefined,
@@ -1767,7 +1852,7 @@ export function annonceToListing(a: ApiAnnonce): Listing {
             phone: row.auteur_telephone ?? row.telephone ?? undefined,
             city: row.ville,
         },
-        tags: row.statut === 'active' ? ['verifie'] : [],
+        tags: row.statut === 'active' ? (isBoosted ? ['verifie', 'boost'] : ['verifie']) : (isBoosted ? ['boost'] : []),
         annonceType: row.type_annonce || 'existante',
         typeBail: row.type_bail ?? null,
         clauseSolidarite: row.clause_solidarite ?? null,
@@ -1788,5 +1873,7 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         modeAnnonce: row.mode_annonce ?? undefined,
         dateExpiration: row.date_expiration ?? null,
         region: row.region ?? undefined,
+        isBoosted,
+        boostServiceId: boostServiceId != null ? Number(boostServiceId) : null,
     }
 }
