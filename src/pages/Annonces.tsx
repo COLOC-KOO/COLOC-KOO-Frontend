@@ -155,7 +155,11 @@ export default function Annonces() {
       api.services().catch(() => []),
     ])
       .then(([annonces, villesList, servicesList]) => {
-        setListings(annonces.map(annonceToListing));
+        setListings(
+          annonces
+            .map(annonceToListing)
+            .sort((a, b) => Number(Boolean(b.isBoosted)) - Number(Boolean(a.isBoosted))),
+        );
         setVilles(villesList);
         setServices(Array.isArray(servicesList) ? servicesList.filter((service) => String(service.cle_service || "").startsWith("service_")) : []);
       })
