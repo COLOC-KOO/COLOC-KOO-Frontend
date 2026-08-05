@@ -368,7 +368,7 @@ export default function Services() {
 
           <div className="border-t border-border px-4 py-4 flex justify-end">
             <Button
-              onClick={() => navigate(selectedBoost ? `/depot_annonce?boost=${selectedBoost}` : '/depot_annonce')}
+              onClick={() => navigate(selectedBoost ? `/depot_annoncedeux?boost=${selectedBoost}` : '/depot_annoncedeux')}
               className="rounded-lg bg-orange-500 hover:bg-orange-600 text-white"
             >
               {selectedBoost ? 'Deposer avec ce booster' : 'Deposer sans booster mon annonce'}
