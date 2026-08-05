@@ -1,10 +1,9 @@
 ﻿import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { LogoSVG, LogoName } from '../Logo'
 
 export default function Footer() {
-  const openCguPopup = () => {
-    window.open('/cgu', 'CGUPopup', 'width=900,height=700,noopener')
-  }
+  const { t } = useTranslation(['common'])
 
   return (
     <footer className="bg-[#2c2c2c] py-6 px-6 text-center mt-9">
@@ -26,24 +25,23 @@ export default function Footer() {
         Immeuble ARO Ampefiloha, Étg.1 Esc.B, Porte B104, 101 Antananarivo, Madagascar
       </p>
       <div className="flex justify-center gap-3.5 flex-wrap">
-        <button
-          type="button"
-          onClick={openCguPopup}
+        <Link
+          to="/cgu"
           className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
         >
-          Conditions générales d'utilisation
-        </button>
+          {t('common:cgu')}
+        </Link>
         <Link
           to="/contact"
           className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
         >
-          Contact
+          {t('common:contact')}
         </Link>
         <Link
           to="/partenaires"
           className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
         >
-          Partenaires
+          {t('common:partenaires')}
         </Link>
       </div>
       <p className="text-[10px] text-white/20 mt-4">

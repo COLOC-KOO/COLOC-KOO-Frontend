@@ -66,8 +66,10 @@
   "partners": {
     "title": "Our Partners",
     "subtitle": "They contribute most to this solidarity project",
-    "viewAll": "View all",
+    "viewAll": "View all partners",
     "becomePartner": "I want to become a partner",
+    "allPartnersTitle": "All partners",
+    "allPartnersSubtitle": "Find here all partners present on Sarintany'COLOC.",
     "empty": "No partners available",
     "loading": "Loading..."
   },
