@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { ApiPartenaireCampagne } from "../../lib/api";
 import { useTranslation } from "react-i18next";
 
@@ -11,6 +12,14 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:4000/api"
 ).replace(/\/api\/?$/, "");
 
+const LEVEL_OPTIONS = [
+  { value: "all", labelKey: "home:partners.levelAll" },
+  { value: "argent", labelKey: "home:partners.levelArgent" },
+  { value: "bronze", labelKey: "home:partners.levelBronze" },
+  { value: "or", labelKey: "home:partners.levelOr" },
+  { value: "diamant", labelKey: "home:partners.levelDiamant" },
+];
+
 function normalizeImageUrl(value: string | null | undefined) {
   if (!value) return "";
   const trimmed = value.trim();
@@ -21,9 +30,24 @@ function normalizeImageUrl(value: string | null | undefined) {
   return `${API_BASE_URL}/${trimmed}`;
 }
 
+function normalizePartnerLevel(value: string | null | undefined) {
+  return (value || "").trim().toLowerCase();
+}
+
 export function PartnersSection({ partners, loading }: PartnersSectionProps) {
   const { t } = useTranslation(["home", "common"]);
-  const displayedPartners = partners.slice(0, 6);
+  const [selectedLevel, setSelectedLevel] = useState("all");
+
+  const filteredPartners = useMemo(() => {
+    const level = selectedLevel.toLowerCase();
+    if (level === "all") return partners;
+    return partners.filter((partner) => {
+      const partnerLevel = normalizePartnerLevel(partner.partenaire_niveau || partner.niveau);
+      return partnerLevel === level;
+    });
+  }, [partners, selectedLevel]);
+
+  const displayedPartners = filteredPartners.slice(0, 6);
 
   return (
     <section className="bg-slate-50 py-8">
@@ -37,7 +61,24 @@ export function PartnersSection({ partners, loading }: PartnersSectionProps) {
           </p>
         </div>
 
-        {partners.length === 0 ? (
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-slate-500">{t("home:partners.filterLevelLabel")}</div>
+          <div className="w-full sm:w-auto">
+            <select
+              value={selectedLevel}
+              onChange={(event) => setSelectedLevel(event.target.value)}
+              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-slate-300 sm:w-auto"
+            >
+              {LEVEL_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {t(option.labelKey)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {filteredPartners.length === 0 ? (
           <div className="rounded-[2rem] border border-slate-200 bg-white p-10 text-center text-slate-500">
             {loading ? t("home:partners.loading") : t("home:partners.empty")}
           </div>
@@ -63,6 +104,11 @@ export function PartnersSection({ partners, loading }: PartnersSectionProps) {
                     <div className="text-[11px] text-slate-500 mt-1">
                       {partner.secteur || partner.emplacement || "Partenaire"}
                     </div>
+                    {(partner.partenaire_niveau || partner.niveau) && (
+                      <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-[0.08em]">
+                        {partner.partenaire_niveau || partner.niveau}
+                      </div>
+                    )}
                   </div>
                   {(partner.description || partner.engagement) && (
                     <p className="text-[11px] text-slate-500 leading-tight line-clamp-2">

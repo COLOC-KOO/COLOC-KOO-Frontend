@@ -66,6 +66,12 @@
   "partners": {
     "title": "Ny Mpiara-miasa",
     "subtitle": "Matoky anay izy ireo",
+    "filterLevelLabel": "Sivana araka ny haavo",
+    "levelAll": "Ny haavo rehetra",
+    "levelArgent": "Volafotsy",
+    "levelBronze": "Bronze",
+    "levelOr": "Volamena",
+    "levelDiamant": "Diamondra",
     "viewAll": "Hijery ny mpiara-miasa rehetra",
     "becomePartner": "Te-ho mpiara-miasa aho",
     "allPartnersTitle": "Ny mpiara-miasa rehetra",
