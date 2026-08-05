@@ -17,6 +17,7 @@ import frFooter from './locales/fr/footer.json'
 import frHeader from './locales/fr/header.json' 
 import frPartenaires from './locales/fr/partenaires.json'
 import frServices from './locales/fr/services.json'
+import frCgu from './locales/fr/cgu.json'
 
 import mgCommon from './locales/mg/common.json'
 import mgHome from './locales/mg/home.json'
@@ -31,6 +32,7 @@ import mgFooter from './locales/mg/footer.json'
 import mgHeader from './locales/mg/header.json'
 import mgPartenaires from './locales/mg/partenaires.json'
 import mgServices from './locales/mg/services.json'
+import mgCgu from './locales/mg/cgu.json'
 
 import enCommon from './locales/en/common.json'
 import enHome from './locales/en/home.json'
@@ -45,6 +47,7 @@ import enFooter from './locales/en/footer.json'
 import enHeader from './locales/en/header.json'
 import enPartenaires from './locales/en/partenaires.json'
 import enServices from './locales/en/services.json'
+import enCgu from './locales/en/cgu.json'
 
 const resources = {
   fr: {
@@ -61,6 +64,7 @@ const resources = {
     header: frHeader,
     partenaires: frPartenaires,
     services: frServices,
+    cgu: frCgu,
   },
   mg: {
     common: mgCommon,
@@ -76,6 +80,7 @@ const resources = {
     header: mgHeader,
     partenaires: mgPartenaires,
     services: mgServices,
+    cgu: mgCgu,
   },
   en: {
     common: enCommon,
@@ -91,6 +96,7 @@ const resources = {
     header: enHeader,
     partenaires: enPartenaires,
     services: enServices,
+    cgu: enCgu,
   },
 }
 
@@ -104,7 +110,7 @@ i18n
     interpolation: {
       escapeValue: false,
     },
-    ns: ['common', 'home', 'auth', 'annonces', 'annonceDetail', 'candidatures', 'compte', 'contact', 'deposer','footer','header', 'partenaires', 'services'],
+    ns: ['common', 'home', 'auth', 'annonces', 'annonceDetail', 'candidatures', 'compte', 'contact', 'deposer', 'footer', 'header', 'partenaires', 'services', 'cgu'],
     defaultNS: 'common',
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],

@@ -7,6 +7,7 @@ import Deposer from './pages/Deposer'
 import DepotAnnonce from './pages/DepotAnnonce'
 import DepotAnnonceDeux from './pages/DepotAnnonceDeux.tsx'
 import Partenaires from './pages/Partenaires'
+import PartenairesTous from './pages/PartenairesTous'
 import Contact from './pages/Contact'
 import CGU from './pages/CGU'
 import Services from './pages/Services'
@@ -58,6 +59,7 @@ export default function App() {
       <Route path="/depot_annonce" element={<DepotAnnonce />} />
       <Route path="/depot_annoncedeux" element={<DepotAnnonceDeux />} />
       <Route path="/partenaires" element={<Partenaires />} />
+      <Route path="/partenaires-tous" element={<PartenairesTous />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/cgu" element={<CGU />} />
       <Route path="/services" element={<Services />} />

@@ -66,8 +66,10 @@
   "partners": {
     "title": "Nos Partenaires",
     "subtitle": "Ils contribuent le plus à ce projet solidaire",
-    "viewAll": "Voir tous",
+    "viewAll": "Voir tous les partenaires",
     "becomePartner": "Je veux devenir partenaire",
+    "allPartnersTitle": "Tous les partenaires",
+    "allPartnersSubtitle": "Retrouvez ici tous les partenaires présents sur Sarintany'COLOC.",
     "empty": "Aucun partenaire disponible",
     "loading": "Chargement..."
   },
