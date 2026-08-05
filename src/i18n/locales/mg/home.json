@@ -15,8 +15,9 @@
     "satisfaction": "4,8/5 fahafaham-po"
   },
   "featured": {
-    "title": "Fanambarana malaza",
+    "title": "Fanambarana farany",
     "subtitle": "Fifantenana amin'ity herinandro ity, nohamarinin'ny ekipanay",
+    "viewAll": "Hijery rehetra",
     "list": "Lisitra",
     "map": "Sarintany",
     "verified": "Voamarina",
@@ -55,6 +56,12 @@
         "description": "Alefaso hafatra voaaro. Tsy misy saram-pandraharahana, 100% maimaim-poana."
       }
     ]
+    ,
+    "baseline": {
+      "title": "SEHATRA NATERIN'NY COLOC, HO AN'NY MPIARA-MONINA REHETRA",
+      "desc": "Maimaim-poana ho an'ny mpifanampy rehetra ny serivisy. Voamarina ny fanambarana izay avoaka mba hiantohana ny fiarovana ny tsirairay.",
+      "quote": "\"Tadiavo ny trano fiarahamoninao, manerana an'i Madagasikara.\""
+    }
   },
   "partners": {
     "title": "Ny Mpiara-miasa",

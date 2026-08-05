@@ -15,8 +15,9 @@
     "satisfaction": "4,8/5 satisfaction"
   },
   "featured": {
-    "title": "Annonces vedettes",
+    "title": "Dernières annonces",
     "subtitle": "Sélection de la semaine, vérifiée par notre équipe",
+    "viewAll": "Voir toutes",
     "list": "Liste",
     "map": "Carte",
     "verified": "Vérifiée",
@@ -55,11 +56,18 @@
         "description": "Envoie un message sécurisé. Aucune commission, 100% gratuit."
       }
     ]
+    ,
+    "baseline": {
+      "title": "UNE PLATEFORME NÉE D'UNE COLOC, POUR TOUTES LES COLOCS",
+      "desc": "Le service est gratuit pour tous les colocataires. Les annonces publiées sont vérifiées afin de garantir la sécurité de chacun.",
+      "quote": "\"Trouves ta colocation, partout à Madagascar.\""
+    }
   },
   "partners": {
     "title": "Nos Partenaires",
-    "subtitle": "Ils nous font confiance",
+    "subtitle": "Ils contribuent le plus à ce projet solidaire",
     "viewAll": "Voir tous",
+    "becomePartner": "Je veux devenir partenaire",
     "empty": "Aucun partenaire disponible",
     "loading": "Chargement..."
   },
