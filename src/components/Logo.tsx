@@ -18,8 +18,8 @@ export function LogoSVG({ height = 28 }: { height?: number }) {
 export function LogoName() {
   return (
     <span className="font-bebas text-[17px] tracking-wide">
-      <span style={{ color: '#46BDD6' }}>SARINTANY'</span>
-      <span style={{ color: '#99CC33' }}>COLOC</span>
+      <span style={{ color: '#46BDD6' }}>Coloc’KOO</span>
+      <span style={{ color: '#99CC33' }}>Miara-Trano</span>
     </span>
   )
 }
