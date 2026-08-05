@@ -1139,7 +1139,7 @@ export default function Annonces() {
                     Voir les profils qui recherchent aussi à {searchedCityLabel}
                   </a>
                   <a
-                    href={`/depot_annonce?ville=${encodeURIComponent(
+                    href={`/depot_annoncedeux?ville=${encodeURIComponent(
                       searchedCityLabel
                     )}`}
                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-sc-cy text-white text-sm font-medium hover:bg-sc-cy-d transition-colors shadow-md rounded-xl"
@@ -1174,7 +1174,7 @@ export default function Annonces() {
                   className="cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => (window.location.href = `/annonces/${l.id}`)}
                 >
-                  <ListingCard l={l} compact />
+                  <ListingCard l={l}/>
                 </div>
               ))}
             </div>
