@@ -77,16 +77,16 @@ export function PartnersSection({ partners, loading }: PartnersSectionProps) {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
           <Link
-            to="/partenaires"
+            to="/partenaires-tous"
             className="inline-flex items-center justify-center rounded-full border border-[#70D8F5] bg-white px-5 py-2.5 text-xs font-semibold text-[#0094AF] transition hover:bg-[#F0FCFF]"
           >
-            Voir tous les partenaires
+            {t('home:partners.viewAll')}
           </Link>
           <Link
             to="/partenaires#contact"
             className="inline-flex items-center justify-center rounded-full bg-[#2CB3D3] px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#28a0bf]"
           >
-            Je veux devenir partenaire
+            {t('home:partners.becomePartner')}
           </Link>
         </div>
       </div>

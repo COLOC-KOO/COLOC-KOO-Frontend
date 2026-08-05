@@ -66,8 +66,11 @@
   "partners": {
     "title": "Ny Mpiara-miasa",
     "subtitle": "Matoky anay izy ireo",
-    "viewAll": "Hijery rehetra",
-    "empty": "Tsy misy mpiara-miara",
+    "viewAll": "Hijery ny mpiara-miasa rehetra",
+    "becomePartner": "Te-ho mpiara-miasa aho",
+    "allPartnersTitle": "Ny mpiara-miasa rehetra",
+    "allPartnersSubtitle": "Hahita eto ny mpiara-miasa rehetra ao amin'ny Sarintany'COLOC ianao.",
+    "empty": "Tsy misy mpiara-miasa",
     "loading": "Entana..."
   },
   "cta": {
