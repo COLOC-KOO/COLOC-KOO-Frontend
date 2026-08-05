@@ -15,8 +15,9 @@
     "satisfaction": "4.8/5 satisfaction"
   },
   "featured": {
-    "title": "Featured listings",
+    "title": "Latest listings",
     "subtitle": "This week's selection, verified by our team",
+    "viewAll": "View all",
     "list": "List",
     "map": "Map",
     "verified": "Verified",
@@ -55,11 +56,18 @@
         "description": "Send a secure message. No commission, 100% free."
       }
     ]
+    ,
+    "baseline": {
+      "title": "A PLATFORM BORN FROM A FLATSHARE, FOR ALL FLATMATES",
+      "desc": "The service is free for all housemates. Published listings are verified to ensure everyone's safety.",
+      "quote": "\"Find your flatshare, everywhere in Madagascar.\""
+    }
   },
   "partners": {
     "title": "Our Partners",
-    "subtitle": "They trust us",
+    "subtitle": "They contribute most to this solidarity project",
     "viewAll": "View all",
+    "becomePartner": "I want to become a partner",
     "empty": "No partners available",
     "loading": "Loading..."
   },
