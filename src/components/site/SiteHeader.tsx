@@ -1,13 +1,14 @@
-// components/SiteHeader.tsx
-import React, { useEffect, useMemo, useState, useRef } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+﻿// components/SiteHeader.tsx
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Menu, User, X, ChevronDown, Home, Search, Plus, Users, Phone, Globe, LogOut, UserCircle, Settings, HelpCircle, ConciergeBell, Leaf } from 'lucide-react'
-import { Logo } from '../Logo'
+import { Menu, User, X, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell } from 'lucide-react'
+import { Logo, LogoMark } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
 import { useAuth } from '../../lib/auth'
 import { useConfig } from '../../lib/config'
+import { api } from '../../lib/api'
 import { cn } from '../../lib/utils'
 
 const LANGUAGE_STORAGE_KEY = 'colockoo_language'
@@ -18,16 +19,24 @@ const navItems = [
   { to: '/depot_annonce', label: 'post', icon: Plus },
   { to: '/partenaires', label: 'partners', icon: Users },
   { to: '/contact', label: 'contact', icon: Phone },
-  { to: '/services', label: 'services', icon: ConciergeBell }
+  { to: '/services', label: 'services', icon: Bell }
 ]
 
-// Langues avec leurs informations complètes
-// 🇺🇸 Drapeau américain pour l'anglais
 const languageOptions = [
   { code: 'FR' as const, label: 'Français', nativeName: 'Français', flagCode: 'fr' },
   { code: 'MG' as const, label: 'Malagasy', nativeName: 'Malagasy', flagCode: 'mg' },
-  { code: 'EN' as const, label: 'English', nativeName: 'English', flagCode: 'us' } 
+  { code: 'EN' as const, label: 'English', nativeName: 'English', flagCode: 'us' }
 ]
+
+type AppNotification = {
+  id_notification: number
+  titre: string
+  texte: string
+  est_lue: number
+  type_notification: string
+  date_creation: string
+  lien: string | null
+}
 
 export function SiteHeader() {
   const { t, i18n } = useTranslation(['header', 'common'])
@@ -35,22 +44,23 @@ export function SiteHeader() {
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<'FR' | 'MG' | 'EN'>('FR')
-  const [scrolled, setScrolled] = useState(false)
+  const [search, setSearch] = useState('')
   const [liteMode, setLiteMode] = useState(false)
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [showNotif, setShowNotif] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const location = useLocation()
+  const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { config } = useConfig()
   const userMenuRef = useRef<HTMLDivElement>(null)
   const languageMenuRef = useRef<HTMLDivElement>(null)
+  const notifRef = useRef<HTMLDivElement>(null)
 
   const partnerEnabled = config?.PARTENAIRE_VISIBILITY !== false
 
-  // TOUJOURS afficher les 3 langues
-  const availableLanguages = useMemo(() => {
-    return languageOptions
-  }, [])
+  const availableLanguages = useMemo(() => languageOptions, [])
 
-  // INITIALISER la langue depuis localStorage ou i18n
   useEffect(() => {
     const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as 'FR' | 'MG' | 'EN' | null
     if (stored && availableLanguages.some((item) => item.code === stored)) {
@@ -59,14 +69,17 @@ export function SiteHeader() {
       return
     }
 
-    if (availableLanguages.length > 0 && !availableLanguages.some((item) => item.code === selectedLanguage)) {
-      const defaultLang = availableLanguages[0]?.code ?? 'FR'
-      setSelectedLanguage(defaultLang)
-      i18n.changeLanguage(defaultLang.toLowerCase())
+    const code = i18n.language.toUpperCase() as 'FR' | 'MG' | 'EN'
+    if (availableLanguages.some((item) => item.code === code)) {
+      setSelectedLanguage(code)
+      return
     }
-  }, [availableLanguages, i18n, selectedLanguage])
 
-  // INITIALISER le mode Lite depuis localStorage
+    const defaultLang = availableLanguages[0]?.code ?? 'FR'
+    setSelectedLanguage(defaultLang)
+    i18n.changeLanguage(defaultLang.toLowerCase())
+  }, [availableLanguages, i18n])
+
   useEffect(() => {
     const stored = localStorage.getItem(LITE_MODE_STORAGE_KEY)
     if (stored === 'true') {
@@ -75,15 +88,10 @@ export function SiteHeader() {
   }, [])
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotif(false)
+      }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false)
       }
@@ -95,7 +103,35 @@ export function SiteHeader() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // CHANGER LA LANGUE
+  useEffect(() => {
+    if (!user) {
+      setNotifications([])
+      setUnreadCount(0)
+      return
+    }
+
+    api.notifications()
+      .then((data) => {
+        setNotifications(data)
+      })
+      .catch(() => setNotifications([]))
+  }, [user])
+
+  useEffect(() => {
+    setUnreadCount(notifications.filter((item) => item.est_lue === 0).length)
+  }, [notifications])
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const query = search.trim()
+    if (query) {
+      navigate(`/profils-recherche-logement?ville=${encodeURIComponent(query)}`)
+    } else {
+      navigate('/profils-recherche-logement')
+    }
+    setOpen(false)
+  }
+
   const handleLanguageChange = (code: 'FR' | 'MG' | 'EN') => {
     setSelectedLanguage(code)
     localStorage.setItem(LANGUAGE_STORAGE_KEY, code)
@@ -103,18 +139,15 @@ export function SiteHeader() {
     setLanguageMenuOpen(false)
   }
 
-  // BASCULER LE MODE LITE (économie de data)
   const handleToggleLiteMode = () => {
     setLiteMode((prev) => {
       const next = !prev
       localStorage.setItem(LITE_MODE_STORAGE_KEY, String(next))
-      // Permet aux autres composants (ex: LazyImage) de réagir en direct
       window.dispatchEvent(new CustomEvent('litemodechange', { detail: { liteMode: next } }))
       return next
     })
   }
 
-  // Récupérer la langue actuelle pour l'affichage
   const currentLanguage = availableLanguages.find(
     (item) => item.code.toLowerCase() === i18n.language
   ) ?? availableLanguages[0]
@@ -153,76 +186,67 @@ export function SiteHeader() {
   const getAccountMenuTarget = () => (isColocataire ? '/compte?tab=favoris' : '/compte?tab=dossier')
   const getAccountMenuLabel = () => (isColocataire ? t('myFavorites', { ns: 'header' }) : t('myAnnouncements', { ns: 'header' }))
 
-  // Fonction pour obtenir le label traduit d'un item de navigation
   const getNavLabel = (labelKey: string): string => {
     return t(labelKey, { ns: 'header' })
   }
 
+  const markAllRead = async () => {
+    try {
+      await api.markNotificationsRead()
+      setNotifications((prev) => prev.map((item) => ({ ...item, est_lue: 1 })))
+    } catch {
+      // silent
+    }
+  }
+
+  const handleNotificationClick = async (notification: AppNotification) => {
+    setShowNotif(false)
+    if (!notification.lien) return
+    try {
+      if (notification.est_lue === 0) {
+        await api.markNotificationRead(notification.id_notification)
+        setNotifications((prev) => prev.map((item) => item.id_notification === notification.id_notification ? { ...item, est_lue: 1 } : item))
+      }
+    } catch {
+      // silent
+    }
+    navigate(notification.lien)
+  }
+
   return (
-    <header className={cn(
-      'sticky top-0 z-50 transition-all duration-300 w-full',
-      scrolled 
-        ? 'bg-white/95 backdrop-blur-xl shadow-lg border-b border-border/50' 
-        : 'bg-white/90 backdrop-blur-sm border-b border-border'
-    )}>
-      <div className="w-full px-4 md:px-6 lg:px-8 h-16 md:h-20 flex items-center gap-4">
-        {/* Logo */}
+    <header className="fixed top-0 left-0 z-50 w-full bg-white border-b border-border">
+      <div className="w-full px-3 sm:px-5 h-14 flex items-center justify-between gap-1.5 sm:gap-2.5">
         <div className="flex-shrink-0">
-          <Logo />
+          <Link to="/" className="sm:hidden flex items-center gap-1" aria-label="Accueil">
+            <LogoMark className="h-8 w-8" />
+            <span className="bebas flex flex-col whitespace-nowrap text-[13px] leading-[0.85]">
+              <span className="text-[--brand-cyan-dark]">Coloc’KOO</span>
+              <span className="text-[--brand-green-dark]">Miara-Trano</span>
+            </span>
+          </Link>
+          <div className="hidden sm:block">
+          <Logo small />
+          </div>
         </div>
-        
-        {/* Navigation Desktop */}
-        <nav className="hidden lg:flex items-center gap-1 ml-6">
-          {visibleNavItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.to)
-            const label = getNavLabel(item.label)
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  'relative px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 group',
-                  isActive
-                    ? 'text-brand-cyan-dark bg-brand-cyan-light/80'
-                    : 'text-foreground/70 hover:text-foreground hover:bg-muted'
-                )}
-              >
-                <item.icon className={cn(
-                  'w-4 h-4 transition-transform duration-200',
-                  isActive ? 'text-brand-cyan' : 'opacity-60 group-hover:opacity-100',
-                  'group-hover:scale-110'
-                )} />
-                <span>{label}</span>
-                {isActive && (
-                  <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-brand-cyan rounded-full" />
-                )}
-              </Link>
-            )
-          })}
-        </nav>
 
-        <div className="flex-1" />
-
-        {/* Actions Desktop */}
-        <div className="hidden lg:flex items-center gap-3">
-          {/* Lite Mode Toggle - économie de data */}
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
           <button
             type="button"
             onClick={handleToggleLiteMode}
             aria-pressed={liteMode}
             aria-label={liteMode ? 'Désactiver le mode Lite' : 'Activer le mode Lite'}
             className={cn(
-              'flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-full border transition-all duration-200',
+              'inline-flex items-center gap-1 px-1.5 sm:px-2 py-1.5 border rounded-lg text-xs font-bold transition-colors',
               liteMode
                 ? 'border-brand-green/40 bg-brand-green/10 text-brand-green-dark'
                 : 'border-border/50 hover:border-brand-cyan/30 hover:bg-muted/80 text-foreground/70'
             )}
           >
-            <Leaf className={cn('w-4 h-4', liteMode ? 'text-brand-green' : 'opacity-60')} />
-            <span className="font-semibold">Lite</span>
+            <Leaf className={cn('w-3.5 h-3.5', liteMode ? 'text-brand-green' : 'opacity-60')} />
+            <span className="hidden lg:inline">Lite</span>
             <span
               className={cn(
-                'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-colors duration-200',
+                'px-1 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide transition-colors duration-200',
                 liteMode ? 'bg-brand-green text-white' : 'bg-muted text-muted-foreground'
               )}
             >
@@ -230,26 +254,24 @@ export function SiteHeader() {
             </span>
           </button>
 
-          {/* Language Selector avec les 3 langues */}
           <div className="relative" ref={languageMenuRef}>
             <button
               type="button"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border border-border/50 hover:border-brand-cyan/30 hover:bg-muted/80 transition-all duration-200 group"
+              className="flex items-center gap-1 px-2 py-1.5 border border-border rounded-lg bg-white hover:bg-muted transition-colors"
               onClick={() => setLanguageMenuOpen((prev) => !prev)}
               aria-expanded={languageMenuOpen}
               aria-haspopup="true"
             >
-              <FlagIcon code={selectedLanguageOption?.code || 'FR'} size="md" />
-              <span className="font-semibold text-sm">{selectedLanguageOption?.code || 'FR'}</span>
+              <FlagIcon code={selectedLanguageOption?.code || 'FR'} size="sm" />
+              <span className="text-xs font-bold text-foreground">{selectedLanguageOption?.code || 'FR'}</span>
               <ChevronDown className={cn(
-                "w-3.5 h-3.5 opacity-60 transition-transform duration-200",
-                languageMenuOpen && "rotate-180"
+                'hidden sm:block w-3.5 h-3.5 opacity-60 transition-transform duration-200',
+                languageMenuOpen && 'rotate-180'
               )} />
             </button>
 
-            {/* Menu avec les 3 langues */}
             {languageMenuOpen && availableLanguages.length > 0 && (
-              <div className="absolute right-0 top-full mt-2 min-w-[220px] rounded-2xl border border-border/50 bg-white shadow-xl overflow-hidden z-20 animate-in fade-in-0 zoom-in-95 duration-150">
+              <div className="absolute right-0 top-[calc(100%+6px)] min-w-[180px] rounded-xl border border-border bg-white shadow-xl overflow-hidden z-20">
                 <div className="p-1">
                   {availableLanguages.map((language) => (
                     <button
@@ -257,7 +279,7 @@ export function SiteHeader() {
                       type="button"
                       onClick={() => handleLanguageChange(language.code)}
                       className={cn(
-                        'w-full text-left px-4 py-2.5 text-sm transition-all duration-150 flex items-center gap-3 rounded-xl hover:bg-muted',
+                        'w-full text-left px-3.5 py-2.5 text-sm transition-colors flex items-center gap-3 hover:bg-muted',
                         language.code.toLowerCase() === i18n.language
                           ? 'bg-brand-cyan/10 text-brand-cyan-dark font-semibold'
                           : 'text-foreground/80 hover:text-foreground'
@@ -267,8 +289,8 @@ export function SiteHeader() {
                         code={language.code} 
                         size="md"
                         className={cn(
-                          "transition-transform duration-200",
-                          language.code.toLowerCase() === i18n.language && "scale-110"
+                          'transition-transform duration-200',
+                          language.code.toLowerCase() === i18n.language && 'scale-110'
                         )}
                       />
                       <span className="flex-1">
@@ -287,110 +309,148 @@ export function SiteHeader() {
             )}
           </div>
 
-          {/* User Actions */}
           {user ? (
-            <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-muted/80 transition-all duration-200 group"
-              >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden">
-                  {profileImageUrl ? (
-                    <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
-                  ) : (
-                    getUserInitials()
+            <div className="flex items-center gap-2">
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setShowNotif((prev) => !prev)}
+                  className="relative w-9 h-9 border border-border rounded-lg bg-white flex items-center justify-center text-foreground hover:bg-muted transition-colors"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {unreadCount}
+                    </span>
                   )}
-                </div>
-                <ChevronDown className={cn(
-                  "w-3.5 h-3.5 opacity-60 transition-transform duration-200",
-                  userMenuOpen && "rotate-180"
-                )} />
-              </button>
+                </button>
 
-              {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 min-w-[240px] rounded-2xl border border-border/50 bg-white shadow-xl overflow-hidden z-20 animate-in fade-in-0 zoom-in-95 duration-150">
-                  <div className="p-4 border-b border-border/50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden">
-                        {profileImageUrl ? (
-                          <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
-                        ) : (
-                          getUserInitials()
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold truncate">
-                          {getUserDisplayName()}
+                {showNotif && (
+                  <div className="absolute top-[calc(100%+8px)] right-0 w-80 max-w-[90vw] bg-white border border-border rounded-xl shadow-xl z-30 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+                      <span className="font-semibold text-sm text-foreground">{t('notifications', { ns: 'header' })}</span>
+                      <button
+                        type="button"
+                        onClick={markAllRead}
+                        className="text-xs font-semibold text-brand-cyan hover:text-brand-cyan-dark transition-colors"
+                      >
+                        {t('markAllRead', { ns: 'header' })}
+                      </button>
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-sm text-muted-foreground">{t('noNotifications', { ns: 'header' })}</div>
+                      ) : (
+                        notifications.map((notification) => (
+                          <button
+                            key={notification.id_notification}
+                            type="button"
+                            onClick={() => handleNotificationClick(notification)}
+                            className={cn(
+                              'w-full text-left px-4 py-3 border-b border-border/50 transition-colors',
+                              notification.est_lue === 0 ? 'bg-brand-cyan/10 hover:bg-brand-cyan/20' : 'hover:bg-muted'
+                            )}
+                          >
+                            <div className="text-sm font-medium text-foreground">
+                              {notification.titre}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">{notification.texte}</p>
+                            <div className="text-[10px] text-muted-foreground mt-2">{notification.date_creation}</div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen((prev) => !prev)}
+                  className="flex items-center gap-1.5 py-1 pl-1 pr-2 border border-border rounded-2xl bg-white hover:bg-muted transition-colors"
+                >
+                  <div className="w-[30px] h-[30px] rounded-full bg-brand-green text-white text-xs font-bold flex items-center justify-center overflow-hidden">
+                    {profileImageUrl ? (
+                      <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
+                    ) : (
+                      getUserInitials()
+                    )}
+                  </div>
+                  <ChevronDown className={cn(
+                    'w-3.5 h-3.5 opacity-60 transition-transform duration-200',
+                    userMenuOpen && 'rotate-180'
+                  )} />
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-[calc(100%+8px)] min-w-[224px] rounded-xl border border-border bg-white shadow-xl overflow-hidden z-20">
+                    <div className="p-4 border-b border-border/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-brand-green flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                          {profileImageUrl ? (
+                            <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
+                          ) : (
+                            getUserInitials()
+                          )}
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {user.email}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold truncate">
+                            {getUserDisplayName()}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {user.email}
+                          </div>
                         </div>
                       </div>
                     </div>
+                    <div className="p-1">
+                      <Link
+                        to="/compte?tab=profil"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
+                      >
+                        <UserCircle className="w-4 h-4 text-muted-foreground" />
+                        <span>{t('myProfile', { ns: 'header' })}</span>
+                      </Link>
+                      <Link
+                        to={getAccountMenuTarget()}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
+                      >
+                        <Home className="w-4 h-4 text-muted-foreground" />
+                        <span>{getAccountMenuLabel()}</span>
+                      </Link>
+                      <button
+                        onClick={() => { logout(); setUserMenuOpen(false) }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-red-50 text-red-600 transition-colors mt-1 border-t border-border/50 pt-2"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>{t('logout', { ns: 'header' })}</span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="p-1">
-                    <Link
-                      to="/compte?tab=profil"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
-                    >
-                      <UserCircle className="w-4 h-4 text-muted-foreground" />
-                      <span>{t('myProfile', { ns: 'header' })}</span>
-                    </Link>
-                    <Link
-                      to={getAccountMenuTarget()}
-                      onClick={() => setUserMenuOpen(false)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
-                    >
-                      <Home className="w-4 h-4 text-muted-foreground" />
-                      <span>{getAccountMenuLabel()}</span>
-                    </Link>
-               
-                    
-                    <button
-                      onClick={() => { logout(); setUserMenuOpen(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-red-50 text-red-600 transition-colors mt-1 border-t border-border/50 pt-2"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>{t('logout', { ns: 'header' })}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ) : (
-            <>
+            <div className="flex items-center gap-1.5">
               <Link to="/auth">
-                <Button variant="outline" size="sm" className="rounded-xl border-2 hover:border-brand-cyan hover:bg-brand-cyan/5 transition-all duration-200">
+                <Button variant="outline" size="sm" className="h-8 px-2 sm:h-9 sm:px-3 rounded-lg border-border hover:bg-muted transition-colors">
                   {t('signin', { ns: 'header' })}
                 </Button>
               </Link>
-              <Link to="/compte?tab=dossier">
-                <Button size="sm" className="rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200">
+              <Link to="/compte?tab=dossier" className="hidden sm:block">
+                <Button size="sm" className="rounded-lg bg-brand-cyan hover:bg-brand-cyan-dark text-white transition-colors">
                   <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
                 </Button>
               </Link>
-            </>
+            </div>
           )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button 
-          className="lg:hidden p-2 hover:bg-muted/80 rounded-xl transition-colors relative"
-          onClick={() => setOpen(!open)}
-          aria-label={open ? t('closeMenu', { ns: 'header' }) : t('openMenu', { ns: 'header' })}
-        >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          {user && !open && (
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-brand-green rounded-full border-2 border-white animate-pulse" />
-          )}
-        </button>
       </div>
 
-      {/* Mobile Menu */}
       {open && (
-        <div className="lg:hidden border-t border-border/50 bg-white/98 backdrop-blur-lg px-4 py-4 flex flex-col gap-1 animate-in slide-in-from-top-5 duration-200">
-          {/* Navigation Mobile */}
+        <div className="sm:hidden border-t border-border bg-white px-4 py-4 flex flex-col gap-3">
           {visibleNavItems.map((item) => {
             const isActive = location.pathname.startsWith(item.to)
             const label = getNavLabel(item.label)
@@ -406,10 +466,7 @@ export function SiteHeader() {
                     : 'hover:bg-muted text-foreground/70 hover:text-foreground'
                 )}
               >
-                <item.icon className={cn(
-                  'w-4 h-4',
-                  isActive ? 'text-brand-cyan' : 'opacity-60'
-                )} />
+                <item.icon className={cn('w-4 h-4', isActive ? 'text-brand-cyan' : 'opacity-60')} />
                 {label}
                 {isActive && (
                   <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-cyan" />
@@ -417,9 +474,8 @@ export function SiteHeader() {
               </Link>
             )
           })}
-          
+
           <div className="border-t border-border/50 mt-3 pt-3 flex flex-col gap-3">
-            {/* Mobile Lite Mode Toggle */}
             <button
               type="button"
               onClick={handleToggleLiteMode}
@@ -441,8 +497,7 @@ export function SiteHeader() {
               </span>
             </button>
 
-            {/* Mobile Language Selector avec les 3 langues */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 mt-3">
               {availableLanguages.map((language) => (
                 <button
                   key={language.code}
@@ -469,51 +524,49 @@ export function SiteHeader() {
               ))}
             </div>
 
-            {/* Mobile User Actions */}
-            {user ? (
-              <>
-                <Link to={getAccountMenuTarget()} className="w-full" onClick={() => setOpen(false)}>
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white shadow-md hover:shadow-lg transition-all duration-200">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                      {profileImageUrl ? (
-                        <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
-                      ) : (
-                        getUserInitials()
-                      )}
-                    </div>
-                    <div className="flex-1 text-left">
-                      <div className="text-sm font-semibold">
-                        {getUserDisplayName()}
+            <div className="mt-4 space-y-3">
+              {user ? (
+                <>
+                  <Link to={getAccountMenuTarget()} className="w-full block" onClick={() => setOpen(false)}>
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white shadow-md hover:shadow-lg transition-all duration-200">
+                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                        {profileImageUrl ? (
+                          <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
+                        ) : (
+                          getUserInitials()
+                        )}
                       </div>
-                      <div className="text-xs opacity-80 truncate">{user.email}</div>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-semibold">
+                          {getUserDisplayName()}
+                        </div>
+                        <div className="text-xs opacity-80 truncate">{user.email}</div>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-                <button
-                  onClick={() => { 
-                    logout(); 
-                    setOpen(false); 
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-red-200 hover:border-red-300 hover:bg-red-50 text-red-600 transition-all duration-200"
-                >
-                  <LogOut className="w-4 h-4" />
-                  {t('logout', { ns: 'header' })}
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/auth" className="w-full" onClick={() => setOpen(false)}>
-                  <Button variant="outline" className="w-full rounded-xl border-2" size="sm">
-                    {t('signin', { ns: 'header' })}
-                  </Button>
-                </Link>
-                <Link to="/compte?tab=dossier" className="w-full" onClick={() => setOpen(false)}>
-                  <Button className="w-full rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200" size="sm">
-                    <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
-                  </Button>
-                </Link>
-              </>
-            )}
+                  </Link>
+                  <button
+                    onClick={() => { logout(); setOpen(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-red-200 hover:border-red-300 hover:bg-red-50 text-red-600 transition-all duration-200"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                    {t('logout', { ns: 'header' })}
+                </>
+              ) : (
+                <>
+                  <Link to="/auth" className="w-full block" onClick={() => setOpen(false)}>
+                    <Button variant="outline" className="w-full rounded-xl border-2" size="sm">
+                      {t('signin', { ns: 'header' })}
+                    </Button>
+                  </Link>
+                  <Link to="/compte?tab=dossier" className="w-full block" onClick={() => setOpen(false)}>
+                    <Button className="w-full rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200" size="sm">
+                      <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
