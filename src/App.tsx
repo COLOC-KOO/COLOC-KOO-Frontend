@@ -8,6 +8,7 @@ import DepotAnnonce from './pages/DepotAnnonce'
 import DepotAnnonceDeux from './pages/DepotAnnonceDeux.tsx'
 import Partenaires from './pages/Partenaires'
 import Contact from './pages/Contact'
+import CGU from './pages/CGU'
 import Services from './pages/Services'
 import ProfilsRechercheLogement from './pages/ProfilsRechercheLogement'
 import Auth from './pages/Auth'
@@ -58,6 +59,7 @@ export default function App() {
       <Route path="/depot_annoncedeux" element={<DepotAnnonceDeux />} />
       <Route path="/partenaires" element={<Partenaires />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/cgu" element={<CGU />} />
       <Route path="/services" element={<Services />} />
       <Route path="/profils-recherche-logement" element={<ProfilsRechercheLogement />} />
       <Route path="/auth" element={<Auth />} />
