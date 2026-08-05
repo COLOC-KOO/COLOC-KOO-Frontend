@@ -64,6 +64,9 @@ export interface Listing {
   region?: string
   isBoosted?: boolean
   boostServiceId?: number | null
+  badge?: string
+  badgeColor?: string
+  chambreSurface?: number
 }
 
 export interface CityInfo {
