@@ -2,6 +2,10 @@
 import { LogoSVG, LogoName } from '../Logo'
 
 export default function Footer() {
+  const openCguPopup = () => {
+    window.open('/cgu', 'CGUPopup', 'width=900,height=700,noopener')
+  }
+
   return (
     <footer className="bg-[#2c2c2c] py-6 px-6 text-center mt-9">
       <div className="flex items-center justify-center gap-2.5 mb-2">
@@ -22,21 +26,25 @@ export default function Footer() {
         Immeuble ARO Ampefiloha, Étg.1 Esc.B, Porte B104, 101 Antananarivo, Madagascar
       </p>
       <div className="flex justify-center gap-3.5 flex-wrap">
-        {[
-          { to: '/cgu', label: 'Conditions générales d\'utilisation' },
-          { to: '/confidentialite', label: 'Politique de confidentialité RGPD' },
-          { to: '/donnees', label: 'Données personnelles' },
-          { to: '/contact', label: 'Contact' },
-          { to: '/partenaires', label: 'Partenaires' },
-        ].map(link => (
-          <Link
-            key={link.to}
-            to={link.to}
-            className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
-          >
-            {link.label}
-          </Link>
-        ))}
+        <button
+          type="button"
+          onClick={openCguPopup}
+          className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
+        >
+          Conditions générales d'utilisation
+        </button>
+        <Link
+          to="/contact"
+          className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
+        >
+          Contact
+        </Link>
+        <Link
+          to="/partenaires"
+          className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
+        >
+          Partenaires
+        </Link>
       </div>
       <p className="text-[10px] text-white/20 mt-4">
         © {new Date().getFullYear()} Sarintany'COLOC — Tous droits réservés
