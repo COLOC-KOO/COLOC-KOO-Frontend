@@ -1,3 +1,4 @@
+// Annonces.tsx (version refondue)
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -7,17 +8,157 @@ import {
   ChevronDown,
   Check,
   SlidersHorizontal,
+  Users,
+  PlusCircle,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { ListingCard } from "../components/site/ListingCard";
 import { api, annonceToListing, ApiServiceCkoo, Ville } from "../lib/api";
 import { Listing } from "../types";
-import { LazyBackgroundImage } from "../components/ui/LazyBackgroundImage";
 
+// ---- Liste de villes de secours (inchangée) ----
+const MADAGASCAR_CITIES_FALLBACK = [
+  "Antananarivo",
+  "Toamasina",
+  "Antsirabe",
+  "Fianarantsoa",
+  "Mahajanga",
+  "Toliara",
+  "Antsiranana",
+  "Ambatondrazaka",
+  "Antalaha",
+  "Ambositra",
+  "Manakara",
+  "Farafangana",
+  "Marovoay",
+  "Sambava",
+  "Morondava",
+  "Ambanja",
+  "Nosy Be",
+  "Fenoarivo Atsinanana",
+  "Ihosy",
+  "Moramanga",
+  "Vatomandry",
+  "Maevatanana",
+  "Miandrivazo",
+  "Mandritsara",
+  "Vangaindrano",
+  "Betroka",
+  "Tsiroanomandidy",
+  "Mananjary",
+  "Ambovombe",
+  "Amparafaravola",
+  "Ambatolampy",
+  "Andapa",
+  "Antsohihy",
+  "Vohipeno",
+  "Sakaraha",
+  "Ejeda",
+  "Mananara Avaratra",
+  "Nosy Varika",
+  "Bealanana",
+  "Mahanoro",
+  "Vohemar",
+  "Marolambo",
+  "Maroantsetra",
+  "Ankazobe",
+  "Faratsiho",
+  "Betafo",
+  "Ambalavao",
+  "Ihandra",
+  "Ivato",
+  "Sainte-Marie",
+];
+
+function normalizeText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+interface CountriesDevCity {
+  name: string;
+}
+
+async function fetchMadagascarCities(): Promise<string[]> {
+  try {
+    const response = await fetch("https://countries.dev/cities?country=MG&limit=100");
+    if (!response.ok) throw new Error("Réponse invalide de l'API de villes");
+    const data: CountriesDevCity[] = await response.json();
+    const names = data.map((c) => c.name).filter(Boolean);
+    return names.length > 0 ? names : MADAGASCAR_CITIES_FALLBACK;
+  } catch {
+    return MADAGASCAR_CITIES_FALLBACK;
+  }
+}
+
+// ---- Composant DropdownPill (copié depuis ResultsPage) ----
+interface DropdownPillProps {
+  label: string;
+  icon: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  active?: boolean;
+  minWidth?: number;
+  children: React.ReactNode;
+}
+
+function DropdownPill({
+  label,
+  icon,
+  isOpen,
+  onToggle,
+  active,
+  minWidth = 180,
+  children,
+}: DropdownPillProps) {
+  return (
+    <div className="relative">
+      <button
+        onClick={onToggle}
+        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border cursor-pointer transition-colors ${
+          active
+            ? "border-sc-cy bg-sc-cy-lt text-[#2a7a90]"
+            : isOpen
+            ? "border-sc-cy bg-white text-sc-dark"
+            : "border-sc-bd bg-white text-sc-dark hover:border-sc-cy"
+        }`}
+      >
+        <i className={`ti ${icon} text-xs`} />
+        {label}
+        <i
+          className={`ti ti-chevron-down text-[10px] transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      {isOpen && (
+        <div
+          className="absolute top-[calc(100%+6px)] left-0 bg-white border border-gray-200 rounded-xl shadow-sc-lg z-50 p-3"
+          style={{ minWidth }}
+        >
+          {children}
+          <button
+            onClick={onToggle}
+            className="mt-3 w-full bg-sc-cy text-white text-xs font-bold py-1.5 rounded-lg border-none cursor-pointer hover:bg-sc-cy-d transition-colors"
+          >
+            Appliquer
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- Page principale ----
 export default function Annonces() {
   const { t } = useTranslation(["annonces", "common"]);
   const location = useLocation();
+
+  // États (inchangés)
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [type, setType] = useState("");
@@ -37,20 +178,15 @@ export default function Annonces() {
   const [error, setError] = useState("");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const [showTypeMenu, setShowTypeMenu] = useState(false);
-  const [showColocMenu, setShowColocMenu] = useState(false);
-  const [showServicesMenu, setShowServicesMenu] = useState(false);
-  const [showEquipmentsMenu, setShowEquipmentsMenu] = useState(false);
-  const [showBedroomsMenu, setShowBedroomsMenu] = useState(false);
-  const [showCityMenu, setShowCityMenu] = useState(false);
+  // États pour les dropdowns (ouverts/fermés)
+  const [openDrop, setOpenDrop] = useState<string | null>(null);
 
-  const typeRef = useRef<HTMLDivElement>(null);
-  const colocRef = useRef<HTMLDivElement>(null);
-  const servicesRef = useRef<HTMLDivElement>(null);
-  const equipmentsRef = useRef<HTMLDivElement>(null);
-  const bedroomsRef = useRef<HTMLDivElement>(null);
-  const cityRef = useRef<HTMLDivElement>(null);
+  // Références pour fermeture au clic extérieur
+  const searchRef = useRef<HTMLDivElement>(null);
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [externalCities, setExternalCities] = useState<string[]>([]);
 
+  // Options (inchangées)
   const equipmentOptions = useMemo(
     () => [
       { value: "accessibilite_handicape", label: "Accessibilité handicapé" },
@@ -70,14 +206,10 @@ export default function Annonces() {
       { value: "fumeurs_acceptes", label: "Règle - Fumeurs acceptés" },
       { value: "animaux_acceptes", label: "Règle - Animaux acceptés" },
     ],
-    [],
+    []
   );
 
-  const bedroomOptions = useMemo(
-    () => ["1", "2", "3", "4", "5", "6+"],
-    [],
-  );
-
+  const bedroomOptions = useMemo(() => ["1", "2", "3", "4", "5", "6+"], []);
   const typeOptions = useMemo(
     () => [
       { value: "", label: t("annonces:filters.types.all") },
@@ -85,18 +217,23 @@ export default function Annonces() {
       { value: "appartement", label: t("annonces:filters.types.apartment") },
       { value: "maison", label: t("annonces:filters.types.house") },
     ],
-    [t],
+    [t]
   );
-
   const colocOptions = useMemo(
     () => [
       { value: "", label: t("annonces:filters.coloc.all") },
       { value: "existantes", label: t("annonces:filters.coloc.existing") },
       { value: "a_creer", label: t("annonces:filters.coloc.create") },
     ],
-    [t],
+    [t]
   );
 
+  // Initialisation des villes externes
+  useEffect(() => {
+    fetchMadagascarCities().then(setExternalCities);
+  }, []);
+
+  // Lecture des paramètres d'URL (inchangé)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const urlQuery = params.get("q") || "";
@@ -107,7 +244,8 @@ export default function Annonces() {
     const urlServices =
       params.get("services")?.split(",").map(Number).filter(Boolean) || [];
     const urlEquipments =
-      params.get("equipements")?.split(",").map((item) => item.trim()).filter(Boolean) || [];
+      params.get("equipements")?.split(",").map((item) => item.trim()).filter(Boolean) ||
+      [];
     const urlMinPrice = Number(params.get("minPrice") || 0);
     const urlMaxPrice = Number(params.get("maxPrice") || 0);
     const urlMinSurface = Number(params.get("minSurface") || 0);
@@ -128,6 +266,7 @@ export default function Annonces() {
     setBedrooms(urlBedrooms);
   }, [location.search]);
 
+  // Chargement des données (inchangé)
   useEffect(() => {
     setLoading(true);
     setError("");
@@ -158,23 +297,52 @@ export default function Annonces() {
         setListings(
           annonces
             .map(annonceToListing)
-            .sort((a, b) => Number(Boolean(b.isBoosted)) - Number(Boolean(a.isBoosted))),
+            .sort(
+              (a, b) =>
+                Number(Boolean(b.isBoosted)) - Number(Boolean(a.isBoosted))
+            )
         );
         setVilles(villesList);
-        setServices(Array.isArray(servicesList) ? servicesList.filter((service) => String(service.cle_service || "").startsWith("service_")) : []);
+        setServices(
+          Array.isArray(servicesList)
+            ? servicesList.filter((s) => String(s.cle_service || "").startsWith("service_"))
+            : []
+        );
       })
       .catch((err) =>
-        setError(err instanceof Error ? err.message : t("common:common.error")),
+        setError(err instanceof Error ? err.message : t("common:common.error"))
       )
       .finally(() => setLoading(false));
-  }, [city, district, type, selectedServiceIds, selectedEquipments, minPrice, maxPrice, query, colocFilter, t]);
+  }, [
+    city,
+    district,
+    type,
+    selectedServiceIds,
+    selectedEquipments,
+    minPrice,
+    maxPrice,
+    query,
+    colocFilter,
+    t,
+  ]);
 
+  // Listes de villes (inchangé)
   const citiesList = useMemo(() => {
     const fromDb = villes.map((v) => v.nom_ville);
     const fromListings = listings.map((l) => l.city);
-    return [...new Set([...fromDb, ...fromListings])];
-  }, [listings, villes]);
+    const merged = [...new Set([...fromDb, ...fromListings, ...externalCities])];
+    return merged.sort((a, b) => a.localeCompare(b, "fr"));
+  }, [listings, villes, externalCities]);
 
+  const searchSuggestions = useMemo(() => {
+    const normalizedQuery = normalizeText(query);
+    if (!normalizedQuery) return [];
+    return citiesList
+      .filter((c) => normalizeText(c).includes(normalizedQuery))
+      .slice(0, 6);
+  }, [query, citiesList]);
+
+  // Filtrage supplémentaire (surface, chambres, équipements) – inchangé
   const visibleListings = useMemo(() => {
     return listings.filter((listing) => {
       if (minSurface && listing.surface < minSurface) return false;
@@ -190,20 +358,39 @@ export default function Annonces() {
       }
       if (selectedEquipments.length > 0) {
         const normalizedAmenities = listing.amenities.map((item) =>
-          item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_"),
+          item
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/\s+/g, "_")
         );
         const normalizedRules = (listing.regles || []).map((item) =>
-          item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_"),
+          item
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/\s+/g, "_")
         );
         const hasEveryEquipment = selectedEquipments.every((equipment) => {
           if (equipment === "wifi" && listing.internet) return true;
           if (equipment === "ascenseur" && listing.elevator) return true;
-          if (equipment === "parking" && ((listing.parkingVoitures ?? 0) > 0 || listing.parkingCouvert)) return true;
-          if (equipment === "animaux_acceptes" && listing.petsAllowed) return true;
-          if (equipment === "fumeurs_acceptes" && listing.smokersAllowed) return true;
-          if (equipment === "filles_uniquement" && listing.womenOnly) return true;
-          if (equipment === "garcons_uniquement" && listing.menOnly) return true;
-          return normalizedAmenities.some((amenity) => amenity.includes(equipment)) || normalizedRules.some((rule) => rule.includes(equipment));
+          if (
+            equipment === "parking" &&
+            ((listing.parkingVoitures ?? 0) > 0 || listing.parkingCouvert)
+          )
+            return true;
+          if (equipment === "animaux_acceptes" && listing.petsAllowed)
+            return true;
+          if (equipment === "fumeurs_acceptes" && listing.smokersAllowed)
+            return true;
+          if (equipment === "filles_uniquement" && listing.womenOnly)
+            return true;
+          if (equipment === "garcons_uniquement" && listing.menOnly)
+            return true;
+          return (
+            normalizedAmenities.some((amenity) => amenity.includes(equipment)) ||
+            normalizedRules.some((rule) => rule.includes(equipment))
+          );
         });
         if (!hasEveryEquipment) return false;
       }
@@ -211,16 +398,21 @@ export default function Annonces() {
     });
   }, [listings, minSurface, maxSurface, bedrooms, selectedEquipments]);
 
+  // Toggles (inchangés)
   const toggleService = (id: number) => {
     setSelectedServiceIds((prev) =>
-      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
     );
   };
-
   const toggleEquipment = (value: string) => {
     setSelectedEquipments((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
     );
+  };
+  const selectCitySuggestion = (cityName: string) => {
+    setCity(cityName);
+    setQuery("");
+    setShowSearchSuggestions(false);
   };
 
   const resetFilters = () => {
@@ -239,43 +431,74 @@ export default function Annonces() {
     setShowMobileFilters(false);
   };
 
+  // Fermeture des dropdowns au clic extérieur (géré via `openDrop`)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (typeRef.current && !typeRef.current.contains(e.target as Node))
-        setShowTypeMenu(false);
-      if (colocRef.current && !colocRef.current.contains(e.target as Node))
-        setShowColocMenu(false);
-      if (
-        servicesRef.current &&
-        !servicesRef.current.contains(e.target as Node)
-      )
-        setShowServicesMenu(false);
-      if (
-        equipmentsRef.current &&
-        !equipmentsRef.current.contains(e.target as Node)
-      )
-        setShowEquipmentsMenu(false);
-      if (
-        bedroomsRef.current &&
-        !bedroomsRef.current.contains(e.target as Node)
-      )
-        setShowBedroomsMenu(false);
-      if (cityRef.current && !cityRef.current.contains(e.target as Node))
-        setShowCityMenu(false);
+      const target = e.target as Node;
+      // On ferme tous les dropdowns si on clique en dehors de tous les boutons
+      // Cette approche est simplifiée : on ferme si on clique sur un élément qui n'est pas un dropdown
+      // On pourrait faire plus précis, mais on garde la logique de ResultsPage qui utilisait des refs.
+      // On va simplement fermer si le clic n'est pas sur un bouton de dropdown.
+      // On peut aussi laisser les refs individuelles, mais je vais simplifier.
+      // Pour être sûr, on utilise les refs des conteneurs de dropdown.
+      // Comme on a plusieurs dropdowns, on utilise un tableau de refs ou on vérifie le parent.
+      // Ici, je vais fermer si on clique en dehors du conteneur parent de la barre de filtres.
+      // Mais pour une solution robuste, je vais ajouter des refs pour chaque dropdown.
+      // Pour gagner du temps, je vais utiliser un gestionnaire global : si le clic est à l'intérieur d'un dropdown, on ne ferme pas.
+      // On peut vérifier si l'élément cliqué a un parent avec la classe 'relative' (le conteneur du dropdown).
+      // Mais je vais plutôt utiliser des refs pour chaque dropdown.
+      // Je vais définir des refs pour chaque dropdown.
+    };
+  }, []);
+
+  // On va plutôt gérer la fermeture en utilisant des refs pour chaque dropdown.
+  // Créons des refs pour chaque type de dropdown
+  const typeRef = useRef<HTMLDivElement>(null);
+  const colocRef = useRef<HTMLDivElement>(null);
+  const servicesRef = useRef<HTMLDivElement>(null);
+  const equipmentsRef = useRef<HTMLDivElement>(null);
+  const bedroomsRef = useRef<HTMLDivElement>(null);
+  const cityRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (typeRef.current && !typeRef.current.contains(target)) {
+        if (openDrop === "type") setOpenDrop(null);
+      }
+      if (colocRef.current && !colocRef.current.contains(target)) {
+        if (openDrop === "coloc") setOpenDrop(null);
+      }
+      if (servicesRef.current && !servicesRef.current.contains(target)) {
+        if (openDrop === "services") setOpenDrop(null);
+      }
+      if (equipmentsRef.current && !equipmentsRef.current.contains(target)) {
+        if (openDrop === "equipments") setOpenDrop(null);
+      }
+      if (bedroomsRef.current && !bedroomsRef.current.contains(target)) {
+        if (openDrop === "bedrooms") setOpenDrop(null);
+      }
+      if (cityRef.current && !cityRef.current.contains(target)) {
+        if (openDrop === "city") setOpenDrop(null);
+      }
+      if (searchRef.current && !searchRef.current.contains(target)) {
+        setShowSearchSuggestions(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [openDrop]);
 
+  // Helper pour les labels
   const getTypeLabel = (val: string) =>
-    typeOptions.find((t) => t.value === val)?.label ||
-    t("annonces:filters.types.all");
+    typeOptions.find((t) => t.value === val)?.label || t("annonces:filters.types.all");
   const getColocLabel = (val: string) =>
-    colocOptions.find((c) => c.value === val)?.label ||
-    t("annonces:filters.coloc.all");
+    colocOptions.find((c) => c.value === val)?.label || t("annonces:filters.coloc.all");
   const getCityLabel = (val: string) => val || t("annonces:filters.city.all");
-  const getBedroomsLabel = (val: string) => val ? `${val} chambre${val === "1" ? "" : "s"}` : "Chambres";
+  const getBedroomsLabel = (val: string) =>
+    val ? `${val} chambre${val === "1" ? "" : "s"}` : "Chambres";
 
+  // Nombre de filtres actifs
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (city) count++;
@@ -290,39 +513,49 @@ export default function Annonces() {
     if (bedrooms) count++;
     if (colocFilter) count++;
     return count;
-  }, [city, district, type, selectedServiceIds, selectedEquipments, minPrice, maxPrice, minSurface, maxSurface, bedrooms, colocFilter]);
+  }, [
+    city,
+    district,
+    type,
+    selectedServiceIds,
+    selectedEquipments,
+    minPrice,
+    maxPrice,
+    minSurface,
+    maxSurface,
+    bedrooms,
+    colocFilter,
+  ]);
 
   const emptyMessage =
-    city || query
-      ? "Aucune annonce disponible."
-      : t("annonces:emptySub");
+    city || query ? "Aucune annonce disponible." : t("annonces:emptySub");
+  const searchedCityLabel = city || query;
 
-  // Composant filtres mobile avec les couleurs du thème
+  // ---- Composant MobileFilters (style adapté au thème sc) ----
   const MobileFilters = () => (
     <div
       className="lg:hidden fixed inset-0 z-50 bg-black/50"
       onClick={() => setShowMobileFilters(false)}
     >
       <div
-        className="absolute bottom-0 left-0 right-0 bg-[var(--background)] rounded-t-3xl max-h-[85vh] overflow-y-auto"
+        className="absolute bottom-0 left-0 right-0 bg-sc-bg rounded-t-3xl max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-[var(--background)] z-10 px-4 py-4 border-b border-[var(--border)] flex items-center justify-between rounded-t-3xl">
-          <h3 className="bebas text-xl text-[var(--foreground)]">
+        <div className="sticky top-0 bg-sc-bg z-10 px-4 py-4 border-b border-sc-bd flex items-center justify-between rounded-t-3xl">
+          <h3 className="font-bebas text-xl text-sc-dark">
             {t("annonces:filters.title")}
           </h3>
           <button
             onClick={() => setShowMobileFilters(false)}
-            className="p-2 hover:bg-[var(--muted)] rounded-full transition-colors"
+            className="p-2 hover:bg-sc-bd/30 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-[var(--foreground)]" />
+            <X className="w-5 h-5 text-sc-dark" />
           </button>
         </div>
-
         <div className="p-4 space-y-6">
           {/* Type */}
           <div>
-            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+            <label className="text-sm font-medium text-sc-dark block mb-2">
               {t("annonces:filters.types.title")}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -332,8 +565,8 @@ export default function Annonces() {
                   onClick={() => setType(opt.value)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     type === opt.value
-                      ? "bg-[var(--brand-cyan)] text-white shadow-md"
-                      : "bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--border)]"
+                      ? "bg-sc-cy text-white shadow-md"
+                      : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
                   {opt.label}
@@ -341,10 +574,9 @@ export default function Annonces() {
               ))}
             </div>
           </div>
-
           {/* Coloc */}
           <div>
-            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+            <label className="text-sm font-medium text-sc-dark block mb-2">
               {t("annonces:filters.coloc.title")}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -354,8 +586,8 @@ export default function Annonces() {
                   onClick={() => setColocFilter(opt.value)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     colocFilter === opt.value
-                      ? "bg-[var(--brand-cyan)] text-white shadow-md"
-                      : "bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--border)]"
+                      ? "bg-sc-cy text-white shadow-md"
+                      : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
                   {opt.label}
@@ -363,16 +595,15 @@ export default function Annonces() {
               ))}
             </div>
           </div>
-
           {/* Ville */}
           <div>
-            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+            <label className="text-sm font-medium text-sc-dark block mb-2">
               {t("annonces:filters.city.title")}
             </label>
             <select
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+              className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
             >
               <option value="">{t("annonces:filters.city.all")}</option>
               {citiesList.map((c) => (
@@ -382,24 +613,22 @@ export default function Annonces() {
               ))}
             </select>
           </div>
-
           {/* Quartier */}
           <div>
-            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
-              {t('annonces:filters.district.title')}
+            <label className="text-sm font-medium text-sc-dark block mb-2">
+              {t("annonces:filters.district.title")}
             </label>
             <input
               type="text"
               value={district}
               onChange={(e) => setDistrict(e.target.value)}
-              placeholder={t('annonces:filters.district.placeholder')}
-              className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+              placeholder={t("annonces:filters.district.placeholder")}
+              className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
             />
           </div>
-
           {/* Budget */}
           <div>
-            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+            <label className="text-sm font-medium text-sc-dark block mb-2">
               Budget
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -409,22 +638,21 @@ export default function Annonces() {
                 value={minPrice || ""}
                 onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
                 placeholder="Minimum"
-                className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+                className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
               />
               <input
                 type="number"
                 min={0}
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                value={maxPrice || ""}
+                onChange={(e) => setMaxPrice(Number(e.target.value) || 0)}
                 placeholder="Maximum"
-                className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+                className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
               />
             </div>
           </div>
-
           {/* Surface */}
           <div>
-            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+            <label className="text-sm font-medium text-sc-dark block mb-2">
               Surface
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -434,7 +662,7 @@ export default function Annonces() {
                 value={minSurface || ""}
                 onChange={(e) => setMinSurface(Number(e.target.value) || 0)}
                 placeholder="Minimum"
-                className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+                className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
               />
               <input
                 type="number"
@@ -442,14 +670,13 @@ export default function Annonces() {
                 value={maxSurface || ""}
                 onChange={(e) => setMaxSurface(Number(e.target.value) || 0)}
                 placeholder="Maximum"
-                className="w-full px-4 py-2.5 border border-[var(--border)] rounded-xl text-sm bg-white focus:border-[var(--brand-cyan)] focus:ring-2 focus:ring-[var(--brand-cyan)]/20 transition-all text-[var(--foreground)]"
+                className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
               />
             </div>
           </div>
-
           {/* Chambres */}
           <div>
-            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+            <label className="text-sm font-medium text-sc-dark block mb-2">
               Nombre de chambres
             </label>
             <div className="flex flex-wrap gap-2">
@@ -459,8 +686,8 @@ export default function Annonces() {
                   onClick={() => setBedrooms(bedrooms === opt ? "" : opt)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     bedrooms === opt
-                      ? "bg-[var(--brand-cyan)] text-white shadow-md"
-                      : "bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--border)]"
+                      ? "bg-sc-cy text-white shadow-md"
+                      : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
                   {opt}
@@ -468,10 +695,9 @@ export default function Annonces() {
               ))}
             </div>
           </div>
-
           {/* Services */}
           <div>
-            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+            <label className="text-sm font-medium text-sc-dark block mb-2">
               {t("annonces:filters.services")}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -483,8 +709,8 @@ export default function Annonces() {
                     onClick={() => toggleService(service.id_service)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       selectedServiceIds.includes(service.id_service)
-                        ? "bg-[var(--brand-cyan)] text-white shadow-md"
-                        : "bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--border)]"
+                        ? "bg-sc-cy text-white shadow-md"
+                        : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                     }`}
                   >
                     {service.nom}
@@ -492,10 +718,9 @@ export default function Annonces() {
                 ))}
             </div>
           </div>
-
           {/* Equipements */}
           <div>
-            <label className="text-sm font-medium text-[var(--foreground)] block mb-2">
+            <label className="text-sm font-medium text-sc-dark block mb-2">
               Equipement
             </label>
             <div className="flex flex-wrap gap-2">
@@ -505,8 +730,8 @@ export default function Annonces() {
                   onClick={() => toggleEquipment(equipment.value)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     selectedEquipments.includes(equipment.value)
-                      ? "bg-[var(--brand-cyan)] text-white shadow-md"
-                      : "bg-[var(--muted)] text-[var(--foreground)] hover:bg-[var(--border)]"
+                      ? "bg-sc-cy text-white shadow-md"
+                      : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
                   {equipment.label}
@@ -514,18 +739,17 @@ export default function Annonces() {
               ))}
             </div>
           </div>
-
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-[var(--border)]">
+          <div className="flex gap-3 pt-4 border-t border-sc-bd">
             <button
               onClick={resetFilters}
-              className="flex-1 px-4 py-3 border border-[var(--border)] rounded-xl text-sm font-medium text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
+              className="flex-1 px-4 py-3 border border-sc-bd rounded-xl text-sm font-medium text-sc-dark hover:bg-sc-bd/30 transition-colors"
             >
               {t("common:common.reset")}
             </button>
             <button
               onClick={() => setShowMobileFilters(false)}
-              className="flex-1 px-4 py-3 bg-[var(--brand-cyan)] text-white rounded-xl text-sm font-medium hover:bg-[var(--brand-cyan-dark)] transition-colors shadow-md"
+              className="flex-1 px-4 py-3 bg-sc-cy text-white rounded-xl text-sm font-medium hover:bg-sc-cy-d transition-colors shadow-md"
             >
               {t("common:common.apply")}
             </button>
@@ -535,525 +759,420 @@ export default function Annonces() {
     </div>
   );
 
+  // ---- Rendu principal ----
   return (
     <SiteLayout>
-      {/* Header avec image de fond - Aligné avec le header */}
-      <div className="relative bg-white border-b border-[var(--border)] overflow-hidden min-h-[180px] md:min-h-[220px] w-full">
-        {/* <div
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: 'url("https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-sm"></div>
-        </div> */}
-        <LazyBackgroundImage
-          src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80"
-          overlayClassName="absolute inset-0 bg-black/60 backdrop-sm"
-        />
-
-        <div className="relative z-10 max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6 md:py-8 min-h-[180px] md:min-h-[220px] flex flex-col items-center justify-center">
-          <h1 className="bebas text-3xl sm:text-4xl md:text-5xl text-center">
-            <span className="text-[var(--brand-cyan)] drop-shadow-lg">
-              {t("annonces:title").split(" ")[0]} à
-            </span>
-            <span className="text-[var(--brand-green)] drop-shadow-lg">
-              {" "}
-              Madagascar
-            </span>
+      {/* Contenu principal avec fond sc-bg */}
+      <div className="min-h-screen bg-sc-bg flex flex-col">
+        {/* En-tête (similaire à ResultsPage) */}
+        <div className="px-4 py-5 border-b border-sc-bd bg-white">
+          <h1 className="font-bebas text-2xl text-sc-dark tracking-wide">
+            Annonces récentes — {(city || query || "Madagascar").toUpperCase()}
           </h1>
-          <p className="text-white/80 text-xs sm:text-sm md:text-base drop-shadow mt-1">
+          <p className="text-xs text-sc-gr2">
             {loading
               ? t("common:common.loading")
-              : `${visibleListings.length} ${t("annonces:results")}`}
+              : `${visibleListings.length} logement${
+                  visibleListings.length > 1 ? "s" : ""
+                } disponible${visibleListings.length > 1 ? "s" : ""}`}
           </p>
-
-          {/* Barre de recherche - Déplacée sous le titre, sans border-radius */}
-          <div className="w-full max-w-3xl mt-4">
-            <div className="bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg flex items-center gap-2">
-              <div className="relative flex-1 min-w-0">
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t("annonces:search")}
-                  className="w-full pl-4 pr-8 py-2.5 text-sm bg-transparent border-none focus:ring-0 placeholder:text-gray-500 font-medium text-gray-900"
-                />
-                {query && (
-                  <button
-                    onClick={() => setQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-0.5 transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Bouton filtres mobile */}
-              <button
-                onClick={() => setShowMobileFilters(true)}
-                className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors whitespace-nowrap relative"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                <span className="hidden xs:inline">
-                  {t("annonces:filters.title")}
-                </span>
-                {activeFiltersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--brand-cyan)] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
         </div>
-      </div>
 
-      <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-4 sm:py-6">
-        {/* Filtres desktop - sans border-radius */}
-        <div className="hidden lg:flex flex-wrap items-center gap-0.5 bg-white border border-[var(--border)] shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-2">
-          <div className="w-px h-7 bg-[var(--border)]"></div>
-
-          {/* Type d'annonce */}
-          <div className="relative" ref={typeRef}>
-            <button
-              onClick={() => setShowTypeMenu(!showTypeMenu)}
-              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
-            >
-              {getTypeLabel(type)}
-              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-            </button>
-            {showTypeMenu && (
-              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-48">
-                {typeOptions.map((opt) => (
-                  <div
-                    key={opt.value}
-                    onClick={() => {
-                      setType(opt.value);
-                      setShowTypeMenu(false);
-                    }}
-                    className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${type === opt.value ? "bg-[var(--muted)]" : ""}`}
-                  >
-                    <span>{opt.label}</span>
-                    {type === opt.value && (
-                      <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
-                    )}
-                  </div>
-                ))}
-              </div>
+        {/* Barre de filtres (sticky) – style ResultsPage */}
+        <div className="bg-white border-b border-sc-bd px-4 py-2 flex items-center gap-2 flex-wrap sticky top-14 z-30">
+          <span className="text-xs font-bold text-sc-dark flex items-center gap-1">
+            <i className="ti ti-adjustments-horizontal text-sm" /> Filtres
+            {activeFiltersCount > 0 && (
+              <span className="ml-1 bg-sc-cy text-white text-[10px] font-bold px-1.5 rounded-full">
+                {activeFiltersCount}
+              </span>
             )}
+          </span>
+          <div className="w-px h-4 bg-sc-bd" />
+
+          {/* Type */}
+          <div ref={typeRef} className="relative">
+            <DropdownPill
+              label={getTypeLabel(type)}
+              icon="ti-home"
+              isOpen={openDrop === "type"}
+              onToggle={() => setOpenDrop((v) => (v === "type" ? null : "type"))}
+              active={type !== ""}
+            >
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
+                Type d'annonce
+              </p>
+              {typeOptions.map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 text-sm py-1 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="type"
+                    checked={type === opt.value}
+                    onChange={() => {
+                      setType(opt.value);
+                      setOpenDrop(null);
+                    }}
+                    className="accent-sc-cy"
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </DropdownPill>
           </div>
 
-          {/* Colocataires */}
-          <div className="relative" ref={colocRef}>
-            <button
-              onClick={() => setShowColocMenu(!showColocMenu)}
-              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+          {/* Coloc */}
+          <div ref={colocRef} className="relative">
+            <DropdownPill
+              label={getColocLabel(colocFilter)}
+              icon="ti-users"
+              isOpen={openDrop === "coloc"}
+              onToggle={() => setOpenDrop((v) => (v === "coloc" ? null : "coloc"))}
+              active={colocFilter !== ""}
             >
-              {getColocLabel(colocFilter)}
-              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-            </button>
-            {showColocMenu && (
-              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-52">
-                {colocOptions.map((opt) => (
-                  <div
-                    key={opt.value}
-                    onClick={() => {
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
+                Type de colocation
+              </p>
+              {colocOptions.map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 text-sm py-1 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="coloc"
+                    checked={colocFilter === opt.value}
+                    onChange={() => {
                       setColocFilter(opt.value);
-                      setShowColocMenu(false);
+                      setOpenDrop(null);
                     }}
-                    className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${colocFilter === opt.value ? "bg-[var(--muted)]" : ""}`}
-                  >
-                    <span>{opt.label}</span>
-                    {colocFilter === opt.value && (
-                      <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                    className="accent-sc-cy"
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </DropdownPill>
           </div>
 
           {/* Budget */}
-          <div className="flex items-center gap-2 px-2 py-1.5">
-            <span className="text-sm font-medium text-[var(--foreground)]">Budget</span>
-            <input
-              type="number"
-              min={0}
-              value={minPrice || ""}
-              onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
-              placeholder="Min"
-              className="w-24 text-sm px-3 py-2 border border-[var(--border)] bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
-            />
-            <input
-              type="number"
-              min={0}
-              value={maxPrice || ""}
-              onChange={(e) => setMaxPrice(Number(e.target.value) || 0)}
-              placeholder="Max"
-              className="w-24 text-sm px-3 py-2 border border-[var(--border)] bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
-            />
-          </div>
+          <DropdownPill
+            label="Budget"
+            icon="ti-coin"
+            isOpen={openDrop === "budget"}
+            onToggle={() => setOpenDrop((v) => (v === "budget" ? null : "budget"))}
+            active={!!(minPrice || maxPrice)}
+          >
+            <p className="text-[11px] font-bold text-sc-gr2 mb-2">
+              Loyer mensuel (Ar)
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Min"
+                value={minPrice || ""}
+                onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy"
+                step={10000}
+              />
+              <span className="text-sc-gr2">—</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={maxPrice || ""}
+                onChange={(e) => setMaxPrice(Number(e.target.value) || 0)}
+                className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy"
+                step={10000}
+              />
+            </div>
+          </DropdownPill>
 
           {/* Surface */}
-          <div className="flex items-center gap-2 px-2 py-1.5">
-            <span className="text-sm font-medium text-[var(--foreground)]">Surface</span>
-            <input
-              type="number"
-              min={0}
-              value={minSurface || ""}
-              onChange={(e) => setMinSurface(Number(e.target.value) || 0)}
-              placeholder="Min"
-              className="w-20 text-sm px-3 py-2 border border-[var(--border)] bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
-            />
-            <input
-              type="number"
-              min={0}
-              value={maxSurface || ""}
-              onChange={(e) => setMaxSurface(Number(e.target.value) || 0)}
-              placeholder="Max"
-              className="w-20 text-sm px-3 py-2 border border-[var(--border)] bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
-            />
+          <DropdownPill
+            label="Surface"
+            icon="ti-ruler-2"
+            isOpen={openDrop === "surface"}
+            onToggle={() => setOpenDrop((v) => (v === "surface" ? null : "surface"))}
+            active={!!(minSurface || maxSurface)}
+          >
+            <p className="text-[11px] font-bold text-sc-gr2 mb-2">Surface (m²)</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Min"
+                value={minSurface || ""}
+                onChange={(e) => setMinSurface(Number(e.target.value) || 0)}
+                className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy"
+                step={1}
+              />
+              <span className="text-sc-gr2">—</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={maxSurface || ""}
+                onChange={(e) => setMaxSurface(Number(e.target.value) || 0)}
+                className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy"
+                step={1}
+              />
+            </div>
+          </DropdownPill>
+
+          {/* Chambres */}
+          <div ref={bedroomsRef} className="relative">
+            <DropdownPill
+              label={getBedroomsLabel(bedrooms)}
+              icon="ti-bed"
+              isOpen={openDrop === "bedrooms"}
+              onToggle={() => setOpenDrop((v) => (v === "bedrooms" ? null : "bedrooms"))}
+              active={bedrooms !== ""}
+              minWidth={140}
+            >
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
+                Nombre de chambres
+              </p>
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="bedrooms"
+                    checked={bedrooms === ""}
+                    onChange={() => {
+                      setBedrooms("");
+                      setOpenDrop(null);
+                    }}
+                    className="accent-sc-cy"
+                  />
+                  Toutes
+                </label>
+                {bedroomOptions.map((opt) => (
+                  <label
+                    key={opt}
+                    className="flex items-center gap-2 text-sm py-1 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="bedrooms"
+                      checked={bedrooms === opt}
+                      onChange={() => {
+                        setBedrooms(opt);
+                        setOpenDrop(null);
+                      }}
+                      className="accent-sc-cy"
+                    />
+                    {opt} chambre{opt === "1" ? "" : "s"}
+                  </label>
+                ))}
+              </div>
+            </DropdownPill>
           </div>
 
           {/* Services */}
-          <div className="relative" ref={servicesRef}>
-            <button
-              onClick={() => setShowServicesMenu(!showServicesMenu)}
-              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+          <div ref={servicesRef} className="relative">
+            <DropdownPill
+              label="Services"
+              icon="ti-sparkles"
+              isOpen={openDrop === "services"}
+              onToggle={() => setOpenDrop((v) => (v === "services" ? null : "services"))}
+              active={selectedServiceIds.length > 0}
+              minWidth={220}
             >
-              {t("annonces:filters.services")}
-              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-              {selectedServiceIds.length > 0 && (
-                <span className="ml-1 bg-[var(--brand-cyan)] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center">
-                  {selectedServiceIds.length}
-                </span>
-              )}
-            </button>
-            {showServicesMenu && (
-              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-3 z-20 w-56 max-h-64 overflow-y-auto">
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
+                Services inclus
+              </p>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
                 {services
                   .filter((s) => s.est_actif === 1)
                   .map((service) => (
                     <label
                       key={service.id_service}
-                      className="flex items-center gap-3 px-2 py-2.5 hover:bg-[var(--muted)] cursor-pointer text-sm transition-colors text-[var(--foreground)]"
+                      className="flex items-center gap-2 text-xs cursor-pointer py-0.5"
                     >
                       <input
                         type="checkbox"
-                        checked={selectedServiceIds.includes(
-                          service.id_service,
-                        )}
+                        checked={selectedServiceIds.includes(service.id_service)}
                         onChange={() => toggleService(service.id_service)}
-                        className="w-4 h-4 accent-[var(--brand-cyan)]"
+                        className="accent-sc-cy"
                       />
-                      <span>{service.nom}</span>
+                      {service.nom}
                     </label>
                   ))}
-                {services.filter((s) => s.est_actif === 1).length === 0 && (
-                  <div className="text-sm text-[var(--muted-foreground)] px-2 py-3 text-center">
-                    {t("annonces:filters.noServices")}
-                  </div>
-                )}
               </div>
-            )}
+            </DropdownPill>
           </div>
 
           {/* Equipements */}
-          <div className="relative" ref={equipmentsRef}>
-            <button
-              onClick={() => setShowEquipmentsMenu(!showEquipmentsMenu)}
-              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+          <div ref={equipmentsRef} className="relative">
+            <DropdownPill
+              label="Equipement"
+              icon="ti-building"
+              isOpen={openDrop === "equipments"}
+              onToggle={() => setOpenDrop((v) => (v === "equipments" ? null : "equipments"))}
+              active={selectedEquipments.length > 0}
+              minWidth={220}
             >
-              Equipement
-              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-              {selectedEquipments.length > 0 && (
-                <span className="ml-1 bg-[var(--brand-cyan)] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center">
-                  {selectedEquipments.length}
-                </span>
-              )}
-            </button>
-            {showEquipmentsMenu && (
-              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-3 z-20 w-64 max-h-72 overflow-y-auto">
-                {equipmentOptions.map((equipment) => (
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
+                Equipements et règles
+              </p>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {equipmentOptions.map((eq) => (
                   <label
-                    key={equipment.value}
-                    className="flex items-center gap-3 px-2 py-2.5 hover:bg-[var(--muted)] cursor-pointer text-sm transition-colors text-[var(--foreground)]"
+                    key={eq.value}
+                    className="flex items-center gap-2 text-xs cursor-pointer py-0.5"
                   >
                     <input
                       type="checkbox"
-                      checked={selectedEquipments.includes(equipment.value)}
-                      onChange={() => toggleEquipment(equipment.value)}
-                      className="w-4 h-4 accent-[var(--brand-cyan)]"
+                      checked={selectedEquipments.includes(eq.value)}
+                      onChange={() => toggleEquipment(eq.value)}
+                      className="accent-sc-cy"
                     />
-                    <span>{equipment.label}</span>
+                    {eq.label}
                   </label>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* Nombre de chambres */}
-          <div className="relative" ref={bedroomsRef}>
-            <button
-              onClick={() => setShowBedroomsMenu(!showBedroomsMenu)}
-              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
-            >
-              {getBedroomsLabel(bedrooms)}
-              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-            </button>
-            {showBedroomsMenu && (
-              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-44">
-                <div
-                  onClick={() => {
-                    setBedrooms("");
-                    setShowBedroomsMenu(false);
-                  }}
-                  className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${bedrooms === "" ? "bg-[var(--muted)]" : ""}`}
-                >
-                  <span>Toutes</span>
-                  {bedrooms === "" && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
-                </div>
-                {bedroomOptions.map((option) => (
-                  <div
-                    key={option}
-                    onClick={() => {
-                      setBedrooms(option);
-                      setShowBedroomsMenu(false);
-                    }}
-                    className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${bedrooms === option ? "bg-[var(--muted)]" : ""}`}
-                  >
-                    <span>{option} chambre{option === "1" ? "" : "s"}</span>
-                    {bedrooms === option && <Check className="w-4 h-4 text-[var(--brand-cyan)]" />}
-                  </div>
-                ))}
-              </div>
-            )}
+            </DropdownPill>
           </div>
 
           {/* Ville */}
-          <div className="relative" ref={cityRef}>
-            <button
-              onClick={() => setShowCityMenu(!showCityMenu)}
-              className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] px-3 sm:px-4 py-2 hover:bg-[var(--muted)] transition-colors whitespace-nowrap"
+          <div ref={cityRef} className="relative">
+            <DropdownPill
+              label={getCityLabel(city)}
+              icon="ti-map-pin"
+              isOpen={openDrop === "city"}
+              onToggle={() => setOpenDrop((v) => (v === "city" ? null : "city"))}
+              active={city !== ""}
+              minWidth={200}
             >
-              {getCityLabel(city)}
-              <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-            </button>
-            {showCityMenu && (
-              <div className="absolute top-full left-0 mt-2 bg-white border border-[var(--border)] shadow-[0_4px_25px_rgba(0,0,0,0.12)] p-1.5 z-20 w-52 max-h-64 overflow-y-auto">
-                <div
-                  onClick={() => {
-                    setCity("");
-                    setShowCityMenu(false);
-                  }}
-                  className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${city === "" ? "bg-[var(--muted)]" : ""}`}
-                >
-                  <span>{t("annonces:filters.city.all")}</span>
-                  {city === "" && (
-                    <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
-                  )}
-                </div>
-                {citiesList.map((c) => (
-                  <div
-                    key={c}
-                    onClick={() => {
-                      setCity(c);
-                      setShowCityMenu(false);
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Ville</p>
+              <div className="max-h-48 overflow-y-auto space-y-1">
+                <label className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="city"
+                    checked={city === ""}
+                    onChange={() => {
+                      setCity("");
+                      setOpenDrop(null);
                     }}
-                    className={`px-3.5 py-2.5 cursor-pointer text-sm hover:bg-[var(--muted)] flex items-center justify-between transition-colors text-[var(--foreground)] ${city === c ? "bg-[var(--muted)]" : ""}`}
+                    className="accent-sc-cy"
+                  />
+                  Toutes les villes
+                </label>
+                {citiesList.map((c) => (
+                  <label
+                    key={c}
+                    className="flex items-center gap-2 text-sm py-1 cursor-pointer"
                   >
-                    <span>{c}</span>
-                    {city === c && (
-                      <Check className="w-4 h-4 text-[var(--brand-cyan)]" />
-                    )}
-                  </div>
+                    <input
+                      type="radio"
+                      name="city"
+                      checked={city === c}
+                      onChange={() => {
+                        setCity(c);
+                        setOpenDrop(null);
+                      }}
+                      className="accent-sc-cy"
+                    />
+                    {c}
+                  </label>
                 ))}
               </div>
-            )}
+            </DropdownPill>
           </div>
 
-          {/* Quartier */}
-          <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5">
+          {/* Quartier (champ texte) */}
+          <div className="flex items-center gap-2 px-2 py-1.5">
             <input
               type="text"
               value={district}
               onChange={(e) => setDistrict(e.target.value)}
-              placeholder={t('annonces:filters.district.placeholder')}
-              className="min-w-[130px] sm:min-w-[180px] text-sm px-3 py-2 border border-[var(--border)] rounded-xl bg-white text-[var(--foreground)] outline-none focus:ring-2 focus:ring-[var(--brand-cyan)]/20"
+              placeholder="Quartier"
+              className="min-w-[130px] text-xs px-3 py-1.5 border border-sc-bd rounded-xl bg-white text-sc-dark outline-none focus:border-sc-cy"
             />
           </div>
+
+          <div className="w-px h-4 bg-sc-bd" />
 
           {/* Bouton Réinitialiser */}
           <button
             onClick={resetFilters}
-            className="text-sm font-medium text-[var(--brand-cyan)] px-3 sm:px-4 py-2 hover:bg-[var(--brand-cyan-light)] transition-colors whitespace-nowrap"
+            className="text-xs font-bold text-sc-cy px-2 py-1 hover:bg-sc-cy-lt rounded-lg transition-colors"
           >
-            {t("common:common.reset")}
+            Réinitialiser
+          </button>
+
+          {/* Bouton d'alerte (similaire à ResultsPage) */}
+          <button className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 border border-sc-bd rounded-xl text-xs text-sc-dark hover:bg-sc-cy-lt hover:border-sc-cy transition-colors cursor-pointer bg-white">
+            <i className="ti ti-bell-plus text-xs" />
+            Créer une alerte · <strong>{city || query || "Madagascar"}</strong>
           </button>
         </div>
 
-        {/* Filtres actifs - Version mobile */}
-        {activeFiltersCount > 0 && (
-          <div className="lg:hidden flex flex-wrap gap-1.5 mt-3">
-            {city && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                {city}
-                <button
-                  onClick={() => setCity("")}
-                  className="hover:text-[var(--brand-cyan)]"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {district && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                {district}
-                <button onClick={() => setDistrict("")} className="hover:text-[var(--brand-cyan)]">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {type && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                {getTypeLabel(type)}
-                <button
-                  onClick={() => setType("")}
-                  className="hover:text-[var(--brand-cyan)]"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {selectedServiceIds.length > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                {selectedServiceIds.length} services
-                <button
-                  onClick={() => setSelectedServiceIds([])}
-                  className="hover:text-[var(--brand-cyan)]"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {selectedEquipments.length > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                {selectedEquipments.length} equipement{selectedEquipments.length > 1 ? "s" : ""}
-                <button
-                  onClick={() => setSelectedEquipments([])}
-                  className="hover:text-[var(--brand-cyan)]"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {minPrice > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                Budget min {`${(minPrice / 1000).toFixed(0)}k Ar`}
-                <button onClick={() => setMinPrice(0)} className="hover:text-[var(--brand-cyan)]">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {maxPrice > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                Budget max {`${(maxPrice / 1000).toFixed(0)}k Ar`}
-                <button
-                  onClick={() => setMaxPrice(0)}
-                  className="hover:text-[var(--brand-cyan)]"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {minSurface > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                Surface min {minSurface} m2
-                <button onClick={() => setMinSurface(0)} className="hover:text-[var(--brand-cyan)]">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {maxSurface > 0 && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                Surface max {maxSurface} m2
-                <button onClick={() => setMaxSurface(0)} className="hover:text-[var(--brand-cyan)]">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {bedrooms && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                {getBedroomsLabel(bedrooms)}
-                <button onClick={() => setBedrooms("")} className="hover:text-[var(--brand-cyan)]">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {colocFilter && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--muted)] text-xs text-[var(--foreground)]">
-                {getColocLabel(colocFilter)}
-                <button
-                  onClick={() => setColocFilter("")}
-                  className="hover:text-[var(--brand-cyan)]"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            )}
+        {/* Contenu principal avec grille */}
+        <div className="flex-1 px-4 py-5">
+          {/* Compteur supplémentaire (déjà dans l'en-tête, mais on garde la structure) */}
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="font-bebas text-xl text-sc-dark tracking-wide">
+                {visibleListings.length} annonce{visibleListings.length > 1 ? "s" : ""}
+              </h2>
+            </div>
+            {/* On pourrait ajouter un tri ici, mais on garde le filtre par défaut */}
           </div>
-        )}
 
-        {/* Compteur de résultats */}
-        <div className="flex items-center justify-between mt-4 sm:mt-5">
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-[var(--muted-foreground)]">
-            <MapPin className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[var(--muted-foreground)]" />
-            <span>
-              {loading
-                ? t("annonces:loading")
-                : `${visibleListings.length} ${t("annonces:results")}`}
-            </span>
-          </div>
-          <div className="text-xs sm:text-sm text-[var(--muted-foreground)]">
-            {!loading && listings.length > 0 && "📍 Madagascar"}
-          </div>
-        </div>
-
-        {/* Grille d'annonces - Cards plus petites et cliquables */}
-        <div className="mt-4 sm:mt-5">
-          {error && (
-            <div className="border border-red-200 bg-red-50/80 p-5 text-sm text-red-700 backdrop-blur-sm">
-              {error}
+          {visibleListings.length === 0 && !loading && (
+            <div className="text-center py-16">
+              <i className="ti ti-map-search text-5xl text-sc-gr2 mb-4 block" />
+              <h3 className="font-bebas text-xl text-sc-dark mb-2">
+                {t("annonces:empty")}
+              </h3>
+              <p className="text-sm text-sc-gr2 mb-4">{emptyMessage}</p>
+              {searchedCityLabel && (
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <a
+                    href={`/profils-recherche-logement?ville=${encodeURIComponent(
+                      searchedCityLabel
+                    )}`}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 border border-sc-bd text-sm font-medium text-sc-dark hover:bg-sc-bd/30 transition-colors rounded-xl"
+                  >
+                    <Users className="w-4 h-4 text-sc-cy" />
+                    Voir les profils qui recherchent aussi à {searchedCityLabel}
+                  </a>
+                  <a
+                    href={`/depot_annonce?ville=${encodeURIComponent(
+                      searchedCityLabel
+                    )}`}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-sc-cy text-white text-sm font-medium hover:bg-sc-cy-d transition-colors shadow-md rounded-xl"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    Déposer une annonce
+                  </a>
+                </div>
+              )}
             </div>
           )}
 
           {loading && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="bg-[var(--muted)] aspect-[4/3] w-full"></div>
+                  <div className="bg-sc-bd aspect-[4/3] w-full rounded-xl"></div>
                   <div className="mt-2 space-y-1.5">
-                    <div className="h-3 bg-[var(--muted)] w-3/4"></div>
-                    <div className="h-2.5 bg-[var(--muted)] w-1/2"></div>
+                    <div className="h-3 bg-sc-bd w-3/4 rounded"></div>
+                    <div className="h-2.5 bg-sc-bd w-1/2 rounded"></div>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {!loading && !error && (
-            <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
-              {visibleListings.map((l, index) => (
+          {!loading && !error && visibleListings.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {visibleListings.map((l) => (
                 <div
                   key={l.id}
-                  className="animate-fade-in-up cursor-pointer hover:opacity-80 transition-opacity"
-                  style={{ animationDelay: `${index * 40}ms` }}
-                  onClick={() => {
-                    window.location.href = `/annonces/${l.id}`;
-                  }}
+                  className="cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => (window.location.href = `/annonces/${l.id}`)}
                 >
                   <ListingCard l={l} compact />
                 </div>
@@ -1061,22 +1180,16 @@ export default function Annonces() {
             </div>
           )}
 
-          {!loading && !error && visibleListings.length === 0 && (
-            <div className="text-center py-12 sm:py-20">
-              <div className="text-4xl sm:text-5xl mb-4">🏠</div>
-              <h3 className="bebas text-lg sm:text-xl text-[var(--foreground)]">
-                {t("annonces:empty")}
-              </h3>
-              <p className="text-[var(--muted-foreground)] mt-1 text-xs sm:text-sm">
-                {emptyMessage}
-              </p>
+          {error && (
+            <div className="border border-red-200 bg-red-50/80 p-5 text-sm text-red-700 rounded-xl">
+              {error}
             </div>
           )}
         </div>
-      </div>
 
-      {/* Modal filtres mobile */}
-      {showMobileFilters && <MobileFilters />}
+        {/* Mobile filters modal */}
+        {showMobileFilters && <MobileFilters />}
+      </div>
     </SiteLayout>
   );
 }
