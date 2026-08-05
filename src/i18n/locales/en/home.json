@@ -66,6 +66,12 @@
   "partners": {
     "title": "Our Partners",
     "subtitle": "They contribute most to this solidarity project",
+    "filterLevelLabel": "Filter by level",
+    "levelAll": "All levels",
+    "levelArgent": "Silver",
+    "levelBronze": "Bronze",
+    "levelOr": "Gold",
+    "levelDiamant": "Diamond",
     "viewAll": "View all partners",
     "becomePartner": "I want to become a partner",
     "allPartnersTitle": "All partners",

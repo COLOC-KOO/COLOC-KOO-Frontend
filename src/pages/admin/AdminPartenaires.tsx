@@ -485,7 +485,17 @@ function PartnerModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-white/40 uppercase">Niveau</label>
-              <input value={niveau} onChange={(e) => setNiveau(e.target.value)} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
+              <select
+                value={niveau}
+                onChange={(e) => setNiveau(e.target.value)}
+                className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
+              >
+                <option value="">Sélectionnez un niveau</option>
+                <option value="Bronze">Bronze</option>
+                <option value="Argent">Argent</option>
+                <option value="Or">Or</option>
+                <option value="Diamant">Diamant</option>
+              </select>
             </div>
             <div>
               <label className="text-xs text-white/40 uppercase">Remise</label>
