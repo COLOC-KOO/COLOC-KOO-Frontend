@@ -15,6 +15,7 @@ import TabProfil from './compte/TabProfil'
 import TabMesAnnonces from './compte/TabMesAnnonces'
 import TabNotif from './compte/TabNotif'
 import TabMessagesV2 from './compte/TabMessagesV2'
+import ConversationsPage from './compte/ConversationsPage'
 import TabMesFavoris from './compte/TabMesFavoris'
 
 
@@ -780,9 +781,10 @@ export default function Compte() {
   const isColocataire = user?.poste === 'colocataire'
   const tabs = [
     { id: 'profil', label: t('profile'), icon: User },
+    { id: 'conversations', label: 'Conversations', icon: MessageSquare },
     { id: isColocataire ? 'favoris' : 'dossier', label: isColocataire ? t('myFavoritesTab') : t('myAnnouncementsTab'), icon: isColocataire ? Heart : FileText },
     { id: 'notif', label: t('notifications'), icon: Bell },
-    { id: 'paiements', label: t('messagesTab'), icon: MessageSquare },
+    // { id: 'paiements', label: t('messagesTab'), icon: MessageSquare },
     { id: 'secu', label: t('securityTab'), icon: Lock }
   ]
 
@@ -791,6 +793,7 @@ export default function Compte() {
     const requestedTab = params.get('tab')
     if (!requestedTab) return 'profil'
     if (requestedTab === 'paiements' || requestedTab === 'messages') return 'paiements'
+    if (requestedTab === 'conversations') return 'conversations'
     if (requestedTab === 'favoris') return 'favoris'
     if (requestedTab === 'dossier') return isColocataire ? 'favoris' : 'dossier'
     if (requestedTab === 'notif') return 'notif'
@@ -873,7 +876,7 @@ export default function Compte() {
         </div>
 
         {/* Statistiques rapides */}
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-white rounded-xl border border-border p-4 text-center">
             <div className="text-2xl font-bold text-brand-cyan-dark">12</div>
             <div className="text-xs text-muted-foreground">Annonces vues</div>
@@ -890,11 +893,12 @@ export default function Compte() {
             <div className="text-2xl font-bold text-brand-cyan-dark">2</div>
             <div className="text-xs text-muted-foreground">Candidatures</div>
           </div>
-        </div>
+        </div> */}
 
         {/* Tabs et contenu */}
         <div className="mt-8 grid md:grid-cols-[240px_1fr] gap-6">
-          <aside className="space-y-1 bg-white rounded-2xl border border-border p-2 h-fit">
+          {/* Desktop aside: visible md+ */}
+          <aside className="hidden md:block space-y-1 bg-white rounded-2xl border border-border p-2 h-fit">
             {tabs.map((t) => (
               <Link
                 key={t.id}
@@ -905,8 +909,8 @@ export default function Compte() {
                     : 'hover:bg-muted text-foreground/70 hover:text-foreground'
                 }`}
               >
-                <t.icon className={`w-4 h-4 ${tab === t.id ? 'text-white' : ''}`} /> 
-                {t.label}
+                <t.icon className={`w-5 h-5 ${tab === t.id ? 'text-white' : 'text-foreground/70'}`} /> 
+                <span className="hidden sm:inline">{t.label}</span>
                 {((t.id === 'favoris' && counters.favoris > 0) || (t.id === 'notif' && counters.notifications > 0) || (t.id === 'paiements' && counters.messages > 0)) && (
                   <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
                     {t.id === 'favoris' ? counters.favoris : t.id === 'notif' ? counters.notifications : counters.messages}
@@ -923,14 +927,46 @@ export default function Compte() {
 
           <div className={tab === 'paiements' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-6 shadow-sm'}>
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
+            {tab === 'conversations' && <ConversationsPage />}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
             {tab === 'notif' && <TabNotif />}
-            {tab === 'paiements' && <TabMessagesV2 />}
+            {tab === 'paiements' && <TabMessagesV2 />} 
             {tab === 'secu' && <TabSecu />}
           </div>
         </div>
       </div>
+        {/* Mobile fixed icon nav (visible on mobile only) */}
+        <nav className="md:hidden fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)]" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}>
+          <div className="bg-white/95 backdrop-blur-md border border-border rounded-xl shadow-lg px-3 py-3 flex items-center justify-between">
+            {['profil','conversations','notif','secu'].map((id) => {
+              const item = tabs.find((x) => x.id === id)
+              if (!item) return null
+              const IconComp = item.icon
+              const isActive = tab === id
+              const showBadge = (id === 'notif' && counters.notifications > 0) || (id === 'paiements' && counters.messages > 0)
+              const badgeCount = id === 'notif' ? counters.notifications : id === 'paiements' ? counters.messages : 0
+              return (
+                <button
+                  key={id}
+                  onClick={() => navigate(`/compte?tab=${id}`)}
+                  className={`flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-md transition-colors ${isActive ? 'bg-brand-cyan text-white' : 'text-foreground/80 hover:bg-muted/40'}`}
+                  aria-label={item.label}
+                >
+                  <div className="relative">
+                    <IconComp className={`w-5 h-5 ${isActive ? 'text-white' : ''}`} />
+                    {showBadge && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full px-1">
+                        {badgeCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] leading-3 hidden">{item.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </nav>
     </SiteLayout>
   )
 }
