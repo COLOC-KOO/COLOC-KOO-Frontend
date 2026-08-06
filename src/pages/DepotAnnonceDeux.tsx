@@ -703,8 +703,8 @@ export default function DepotAnnonceDeux() {
         regles,
         chambres: [
           {
-            loyer,
-            charges,
+            loyer: loyer.replace(/\D/g, ''),
+            charges: charges.replace(/\D/g, ''),
             caution: cautionType === 'autre' ? cautionAutre : cautionType === '1mois' ? '1 mois de loyer' : '',
             surface: chambreSurface,
             meublee: meublee.join(', '),
