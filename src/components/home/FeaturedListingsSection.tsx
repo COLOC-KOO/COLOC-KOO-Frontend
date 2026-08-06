@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Building2, Star, MapPin } from "lucide-react";
+import type { MouseEvent } from "react";
+import { ArrowRight } from "lucide-react";
 
-import { LazyImage } from "../ui/LazyImage";
 import { Listing } from "../../types";
 import { useTranslation } from "react-i18next";
 import { ListingCard } from "../site/ListingCard";
@@ -12,6 +12,8 @@ type FeaturedListingsSectionProps = {
   hoveredListingId: string | null;
   setHoveredListingId: (id: string | null) => void;
   error: string;
+  favoriteIds?: Set<string>;
+  onFavoriteClick?: (event: MouseEvent, listingId: string) => void;
 };
 
 export function FeaturedListingsSection({
@@ -20,6 +22,8 @@ export function FeaturedListingsSection({
   hoveredListingId,
   setHoveredListingId,
   error,
+  favoriteIds = new Set(),
+  onFavoriteClick,
 }: FeaturedListingsSectionProps) {
   const { t } = useTranslation(["home", "common"]);
   const navigate = useNavigate();
@@ -61,7 +65,15 @@ export function FeaturedListingsSection({
               <div className="flex gap-5 min-w-max py-2">
                 {featuredListings.slice(0, 5).map((listing) => (
                   <div key={listing.id} className="w-80 flex-shrink-0">
-                    <ListingCard key={listing.id} l={listing} />
+                    <ListingCard
+                      l={listing}
+                      isFavorite={favoriteIds.has(String(listing.id))}
+                      onFavoriteClick={
+                        onFavoriteClick
+                          ? (event) => onFavoriteClick(event, listing.id)
+                          : undefined
+                      }
+                    />
                   </div>
                 ))}
               </div>

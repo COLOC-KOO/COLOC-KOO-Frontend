@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BedDouble, Camera, Car, Check, MapPin, Users, ArrowRight, Heart, ChevronLeft, ChevronRight } from 'lucide-react'
+import { BedDouble, Camera, MapPin, Users, Heart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Listing } from '../../types'
 import { formatAr } from '../../lib/utils'
 import { LazyImage } from '../ui/LazyImage'
@@ -10,25 +10,19 @@ const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b
 interface ListingCardProps {
   l: Listing
   compact?: boolean
+  isFavorite?: boolean
+  onFavoriteClick?: (event: React.MouseEvent, listing: Listing) => void
 }
 
-export function ListingCard({ l, compact = false }: ListingCardProps) {
+export function ListingCard({ l, compact = false, isFavorite = false, onFavoriteClick }: ListingCardProps) {
   const navigate = useNavigate()
   const [imgIdx, setImgIdx] = useState(0)
-  const [fav, setFav] = useState(false)
 
   useEffect(() => {
     setImgIdx(0)
   }, [l.id])
 
   const imgs: string[] = (l.gallery && l.gallery.length > 0) ? l.gallery : [l.image || FALLBACK_IMAGE]
-  const photoCount = Math.max((l.gallery || []).length, l.image ? 1 : 0)
-  const badgeText = l.badge || (l.tags?.includes('vedette') ? 'Coup de coeur' : undefined)
-  const badgeColor = l.badgeColor || (l.tags?.includes('vedette') ? '#46BDD6' : '#46BDD6')
-
-  const ownerInitials = l.owner?.name
-    ? l.owner.name.split(' ').map(p => p.charAt(0)).join('').slice(0,2).toUpperCase()
-    : 'P'
 
   const handleCardClick = () => {
     navigate(`/annonces/${l.id}`)
@@ -68,6 +62,18 @@ export function ListingCard({ l, compact = false }: ListingCardProps) {
           </>
         )}
 
+        {onFavoriteClick && (
+          <button
+            type="button"
+            aria-label={isFavorite ? 'Annonce deja dans vos favoris' : 'Ajouter aux favoris'}
+            onClick={(event) => onFavoriteClick(event, l)}
+            className={`absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/90 shadow-sm transition-colors hover:bg-white ${
+              isFavorite ? 'text-red-500' : 'text-slate-700'
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+          </button>
+        )}
       </div>
 
       {/* Body */}
