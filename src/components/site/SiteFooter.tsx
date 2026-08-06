@@ -45,7 +45,7 @@ export default function Footer() {
         </Link>
       </div>
       <p className="text-[10px] text-white/20 mt-4">
-        © {new Date().getFullYear()} Coloc’KOOMiara-Trano — Tous droits réservés
+        © {new Date().getFullYear()} SARITANY'COLOC — Tous droits réservés
       </p>
     </footer>
   )
