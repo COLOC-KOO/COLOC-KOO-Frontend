@@ -28,6 +28,26 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
     ? suggestions.filter((city) => city.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 8)
     : visibleSuggestions
 
+  const handleSearchTermChange = (value: string) => {
+    onSearchTermChange(value)
+    setHasSelectedCity(false)
+    setShowSuggestions(true)
+
+    const trimmedValue = value.trim()
+    if (!trimmedValue) {
+      setSearchMessage('')
+      return
+    }
+
+    const hasMatches = suggestions.some((city) => city.toLowerCase().includes(trimmedValue.toLowerCase()))
+    if (!hasMatches) {
+      setSearchMessage('Cette localité n’existe pas ou n’est pas encore disponible')
+      return
+    }
+
+    setSearchMessage('')
+  }
+
   return <section className="relative min-h-[300px] overflow-visible bg-gray-900">
     <LazyImage src={HERO_BG} alt={t('home:hero.title')} className="absolute inset-0 h-full w-full object-cover" />
     <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/10" />
@@ -48,7 +68,7 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
               spellCheck={false}
               value={searchTerm}
               placeholder={t('home:hero.placeholder')}
-              onChange={(event) => { onSearchTermChange(event.target.value); setHasSelectedCity(false); setShowSuggestions(true) }}
+              onChange={(event) => handleSearchTermChange(event.target.value)}
               onClick={() => setShowSuggestions(true)}
               onFocus={() => setShowSuggestions(true)}
               className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-slate-400"
