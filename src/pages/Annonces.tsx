@@ -2,19 +2,22 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  MapPin,
-  Search,
   X,
-  ChevronDown,
-  Check,
-  SlidersHorizontal,
   Users,
   PlusCircle,
+  List,
+  Map,
+  Pencil,
 } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { DivIcon, LatLngBounds, LatLngExpression } from "leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { ListingCard } from "../components/site/ListingCard";
 import { api, annonceToListing, ApiServiceCkoo, Ville } from "../lib/api";
+import { useAuth } from "../lib/auth";
+import { formatAr } from "../lib/utils";
 import { Listing } from "../types";
 
 // ---- Liste de villes de secours (inchangée) ----
@@ -71,12 +74,135 @@ const MADAGASCAR_CITIES_FALLBACK = [
   "Sainte-Marie",
 ];
 
+const CITY_COORDINATES: Record<string, [number, number]> = {
+  antananarivo: [-18.8792, 47.5079],
+  toamasina: [-18.1492, 49.4023],
+  antsirabe: [-19.8659, 47.0333],
+  fianarantsoa: [-21.4527, 47.0857],
+  mahajanga: [-15.7167, 46.3167],
+  toliara: [-23.35, 43.6667],
+  antsiranana: [-12.2787, 49.2917],
+  "nosy be": [-13.3128, 48.2573],
+};
+
 function normalizeText(value: string) {
   return value
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
+}
+
+function fallbackPositionForListing(listing: Listing, index: number): [number, number] {
+  const cityKey = normalizeText(listing.city || "");
+  const base = CITY_COORDINATES[cityKey] || CITY_COORDINATES.antananarivo;
+  const angle = index * 1.65;
+  const radius = 0.018 + (index % 5) * 0.008;
+  return [base[0] + Math.sin(angle) * radius, base[1] + Math.cos(angle) * radius];
+}
+
+function getListingPosition(listing: Listing, index: number): [number, number] {
+  if (Number.isFinite(listing.latitude) && Number.isFinite(listing.longitude)) {
+    return [Number(listing.latitude), Number(listing.longitude)];
+  }
+  return fallbackPositionForListing(listing, index);
+}
+
+function createPriceIcon(price: number) {
+  return new DivIcon({
+    className: "ck-price-marker",
+    html: `<div style="background:#2b2b2b;color:#fff;border-radius:9px;padding:6px 10px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.22);">${formatAr(price || 0)}</div>`,
+    iconSize: [92, 30],
+    iconAnchor: [46, 15],
+    popupAnchor: [0, -18],
+  });
+}
+
+function MapBounds({ listings }: { listings: Listing[] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (listings.length === 0) return;
+    const first = getListingPosition(listings[0], 0);
+    const bounds = new LatLngBounds(first, first);
+    listings.forEach((listing, index) => {
+      bounds.extend(getListingPosition(listing, index));
+    });
+    map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+  }, [listings, map]);
+
+  return null;
+}
+
+function InteractiveListingsMap({
+  listings,
+  favoriteIds,
+  onFavoriteClick,
+  locationLabel,
+}: {
+  listings: Listing[];
+  favoriteIds: Set<string>;
+  onFavoriteClick: (event: React.MouseEvent, listing: Listing) => void;
+  locationLabel: string;
+}) {
+  const navigate = useNavigate();
+  const firstPosition: LatLngExpression =
+    listings.length > 0 ? getListingPosition(listings[0], 0) : CITY_COORDINATES.antananarivo;
+
+  return (
+    <div className="grid min-h-[calc(100vh-190px)] grid-cols-1 overflow-hidden border-t border-sc-bd bg-white lg:grid-cols-[1fr_470px]">
+      <div className="relative min-h-[420px] bg-[#dfead4] lg:min-h-[calc(100vh-190px)]">
+        <MapContainer center={firstPosition} zoom={12} className="h-full w-full" zoomControl={false}>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <MapBounds listings={listings} />
+          {listings.map((listing, index) => {
+            const position = getListingPosition(listing, index);
+            return (
+              <Marker
+                key={listing.id}
+                position={position}
+                icon={createPriceIcon(listing.price)}
+                eventHandlers={{ click: () => navigate(`/annonces/${listing.id}`) }}
+              >
+                <Popup>
+                  <div className="w-56">
+                    <img src={listing.image} alt={listing.title} className="mb-2 h-28 w-full rounded-lg object-cover" />
+                    <p className="text-sm font-bold text-slate-900">{listing.title}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {listing.district}, {listing.city}
+                    </p>
+                    <p className="mt-2 text-sm font-bold text-sc-cy">{formatAr(listing.price)}/mois</p>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
+      </div>
+
+      <aside className="max-h-[calc(100vh-190px)] overflow-y-auto border-l border-sc-bd bg-white">
+        <div className="sticky top-0 z-10 border-b border-sc-bd bg-white px-4 py-4">
+          <h2 className="text-lg font-extrabold text-sc-dark">
+            {listings.length} annonce{listings.length > 1 ? "s" : ""} · {locationLabel}
+          </h2>
+        </div>
+        <div className="space-y-3 p-4">
+          {listings.map((listing) => (
+            <ListingCard
+              key={listing.id}
+              l={listing}
+              compact
+              isFavorite={favoriteIds.has(String(listing.id))}
+              onFavoriteClick={onFavoriteClick}
+            />
+          ))}
+        </div>
+      </aside>
+    </div>
+  );
 }
 
 interface CountriesDevCity {
@@ -157,6 +283,8 @@ function DropdownPill({
 export default function Annonces() {
   const { t } = useTranslation(["annonces", "common"]);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   // États (inchangés)
   const [city, setCity] = useState("");
@@ -177,6 +305,9 @@ export default function Annonces() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [favoriteMessage, setFavoriteMessage] = useState("");
 
   // États pour les dropdowns (ouverts/fermés)
   const [openDrop, setOpenDrop] = useState<string | null>(null);
@@ -326,6 +457,39 @@ export default function Annonces() {
     t,
   ]);
 
+  useEffect(() => {
+    if (!user) {
+      setFavoriteIds(new Set());
+      return;
+    }
+
+    let cancelled = false;
+    api
+      .favoris()
+      .then((items) => {
+        if (cancelled) return;
+        const ids = items.flatMap((item) => [
+          item.id,
+          item.id_depot_annonce,
+          item.id_annonce,
+        ]);
+        setFavoriteIds(new Set(ids.filter(Boolean).map(String)));
+      })
+      .catch(() => {
+        if (!cancelled) setFavoriteIds(new Set());
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!favoriteMessage) return;
+    const timer = window.setTimeout(() => setFavoriteMessage(""), 3000);
+    return () => window.clearTimeout(timer);
+  }, [favoriteMessage]);
+
   // Listes de villes (inchangé)
   const citiesList = useMemo(() => {
     const fromDb = villes.map((v) => v.nom_ville);
@@ -429,6 +593,41 @@ export default function Annonces() {
     setQuery("");
     setColocFilter("");
     setShowMobileFilters(false);
+  };
+
+  const showFavoriteToast = (message: string) => {
+    setFavoriteMessage("");
+    window.setTimeout(() => setFavoriteMessage(message), 20);
+  };
+
+  const handleFavoriteClick = async (event: React.MouseEvent, listing: Listing) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!user) {
+      navigate(`/auth?mode=signin&redirect=/annonces`);
+      return;
+    }
+
+    const listingId = String(listing.id);
+    if (favoriteIds.has(listingId)) {
+      showFavoriteToast("C'est déjà dans vos favoris.");
+      return;
+    }
+
+    try {
+      const response = await api.addFavori(listing.id);
+      setFavoriteIds((prev) => new Set([...prev, listingId]));
+      showFavoriteToast(
+        response.alreadyExists
+          ? "C'est déjà dans vos favoris."
+          : "Ajouté avec succès."
+      );
+    } catch (err) {
+      showFavoriteToast(
+        err instanceof Error ? err.message : "Impossible d'ajouter ce favori."
+      );
+    }
   };
 
   // Fermeture des dropdowns au clic extérieur (géré via `openDrop`)
@@ -764,6 +963,12 @@ export default function Annonces() {
     <SiteLayout>
       {/* Contenu principal avec fond sc-bg */}
       <div className="min-h-screen bg-sc-bg flex flex-col">
+        {favoriteMessage && (
+          <div className="fixed right-5 top-20 z-[90] rounded-xl border border-sc-bd bg-white px-4 py-3 text-sm font-semibold text-sc-dark shadow-2xl">
+            {favoriteMessage}
+          </div>
+        )}
+
         {/* En-tête (similaire à ResultsPage) */}
         <div className="px-4 py-5 border-b border-sc-bd bg-white">
           <h1 className="font-bebas text-2xl text-sc-dark tracking-wide">
@@ -1102,6 +1307,33 @@ export default function Annonces() {
           </button>
 
           {/* Bouton d'alerte (similaire à ResultsPage) */}
+          <div className="flex items-center rounded-xl border border-sc-bd bg-white p-0.5">
+            <button
+              type="button"
+              onClick={() => setViewMode("map")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                viewMode === "map"
+                  ? "bg-sc-cy text-white"
+                  : "text-sc-dark hover:bg-sc-cy-lt"
+              }`}
+            >
+              <Map className="h-3.5 w-3.5" />
+              Carte
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                viewMode === "list"
+                  ? "bg-white text-sc-dark shadow-sm"
+                  : "text-sc-dark hover:bg-sc-cy-lt"
+              }`}
+            >
+              <List className="h-3.5 w-3.5" />
+              Liste
+            </button>
+          </div>
+
           <button className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 border border-sc-bd rounded-xl text-xs text-sc-dark hover:bg-sc-cy-lt hover:border-sc-cy transition-colors cursor-pointer bg-white">
             <i className="ti ti-bell-plus text-xs" />
             Créer une alerte · <strong>{city || query || "Madagascar"}</strong>
@@ -1109,6 +1341,26 @@ export default function Annonces() {
         </div>
 
         {/* Contenu principal avec grille */}
+        <div className="bg-white px-4 py-4">
+          <Link
+            to="/depot_annoncedeux"
+            className="mx-auto flex min-h-[68px] w-full max-w-[520px] items-center justify-center gap-8 rounded border border-sc-bd bg-white px-8 py-3 text-center text-sm leading-5 text-sc-gr2 shadow-sm transition-colors hover:border-sc-cy hover:text-sc-dark"
+          >
+            <Pencil className="h-6 w-6 shrink-0 text-emerald-500" />
+            <span>
+              Cliquer ici pour déposer une annonce et trouver gratuitement vos prochains locataires.
+            </span>
+          </Link>
+        </div>
+
+        {viewMode === "map" && !loading && !error && visibleListings.length > 0 ? (
+          <InteractiveListingsMap
+            listings={visibleListings}
+            favoriteIds={favoriteIds}
+            onFavoriteClick={handleFavoriteClick}
+            locationLabel={city || query || "Madagascar"}
+          />
+        ) : (
         <div className="flex-1 px-4 py-5">
           {/* Compteur supplémentaire (déjà dans l'en-tête, mais on garde la structure) */}
           <div className="mb-4 flex items-center justify-between">
@@ -1169,13 +1421,12 @@ export default function Annonces() {
           {!loading && !error && visibleListings.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {visibleListings.map((l) => (
-                <div
+                <ListingCard
                   key={l.id}
-                  className="cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => (window.location.href = `/annonces/${l.id}`)}
-                >
-                  <ListingCard l={l}/>
-                </div>
+                  l={l}
+                  isFavorite={favoriteIds.has(String(l.id))}
+                  onFavoriteClick={handleFavoriteClick}
+                />
               ))}
             </div>
           )}
@@ -1186,6 +1437,7 @@ export default function Annonces() {
             </div>
           )}
         </div>
+        )}
 
         {/* Mobile filters modal */}
         {showMobileFilters && <MobileFilters />}
