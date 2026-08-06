@@ -822,6 +822,12 @@ export const api = {
             total_messages: number
             non_lus: number
             date_dernier_message: string
+            id_annonce: number | null
+            annonce_titre: string | null
+            annonce_quartier: string | null
+            annonce_ville: string | null
+            annonce_prix: number | null
+            annonce_photo: string | null
         }>>('/messages')
     },
     messagesThread(userId: number | string) {
@@ -889,6 +895,11 @@ export const api = {
             total_messages: number
             non_lus: number
             date_dernier_message: string | null
+            annonce_titre: string | null
+            annonce_quartier: string | null
+            annonce_ville: string | null
+            annonce_prix: number | null
+            annonce_photo: string | null
         }>>('/groupes')
     },
     createGroup(payload: { nom: string; membres: number[]; id_annonce?: number | string | null }) {
