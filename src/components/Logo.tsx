@@ -18,8 +18,8 @@ export function LogoSVG({ height = 28 }: { height?: number }) {
 export function LogoName() {
   return (
     <span className="font-bebas text-[17px] tracking-wide">
-      <span style={{ color: '#46BDD6' }}>Coloc’KOO</span>
-      <span style={{ color: '#99CC33' }}>Miara-Trano</span>
+      <span style={{ color: '#46BDD6' }}>SARITANY'</span>
+      <span style={{ color: '#99CC33' }}>COLOC</span>
     </span>
   )
 }
@@ -30,8 +30,8 @@ export function Logo({ small = false }: { small?: boolean }) {
       <LogoMark className={small ? 'h-7 w-auto' : 'h-9 w-auto'} />
       <div className="flex flex-col leading-none">
           <h5 className="bebas text-2xl">
-            <span className="text-[--brand-cyan-dark]">Coloc’KOO</span>
-            <span className="text-[--brand-green-dark]">Miara-Trano</span>
+            <span className="text-[--brand-cyan-dark]">SARITANY'</span>
+            <span className="text-[--brand-green-dark]">COLOC</span>
           </h5>
         <span className="text-[9px] text-muted-foreground">by Sarintany Group</span>
       </div>
