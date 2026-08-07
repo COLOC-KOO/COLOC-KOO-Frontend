@@ -39,6 +39,7 @@ import AdminBooster from './pages/admin/AdminBooster'
 import AdminContratsEDL from './pages/admin/AdminContrat'
 import { useAuth } from './lib/auth'
 import { ConfigProvider } from './lib/config'
+import AdvertisingPopup from './components/site/AdvertisingPopup'
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { loading, isAdmin } = useAuth()
@@ -50,6 +51,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ConfigProvider>
+      <AdvertisingPopup />
       <Routes>
         {/* Site public */}
       <Route path="/" element={<Home />} />
