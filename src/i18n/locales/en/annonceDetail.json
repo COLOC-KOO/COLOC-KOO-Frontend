@@ -74,6 +74,7 @@
     "expand": "View full profile",
     "collapse": "Collapse profile",
     "sendMessage": "Send a message",
+    "viewProfile": "View full profile",
     "noMessage": "No additional message provided.",
     "currentCity": "Current city:",
     "originCity": "Origin:",
@@ -119,7 +120,14 @@
     "title": "Landlord",
     "verified": "Listing verified by moderation",
     "self": "You are the landlord of this listing.",
-    "unavailable": "The landlord is not available at the moment."
+    "unavailable": "The landlord is not available at the moment.",
+    "viewProfile": "View owner profile"
+  },
+  "profile": {
+    "profession": "Profession",
+    "bio": "Bio",
+    "ownerProfession": "Owner profession",
+    "ownerBio": "Owner bio"
   },
   "launch": {
     "success": "The colocation has been launched successfully.",
