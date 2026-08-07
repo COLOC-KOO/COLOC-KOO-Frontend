@@ -86,14 +86,27 @@ export function ContractWizardModal({
   const coAddr = [annonceData?.quartier, annonceData?.ville].filter(Boolean).join(", ") || "—";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/50 p-4 sm:p-6">
+      <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden" aria-hidden="true">
+        {Array.from({ length: 55 }).map((_, index) => (
+          <span
+            key={index}
+            className={`celebration-confetti celebration-confetti-${index % 5}`}
+            style={{
+              left: `${(index * 41) % 101}%`,
+              animationDelay: `${(index % 12) * 0.08}s`,
+              animationDuration: `${4.6 + (index % 5) * 0.35}s`,
+            }}
+          />
+        ))}
+      </div>
+      <div className="relative z-20 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
         {contractStep !== "offer" && (
           <div className="relative text-center">
             <button type="button" className="absolute right-0 top-0 rounded-full bg-muted p-2 text-muted-foreground hover:bg-muted/80" onClick={onClose}>
               <X className="h-5 w-5" />
             </button>
-            <h2 className="bebas text-3xl text-brand-cyan-dark">Ton contrat de colocation</h2>
+            <h2 className="bebas text-2xl text-brand-magenta">Ton contrat de colocation</h2>
             <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
               Ton contrat comprend tous les éléments nécessaires pour établir un contrat légal entre les colocataires et le propriétaire.
             </p>
@@ -112,7 +125,7 @@ export function ContractWizardModal({
               <X className="h-5 w-5" />
             </button>
             <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-br from-brand-green to-brand-cyan" />
-            <h2 className="bebas text-3xl">Toutes nos félicitations !</h2>
+            <h2 className="bebas text-2xl">Toutes nos félicitations !</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
               Tu as permis à plusieurs colocataires de se rencontrer à travers ton logement pour un mieux vivre ensemble.
             </p>
@@ -120,7 +133,7 @@ export function ContractWizardModal({
               <div className="mx-auto -mt-16 mb-3 grid h-[94px] w-[94px] place-items-center rounded-full bg-white shadow-md">
                 <span className="bebas text-lg leading-none text-brand-cyan-dark">COLOC'KOO</span>
               </div>
-              <h3 className="bebas mx-auto max-w-md text-2xl text-brand-cyan-dark">{activeOffer.titre}</h3>
+              <h3 className="bebas mx-auto max-w-md text-xl text-brand-magenta">{activeOffer.titre}</h3>
               <p className="mx-auto mt-2 max-w-md text-sm text-foreground/80">{activeOffer.texte}</p>
               <div className="relative mt-3 max-h-40 overflow-hidden rounded-xl border border-border bg-white p-4 text-left text-xs leading-relaxed text-foreground">
                 <div className="bebas mb-1.5 text-base">{activeBody.titre}</div>
@@ -130,13 +143,13 @@ export function ContractWizardModal({
                 {activeBody.corps}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white to-transparent" />
               </div>
-              <button type="button" onClick={() => onChooseOffer("contrat")} className="mt-3 w-full rounded-xl bg-brand-cyan px-4 py-3 text-sm font-bold text-white hover:bg-brand-cyan-dark">
+              <button type="button" onClick={() => onChooseOffer("contrat")} className="mt-3 w-full rounded-xl bg-brand-magenta px-4 py-3 text-sm font-bold text-white hover:brightness-95">
                 Aide au contrat
               </button>
-              <button type="button" onClick={() => onChooseOffer("edl")} className="mt-2.5 w-full rounded-xl bg-brand-cyan px-4 py-3 text-sm font-bold text-white hover:bg-brand-cyan-dark">
+              <button type="button" onClick={() => onChooseOffer("edl")} className="mt-2.5 w-full rounded-xl bg-brand-magenta px-4 py-3 text-sm font-bold text-white hover:brightness-95">
                 Aide à l'état des lieux
               </button>
-              <button type="button" onClick={() => onChooseOffer("both")} className="mt-2.5 w-full rounded-xl bg-brand-cyan px-4 py-3 text-sm font-bold text-white hover:bg-brand-cyan-dark">
+              <button type="button" onClick={() => onChooseOffer("both")} className="mt-2.5 w-full rounded-xl bg-brand-magenta px-4 py-3 text-sm font-bold text-white hover:brightness-95">
                 Les deux Monsieur !
               </button>
               <button type="button" onClick={onIgnoreOffer} className="mt-2.5 text-xs text-muted-foreground hover:text-foreground">
@@ -177,7 +190,7 @@ export function ContractWizardModal({
             <p className="text-center text-xs text-muted-foreground">
               Le forfait sera <b>réparti entre les colocataires</b> — chacun règlera sa part. Toi (déposant), tu ne paies rien.
             </p>
-            <button type="button" onClick={() => onSetContractStep("done")} className="w-full rounded-xl bg-brand-cyan px-5 py-3.5 text-sm font-bold text-white hover:bg-brand-cyan-dark">
+            <button type="button" onClick={() => onSetContractStep("done")} className="w-full rounded-xl bg-brand-magenta px-5 py-3.5 text-sm font-bold text-white hover:brightness-95">
               Continuer
             </button>
             <div className="flex items-center justify-between text-xs">
@@ -220,7 +233,7 @@ export function ContractWizardModal({
               <span className="text-muted-foreground">{myShare != null ? "Ta part à régler" : priceLabel}</span>
               <span className="bebas text-xl text-brand-cyan-dark">{fmtAr(myShare ?? (orderTotal || previewTotal))} Ar</span>
             </div>
-            <button type="button" onClick={onConfirmPayment} disabled={contractSubmitting} className="w-full rounded-xl bg-brand-cyan px-5 py-3.5 text-sm font-bold text-white hover:bg-brand-cyan-dark disabled:opacity-60">
+            <button type="button" onClick={onConfirmPayment} disabled={contractSubmitting} className="w-full rounded-xl bg-brand-magenta px-5 py-3.5 text-sm font-bold text-white hover:brightness-95 disabled:opacity-60">
               {contractSubmitting ? "Enregistrement..." : "Valider ma commande"}
             </button>
             <div className="flex items-center justify-between text-xs">
@@ -239,7 +252,7 @@ export function ContractWizardModal({
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-green/15 text-brand-green">
               <Sparkles className="h-7 w-7" />
             </div>
-            <div className="bebas text-2xl">{paymentInfo ? "Paiement enregistré" : "Récapitulatif du contrat"}</div>
+            <div className="bebas text-xl">{paymentInfo ? "Paiement enregistré" : "Récapitulatif du contrat"}</div>
             <p className="text-sm text-muted-foreground">
               {paymentInfo ? (
                 <>
