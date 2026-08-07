@@ -74,6 +74,7 @@
     "expand": "Hijery ny mombamomba feno",
     "collapse": "Hanafoana ny mombamomba",
     "sendMessage": "Handefa hafatra",
+    "viewProfile": "Hijery ny mombamomba",
     "noMessage": "Tsy misy hafatra fanampiny.",
     "currentCity": "Tanàna misy amin'izao :",
     "originCity": "Niaviany :",
@@ -119,7 +120,14 @@
     "title": "Tompon-trano",
     "verified": "Fanambarana nohamarinin'ny fanaraha-maso",
     "self": "Ianao no tompon-tranon'ity fanambarana ity.",
-    "unavailable": "Tsy misy ny tompon-trano amin'izao fotoana izao."
+    "unavailable": "Tsy misy ny tompon-trano amin'izao fotoana izao.",
+    "viewProfile": "Hijery ny mombamomban'ny tompon-trano"
+  },
+  "profile": {
+    "profession": "Asa",
+    "bio": "Biô",
+    "ownerProfession": "Asan'ny tompon-trano",
+    "ownerBio": "Biô-n'ny tompon-trano"
   },
   "launch": {
     "success": "Ny trano fiarahamonina dia natomboka soa aman-tsara.",

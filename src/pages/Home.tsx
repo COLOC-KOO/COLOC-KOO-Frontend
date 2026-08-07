@@ -296,6 +296,8 @@ export default function Home() {
         hoveredListingId={hoveredListingId}
         setHoveredListingId={setHoveredListingId}
         error={error}
+        favoriteIds={favoriteIds}
+        onFavoriteClick={handleFavorite}
       />
 
     {/* <CitiesExploreSection

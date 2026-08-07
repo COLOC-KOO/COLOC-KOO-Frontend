@@ -74,6 +74,7 @@
     "expand": "Voir le profil complet",
     "collapse": "Réduire le profil",
     "sendMessage": "Envoyer un message",
+    "viewProfile": "Voir le profil",
     "noMessage": "Aucun message supplémentaire fourni.",
     "currentCity": "Ville actuelle :",
     "originCity": "Origine :",
@@ -119,7 +120,14 @@
     "title": "Propriétaire",
     "verified": "Annonce vérifiée par modération",
     "self": "Vous êtes le propriétaire de cette annonce.",
-    "unavailable": "Le propriétaire n'est pas disponible pour le moment."
+    "unavailable": "Le propriétaire n'est pas disponible pour le moment.",
+    "viewProfile": "Voir le profil du propriétaire"
+  },
+  "profile": {
+    "profession": "Profession",
+    "bio": "Bio",
+    "ownerProfession": "Profession du propriétaire",
+    "ownerBio": "Bio du propriétaire"
   },
   "launch": {
     "success": "La colocation a été lancée avec succès.",
