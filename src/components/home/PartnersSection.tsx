@@ -34,6 +34,36 @@ function normalizePartnerLevel(value: string | null | undefined) {
   return (value || "").trim().toLowerCase();
 }
 
+function getLevelStyle(level: string) {
+  switch (level) {
+    case "diamant":
+      return {
+        badge: "border-cyan-200 bg-cyan-50 text-cyan-700",
+        card: "border-cyan-200/70 bg-gradient-to-br from-cyan-50/60 to-white",
+      };
+    case "or":
+      return {
+        badge: "border-amber-200 bg-amber-50 text-amber-700",
+        card: "border-amber-200/70 bg-gradient-to-br from-amber-50/60 to-white",
+      };
+    case "argent":
+      return {
+        badge: "border-slate-200 bg-slate-50 text-slate-700",
+        card: "border-slate-200/70 bg-gradient-to-br from-slate-50/70 to-white",
+      };
+    case "bronze":
+      return {
+        badge: "border-orange-200 bg-orange-50 text-orange-700",
+        card: "border-orange-200/70 bg-gradient-to-br from-orange-50/60 to-white",
+      };
+    default:
+      return {
+        badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
+        card: "border-emerald-200/70 bg-gradient-to-br from-emerald-50/60 to-white",
+      };
+  }
+}
+
 export function PartnersSection({ partners, loading }: PartnersSectionProps) {
   const { t } = useTranslation(["home", "common"]);
   const [selectedLevel, setSelectedLevel] = useState("all");
@@ -83,41 +113,56 @@ export function PartnersSection({ partners, loading }: PartnersSectionProps) {
             {loading ? t("home:partners.loading") : t("home:partners.empty")}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
-            {displayedPartners.map((partner) => (
-              <div key={partner.id_partenaire} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:shadow-md min-h-[130px]">
-                <div className="flex h-full flex-col items-center justify-between text-center gap-2">
-                  <div className="w-14 h-10 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden">
-                    {(partner.visuel || partner.logo) && (/^(https?:\/\/|\/|uploads\/)/i.test((partner.visuel || partner.logo || "").trim())) ? (
-                      <img
-                        src={normalizeImageUrl(partner.visuel || partner.logo)}
-                        alt={partner.partenaire_nom || partner.titre || "Partenaire"}
-                        className="h-full w-full object-contain"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span className="text-xl font-bold text-slate-700">{(partner.partenaire_nom || partner.titre || "P").charAt(0)}</span>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">{partner.partenaire_nom || partner.titre || "Partenaire"}</div>
-                    <div className="text-[11px] text-slate-500 mt-1">
-                      {partner.secteur || partner.emplacement || "Partenaire"}
-                    </div>
-                    {(partner.partenaire_niveau || partner.niveau) && (
-                      <div className="text-[11px] text-slate-500 mt-1 uppercase tracking-[0.08em]">
-                        {partner.partenaire_niveau || partner.niveau}
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {displayedPartners.map((partner) => {
+              const levelValue = normalizePartnerLevel(partner.partenaire_niveau || partner.niveau);
+              const levelStyle = getLevelStyle(levelValue);
+              const levelLabel = partner.partenaire_niveau || partner.niveau || "";
+
+              return (
+                <div
+                  key={partner.id_partenaire}
+                  className={`min-h-[132px] rounded-2xl border border-slate-200 border-t-[3px] border-t-[#cacc7d] bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${levelStyle.card}`}
+                >
+                  <div className="flex h-full flex-col items-center justify-between gap-2 text-center">
+                    <div className="flex w-full flex-col items-center justify-center gap-2">
+                      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white/90 shadow-sm">
+                        {(partner.visuel || partner.logo) && (/^(https?:\/\/|\/|uploads\/)/i.test((partner.visuel || partner.logo || "").trim())) ? (
+                          <img
+                            src={normalizeImageUrl(partner.visuel || partner.logo)}
+                            alt={partner.partenaire_nom || partner.titre || "Partenaire"}
+                            className="h-full w-full object-contain"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span className="text-base font-semibold text-slate-700">{(partner.partenaire_nom || partner.titre || "P").charAt(0)}</span>
+                        )}
                       </div>
+                      {levelLabel && (
+                        <span className={`rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${levelStyle.badge}`}>
+                          {levelLabel}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-center space-y-1 text-center">
+                      <div className="text-sm font-semibold text-slate-900">
+                        {partner.partenaire_nom || partner.titre || "Partenaire"}
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        {partner.secteur || partner.emplacement || "Partenaire"}
+                      </div>
+                    </div>
+
+                    {(partner.description || partner.engagement) && (
+                      <p className="text-[11px] leading-tight text-slate-500 line-clamp-2">
+                        {partner.description || partner.engagement}
+                      </p>
                     )}
                   </div>
-                  {(partner.description || partner.engagement) && (
-                    <p className="text-[11px] text-slate-500 leading-tight line-clamp-2">
-                      {partner.description || partner.engagement}
-                    </p>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
