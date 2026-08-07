@@ -1,5 +1,104 @@
 import { Link } from "react-router-dom";
-import { Check, Eye, Trash2, UserPlus } from "lucide-react";
+import { Check, Eye, MessageCircle, Trash2, UserPlus, X } from "lucide-react";
+
+type OwnerCandidate = {
+  id: string;
+  initials: string;
+  name: string;
+  subtitle: string;
+};
+
+type OwnerDashboardProps = {
+  title: string;
+  resume: string;
+  monthlyRent: string;
+  target: number;
+  retained: OwnerCandidate[];
+  pending: OwnerCandidate[];
+  refused: OwnerCandidate[];
+  refusedOpen: boolean;
+  launchDisabled: boolean;
+  launchLabel: string;
+  onAccept: (id: string) => void;
+  onDiscuss: (candidate: OwnerCandidate) => void;
+  onRefuse: (id: string) => void;
+  onRestore: (id: string) => void;
+  onLaunch: () => void;
+  onToggleRefused: () => void;
+};
+
+export function OwnerCandidaturesDashboard({
+  title, resume, monthlyRent, target, retained, pending, refused, refusedOpen,
+  launchDisabled, launchLabel, onAccept, onDiscuss, onRefuse, onRestore,
+  onLaunch, onToggleRefused,
+}: OwnerDashboardProps) {
+  const filled = retained.length;
+  const avatarClass = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-xs font-bold text-white";
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-3">
+      <section className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4">
+        <div className="h-14 w-14 shrink-0 rounded-xl bg-brand-cyan-light" />
+        <div className="min-w-0">
+          <p className="bebas truncate text-lg leading-none text-brand-dark">{title} · {resume}</p>
+          <p className="mt-1 text-sm font-bold text-brand-dark">{monthlyRent} <span className="text-xs font-normal text-muted-foreground">/ mois · loyer global</span></p>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4">
+        <div className="rounded-xl bg-brand-cyan-light p-3 text-xs leading-relaxed text-brand-cyan-dark">
+          <b>Mode : Validation individuelle.</b> En tant que membre de la colocation, tu valides les colocataires un par un et peux échanger avec chacun·e avant d'accepter. La coloc se lance quand les {target} places sont pourvues.
+        </div>
+
+        <div className="mt-3 flex items-end justify-between">
+          <span className="bebas text-2xl text-brand-green-dark">{filled} / {target}</span>
+          <span className="text-[10px] text-muted-foreground">places pourvues</span>
+        </div>
+        <div className="mt-1 grid grid-cols-3 gap-1">
+          {Array.from({ length: target }).map((_, index) => (
+            <span key={index} className={`h-2 rounded-full ${index < filled ? "bg-brand-green" : "bg-muted"}`} />
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <div className="flex items-center gap-2">
+            <h2 className="bebas text-base text-brand-green-dark">Colocataires retenus</h2>
+            <span className="rounded-full bg-brand-green px-2 py-0.5 text-[10px] font-bold text-white">{retained.length}</span>
+          </div>
+          <div className="mt-2 space-y-2">
+            {retained.length ? retained.map((candidate) => (
+              <div key={candidate.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
+                <div className="flex min-w-0 items-center gap-2"><span className={avatarClass}>{candidate.initials}</span><div className="min-w-0"><p className="truncate text-sm font-bold">{candidate.name}</p><p className="truncate text-[11px] text-muted-foreground">{candidate.subtitle}</p></div></div>
+                <span className="rounded-full bg-brand-green-light px-2 py-0.5 text-[10px] font-semibold text-brand-green-dark">Retenu</span>
+              </div>
+            )) : <p className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">Aucun colocataire retenu pour l'instant.</p>}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="flex items-center gap-2"><h2 className="bebas text-base text-brand-dark">Candidatures en attente</h2><span className="rounded-full bg-brand-dark px-2 py-0.5 text-[10px] font-bold text-white">{pending.length}</span></div>
+          <div className="mt-2 space-y-2">
+            {pending.length ? pending.map((candidate) => (
+              <div key={candidate.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
+                <div className="flex min-w-0 items-center gap-2"><span className={avatarClass}>{candidate.initials}</span><div className="min-w-0"><p className="truncate text-sm font-bold">{candidate.name}</p><p className="truncate text-[11px] text-muted-foreground">{candidate.subtitle}</p></div></div>
+                <div className="flex shrink-0 gap-1.5">
+                  <button type="button" aria-label={`Discuter avec ${candidate.name}`} onClick={() => onDiscuss(candidate)} className="rounded-lg border border-brand-cyan bg-brand-cyan-light p-2 text-brand-cyan-dark hover:bg-brand-cyan hover:text-white"><MessageCircle className="h-4 w-4" /></button>
+                  <button type="button" aria-label={`Accepter ${candidate.name}`} onClick={() => onAccept(candidate.id)} className="rounded-lg border border-brand-green bg-brand-green-light p-2 text-brand-green-dark hover:bg-brand-green hover:text-white"><Check className="h-4 w-4" /></button>
+                  <button type="button" aria-label={`Refuser ${candidate.name}`} onClick={() => onRefuse(candidate.id)} className="rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 hover:bg-red-500 hover:text-white"><X className="h-4 w-4" /></button>
+                </div>
+              </div>
+            )) : <p className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">Aucune candidature en attente.</p>}
+          </div>
+        </div>
+
+        <button type="button" onClick={onToggleRefused} className="mt-3 flex w-full items-center justify-between border-t border-border pt-3 text-xs font-semibold text-muted-foreground">Personnes refusées ({refused.length}) <span>{refusedOpen ? "▴" : "▾"}</span></button>
+        {refusedOpen && <div className="mt-2 space-y-2">{refused.length ? refused.map((candidate) => <div key={candidate.id} className="flex items-center justify-between rounded-xl border border-border p-2.5 text-sm"><span>{candidate.name}</span><button type="button" onClick={() => onRestore(candidate.id)} className="text-xs font-semibold text-brand-cyan-dark">Rétablir</button></div>) : <p className="text-xs text-muted-foreground">Aucun refus pour l'instant.</p>}</div>}
+
+        <button type="button" disabled={launchDisabled} onClick={onLaunch} className="mt-4 w-full rounded-xl bg-brand-green px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground">{launchLabel}</button>
+      </section>
+    </div>
+  );
+}
 
 type Props = {
   annonceId?: string;

@@ -22,10 +22,10 @@ import { useAuth } from "../lib/auth";
 import { api, ApiAnnonce, ApiBackofficeContratDetails } from "../lib/api";
 import { BasicCandidatureModals } from "../components/candidatures/BasicCandidatureModals";
 import { CandidateAvatarStack } from "../components/candidatures/CandidateAvatarStack";
-import { CandidaturesHeader } from "../components/candidatures/CandidaturesHeader";
+import { CandidaturesHeader, CandidaturesViewButtons } from "../components/candidatures/CandidaturesHeader";
 import { ContractWizardModal } from "../components/candidatures/ContractWizardModal";
 import { JoinTeamView } from "../components/candidatures/JoinTeamView";
-import { RealCandidaturesPanel } from "../components/candidatures/RealCandidaturesPanel";
+import { OwnerCandidaturesDashboard, RealCandidaturesPanel } from "../components/candidatures/RealCandidaturesPanel";
 
 type OwnerCandidate = {
   id: string;
@@ -1583,13 +1583,24 @@ function openChat(candidate: any) {
   return (
     <SiteLayout>
       <div className="mx-auto min-h-[calc(100vh-120px)] max-w-6xl px-4 py-6 sm:px-6">
-        <CandidaturesHeader
-          activeView={activeView}
-          onChangeView={changeView}
-          activeButtonClass={activeButtonClass}
-          inactiveButtonClass={inactiveButtonClass}
-          officialNotification={officialNotification}
-        />
+        <div className="mb-3 border-b border-border pb-3">
+          <CandidaturesViewButtons
+            activeView={activeView}
+            onChangeView={changeView}
+            activeButtonClass={activeButtonClass}
+            inactiveButtonClass={inactiveButtonClass}
+            officialNotification={officialNotification}
+          />
+        </div>
+        {!(activeView === "flux" && isAnnonceOwner) && (
+          <CandidaturesHeader
+            activeView={activeView}
+            onChangeView={changeView}
+            activeButtonClass={activeButtonClass}
+            inactiveButtonClass={inactiveButtonClass}
+            officialNotification={officialNotification}
+          />
+        )}
         {!authLoading && !user ? (
           <div className="mt-8 rounded-3xl border border-border bg-card p-8 text-center">
             <p className="text-lg font-semibold">
@@ -1611,7 +1622,7 @@ function openChat(candidate: any) {
           </div>
         ) : (
           <div className="mt-8 space-y-6">
-            {activeView === "flux" && (
+            {activeView === "flux" && !isAnnonceOwner && (
               <RealCandidaturesPanel
                 annonceId={annonceId}
                 candidateActionFeedback={candidateActionFeedback}
@@ -2034,7 +2045,38 @@ function openChat(candidate: any) {
               )}
 
             {/* ===== VUE FLUX (gestion — réservée au déposant) ===== */}
-            {activeView === "flux" && isAnnonceOwner && (
+            {activeView === "flux" && isAnnonceOwner && (() => {
+              const contractExists = myContracts.length > 0;
+              const isFinalized = annonceData?.statut === "terminee";
+              const launchDisabled = ownerFilled < TARGET || contractExists || isFinalized;
+              const launchLabel = isFinalized
+                ? "Colocation déjà lancée ✓"
+                : contractExists
+                  ? "Contrat déjà créé — voir les paiements ci-dessus"
+                  : ownerFilled < TARGET
+                    ? `Lancer la colocation (${ownerFilled}/${TARGET})`
+                    : "Lancer la colocation 🎉";
+              return <OwnerCandidaturesDashboard
+                title={logementTitre}
+                resume={logementResume}
+                monthlyRent={`${fmtAr(monthlyRent)} Ar`}
+                target={TARGET}
+                retained={ownerRetained}
+                pending={ownerPending}
+                refused={ownerRefused}
+                refusedOpen={refusedOpen}
+                launchDisabled={launchDisabled}
+                launchLabel={launchLabel}
+                onAccept={acceptCandidate}
+                onDiscuss={openChat}
+                onRefuse={refuseCandidate}
+                onRestore={restoreCandidate}
+                onLaunch={launchColoc}
+                onToggleRefused={() => setRefusedOpen((prev) => !prev)}
+              />;
+            })()}
+
+            {false && activeView === "flux" && isAnnonceOwner && (
               <div className="space-y-6">
                 <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

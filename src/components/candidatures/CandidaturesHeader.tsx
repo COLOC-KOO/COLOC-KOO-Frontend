@@ -12,6 +12,62 @@ type Props = {
 
 const viewButtons: ViewId[] = ["flux", "track", "cand", "join", "won", "lost"];
 
+export function CandidaturesViewButtons({
+  activeView,
+  onChangeView,
+  activeButtonClass,
+  inactiveButtonClass,
+  officialNotification = null,
+}: Props) {
+  return (
+    <div className="flex flex-nowrap justify-start gap-1 overflow-x-auto pb-1 lg:justify-end">
+      {viewButtons.map((button) => {
+        const isWonNotification = button === "won";
+        const isLostNotification = button === "lost";
+        const hasOfficialNotification = Boolean(officialNotification);
+        const isCurrentNotification =
+          (officialNotification === "won" && isWonNotification) ||
+          (officialNotification === "lost" && isLostNotification);
+        const isOppositeNotification =
+          (officialNotification === "won" && isLostNotification) ||
+          (officialNotification === "lost" && isWonNotification);
+        const disabled = hasOfficialNotification && isOppositeNotification;
+        const notificationClass = isCurrentNotification
+          ? isWonNotification
+            ? "animate-pulse border-brand-green bg-brand-green text-white shadow-sm shadow-brand-green/30"
+            : "animate-pulse border-red-500 bg-red-500 text-white shadow-sm shadow-red-500/30"
+          : isOppositeNotification
+            ? isWonNotification
+              ? "cursor-not-allowed border-brand-green bg-brand-green text-white opacity-60"
+              : "cursor-not-allowed border-red-500 bg-red-500 text-white opacity-60"
+            : activeView === button
+              ? activeButtonClass
+              : inactiveButtonClass;
+
+        return (
+          <button
+            key={button}
+            type="button"
+            onClick={() => {
+              if (!disabled) onChangeView(button);
+            }}
+            disabled={disabled}
+            aria-disabled={disabled}
+            className={`shrink-0 whitespace-nowrap rounded-lg border px-2 py-1 text-[10px] font-semibold transition ${notificationClass}`}
+          >
+            <CandidaturesViewButtonLabel button={button} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function CandidaturesViewButtonLabel({ button }: { button: ViewId }) {
+  const { t } = useTranslation(["candidatures"]);
+  return <>{t(`candidatures:header.views.${button}`)}</>;
+}
+
 export function CandidaturesHeader({
   activeView,
   onChangeView,
@@ -34,46 +90,6 @@ export function CandidaturesHeader({
           <p className="mt-3 max-w-xl text-muted-foreground">
             {t("candidatures:header.subtitle")}
           </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {viewButtons.map((button) => {
-            const isWonNotification = button === "won";
-            const isLostNotification = button === "lost";
-            const hasOfficialNotification = Boolean(officialNotification);
-            const isCurrentNotification =
-              (officialNotification === "won" && isWonNotification) ||
-              (officialNotification === "lost" && isLostNotification);
-            const isOppositeNotification =
-              (officialNotification === "won" && isLostNotification) ||
-              (officialNotification === "lost" && isWonNotification);
-            const disabled = hasOfficialNotification && isOppositeNotification;
-            const notificationClass = isCurrentNotification
-              ? isWonNotification
-                ? "animate-pulse border-brand-green bg-brand-green text-white shadow-sm shadow-brand-green/30"
-                : "animate-pulse border-red-500 bg-red-500 text-white shadow-sm shadow-red-500/30"
-              : isOppositeNotification
-                ? isWonNotification
-                  ? "cursor-not-allowed border-brand-green bg-brand-green text-white opacity-60"
-                  : "cursor-not-allowed border-red-500 bg-red-500 text-white opacity-60"
-                : activeView === button
-                  ? activeButtonClass
-                  : inactiveButtonClass;
-
-            return (
-              <button
-                key={button}
-                type="button"
-                onClick={() => {
-                  if (!disabled) onChangeView(button);
-                }}
-                disabled={disabled}
-                aria-disabled={disabled}
-                className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${notificationClass}`}
-              >
-                {t(`candidatures:header.views.${button}`)}
-              </button>
-            );
-          })}
         </div>
       </div>
     </div>

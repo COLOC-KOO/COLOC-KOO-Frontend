@@ -1,4 +1,5 @@
-import { Sparkles, X } from "lucide-react";
+import { PartyPopper, Sparkles, X } from "lucide-react";
+import { LogoMark } from "../Logo";
 
 type Props = {
   candidatureMessage: string;
@@ -90,33 +91,51 @@ export function BasicCandidatureModals({
       )}
 
       {celebrateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-8 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-brand-cyan-light px-3 py-1.5 text-sm font-semibold text-brand-cyan-dark">
-                  <Sparkles className="h-4 w-4" /> Célébration
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-brand-dark/60 p-4 backdrop-blur-[2px]">
+          <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden" aria-hidden="true">
+            {Array.from({ length: 70 }).map((_, index) => (
+              <span
+                key={index}
+                className={`celebration-confetti celebration-confetti-${index % 5}`}
+                style={{
+                  left: `${(index * 37) % 101}%`,
+                  animationDelay: `${(index % 12) * 0.08}s`,
+                  animationDuration: `${4.6 + (index % 5) * 0.35}s`,
+                }}
+              />
+            ))}
+          </div>
+          <div className="celebration-modal relative z-20 max-h-[90vh] w-full max-w-[360px] overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 text-center">
+                <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-green to-brand-cyan text-white shadow-md">
+                  <PartyPopper className="h-6 w-6" />
                 </div>
-                <h2 className="bebas mt-4 text-3xl">Toutes nos félicitations !</h2>
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-cyan-light px-2.5 py-1 text-[10px] font-semibold text-brand-cyan-dark">
+                  <Sparkles className="h-3.5 w-3.5" /> Célébration
+                </div>
+                <h2 className="bebas mt-2 text-xl leading-none text-brand-dark sm:text-2xl">Toutes nos félicitations !</h2>
               </div>
               <button
                 type="button"
-                className="rounded-full bg-muted p-3 text-muted-foreground hover:bg-muted/80"
+                className="rounded-full bg-muted p-2 text-muted-foreground transition hover:bg-muted/80"
                 onClick={onCloseCelebrate}
+                aria-label="Fermer"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="mx-auto mt-2 max-w-[300px] text-center text-xs leading-relaxed text-muted-foreground">
               Tu as permis à plusieurs colocataires de se rencontrer à travers ton logement pour un mieux vivre ensemble.
             </p>
-            {createdContractIds.length > 0 && (
-              <div className="mt-4 space-y-4 rounded-2xl border border-brand-cyan/30 bg-white p-4 text-sm text-brand-cyan-dark">
-                <div className="font-semibold">
+            {false && createdContractIds.length > 0 && (
+              <div className="relative mt-7 space-y-3 rounded-xl border border-brand-magenta/30 bg-brand-cyan-light/20 p-3 pt-7 text-sm text-brand-cyan-dark">
+                <div className="absolute -top-5 left-1/2 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-brand-magenta/15"><LogoMark className="h-8 w-8" /></div>
+                <div className="bebas text-center text-lg leading-tight text-brand-magenta">
                   Contrat{createdContractIds.length > 1 ? "s" : ""} créé{createdContractIds.length > 1 ? "s" : ""}
                 </div>
                 {createdContracts.map((contract) => (
-                  <div key={contract.id_contrat} className="rounded-2xl border border-border p-4">
+                  <div key={contract.id_contrat} className="rounded-xl border border-border bg-white p-3">
                     <div className="text-sm font-semibold">
                       #{contract.id_contrat} · {contract.type === "contrat" ? "Contrat de colocation" : "État des lieux"}
                     </div>
@@ -132,7 +151,7 @@ export function BasicCandidatureModals({
                     <button
                       type="button"
                       onClick={() => onOpenContractDocument(contract.id_contrat)}
-                      className="mt-3 w-full rounded-xl border border-brand-cyan px-4 py-2 text-xs font-bold text-brand-cyan-dark hover:bg-brand-cyan/10"
+                      className="mt-3 w-full rounded-lg bg-brand-magenta px-4 py-2 text-xs font-bold text-white transition hover:brightness-95"
                     >
                       Voir / télécharger le document
                     </button>
@@ -140,21 +159,21 @@ export function BasicCandidatureModals({
                 ))}
               </div>
             )}
-            <div className="mt-6 rounded-2xl border border-border bg-brand-cyan-light/30 p-6">
-              <div className="text-sm text-muted-foreground">Logement</div>
-              <div className="bebas mt-2 text-2xl text-brand-cyan-dark">
+            <div className="mt-3 rounded-xl border border-brand-green/15 bg-brand-green-light/50 p-3 text-left">
+              <div className="text-xs text-muted-foreground">Logement</div>
+              <div className="bebas mt-1 text-lg leading-tight text-brand-cyan-dark">
                 {logementTitre} · {logementResume} · {fmtAr(monthlyRent)} Ar / mois
               </div>
-              <div className="mt-4 text-sm text-muted-foreground">
+              <div className="mt-2 text-xs text-muted-foreground">
                 Colocataires — {ownerRetained.map((candidate) => candidate.name).join(" · ") || "—"}
               </div>
-              <div className="mt-2 text-sm text-muted-foreground">
+              <div className="mt-1 text-xs text-muted-foreground">
                 Début d'emménagement — {moveInLabel}
               </div>
             </div>
             <button
               type="button"
-              className="mt-6 w-full rounded-xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark"
+              className="mt-3 w-full rounded-xl bg-brand-cyan px-5 py-3 text-sm font-bold uppercase text-white shadow-sm transition hover:bg-brand-cyan-dark focus:outline-none focus:ring-4 focus:ring-brand-cyan/25"
               onClick={onCloseCelebrate}
             >
               Terminer
