@@ -433,6 +433,8 @@ export default function Compte() {
   const { user, loading, logout, updateProfile, isAdmin } = useAuth()
   const [counters, setCounters] = useState({ favoris: 0, notifications: 0, messages: 0 })
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [avatarUpdating, setAvatarUpdating] = useState(false)
+  const [avatarMessage, setAvatarMessage] = useState('')
   const isColocataire = user?.poste === 'colocataire'
 
   const tabs = [
@@ -482,6 +484,7 @@ export default function Compte() {
   }, [user])
 
   const initials = (user?.prenom?.[0] || user?.name?.[0] || 'U').toUpperCase()
+  const profileImageUrl = user?.profilePicture || (user as any)?.profile_picture || null
   const fullName = `${user?.prenom || ''} ${user?.nom || ''}`.trim() || user?.name || t('userProfile')
   const roleLabel = user?.poste === 'proprietaire' ? t('proprietaire') : user?.poste === 'colocataire' ? t('colocataire') : user?.poste || t('member')
 
@@ -498,18 +501,40 @@ export default function Compte() {
     return 0
   }
 
+  const handleProfileImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setAvatarUpdating(true)
+    setAvatarMessage('')
+    try {
+      const formData = new FormData()
+      formData.append('photo', file)
+      const uploaded = await api.uploadProfilePicture(formData)
+      await updateProfile({ profile_picture: uploaded.profilePicture || null })
+      setAvatarMessage('Photo de profil mise à jour')
+    } catch {
+      setAvatarMessage('Impossible de mettre à jour la photo de profil')
+    } finally {
+      setAvatarUpdating(false)
+      event.target.value = ''
+    }
+  }
+
   return (
     <SiteLayout>
       {/* ---------- HEADER SOMBRE (façon maquette .account-head) ---------- */}
       <div className="bg-gradient-to-r from-[#2C2C2C] to-[#3a3a3a] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 flex items-center gap-4">
           <div className="relative shrink-0">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white text-4xl font-bold border-4 border-white/20">
-              {loading ? '...' : initials}
+            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-white text-4xl font-bold border-4 border-white/20 overflow-hidden">
+              {loading ? '...' : profileImageUrl ? (
+                <img src={profileImageUrl} alt={fullName} className="h-full w-full object-cover" />
+              ) : initials}
             </div>
             <label className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-brand-cyan border-2 border-[#2C2C2C] flex items-center justify-center cursor-pointer hover:bg-brand-cyan-dark transition-colors">
               <Camera className="w-4 h-4 text-white" />
-              <input type="file" accept="image/*" className="hidden" />
+              <input type="file" accept="image/*" className="hidden" onChange={handleProfileImageChange} />
             </label>
           </div>
           <div className="min-w-0">
@@ -543,6 +568,11 @@ export default function Compte() {
                 </span>
               )}
             </div>
+            {avatarMessage ? (
+              <p className={`mt-2 text-sm ${avatarUpdating ? 'text-white/70' : 'text-brand-green-light'}`}>
+                {avatarUpdating ? 'Mise à jour de la photo...' : avatarMessage}
+              </p>
+            ) : null}
           </div>
           <div className="ml-auto hidden md:flex items-center gap-2">
             {user && isAdmin && (
@@ -551,7 +581,7 @@ export default function Compte() {
               </Button>
             )}
             {user && (
-              <Button variant="outline" onClick={() => { logout(); navigate('/auth?mode=signin') }} className="gap-2 bg-white/10 text-red-300 border-red-300/30 hover:bg-red-500 hover:text-white">
+              <Button variant="outline" onClick={() => logout()} className="gap-2 bg-white/10 text-red-300 border-red-300/30 hover:bg-red-500 hover:text-white">
                 Déconnexion
               </Button>
             )}

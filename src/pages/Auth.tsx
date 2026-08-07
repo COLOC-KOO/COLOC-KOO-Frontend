@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Home } from "lucide-react";
 import { Logo } from "../components/Logo";
 import { Button } from "../components/ui/Button";
 import { Poste } from "../lib/api";
@@ -32,6 +32,7 @@ export default function Auth() {
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login, register, user } = useAuth();
   const navigate = useNavigate();
 
@@ -85,7 +86,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2 relative">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_35%),linear-gradient(135deg,_#f8fcff_0%,_#eef7f4_100%)] grid md:grid-cols-[1.05fr_0.95fr] relative overflow-hidden">
       {/* Bouton retour - Version desktop */}
       <Link
         to="/"
@@ -96,17 +97,20 @@ export default function Auth() {
       </Link>
 
       <div className="hidden md:flex bg-gradient-to-br from-brand-cyan via-brand-cyan-dark to-brand-green p-12 text-white flex-col justify-between relative">
-        <Logo />
-        <div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.2),_transparent_35%)]" />
+        <div className="relative z-10">
+          <Logo />
+        </div>
+        <div className="relative z-10">
           <div className="bebas text-5xl leading-none">{t("welcome")}</div>
           <p className="mt-4 text-white/85 max-w-sm">
             {t("verifiedAnnouncements")}
           </p>
         </div>
-        <div className="text-xs text-white/60">2026 {t("copyright")}</div>
+        <div className="relative z-10 text-xs text-white/60">2026 {t("copyright")}</div>
       </div>
 
-      <div className="flex items-center justify-center p-8 relative">
+      <div className="flex items-center justify-center p-4 sm:p-8 relative">
         {/* Bouton retour - Version mobile */}
         <Link
           to="/"
@@ -116,11 +120,11 @@ export default function Auth() {
           <span className="hidden xs:inline">{t(" ")}</span>
         </Link>
 
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-md rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-[0_20px_80px_-20px_rgba(15,23,42,0.35)] backdrop-blur-xl sm:p-8">
           <div className="md:hidden mb-6 flex justify-center">
             <Logo />
           </div>
-          <div className="flex gap-1 p-1 bg-muted rounded-lg text-sm mb-6">
+          <div className="flex gap-1 p-1 bg-muted rounded-xl text-sm mb-6">
             <button
               type="button"
               onClick={() => setMode("signin")}
@@ -145,9 +149,14 @@ export default function Auth() {
             </button>
           </div>
 
-          <h1 className="bebas text-3xl">
+          <h1 className="bebas text-3xl text-slate-900">
             {mode === "signin" ? t("welcomeBack") : t("createAccount")}
           </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            {mode === "signin"
+              ? "Accède à ton espace et retrouve tes annonces en un instant."
+              : "Crée ton compte pour publier, contacter et gérer tes colocations."}
+          </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             {mode === "signup" && (
@@ -231,16 +240,26 @@ export default function Auth() {
               <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">
                 {t("password")}
               </label>
-              <input
-                required
-                minLength={6}
-                type="password"
-                className="input"
-                value={form.mot_de_passe}
-                onChange={(e) =>
-                  setForm({ ...form, mot_de_passe: e.target.value })
-                }
-              />
+              <div className="relative">
+                <input
+                  required
+                  minLength={6}
+                  type={showPassword ? "text" : "password"}
+                  className="input pr-12"
+                  value={form.mot_de_passe}
+                  onChange={(e) =>
+                    setForm({ ...form, mot_de_passe: e.target.value })
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 transition hover:text-slate-700"
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {mode === "signup" && (
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("passwordMinLength")}
@@ -255,7 +274,7 @@ export default function Auth() {
             <Button
               disabled={submitting}
               type="submit"
-              className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white"
+              className="w-full bg-gradient-to-r from-brand-cyan to-brand-green hover:opacity-90 text-white shadow-lg shadow-brand-cyan/20"
             >
               {submitting
                 ? t("processing")
