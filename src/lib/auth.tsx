@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api, AuthUser, clearSession, getStoredUser, getToken, saveSession } from './api'
 
 interface AuthContextValue {
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 const adminRoles = new Set(['superadmin', 'admin', 'moderateur'])
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate()
   const [user, setUser] = useState<AuthUser | null>(() => getStoredUser())
   const [loading, setLoading] = useState(Boolean(getToken()))
 
@@ -71,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout() {
         clearSession()
         setUser(null)
+        navigate('/auth?mode=signin', { replace: true })
       },
     }),
     [loading, user]
