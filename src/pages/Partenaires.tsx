@@ -248,14 +248,21 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
             {tier.name}
           </span>
         </div>
-        {tier.launch && (
-          <span
-            className="text-[10px] font-bold border rounded-full px-3 py-0.5 whitespace-nowrap"
-            style={{ backgroundColor: accent.tint, color: accent.top, borderColor: `${accent.top}40` }}
-          >
-            {tier.launch}
-          </span>
-        )}
+        <div className="flex flex-col items-end gap-1">
+          {tier.amount && (
+            <span className="text-sm font-semibold text-foreground">
+              {tier.amount}
+            </span>
+          )}
+          {tier.launch && (
+            <span
+              className="text-[10px] font-bold border rounded-full px-3 py-0.5 whitespace-nowrap"
+              style={{ backgroundColor: accent.tint, color: accent.top, borderColor: `${accent.top}40` }}
+            >
+              {tier.launch}
+            </span>
+          )}
+        </div>
       </div>
 
       <p className="text-sm italic leading-relaxed my-2 mb-3" style={{ color: accent.top }}>
@@ -733,6 +740,7 @@ const partnerSections: PartnerSection[] = [
         name: 'partenaires:tiers.bronze.name',
         icon: <Shield className="w-4 h-4 sm:w-5 sm:h-5" />,
         arg: 'partenaires:tiers.bronze.arg',
+        amount: '400 000 MGA / an',
         benefits: [
           'partenaires:tiers.bronze.benefit1',
           'partenaires:tiers.bronze.benefit2',
@@ -744,11 +752,14 @@ const partnerSections: PartnerSection[] = [
         name: 'partenaires:tiers.silver.name',
         icon: <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />,
         arg: 'partenaires:tiers.silver.arg',
+        amount: '850 000 MGA / an',
         benefits: [
           'partenaires:tiers.silver.benefit1',
           'partenaires:tiers.silver.benefit2',
           'partenaires:tiers.silver.benefit3',
-          'partenaires:tiers.silver.benefit4'
+          'partenaires:tiers.silver.benefit4',
+          'partenaires:tiers.silver.benefit5',
+          'partenaires:tiers.silver.benefit6'
         ],
         tierClass: 'argent',
         popular: true
@@ -757,6 +768,7 @@ const partnerSections: PartnerSection[] = [
         name: 'partenaires:tiers.gold.name',
         icon: <Crown className="w-4 h-4 sm:w-5 sm:h-5" />,
         arg: 'partenaires:tiers.gold.arg',
+        amount: '1 550 000 MGA / an',
         benefits: [
           'partenaires:tiers.gold.benefit1',
           'partenaires:tiers.gold.benefit2',
@@ -771,6 +783,7 @@ const partnerSections: PartnerSection[] = [
         name: 'partenaires:tiers.platinum.name',
         icon: <Layers className="w-4 h-4 sm:w-5 sm:h-5" />,
         arg: 'partenaires:tiers.platinum.arg',
+        amount: '2 950 000 MGA / an',
         benefits: [
           'partenaires:tiers.platinum.benefit1',
           'partenaires:tiers.platinum.benefit2',
@@ -780,7 +793,7 @@ const partnerSections: PartnerSection[] = [
           'partenaires:tiers.platinum.benefit6',
           'partenaires:tiers.platinum.benefit7'
         ],
-        tierClass: 'platine'
+        tierClass: 'diamant'
       }
     ]
   },
@@ -796,6 +809,7 @@ const partnerSections: PartnerSection[] = [
         launch: 'partenaires:tiers.independent.launch',
         icon: <Target className="w-4 h-4 sm:w-5 sm:h-5" />,
         arg: 'partenaires:tiers.independent.arg',
+        amount: '20 000 MGA / an',
         benefits: [
           'partenaires:tiers.independent.benefit1',
           'partenaires:tiers.independent.benefit2',
@@ -821,6 +835,7 @@ const partnerSections: PartnerSection[] = [
         launch: 'partenaires:tiers.network.launch',
         icon: <Layers className="w-4 h-4 sm:w-5 sm:h-5" />,
         arg: 'partenaires:tiers.network.arg',
+        amount: '2 100 000 MGA / an',
         benefits: [
           'partenaires:tiers.network.benefit1',
           'partenaires:tiers.network.benefit2',

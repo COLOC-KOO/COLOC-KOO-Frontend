@@ -13,6 +13,40 @@ function normalizeImageUrl(value: string | null | undefined) {
   return `${import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:4000'}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`
 }
 
+function normalizePartnerLevel(value: string | null | undefined) {
+  return (value || '').trim().toLowerCase()
+}
+
+function getLevelStyle(level: string) {
+  switch (level) {
+    case 'diamant':
+      return {
+        badge: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+        card: 'border-cyan-200/70 bg-gradient-to-br from-cyan-50/60 to-white',
+      }
+    case 'or':
+      return {
+        badge: 'border-amber-200 bg-amber-50 text-amber-700',
+        card: 'border-amber-200/70 bg-gradient-to-br from-amber-50/60 to-white',
+      }
+    case 'argent':
+      return {
+        badge: 'border-slate-200 bg-slate-50 text-slate-700',
+        card: 'border-slate-200/70 bg-gradient-to-br from-slate-50/70 to-white',
+      }
+    case 'bronze':
+      return {
+        badge: 'border-orange-200 bg-orange-50 text-orange-700',
+        card: 'border-orange-200/70 bg-gradient-to-br from-orange-50/60 to-white',
+      }
+    default:
+      return {
+        badge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+        card: 'border-emerald-200/70 bg-gradient-to-br from-emerald-50/60 to-white',
+      }
+  }
+}
+
 export default function PartenairesTous() {
   const { t } = useTranslation(['home', 'common'])
   const [partners, setPartners] = useState<ApiPartenaireCampagne[]>([])
@@ -82,45 +116,59 @@ export default function PartenairesTous() {
             {t('home:partners.empty')}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {partners.map((partner) => (
-              <div key={partner.id_partenaire} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 overflow-hidden">
-                    {partner.visuel || partner.logo ? (
-                      <LazyImage
-                        src={normalizeImageUrl(partner.visuel || partner.logo)}
-                        alt={partner.partenaire_nom || partner.titre || partner.nom || 'Partenaire'}
-                        className="h-full w-full object-contain"
-                      />
-                    ) : (
-                      <span className="text-xl font-bold text-slate-700">{(partner.partenaire_nom || partner.titre || partner.nom || 'P').charAt(0)}</span>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {partners.map((partner) => {
+              const levelValue = normalizePartnerLevel(partner.partenaire_niveau || partner.niveau)
+              const levelStyle = getLevelStyle(levelValue)
+              const levelLabel = partner.partenaire_niveau || partner.niveau || ''
+
+              return (
+                <div key={partner.id_partenaire} className={`rounded-2xl border border-slate-200 border-t-[3px] border-t-[#cacc7d] bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${levelStyle.card}`}>
+                  <div className="mb-4 flex flex-col items-center justify-center gap-3 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white/90 shadow-sm">
+                      {partner.visuel || partner.logo ? (
+                        <LazyImage
+                          src={normalizeImageUrl(partner.visuel || partner.logo)}
+                          alt={partner.partenaire_nom || partner.titre || partner.nom || 'Partenaire'}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-lg font-semibold text-slate-700">{(partner.partenaire_nom || partner.titre || partner.nom || 'P').charAt(0)}</span>
+                      )}
+                    </div>
+                    {levelLabel && (
+                      <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${levelStyle.badge}`}>
+                        {levelLabel}
+                      </span>
                     )}
                   </div>
-                  <div>
+
+                  <div className="flex flex-col items-center space-y-1 text-center">
                     <h2 className="text-base font-semibold text-slate-900">
                       {partner.partenaire_nom || partner.titre || partner.nom || 'Partenaire'}
                     </h2>
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                      {partner.secteur || partner.partenaire_niveau || partner.niveau || 'Partenaire'}
+                    <p className="text-xs text-slate-500">
+                      {partner.secteur || 'Partenaire'}
                     </p>
                   </div>
+
+                  {partner.description && <p className="mt-3 text-sm leading-relaxed text-slate-600">{partner.description}</p>}
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {(partner.engagement || partner.remise) && (
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-700">
+                        {partner.engagement || partner.remise}
+                      </span>
+                    )}
+                    {partner.statut && (
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-700">
+                        {partner.statut}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {partner.description && <p className="text-sm leading-relaxed text-slate-600 mb-4">{partner.description}</p>}
-                <div className="flex flex-wrap gap-2">
-                  {(partner.engagement || partner.remise) && (
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-700">
-                      {partner.engagement || partner.remise}
-                    </span>
-                  )}
-                  {partner.statut && (
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-700">
-                      {partner.statut}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
