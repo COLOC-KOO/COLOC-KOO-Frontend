@@ -491,7 +491,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {/* Footer sidebar - comme dans la maquette */}
           <div className="p-3 border-t border-white/10">
             <button
-              onClick={logout}
+              onClick={() => logout()}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-white w-full transition"
             >
               <LogOut className="w-4 h-4" /> Deconnexion
