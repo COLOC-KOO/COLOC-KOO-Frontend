@@ -27,6 +27,8 @@ export interface AuthUser {
     age?: number | null
     villeActuelle?: string | null
     villeOrigine?: string | null
+    ville?: string | null
+    date_inscription?: string
     languePreferee?: number | null
     verification?: boolean
     statut?: string
@@ -237,28 +239,6 @@ export interface ApiPartenaireCampagne {
     actif?: 0 | 1
 }
 
-export interface ApiPartenaireCampagne {
-  id_campagne: number
-  id_partenaire: number
-  titre: string
-  description: string | null
-  emplacement: 'carte' | 'fil_annonces' | 'bandeau_regional' | 'page_partenaire'
-  visuel: string | null
-  date_debut: string
-  date_fin: string | null
-  statut: 'active' | 'programmee' | 'suspendue' | 'terminee'
-  date_creation: string
-  nom?: string | null
-  partenaire_nom?: string | null
-  partenaire_niveau?: string | null
-  secteur?: string | null
-  niveau?: 'Bronze' | 'Argent' | 'Or' | 'Diamant' | null
-  remise?: string | null
-  engagement?: string | null
-  logo?: string | null
-  actif?: 0 | 1
-}
-
 export interface ApiPartenaireRequest {
     id_demande: number
     nom_entreprise: string
@@ -380,7 +360,6 @@ export interface DemandeServiceGroup {
         prix_unitaire: number
         sous_total: number
     }>
-    // NOUVEAUX CHAMPS POUR LE SUIVI
     dernier_contact?: string | null
     relance?: string | null
     synthese?: string | null
@@ -410,7 +389,6 @@ export interface DemandeServiceStaffItem {
         prix_unitaire: number
         sous_total: number
     }>
-    // NOUVEAUX CHAMPS POUR LE SUIVI
     dernier_contact?: string | null
     relance?: string | null
     synthese?: string | null
@@ -670,7 +648,6 @@ export const api = {
             body: JSON.stringify(payload),
         })
     },
-    // Ajouter cette méthode
     envoyerEmailContrat(id: string | number, payload?: {
         type?: 'contrat' | 'edl';
         message?: string;
@@ -687,40 +664,6 @@ export const api = {
         });
     },
 
-    // Récupérer les détails d'un contrat
-    // backofficeContratDetails(id: string | number) {
-    //     return request<ApiBackofficeContratDetails>(`/contrats/${id}`);
-    // },
-
-    // Action sur un contrat (émettre, signer, envoyer)
-    // contratAction(id: string | number, action: 'emettre' | 'signer' | 'envoyer') {
-    //     return request<{ success: boolean; message: string }>(`/contrats/${id}/${action}`, {
-    //         method: 'POST',
-    //     });
-    // },
-
-    // ============================================================
-    // NOUVELLES MÉTHODES POUR L'ENVOI D'EMAILS
-    // ============================================================
-
-    // Envoyer un email pour un contrat
-    // envoyerEmailContrat(id: string | number, payload?: {
-    //     type?: 'contrat' | 'edl';
-    //     message?: string;
-    //     sujet?: string;
-    // }) {
-    //     return request<{
-    //         success: boolean;
-    //         message: string;
-    //         destinataires: string[];
-    //         count: number;
-    //     }>(`/contrats/${id}/email`, {
-    //         method: 'POST',
-    //         body: JSON.stringify(payload || {type: 'contrat'}),
-    //     });
-    // },
-
-    // Envoyer une relance pour un contrat
     envoyerRelanceContrat(id: string | number, message?: string) {
         return request<{
             success: boolean;
@@ -779,6 +722,25 @@ export const api = {
             body: JSON.stringify(payload),
         })
     },
+
+    // ===== SÉCURITÉ DU COMPTE =====
+    updateSecuritySettings(payload: { two_fa_enabled?: boolean; [key: string]: unknown }) {
+        return request<{ message: string; user?: AuthUser }>('/auth/me/security', {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        })
+    },
+    disconnectOtherDevices() {
+        return request<{ message: string }>('/auth/me/sessions/revoke-others', {
+            method: 'POST',
+        })
+    },
+    deleteAccount() {
+        return request<{ message: string }>('/auth/me', {
+            method: 'DELETE',
+        })
+    },
+
     notifications() {
         return request<Array<{
             id_notification: number;
@@ -965,11 +927,9 @@ export const api = {
     boosters() {
         return requestWithFallback<ApiBooster[]>('/meta/boosters', '/meta/services')
     },
-    // Catalogue des « autres services » (cle_service = service_%) — public.
     serviceCatalogue() {
         return request<ServiceCatalogueItem[]>('/demandes-service/catalogue')
     },
-    // Soumission d'une demande de service — connexion requise.
     createDemandeService(payload: {
         services: Array<{ id_service: number }>
         message?: string
@@ -980,15 +940,12 @@ export const api = {
             {method: 'POST', body: JSON.stringify(payload)},
         )
     },
-    // Historique des demandes de l'utilisateur connecté.
     myDemandesService() {
         return request<DemandeServiceGroup[]>('/demandes-service/mine')
     },
-    // Back-office : toutes les demandes de service (staff).
     backofficeDemandesService() {
         return request<DemandeServiceStaffItem[]>('/demandes-service/admin')
     },
-    // Back-office : change le statut d'une demande (dont « masquer » = en-cours).
     updateDemandeServiceStatut(reference: string, statut: 'nouvelle' | 'en-cours' | 'traitee' | 'annulee') {
         return request<{ message: string; reference: string; statut: string }>(
             `/demandes-service/${encodeURIComponent(reference)}/statut`,
@@ -996,25 +953,20 @@ export const api = {
         )
     },
 
-    // ===== NOUVELLES MÉTHODES POUR LE SUIVI DES DEMANDES DE SERVICE =====
+    marquerAppele(reference: string) {
+        return request<{ message: string }>(
+            `/demandes-service/${encodeURIComponent(reference)}/appel`,
+            {method: 'POST'}
+        )
+    },
 
-    // Marquer comme appelé
-    // marquerAppele(reference: string) {
-    //     return request<{ message: string }>(
-    //         `/demandes-service/${encodeURIComponent(reference)}/appel`,
-    //         {method: 'POST'}
-    //     )
-    // },
+    marquerMailEnvoye(reference: string) {
+        return request<{ message: string }>(
+            `/demandes-service/${encodeURIComponent(reference)}/mail`,
+            {method: 'POST'}
+        )
+    },
 
-    // Marquer mail envoyé
-    // marquerMailEnvoye(reference: string) {
-    //     return request<{ message: string }>(
-    //         `/demandes-service/${encodeURIComponent(reference)}/mail`,
-    //         {method: 'POST'}
-    //     )
-    // },
-
-    // Relancer
     relancerDemande(reference: string) {
         return request<{ message: string }>(
             `/demandes-service/${encodeURIComponent(reference)}/relance`,
@@ -1022,7 +974,6 @@ export const api = {
         )
     },
 
-    // Programmer RDV
     programmerRdv(reference: string, date: string, note: string) {
         return request<{ message: string }>(
             `/demandes-service/${encodeURIComponent(reference)}/rdv`,
@@ -1033,7 +984,6 @@ export const api = {
         )
     },
 
-    // Annuler RDV
     annulerRdv(reference: string) {
         return request<{ message: string }>(
             `/demandes-service/${encodeURIComponent(reference)}/annuler-rdv`,
@@ -1041,7 +991,6 @@ export const api = {
         )
     },
 
-    // Valider une demande
     validerDemande(reference: string) {
         return request<{ message: string }>(
             `/demandes-service/${encodeURIComponent(reference)}/valider`,
@@ -1049,7 +998,6 @@ export const api = {
         )
     },
 
-    // Annuler une demande
     annulerDemande(reference: string) {
         return request<{ message: string }>(
             `/demandes-service/${encodeURIComponent(reference)}/annuler`,
@@ -1057,7 +1005,6 @@ export const api = {
         )
     },
 
-    // Mettre à jour la synthèse
     updateSynthese(reference: string, synthese: string) {
         return request<{ message: string }>(
             `/demandes-service/${encodeURIComponent(reference)}/synthese`,
@@ -1067,8 +1014,6 @@ export const api = {
             }
         )
     },
-
-    // ===== FIN NOUVELLES MÉTHODES =====
 
     partenaires() {
         return request<ApiPartenaire[]>('/partenaires')
@@ -1133,6 +1078,16 @@ export const api = {
     deleteAnnonce(id: string | number) {
         return requestWithFallback<{ message: string }>(`/depot-annonce/${id}`, `/annonces/${id}`, {method: 'DELETE'})
     },
+
+    // ===== ARCHIVAGE D'ANNONCE =====
+    archiveAnnonce(id: string | number) {
+        return requestWithFallback<{ message: string; statut?: string }>(
+            `/depot-annonce/${id}/archive`,
+            `/annonces/${id}/archive`,
+            { method: 'PATCH' },
+        )
+    },
+
     candidatures() {
         return request<ApiCandidature[]>('/candidatures')
     },
@@ -1292,17 +1247,14 @@ export const api = {
 
     // ===== GESTION DES ÉQUIPES =====
 
-    // Récupérer toutes les équipes d'une annonce
     getEquipesByAnnonce(annonceId: string | number): Promise<ApiEquipe[]> {
         return requestWithFallback<ApiEquipe[]>(`/equipes/depot-annonce/${annonceId}`, `/equipes/annonces/${annonceId}`)
     },
 
-    // Récupérer une équipe par son ID
     getEquipe(id: string | number): Promise<ApiEquipe> {
         return request<ApiEquipe>(`/equipes/${id}`)
     },
 
-    // Créer une équipe
     createEquipe(data: {
         id_annonce: number;
         id_depot_annonce?: number;
@@ -1316,7 +1268,6 @@ export const api = {
         })
     },
 
-    // Mettre à jour une équipe
     updateEquipe(id: string | number, data: {
         nom?: string;
         ambiance?: string | null;
@@ -1328,14 +1279,12 @@ export const api = {
         })
     },
 
-    // Supprimer une équipe
     deleteEquipe(id: string | number): Promise<{ message: string }> {
         return request<{ message: string }>(`/equipes/${id}`, {
             method: 'DELETE',
         })
     },
 
-    // Ajouter un membre à une équipe
     addMemberToEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
         return request<{ message: string }>(`/equipes/${equipeId}/membres`, {
             method: 'POST',
@@ -1343,7 +1292,6 @@ export const api = {
         })
     },
 
-    // Retirer un membre d'une équipe
     removeMemberFromEquipe(equipeId: string | number, userId: string | number): Promise<{ message: string }> {
         return request<{ message: string }>(`/equipes/${equipeId}/membres/${userId}`, {
             method: 'DELETE',
@@ -1647,17 +1595,14 @@ export const api = {
     // ===== CAMPAGNES DE PUBLICITÉS NATIVES =====
     // ================================================================
 
-    // Récupérer toutes les campagnes
     campagnes() {
         return request<Campagne[]>('/backoffice/campagnes')
     },
 
-    // Récupérer une campagne par son ID
     campagne(id: string | number) {
         return request<Campagne>(`/backoffice/campagnes/${id}`)
     },
 
-    // Créer une campagne
     createCampagne(payload: {
         id_partenaire: number
         titre: string
@@ -1674,7 +1619,6 @@ export const api = {
         })
     },
 
-    // Mettre à jour une campagne
     updateCampagne(id: string | number, payload: Partial<{
         id_partenaire: number
         titre: string
@@ -1691,14 +1635,12 @@ export const api = {
         })
     },
 
-    // Supprimer une campagne
     deleteCampagne(id: string | number) {
         return request<{ message: string }>(`/backoffice/campagnes/${id}`, {
             method: 'DELETE',
         })
     },
 
-    // Uploader un visuel de campagne
     uploadCampagneVisuel(file: File) {
         const formData = new FormData()
         formData.append('visuel', file)
@@ -1707,76 +1649,6 @@ export const api = {
             body: formData,
         })
     },
-
-    // Marquer comme appelé
-    marquerAppele(reference: string) {
-        return request<{ message: string }>(
-            `/demandes-service/${encodeURIComponent(reference)}/appel`,
-            {method: 'POST'}
-        )
-    },
-
-    // Marquer mail envoyé
-    marquerMailEnvoye(reference: string) {
-        return request<{ message: string }>(
-            `/demandes-service/${encodeURIComponent(reference)}/mail`,
-            {method: 'POST'}
-        )
-    },
-
-    // Relancer
-    // relancerDemande(reference: string) {
-    //     return request<{ message: string }>(
-    //         `/demandes-service/${encodeURIComponent(reference)}/relance`,
-    //         {method: 'POST'}
-    //     )
-    // },
-    //
-    // // Programmer RDV
-    // programmerRdv(reference: string, date: string, note: string) {
-    //     return request<{ message: string }>(
-    //         `/demandes-service/${encodeURIComponent(reference)}/rdv`,
-    //         {
-    //             method: 'POST',
-    //             body: JSON.stringify({date, note})
-    //         }
-    //     )
-    // },
-    //
-    // // Annuler RDV
-    // annulerRdv(reference: string) {
-    //     return request<{ message: string }>(
-    //         `/demandes-service/${encodeURIComponent(reference)}/annuler-rdv`,
-    //         {method: 'POST'}
-    //     )
-    // },
-    //
-    // // Valider une demande
-    // validerDemande(reference: string) {
-    //     return request<{ message: string }>(
-    //         `/demandes-service/${encodeURIComponent(reference)}/valider`,
-    //         {method: 'POST'}
-    //     )
-    // },
-    //
-    // // Annuler une demande
-    // annulerDemande(reference: string) {
-    //     return request<{ message: string }>(
-    //         `/demandes-service/${encodeURIComponent(reference)}/annuler`,
-    //         {method: 'POST'}
-    //     )
-    // },
-    //
-    // // Mettre à jour la synthèse
-    // updateSynthese(reference: string, synthese: string) {
-    //     return request<{ message: string }>(
-    //         `/demandes-service/${encodeURIComponent(reference)}/synthese`,
-    //         {
-    //             method: 'POST',
-    //             body: JSON.stringify({synthese})
-    //         }
-    //     )
-    // },
     // ================================================================
 }
 
