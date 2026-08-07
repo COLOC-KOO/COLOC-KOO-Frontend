@@ -446,15 +446,15 @@ export default function TabMessagesV2() {
   return (
     <div className="flex h-[calc(100dvh-180px)] min-h-[480px] w-full min-w-0 overflow-hidden rounded-none border border-border bg-white shadow-sm sm:min-h-[560px] sm:rounded-2xl lg:h-[700px] lg:max-h-[calc(100dvh-180px)] lg:flex-row">
       {/* Left panel */}
-      <aside className={`${isSidebarOpen ? 'flex' : 'hidden'} min-h-0 w-full shrink-0 flex-col overflow-hidden bg-white lg:flex lg:h-full lg:w-[320px] lg:border-r`}>
+      <aside className={`${isSidebarOpen ? 'flex' : 'hidden'} min-h-0 w-full shrink-0 flex-col overflow-hidden bg-white lg:flex lg:h-full lg:w-[300px] xl:w-[320px] lg:border-r`}>
         <div className="flex items-center justify-between px-4 pb-3 pt-4 sm:px-5">
-          <div className="flex items-center gap-2">
-            <button aria-label="Fermer les conversations" onClick={() => setIsSidebarOpen(false)} className="rounded-full p-2 hover:bg-muted lg:hidden">
+          <div className="flex items-center gap-2 min-w-0">
+            <button aria-label="Fermer les conversations" onClick={() => setIsSidebarOpen(false)} className="rounded-full p-2 hover:bg-muted lg:hidden shrink-0">
               <X className="w-4 h-4" />
             </button>
-            <h3 className="text-2xl font-bold tracking-tight">Messages</h3>
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight truncate">Messages</h3>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button aria-label="Nouvelle discussion" title="Nouvelle discussion" onClick={() => setShowDirectModal(true)} className="rounded-full bg-muted p-2.5 text-foreground transition hover:bg-muted/70">
               <Plus className="h-4 w-4" />
             </button>
@@ -563,27 +563,29 @@ export default function TabMessagesV2() {
         </div>
       ) : null}
 
+      {/* Zone de conversation — occupe désormais tout l'espace restant       */}
+      {/* (le panneau "Contact de la conversation" à droite a été retiré)     */}
       <main className={`${isSidebarOpen ? 'hidden' : 'flex'} min-h-0 min-w-0 flex-1 flex-col bg-[#f7f8fa] lg:flex`}>
-        <header className="flex min-h-[72px] items-center gap-3 border-b border-border bg-white px-3 py-3 sm:px-5">
-          <button aria-label="Retour aux conversations" onClick={() => setIsSidebarOpen(true)} className="rounded-full p-2 hover:bg-muted lg:hidden"><ChevronLeft className="h-5 w-5" /></button>
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${active?.type === 'group' ? 'bg-brand-green/15 text-brand-green' : 'bg-brand-cyan/15 text-brand-cyan'}`}>{active?.initials || <MessageSquare className="h-5 w-5" />}</div>
+        <header className="flex min-h-[64px] sm:min-h-[72px] items-center gap-3 border-b border-border bg-white px-3 py-3 sm:px-5">
+          <button aria-label="Retour aux conversations" onClick={() => setIsSidebarOpen(true)} className="rounded-full p-2 hover:bg-muted lg:hidden shrink-0"><ChevronLeft className="h-5 w-5" /></button>
+          <div className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${active?.type === 'group' ? 'bg-brand-green/15 text-brand-green' : 'bg-brand-cyan/15 text-brand-cyan'}`}>{active?.initials || <MessageSquare className="h-5 w-5" />}</div>
           <div className="min-w-0 flex-1">
-            <div className="truncate font-semibold">{active?.name || 'Messagerie'}</div>
+            <div className="truncate font-semibold text-sm sm:text-base">{active?.name || 'Messagerie'}</div>
             <div className="truncate text-xs text-muted-foreground">{active?.type === 'group' ? 'Groupe de discussion' : active ? 'Conversation privée' : 'Sélectionnez une conversation'}</div>
           </div>
-          {active && <button aria-label="Voir le profil" onClick={viewProfile} className="rounded-full px-3 py-2 text-xs font-semibold text-brand-cyan hover:bg-brand-cyan-light/20 sm:text-sm">Profil</button>}
+          {active && <button aria-label="Voir le profil" onClick={viewProfile} className="shrink-0 rounded-full px-3 py-2 text-xs font-semibold text-brand-cyan hover:bg-brand-cyan-light/20 sm:text-sm">Profil</button>}
         </header>
 
         {/* Pinned message banner */}
         {pinnedMessage ? (
           <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-b-lg text-sm">
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <div className="text-xs text-muted-foreground">Message épinglé</div>
-                <div className="font-semibold">{pinnedMessage.expediteur_prenom} {pinnedMessage.expediteur_nom}</div>
-                <div className="mt-1 text-sm">{pinnedMessage.contenu}</div>
+                <div className="font-semibold truncate">{pinnedMessage.expediteur_prenom} {pinnedMessage.expediteur_nom}</div>
+                <div className="mt-1 text-sm break-words">{pinnedMessage.contenu}</div>
               </div>
-              <button onClick={() => setPinnedMessage(null)} className="text-sm text-muted-foreground">Détacher</button>
+              <button onClick={() => setPinnedMessage(null)} className="shrink-0 text-sm text-muted-foreground">Détacher</button>
             </div>
           </div>
         ) : null}
@@ -636,8 +638,8 @@ export default function TabMessagesV2() {
           {typingUsers.length > 0 && <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"><span className="flex items-end gap-0.5 rounded-full bg-muted px-2 py-1"><i className="h-1 w-1 animate-bounce rounded-full bg-brand-cyan [animation-delay:-0.2s]" /><i className="h-1 w-1 animate-bounce rounded-full bg-brand-cyan [animation-delay:-0.1s]" /><i className="h-1 w-1 animate-bounce rounded-full bg-brand-cyan" /></span>{typingUsers.length > 1 ? 'Plusieurs personnes écrivent…' : `${active?.name || 'Votre contact'} est en train d’écrire…`}</div>}
           {sendError && <div className="mb-2 text-xs text-red-600">{sendError}</div>}
           <div className="mx-auto flex max-w-4xl items-center gap-2">
-            <input value={reply} onChange={(e) => handleReplyChange(e.target.value)} onBlur={() => { if (isTypingRef.current) { emitTyping(false); isTypingRef.current = false } }} className="flex-1 rounded-full border px-4 py-2 text-sm" placeholder="Écrire un message..." />
-            <button onClick={handleSend} className="w-11 h-11 rounded-full bg-brand-cyan text-white flex items-center justify-center"><Send className="w-4 h-4" /></button>
+            <input value={reply} onChange={(e) => handleReplyChange(e.target.value)} onBlur={() => { if (isTypingRef.current) { emitTyping(false); isTypingRef.current = false } }} className="flex-1 min-w-0 rounded-full border px-4 py-2 text-sm" placeholder="Écrire un message..." />
+            <button onClick={handleSend} className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-brand-cyan text-white flex items-center justify-center"><Send className="w-4 h-4" /></button>
           </div>
         </div>
 
@@ -649,25 +651,6 @@ export default function TabMessagesV2() {
           </div>
         )}
       </main>
-
-      {/* The contact remains visible on desktop; on mobile it is represented by the fixed chat header. */}
-      <aside className="hidden w-60 shrink-0 border-l border-border bg-white lg:flex lg:flex-col">
-        {active ? (
-          <div className="flex flex-1 flex-col items-center px-5 py-8 text-center">
-            <div className={`flex h-20 w-20 items-center justify-center rounded-full text-xl font-bold ${active.type === 'group' ? 'bg-brand-green/15 text-brand-green' : 'bg-brand-cyan/15 text-brand-cyan'}`}>{active.initials}</div>
-            <h2 className="mt-4 break-words text-base font-bold">{active.name}</h2>
-            <p className="mt-1 text-xs text-muted-foreground">{active.type === 'group' ? 'Groupe de discussion' : 'Contact de la conversation'}</p>
-            <div className="my-6 h-px w-full bg-border" />
-            <div className="w-full rounded-xl bg-muted/70 px-3 py-3 text-left">
-              <p className="text-xs text-muted-foreground">Historique</p>
-              <p className="mt-1 text-sm font-semibold">{active.total || 0} messages</p>
-            </div>
-            <button onClick={viewProfile} className="mt-4 w-full rounded-xl border border-border px-3 py-2.5 text-sm font-semibold text-brand-cyan transition hover:bg-brand-cyan-light/20">Voir le profil</button>
-          </div>
-        ) : (
-          <div className="flex flex-1 items-center justify-center px-5 text-center text-sm text-muted-foreground">Le profil du correspondant apparaîtra ici.</div>
-        )}
-      </aside>
     </div>
   )
 }
