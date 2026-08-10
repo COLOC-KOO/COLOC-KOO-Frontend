@@ -121,7 +121,7 @@ export default function TabProfil({
   const labelClass = 'mb-2 block text-sm font-semibold text-[#2b2b2b]'
   const lockNote = (
     <span className="ml-1 inline-flex items-center gap-1 text-xs font-normal text-[#9b9b9b]">
-      <Lock className="h-3 w-3" /> non modifiable
+      <Lock className="h-3 w-3" /> {t('notEditable')}
     </span>
   )
 
@@ -132,10 +132,10 @@ export default function TabProfil({
           <div>
             <h2 className="flex items-center gap-3 font-bebas text-2xl tracking-wide text-[#2b2b2b]">
               <CircleUserRound className="h-5 w-5 text-brand-cyan" />
-              MON PROFIL
+              {t('profile')}
             </h2>
             <p className="mt-1 text-sm text-[#8b8b8b]">
-              Ces informations facilitent les échanges avec tes futurs colocataires.
+              {t('profileInfoDescription')}
             </p>
           </div>
           <div className="hidden h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-sm font-semibold text-white sm:flex">
@@ -145,25 +145,25 @@ export default function TabProfil({
 
         <div className="grid gap-x-4 gap-y-5 md:grid-cols-2">
           <div>
-            <label className={labelClass}>Nom {lockNote}</label>
+            <label className={labelClass}>{t('lastName')} {lockNote}</label>
             <input className={inputClass} value={form.nom} disabled readOnly />
           </div>
 
           <div>
-            <label className={labelClass}>Prénom {lockNote}</label>
+            <label className={labelClass}>{t('firstName')} {lockNote}</label>
             <input className={inputClass} value={form.prenom} disabled readOnly />
           </div>
 
           <div>
-            <label className={labelClass}>Âge {lockNote}</label>
-            <input className={`${inputClass} md:max-w-[275px]`} value={ageDisplay ? `${ageDisplay} ans` : ''} disabled readOnly />
+            <label className={labelClass}>{t('age')} {lockNote}</label>
+            <input className={`${inputClass} md:max-w-[275px]`} value={ageDisplay ? `${ageDisplay} ${t('years')}` : ''} disabled readOnly />
           </div>
 
           <div className="hidden md:block" />
 
           <div className="md:col-span-2">
             <label className={labelClass}>
-              Texte de présentation <span className="font-normal text-[#a3a3a3]">- max 500 caractères</span>
+              {t('bio')} <span className="font-normal text-[#a3a3a3]">- {t('bioMaxLength')}</span>
             </label>
             <textarea
               rows={4}
@@ -171,20 +171,20 @@ export default function TabProfil({
               className={`${inputClass} min-h-[105px] resize-y`}
               value={form.bio}
               onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
-              placeholder="Quelques mots sur toi, ton rythme de vie, ce que tu recherches dans une coloc..."
+              placeholder={t('bioPlaceholder')}
             />
-            <p className="mt-2 text-right text-xs text-[#9b9b9b]">{bioLength} / 500 caractères</p>
+            <p className="mt-2 text-right text-xs text-[#9b9b9b]">{bioLength} / 500 {t('characters')}</p>
           </div>
 
           <div>
-            <label className={labelClass}>E-mail</label>
+            <label className={labelClass}>{t('email')}</label>
             <input className={inputClass} value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
           </div>
 
           <div>
-            <label className={labelClass}>Téléphone portable</label>
+            <label className={labelClass}>{t('phone')}</label>
             <div className="grid grid-cols-[140px_1fr] gap-3">
-              <select className={inputClass} defaultValue="+261" aria-label="Indicatif pays">
+              <select className={inputClass} defaultValue="+261" aria-label={t('countryCode')}>
                 <option value="+261">MG +261</option>
                 <option value="+33">FR +33</option>
               </select>
@@ -192,23 +192,23 @@ export default function TabProfil({
             </div>
             <p className="mt-2 flex items-center gap-1 text-xs text-[#9b9b9b]">
               <Info className="h-3.5 w-3.5 text-lime-500" />
-              +261 {'->'} 032 / 033 / 034 · +33 {'->'} 06 / 07
+              {t('phoneExample')}
             </p>
           </div>
 
           <div>
-            <label className={labelClass}>Ville d'origine <span className="font-normal text-[#a3a3a3]">(optionnel)</span></label>
+            <label className={labelClass}>{t('originCity')} <span className="font-normal text-[#a3a3a3]">({t('optional')})</span></label>
             <input className={inputClass} value={form.villeOrigine} onChange={(e) => setForm((prev) => ({ ...prev, villeOrigine: e.target.value }))} />
           </div>
 
           <div>
-            <label className={labelClass}>Situation professionnelle <span className="font-normal text-[#a3a3a3]">(optionnel)</span></label>
+            <label className={labelClass}>{t('profession')} <span className="font-normal text-[#a3a3a3]">({t('optional')})</span></label>
             <select className={inputClass} value={form.profession} onChange={(e) => setForm((prev) => ({ ...prev, profession: e.target.value }))}>
-              <option value="">Sélectionner</option>
-              <option value="Étudiant(e)">Étudiant(e)</option>
-              <option value="Salarié(e)">Salarié(e)</option>
-              <option value="Indépendant(e)">Indépendant(e)</option>
-              <option value="En recherche">En recherche</option>
+              <option value="">{t('select')}</option>
+              <option value="Étudiant(e)">{t('student')}</option>
+              <option value="Salarié(e)">{t('employee')}</option>
+              <option value="Indépendant(e)">{t('selfEmployed')}</option>
+              <option value="En recherche">{t('lookingForWork')}</option>
               {form.profession && !['Étudiant(e)', 'Salarié(e)', 'Indépendant(e)', 'En recherche'].includes(form.profession) ? (
                 <option value={form.profession}>{form.profession}</option>
               ) : null}
@@ -272,7 +272,7 @@ export default function TabProfil({
               className="inline-flex items-center gap-2 rounded-xl bg-lime-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-lime-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Check className="h-4 w-4" />
-              {saving || uploadingProfile ? t('saving') : 'Enregistrer les modifications'}
+              {saving || uploadingProfile ? t('saving') : t('saveChanges')}
             </button>
           </div>
         </div>
@@ -283,9 +283,9 @@ export default function TabProfil({
           <div className="flex items-start gap-4">
             <Store className="mt-1 h-7 w-7 shrink-0 text-brand-cyan" />
             <div>
-              <h3 className="text-base font-bold text-[#2b2b2b]">Vous représentez une entreprise ou une agence immobilière ?</h3>
+              <h3 className="text-base font-bold text-[#2b2b2b]">{t('partnerSectionTitle')}</h3>
               <p className="mt-1 text-sm text-[#8b8b8b]">
-                Découvrez les offres partenaires et gagnez en visibilité auprès des colocataires.
+                {t('partnerSectionDescription')}
               </p>
             </div>
           </div>
@@ -294,7 +294,7 @@ export default function TabProfil({
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-cyan px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-cyan-dark"
           >
             <ArrowRight className="h-4 w-4" />
-            Devenir partenaire
+            {t('becomePartner')}
           </a>
         </div>
       </section>
