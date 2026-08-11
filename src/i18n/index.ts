@@ -3,7 +3,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 
-// Importer toutes les traductions
+// Importer toutes les traductions (FR)
 import frCommon from './locales/fr/common.json'
 import frHome from './locales/fr/home.json'
 import frAuth from './locales/fr/auth.json'
@@ -18,7 +18,9 @@ import frHeader from './locales/fr/header.json'
 import frPartenaires from './locales/fr/partenaires.json'
 import frServices from './locales/fr/services.json'
 import frCgu from './locales/fr/cgu.json'
-
+import frConversations from './locales/fr/conversations.json' // <--- AJOUTÉ
+import frMessages from './locales/fr/messages.json'
+// Importer toutes les traductions (MG)
 import mgCommon from './locales/mg/common.json'
 import mgHome from './locales/mg/home.json'
 import mgAuth from './locales/mg/auth.json'
@@ -33,7 +35,9 @@ import mgHeader from './locales/mg/header.json'
 import mgPartenaires from './locales/mg/partenaires.json'
 import mgServices from './locales/mg/services.json'
 import mgCgu from './locales/mg/cgu.json'
-
+import mgConversations from './locales/mg/conversations.json' // <--- AJOUTÉ
+import mgMessages from './locales/mg/messages.json'
+// Importer toutes les traductions (EN)
 import enCommon from './locales/en/common.json'
 import enHome from './locales/en/home.json'
 import enAuth from './locales/en/auth.json'
@@ -48,7 +52,8 @@ import enHeader from './locales/en/header.json'
 import enPartenaires from './locales/en/partenaires.json'
 import enServices from './locales/en/services.json'
 import enCgu from './locales/en/cgu.json'
-
+import enConversations from './locales/en/conversations.json' // <--- AJOUTÉ
+import enMessages from './locales/en/messages.json'
 const resources = {
   fr: {
     common: frCommon,
@@ -65,6 +70,8 @@ const resources = {
     partenaires: frPartenaires,
     services: frServices,
     cgu: frCgu,
+    conversations: frConversations, // <--- AJOUTÉ
+    messages:frMessages,
   },
   mg: {
     common: mgCommon,
@@ -81,6 +88,8 @@ const resources = {
     partenaires: mgPartenaires,
     services: mgServices,
     cgu: mgCgu,
+    conversations: mgConversations, 
+    messages:mgMessages
   },
   en: {
     common: enCommon,
@@ -97,6 +106,8 @@ const resources = {
     partenaires: enPartenaires,
     services: enServices,
     cgu: enCgu,
+    conversations: enConversations, 
+    messages:enMessages
   },
 }
 
@@ -110,11 +121,29 @@ i18n
     interpolation: {
       escapeValue: false,
     },
-    ns: ['common', 'home', 'auth', 'annonces', 'annonceDetail', 'candidatures', 'compte', 'contact', 'deposer', 'footer', 'header', 'partenaires', 'services', 'cgu'],
+    ns: [
+      'common',
+      'home',
+      'auth',
+      'annonces',
+      'annonceDetail',
+      'candidatures',
+      'compte',
+      'contact',
+      'deposer',
+      'footer',
+      'header',
+      'partenaires',
+      'services',
+      'cgu',
+      'conversations', 
+      'messages'
+    ],
     defaultNS: 'common',
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
+      lookupLocalStorage: 'colockoo_language', // Garde la même clé que votre SiteHeader
     },
   })
 
