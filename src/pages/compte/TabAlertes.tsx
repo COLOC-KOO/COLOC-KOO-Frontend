@@ -1,17 +1,31 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Bell, BellPlus, Check, Trash, X, Plus } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
-/*  MES ALERTES — pas encore branché à une vraie API,                  */
-/*  donc données statiques en attendant l'endpoint backend             */
+/*  MES ALERTES — branché sur l'API backend :                          */
+/*  GET    /api/alertes/:idUtilisateur                                 */
+/*  POST   /api/alertes                                                */
+/*  DELETE /api/alertes/:id                                            */
 /* ------------------------------------------------------------------ */
+
+const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
+const API = BASE.endsWith('/api') ? BASE.slice(0, -4) : BASE
+
+const VILLES = [
+  { id: 1, nom: 'Antananarivo' },
+  { id: 2, nom: 'Mahajanga' },
+  { id: 3, nom: 'Toamasina' },
+  { id: 4, nom: 'Fianarantsoa' },
+  { id: 5, nom: 'Antsirabe' },
+  { id: 6, nom: 'Antsiranana' },
+]
 
 const TYPES_BIEN = ['Appartement', 'Maison'] as const
 const REGLES_COLOC = ['Fille uniquement', 'Garçon uniquement', 'Animaux acceptés'] as const
 const TYPES_ANNONCE = ['Colocation existante', "Création d'une colocation", 'Bien immobilier potentiel'] as const
 
 interface AlerteForm {
-  ville: string
+  idVille: string
   quartier: string
   prixMax: string
   typeBien: string[]
@@ -20,7 +34,7 @@ interface AlerteForm {
 }
 
 const EMPTY_FORM: AlerteForm = {
-  ville: '',
+  idVille: '',
   quartier: '',
   prixMax: '',
   typeBien: [],
@@ -28,23 +42,18 @@ const EMPTY_FORM: AlerteForm = {
   typeAnnonce: [],
 }
 
-interface AlerteStatique {
+/* Ligne renvoyée par l'API (table recherches_sauvegardees) */
+interface Alerte {
   id: number
-  titre: string
-  criteres: string[]
-  push: boolean
-  email: boolean
+  nom_ville: string | null
+  quartier: string | null
+  prix_max: number | null
+  type_propriete: string | null
+  type_annonce: string | null
+  regles: string | null
+  notif_push: number
+  notif_email: number
 }
-
-const ALERTES_MOCK: AlerteStatique[] = [
-  {
-    id: 1,
-    titre: 'Antananarivo · Colocation',
-    criteres: ['Loyer ≤ 400 000 Ar', 'Appartement', 'Parking', '≤ 5 km du centre'],
-    push: true,
-    email: true,
-  },
-]
 
 function toggleInArray(arr: string[], value: string) {
   return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]
@@ -54,10 +63,7 @@ function Checkbox({ label, checked, onChange }: { label: string; checked: boolea
   return (
     <label className="flex items-center gap-3 border border-border rounded-lg px-3 py-2.5 text-sm cursor-pointer hover:bg-muted/50 transition-colors">
       <span
-        onClick={(e) => {
-          e.preventDefault()
-          onChange()
-        }}
+        onClick={(e) => { e.preventDefault(); onChange() }}
         className={`w-5 h-5 shrink-0 rounded flex items-center justify-center border transition-colors ${
           checked ? 'bg-brand-green border-brand-green' : 'border-border bg-white'
         }`}
@@ -69,34 +75,65 @@ function Checkbox({ label, checked, onChange }: { label: string; checked: boolea
   )
 }
 
-function buildCriteres(form: AlerteForm): string[] {
+function buildTitre(a: Alerte): string {
+  const ville = a.nom_ville ?? 'Toutes villes'
+  const suite = a.quartier ?? (a.type_annonce ? a.type_annonce.split(',')[0] : 'Colocation')
+  return `${ville} · ${suite}`
+}
+
+function buildCriteres(a: Alerte): string[] {
   const criteres: string[] = []
-  if (form.prixMax) criteres.push(`Loyer ≤ ${Number(form.prixMax).toLocaleString('fr-FR')} Ar`)
-  criteres.push(...form.typeBien)
-  criteres.push(...form.reglesColoc)
-  criteres.push(...form.typeAnnonce)
+  if (a.prix_max) criteres.push(`Loyer ≤ ${Number(a.prix_max).toLocaleString('fr-FR')} Ar`)
+  if (a.type_propriete) criteres.push(...a.type_propriete.split(',').filter(Boolean))
+  if (a.regles) {
+    try { criteres.push(...(JSON.parse(a.regles) as string[])) } catch { /* ignore */ }
+  }
+  if (a.type_annonce) criteres.push(...a.type_annonce.split(',').filter(Boolean))
   return criteres
 }
 
-export default function TabAlertes() {
-  const [alertes, setAlertes] = useState<AlerteStatique[]>(ALERTES_MOCK)
+export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number }) {
+  const [alertes, setAlertes] = useState<Alerte[]>([])
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<AlerteForm>(EMPTY_FORM)
 
-  const removeAlerte = (id: number) => setAlertes((prev) => prev.filter((a) => a.id !== id))
+  const charger = async () => {
+    try {
+      const res = await fetch(`${API}/api/alertes/${idUtilisateur}`)
+      if (res.ok) setAlertes(await res.json())
+    } catch (err) {
+      console.error('Erreur chargement des alertes :', err)
+    }
+  }
+
+  useEffect(() => { charger() }, [idUtilisateur])
+
+  const removeAlerte = async (id: number) => {
+    await fetch(`${API}/api/alertes/${id}`, { method: 'DELETE' })
+    setAlertes((prev) => prev.filter((a) => a.id !== id))
+  }
 
   const closeModal = () => {
     setShowModal(false)
     setForm(EMPTY_FORM)
   }
 
-  const handleSubmit = () => {
-    const titre = form.quartier ? `${form.ville} · ${form.quartier}` : form.ville || 'Nouvelle alerte'
-    setAlertes((prev) => [
-      ...prev,
-      { id: Date.now(), titre, criteres: buildCriteres(form), push: true, email: true },
-    ])
+  const handleSubmit = async () => {
+    await fetch(`${API}/api/alertes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id_utilisateur: idUtilisateur,
+        id_ville: form.idVille ? Number(form.idVille) : null,
+        quartier: form.quartier || null,
+        prix_max: form.prixMax ? Number(form.prixMax) : null,
+        types_bien: form.typeBien,
+        regles: form.reglesColoc,
+        types_annonce: form.typeAnnonce,
+      }),
+    })
     closeModal()
+    charger()
   }
 
   return (
@@ -107,7 +144,6 @@ export default function TabAlertes() {
       </div>
       <p className="text-sm text-muted-foreground mb-5">
         Sois notifié·e dès qu'une nouvelle annonce correspond à tes critères.
-        <span className="ml-1 text-xs italic text-muted-foreground/70">(données de démonstration — API à venir)</span>
       </p>
 
       {alertes.length === 0 ? (
@@ -118,9 +154,9 @@ export default function TabAlertes() {
       ) : (
         alertes.map((a) => (
           <div key={a.id} className="border border-border rounded-2xl p-4 mb-3">
-            <div className="text-sm font-bold text-foreground mb-2">{a.titre}</div>
+            <div className="text-sm font-bold text-foreground mb-2">{buildTitre(a)}</div>
             <div className="flex flex-wrap gap-2 mb-3">
-              {a.criteres.map((c) => (
+              {buildCriteres(a).map((c) => (
                 <span key={c} className="text-[11px] font-semibold bg-muted text-foreground/70 rounded-md px-2.5 py-1">
                   {c}
                 </span>
@@ -129,10 +165,10 @@ export default function TabAlertes() {
             <div className="flex items-center gap-4 flex-wrap">
               <span className="text-xs text-muted-foreground">Notification :</span>
               <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" defaultChecked={a.push} className="accent-brand-green w-4 h-4" /> Push
+                <input type="checkbox" defaultChecked={!!a.notif_push} className="accent-brand-green w-4 h-4" /> Push
               </label>
               <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" defaultChecked={a.email} className="accent-brand-green w-4 h-4" /> E-mail
+                <input type="checkbox" defaultChecked={!!a.notif_email} className="accent-brand-green w-4 h-4" /> E-mail
               </label>
               <button
                 onClick={() => removeAlerte(a.id)}
@@ -170,12 +206,16 @@ export default function TabAlertes() {
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
                 <label className="block text-xs font-semibold mb-1">Ville</label>
-                <input
-                  value={form.ville}
-                  onChange={(e) => setForm((prev) => ({ ...prev, ville: e.target.value }))}
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-                  placeholder="Ex. Antananarivo"
-                />
+                <select
+                  value={form.idVille}
+                  onChange={(e) => setForm((prev) => ({ ...prev, idVille: e.target.value }))}
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                >
+                  <option value="">— Choisir —</option>
+                  {VILLES.map((v) => (
+                    <option key={v.id} value={v.id}>{v.nom}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1">
@@ -257,5 +297,3 @@ export default function TabAlertes() {
     </div>
   )
 }
-
-export { ALERTES_MOCK }
