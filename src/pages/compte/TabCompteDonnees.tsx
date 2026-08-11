@@ -55,7 +55,7 @@ const APPAREILS_MOCK: AppareilConnecte[] = [
 ]
 
 export default function TabCompteDonnees() {
-  const { t } = useTranslation('compte')
+  const { t } = useTranslation('compteSecurites')
   const [form, setForm] = useState({ current: '', next: '', confirm: '' })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -90,8 +90,6 @@ export default function TabCompteDonnees() {
     }
   }
 
-  const identityVerified = false
-
   const [analyticsOptIn, setAnalyticsOptIn] = useState(false)
   const [partnerOptIn, setPartnerOptIn] = useState(false)
 
@@ -111,18 +109,18 @@ export default function TabCompteDonnees() {
 
   const handleSave = async () => {
     if (!form.current || !form.next || form.next.length < 8 || form.next !== form.confirm) {
-      setMessage(t('passwordValidation'))
+      setMessage(t('messages.passwordValidation'))
       return
     }
     setSaving(true)
     setMessage('')
     try {
       await api.changePassword({ mot_de_passe_actuel: form.current, nouveau_mot_de_passe: form.next })
-      setMessage(t('passwordUpdateSuccess'))
+      setMessage(t('messages.passwordUpdateSuccess'))
       setForm({ current: form.current, next: '', confirm: '' })
       setShowPasswordModal(false)
     } catch {
-      setMessage(t('passwordUpdateError'))
+      setMessage(t('messages.passwordUpdateError'))
     } finally {
       setSaving(false)
     }
@@ -130,16 +128,17 @@ export default function TabCompteDonnees() {
 
   return (
     <div>
+      {/* SECTION 1: Sécurité du compte */}
       <div className="flex items-center gap-2 mb-1">
         <Key className="w-5 h-5 text-brand-green" />
-        <h2 className="bebas text-2xl">Sécurité du compte</h2>
+        <h2 className="bebas text-2xl">{t('security.title')}</h2>
       </div>
       <p className="text-sm text-muted-foreground mb-5">
-        Tes données sont chiffrées en transit (HTTPS) et au repos. Choisis un mot de passe solide pour protéger ton compte.
+        {t('security.subtitle')}
       </p>
 
       <div className="max-w-lg">
-        <label className="block text-sm font-semibold text-foreground mb-1.5">Mot de passe actuel</label>
+        <label className="block text-sm font-semibold text-foreground mb-1.5">{t('security.currentPassword')}</label>
         <div className="relative">
           <input
             type={showCurrent ? 'text' : 'password'}
@@ -167,9 +166,10 @@ export default function TabCompteDonnees() {
         }}
         disabled={!form.current}
       >
-        Changer le mot de passe
+        {t('security.changePasswordBtn')}
       </Button>
 
+      {/* MODALE: Changement de mot de passe */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 relative">
@@ -183,14 +183,14 @@ export default function TabCompteDonnees() {
             <div className="w-14 h-14 rounded-full bg-brand-green-light text-brand-green flex items-center justify-center mx-auto mb-3">
               <Key className="w-6 h-6" />
             </div>
-            <h3 className="bebas text-xl text-center mb-1">Changer le mot de passe</h3>
+            <h3 className="bebas text-xl text-center mb-1">{t('security.modal.title')}</h3>
             <p className="text-sm text-muted-foreground text-center mb-5">
-              Choisis un nouveau mot de passe, différent de l'ancien.
+              {t('security.modal.subtitle')}
             </p>
 
             <div className="mb-4">
               <label className="block text-sm font-semibold text-foreground mb-1.5">
-                Nouveau mot de passe <span className="font-normal text-muted-foreground">— 8 caractères min.</span>
+                {t('security.modal.newPassword')} <span className="font-normal text-muted-foreground">— {t('security.modal.minChars')}</span>
               </label>
               <div className="relative">
                 <input
@@ -210,7 +210,7 @@ export default function TabCompteDonnees() {
             </div>
 
             <div className="mb-2">
-              <label className="block text-sm font-semibold text-foreground mb-1.5">Confirmer le nouveau mot de passe</label>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">{t('security.modal.confirmPassword')}</label>
               <div className="relative">
                 <input
                   type={showConfirm ? 'text' : 'password'}
@@ -235,36 +235,37 @@ export default function TabCompteDonnees() {
                 onClick={() => setShowPasswordModal(false)}
                 className="flex-1 border border-border rounded-lg py-2.5 text-sm font-semibold hover:bg-muted"
               >
-                Annuler
+                {t('security.modal.cancel')}
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
                 className="flex-1 bg-brand-green text-white rounded-lg py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50"
               >
-                {saving ? t('updating') : 'Valider'}
+                {saving ? t('security.modal.updating') : t('security.modal.submit')}
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* 2FA & Appareils */}
       <div className="mt-8 pt-6 border-t border-border">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold">Double authentification (2FA)</span>
-              <span className="text-[10px] font-semibold bg-muted text-foreground/60 rounded-full px-2 py-0.5">recommandé</span>
+              <span className="text-sm font-bold">{t('security.twoFA.title')}</span>
+              <span className="text-[10px] font-semibold bg-muted text-foreground/60 rounded-full px-2 py-0.5">{t('security.twoFA.badge')}</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1 max-w-md">
-              Reçois un code à la connexion pour sécuriser ton compte. Elle est <strong>obligatoire</strong> pour les comptes administrateurs.
+              {t('security.twoFA.description', { obligatory: t('security.twoFA.obligatory') })}
             </p>
           </div>
           <Toggle checked={twoFA} onChange={handleToggleTwoFA} disabled={savingTwoFA} />
         </div>
 
         <div className="mt-5 pt-5 border-t border-border/60">
-          <div className="text-sm font-bold mb-3">Appareils connectés</div>
+          <div className="text-sm font-bold mb-3">{t('security.devices.title')}</div>
           <ul className="space-y-2">
             {appareils.map((a) => (
               <li key={a.id} className="flex items-center gap-2 text-sm text-foreground/80">
@@ -274,7 +275,7 @@ export default function TabCompteDonnees() {
                   <Laptop className="w-4 h-4 text-foreground/40" />
                 )}
                 <span>{a.label}</span>
-                <span className="text-muted-foreground">· {a.courant ? `${a.lieu} · cet appareil` : a.lieu}</span>
+                <span className="text-muted-foreground">· {a.courant ? `${a.lieu} · ${t('security.devices.currentDevice')}` : a.lieu}</span>
               </li>
             ))}
           </ul>
@@ -283,83 +284,87 @@ export default function TabCompteDonnees() {
             disabled={disconnecting || appareils.length <= 1}
             className="mt-4 inline-flex items-center gap-2 text-sm font-semibold border border-border rounded-lg px-4 py-2 hover:bg-muted disabled:opacity-50"
           >
-            <LogOut className="w-4 h-4" /> {disconnecting ? 'Déconnexion...' : 'Déconnecter les autres appareils'}
+            <LogOut className="w-4 h-4" /> {disconnecting ? t('security.devices.disconnecting') : t('security.devices.disconnectOthers')}
           </button>
         </div>
       </div>
 
+      {/* Vérification d'identité */}
       <div className="mt-8 pt-6 border-t border-border">
         <div className="flex items-center gap-2 mb-1">
           <Fingerprint className="w-5 h-5 text-brand-cyan" />
-          <h3 className="bebas text-xl">Vérification d'identité</h3>
-          <span className="text-[10px] font-semibold bg-muted text-foreground/60 rounded-full px-2 py-0.5">à venir · v2.0</span>
+          <h3 className="bebas text-xl">{t('identity.title')}</h3>
+          <span className="text-[10px] font-semibold bg-muted text-foreground/60 rounded-full px-2 py-0.5">{t('identity.badge')}</span>
         </div>
         <p className="text-sm text-muted-foreground mb-4 max-w-lg">
-          Optionnelle. Une fois confirmée, un badge <strong>« Identité confirmée »</strong> rassure tes futurs colocataires. La vérification se fera via ton opérateur mobile (USSD : Telma / Orange / Airtel), sans frais de SMS.
+          {t('identity.description', { badgeLabel: t('identity.badgeLabel') })}
         </p>
         <div className="flex gap-2">
           <button disabled className="inline-flex items-center gap-2 text-sm font-semibold border border-border rounded-lg px-4 py-2 text-foreground/60 opacity-70 cursor-not-allowed">
-            <ShieldOff className="w-4 h-4" /> Identité non confirmée
+            <ShieldOff className="w-4 h-4" /> {t('identity.notConfirmed')}
           </button>
           <button disabled className="inline-flex items-center gap-2 text-sm font-semibold border border-border rounded-lg px-4 py-2 text-foreground/40 opacity-60 cursor-not-allowed">
-            <Lock className="w-4 h-4" /> Bientôt disponible
+            <Lock className="w-4 h-4" /> {t('identity.comingSoon')}
           </button>
         </div>
       </div>
 
+      {/* Données personnelles */}
       <div className="mt-8 pt-6 border-t border-border">
         <div className="flex items-center gap-2 mb-1">
           <ShieldCheck className="w-5 h-5 text-brand-cyan" />
-          <h3 className="bebas text-xl">Données personnelles</h3>
+          <h3 className="bebas text-xl">{t('privacy.title')}</h3>
         </div>
-        <p className="text-sm text-muted-foreground mb-4">Tu contrôles l'usage de tes données, conformément au RGPD.</p>
+        <p className="text-sm text-muted-foreground mb-4">{t('privacy.subtitle')}</p>
         <div className="flex items-start justify-between gap-4 py-3 border-b border-border/60">
           <div>
-            <div className="text-sm font-semibold">Usage des données à des fins d'analyse anonymisée</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Aide à comprendre le marché de la colocation à Madagascar. Données anonymisées, jamais revendues.</div>
+            <div className="text-sm font-semibold">{t('privacy.analytics.title')}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{t('privacy.analytics.description')}</div>
           </div>
           <Toggle checked={analyticsOptIn} onChange={setAnalyticsOptIn} />
         </div>
         <div className="flex items-start justify-between gap-4 py-3">
           <div>
-            <div className="text-sm font-semibold">Recevoir des informations des partenaires</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Offres solidaires, logement, emploi étudiant. Aucun démarchage commercial intrusif.</div>
+            <div className="text-sm font-semibold">{t('privacy.partners.title')}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{t('privacy.partners.description')}</div>
           </div>
           <Toggle checked={partnerOptIn} onChange={setPartnerOptIn} />
         </div>
 
         <div className="bg-brand-green/5 border border-brand-green/20 rounded-xl p-4 mt-4">
           <div className="flex items-center gap-1.5 text-sm font-bold text-brand-green">
-            <RefreshCw className="w-4 h-4" /> Conservation de tes données
+            <RefreshCw className="w-4 h-4" /> {t('privacy.retention.title')}
           </div>
           <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
-            <li>Annonces et textes : archivés 5 ans (invisibles publiquement), puis purge automatique.</li>
-            <li>Photos : conservées 1 an maximum.</li>
-            <li>Tu peux demander l'export ou la suppression de tes données à tout moment.</li>
+            <li>{t('privacy.retention.line1')}</li>
+            <li>{t('privacy.retention.line2')}</li>
+            <li>{t('privacy.retention.line3')}</li>
           </ul>
         </div>
 
         <button className="mt-4 inline-flex items-center gap-2 text-sm font-semibold border border-border rounded-lg px-4 py-2 hover:bg-muted">
-          <Download className="w-4 h-4" /> Télécharger mes données
+          <Download className="w-4 h-4" /> {t('privacy.downloadData')}
         </button>
       </div>
 
+      {/* Supprimer le compte */}
       <div className="mt-8 border border-red-300 bg-red-50 rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-1">
           <AlertTriangle className="w-5 h-5 text-red-600" />
-          <h3 className="bebas text-xl text-red-700">Supprimer mon compte</h3>
+          <h3 className="bebas text-xl text-red-700">{t('deleteAccount.title')}</h3>
         </div>
         <p className="text-sm text-muted-foreground mb-3">
-          Cette action est définitive : tes annonces, alertes et conversations seront supprimées.
+          {t('deleteAccount.description')}
         </p>
         <button
           onClick={() => setShowDeleteModal(true)}
           className="inline-flex items-center gap-2 text-sm font-semibold border border-red-600 text-red-600 rounded-lg px-4 py-2 hover:bg-red-600 hover:text-white transition-colors"
         >
-          <Trash className="w-4 h-4" /> Supprimer définitivement mon compte
+          <Trash className="w-4 h-4" /> {t('deleteAccount.button')}
         </button>
       </div>
 
+      {/* MODALE: Suppression */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 relative text-center">
@@ -372,23 +377,23 @@ export default function TabCompteDonnees() {
             <div className="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <h3 className="bebas text-xl mb-2">Supprimer ton compte ?</h3>
+            <h3 className="bebas text-xl mb-2">{t('deleteAccount.modal.title')}</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Toutes tes données (annonces, alertes, conversations) seront définitivement effacées. Cette action est irréversible.
+              {t('deleteAccount.modal.description')}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 border border-border rounded-lg py-2.5 text-sm font-semibold hover:bg-muted"
               >
-                Annuler
+                {t('deleteAccount.modal.cancel')}
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={deleting}
                 className="flex-1 inline-flex items-center justify-center gap-2 border border-red-600 text-red-600 rounded-lg py-2.5 text-sm font-semibold hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50"
               >
-                <Trash className="w-4 h-4" /> {deleting ? 'Suppression...' : 'Supprimer'}
+                <Trash className="w-4 h-4" /> {deleting ? t('deleteAccount.modal.deleting') : t('deleteAccount.modal.confirm')}
               </button>
             </div>
           </div>

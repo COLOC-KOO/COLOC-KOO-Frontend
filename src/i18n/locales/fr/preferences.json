@@ -1,0 +1,40 @@
+{
+  "displayNetwork": {
+    "title": "Affichage & réseau",
+    "subtitle": "Sarintany'COLOC est conçu pour fonctionner même avec une connexion lente ou instable, partout à Madagascar.",
+    "lightMode": "Mode allégé (économie de données)",
+    "lightModeDesc": "Charge des images plus légères et limite les animations. {{boldActivated}} sur réseau 3G+/4G ou hors-ligne ; tu peux aussi le forcer ici.",
+    "activatedAutomatically": "Activé automatiquement",
+    "offlineAvailability": "Disponibilité hors-ligne",
+    "offlineAvailabilityDesc": "Conserve les annonces et conversations consultées récemment pour les retrouver sans connexion.",
+    "installApp": "Installer l'application",
+    "installAppDesc": "Ajoute Sarintany'COLOC à ton écran d'accueil, sans passer par un store d'applications.",
+    "installButton": "Installer"
+  },
+  "notifications": {
+    "title": "Préférences de notification",
+    "subtitle": "Choisis comment tu souhaites être prévenu·e.",
+    "smsInfo": "Le SMS sera proposé après le lancement officiel.",
+    "defaultMode": "Mode par défaut",
+    "pushOnly": "Push uniquement",
+    "emailOnly": "E-mail uniquement",
+    "both": "Les deux",
+    "table": {
+      "event": "Événement",
+      "push": "Push",
+      "email": "E-mail",
+      "notApplicable": "Non applicable"
+    },
+    "events": {
+      "new_msg": "Nouveau message reçu",
+      "expire_j7": "Annonce arrivant à expiration (J-7)",
+      "expired": "Annonce expirée — demande de renouvellement",
+      "alert_match": "Nouvelle annonce correspondant à une alerte",
+      "msg_auto": "Message non transmis (modération auto)",
+      "msg_blocked": "Message bloqué reçu",
+      "pub_confirm": "Confirmation de publication d'annonce"
+    },
+    "save": "Enregistrer",
+    "saved": "Enregistré"
+  }
+}

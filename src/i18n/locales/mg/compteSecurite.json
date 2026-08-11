@@ -1,0 +1,76 @@
+{
+  "security": {
+    "title": "Ankino ny kaontinao",
+    "subtitle": "Voalprotected amin'ny encryption (HTTPS) sy amin'ny fitehirizana ny datsinao. Mifidiana teny miafina matanjaka mba hiarovana ny kaontinao.",
+    "currentPassword": "Teny miafina ampiasaina izao",
+    "changePasswordBtn": "Hanojo ny teny miafina",
+    "modal": {
+      "title": "Hanojo ny teny miafina",
+      "subtitle": "Mifidiana teny miafina vaovao, tsy mitovy amin'ny taloha.",
+      "newPassword": "Teny miafina vaovao",
+      "minChars": "Litera 8 farafahakeliny",
+      "confirmPassword": "Hamarino ny teny miafina vaovao",
+      "cancel": "Ajanona",
+      "submit": "Hamarino",
+      "updating": "Fanavaozana..."
+    },
+    "twoFA": {
+      "title": "Fanamarinana indroakely (2FA)",
+      "badge": "toroana hevitra",
+      "description": "Mahazo kaody rehefa miditra mba hiarovana ny kaontinao. {{boldObligatory}} izany ho an'ny kaonty mpitantana (admin).",
+      "obligatory": "tsy maintsy atao"
+    },
+    "devices": {
+      "title": "Aparey mifandray",
+      "currentDevice": "ity aparey ity",
+      "disconnectOthers": "Hanesotra ireo aparey hafa",
+      "disconnecting": "Manesotra...",
+      "daysAgo": "{{count}} andro lasa"
+    }
+  },
+  "identity": {
+    "title": "Fanamarinana ny mombamomba anao",
+    "badge": "ho avy · v2.0",
+    "description": "Azo atao na tsy atao. Rehefa voaamarina, misy famantarana {{boldBadge}} mampitoky ireo mpiray trano aminao amin'ny hoavy. Ny fanamarinana dia atao amin'ny alalan'ny mpamatsy rezo findainao (USSD: Telma / Orange / Airtel), tsy misy sarany SMS.",
+    "badgeLabel": "« Mombamomba voaamarina »",
+    "notConfirmed": "Mombamomba tsy mbola voaamarina",
+    "comingSoon": "Ho avy tsy ho ela"
+  },
+  "privacy": {
+    "title": "Mombamomba anao manokana",
+    "subtitle": "Ianao no mifehy ny fampiasana ny datsinao, araka ny fitsipika RGPD.",
+    "analytics": {
+      "title": "Fampiasana data amin'ny fikarohana sy famakafakana tsy mitonona anarana",
+      "description": "Manampy amin'ny fahafantarana ny tsenan'ny colocation any Madagasikara. Data tsy mitonona anarana, tsy hamidy mihitsy."
+    },
+    "partners": {
+      "title": "Mahazo fampahafantarana avy amin'ireo mpiara-miasa",
+      "description": "Tolotra fiahiana, trano fonenana, asa ho an'ny mpianatra. Tsy misy dokam-barotra manelingelina.",
+      "partnerOptIn": "Opt-in ho an'ny mpiara-miasa"
+    },
+    "retention": {
+      "title": "Fitehirizana ny datsinao",
+      "line1": "Fampitandremana sy lahatsoratra: tehirizina 5 taona (tsy hitan'ny besinimaro), avy eo fafana ho azy.",
+      "line2": "Sary: tehirizina 1 taona farafahatsorany.",
+      "line3": "Afaka mangataka ny hitrandraka na hamafa ny datsinao ianao amin'ny fotoana rehetra."
+    },
+    "downloadData": "Hampidina ny datiko"
+  },
+  "deleteAccount": {
+    "title": "Hamafa ny kaontiko",
+    "description": "Tsy azo averina intsony ity asa ity: ho voafafa avokoa ny fampitandremanao, ny alerte ary ny dinikao.",
+    "button": "Hamafa tanteraka ny kaontiko",
+    "modal": {
+      "title": "Hamafa ny kaontinao?",
+      "description": "Ireo datsinao rehetra (fampitandremana, alerte, dinika) dia voafafa tanteraka. Tsy azo averina intsony izany.",
+      "cancel": "Ajanona",
+      "confirm": "Hamafa",
+      "deleting": "Mamafa..."
+    }
+  },
+  "messages": {
+    "passwordValidation": "Jereo azafady ireo sehatra nosoratana (teny miafina farafahakeliny 8 litera).",
+    "passwordUpdateSuccess": "Teny miafina voaovao soa aman-tsara!",
+    "passwordUpdateError": "Nisy diso teo am-panavaozana."
+  }
+}

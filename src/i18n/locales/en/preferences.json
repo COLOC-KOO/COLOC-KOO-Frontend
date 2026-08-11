@@ -1,0 +1,40 @@
+{
+  "displayNetwork": {
+    "title": "Display & Network",
+    "subtitle": "Sarintany'COLOC is designed to work even on slow or unstable connections, anywhere in Madagascar.",
+    "lightMode": "Data Saver Mode",
+    "lightModeDesc": "Loads lighter images and limits animations. {{boldActivated}} on 3G+/4G network or offline; you can also force it here.",
+    "activatedAutomatically": "Activated automatically",
+    "offlineAvailability": "Offline Availability",
+    "offlineAvailabilityDesc": "Saves recently viewed listings and conversations so you can access them without connection.",
+    "installApp": "Install Application",
+    "installAppDesc": "Add Sarintany'COLOC to your home screen without going through an app store.",
+    "installButton": "Install"
+  },
+  "notifications": {
+    "title": "Notification Preferences",
+    "subtitle": "Choose how you would like to be notified.",
+    "smsInfo": "SMS option will be available after the official launch.",
+    "defaultMode": "Default Mode",
+    "pushOnly": "Push only",
+    "emailOnly": "Email only",
+    "both": "Both",
+    "table": {
+      "event": "Event",
+      "push": "Push",
+      "email": "Email",
+      "notApplicable": "Not applicable"
+    },
+    "events": {
+      "new_msg": "New message received",
+      "expire_j7": "Listing expiring soon (D-7)",
+      "expired": "Listing expired — renewal request",
+      "alert_match": "New listing matching an alert",
+      "msg_auto": "Message not sent (auto-moderation)",
+      "msg_blocked": "Blocked message received",
+      "pub_confirm": "Listing publication confirmation"
+    },
+    "save": "Save",
+    "saved": "Saved"
+  }
+}
