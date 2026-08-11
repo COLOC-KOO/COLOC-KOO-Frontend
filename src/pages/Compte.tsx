@@ -19,7 +19,8 @@ import TabPreference from './compte/TabPreference'
 import TabMessagesV2 from './compte/TabMessagesV2'
 import ConversationsPage from './compte/ConversationsPage'
 import TabMesFavoris from './compte/TabMesFavoris'
-import TabAlertes, { ALERTES_MOCK } from './compte/TabAlertes'
+import TabAlertes from './compte/TabAlertes'  // ✅ CORRECTION 1 : suppression de { ALERTES_MOCK }
+
 import TabCompteDonnees from './compte/TabCompteDonnees'
 
 /* ------------------------------------------------------------------ */
@@ -42,6 +43,7 @@ export default function Compte() {
   const navigate = useNavigate()
   const { user, loading, logout, updateProfile, isAdmin } = useAuth()
   const [counters, setCounters] = useState({ favoris: 0, notifications: 0, messages: 0 })
+  const [alertCount, setAlertCount] = useState(0) // ✅ CORRECTION 2 : nouveau state
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [avatarUpdating, setAvatarUpdating] = useState(false)
   const [avatarMessage, setAvatarMessage] = useState('')
@@ -93,6 +95,19 @@ export default function Compte() {
     }
   }, [user])
 
+    // Charger dynamiquement le nombre d'alertes
+  useEffect(() => {
+    const userId = (user as any)?.id_utilisateur ?? (user as any)?.id
+    if (!userId) return
+    
+    const API = 'http://localhost:4000'
+    
+    fetch(`${API}/api/alertes/${userId}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setAlertCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => setAlertCount(0))
+  }, [user])
+
   const initials = (user?.prenom?.[0] || user?.name?.[0] || 'U').toUpperCase()
   const profileImageUrl = user?.profilePicture || (user as any)?.profile_picture || null
   const fullName = `${user?.prenom || ''} ${user?.nom || ''}`.trim() || user?.name || t('userProfile')
@@ -107,7 +122,7 @@ export default function Compte() {
     if (id === 'favoris') return counters.favoris
     if (id === 'notif') return counters.notifications
     if (id === 'paiements') return counters.messages
-    if (id === 'alertes') return ALERTES_MOCK.length
+    if (id === 'alertes') return alertCount // On utilise le state dynamique
     return 0
   }
 
@@ -130,6 +145,9 @@ export default function Compte() {
       event.target.value = ''
     }
   }
+
+  //  Helper pour récupérer l'ID de l'utilisateur connecté
+  const currentUserId = (user as any)?.id_utilisateur ?? (user as any)?.id ?? null
 
   return (
     <SiteLayout>
@@ -252,7 +270,8 @@ export default function Compte() {
           <div className={tab === 'paiements' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-6 shadow-sm'}>
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
             {tab === 'conversations' && <ConversationsPage />}
-            {tab === 'alertes' && <TabAlertes />}
+            {/*  On passe l'idUtilisateur au composant */}
+            {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
             {tab === 'notif' && <TabPreference />}
