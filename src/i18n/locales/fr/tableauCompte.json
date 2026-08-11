@@ -1,0 +1,23 @@
+{
+  "profile": "Profil",
+  "myFavoritesTab": "Mes favoris",
+  "myListings": "Mes annonces",
+  "myAlerts": "Mes alertes",
+  "conversations": "Conversations",
+  "preferences": "Préférences",
+  "accountAndData": "Compte & données",
+  "userProfile": "Profil utilisateur",
+  "personalAccountOf": "Compte personnel de {{name}}",
+  "proprietaire": "Propriétaire",
+  "colocataire": "Colocataire",
+  "member": "Membre",
+  "identityVerified": "Identité vérifiée",
+  "identityNotVerified": "Identité non vérifiée",
+  "memberSince": "Membre depuis {{date}}",
+  "updatingPhoto": "Mise à jour de la photo...",
+  "photoUpdated": "Photo de profil mise à jour",
+  "photoUpdateError": "Impossible de mettre à jour la photo de profil",
+  "administration": "Administration",
+  "logout": "Déconnexion",
+  "loading": "Chargement..."
+}

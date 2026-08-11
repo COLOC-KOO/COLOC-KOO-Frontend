@@ -1,0 +1,75 @@
+{
+  "security": {
+    "title": "Account Security",
+    "subtitle": "Your data is encrypted in transit (HTTPS) and at rest. Choose a strong password to protect your account.",
+    "currentPassword": "Current password",
+    "changePasswordBtn": "Change password",
+    "modal": {
+      "title": "Change Password",
+      "subtitle": "Choose a new password, different from the old one.",
+      "newPassword": "New password",
+      "minChars": "8 chars minimum",
+      "confirmPassword": "Confirm new password",
+      "cancel": "Cancel",
+      "submit": "Submit",
+      "updating": "Updating..."
+    },
+    "twoFA": {
+      "title": "Two-Factor Authentication (2FA)",
+      "badge": "recommended",
+      "description": "Receive a code upon login to secure your account. It is {{obligatory}} for administrator accounts.",
+      "obligatory": "mandatory"
+    },
+    "devices": {
+      "title": "Connected Devices",
+      "currentDevice": "this device",
+      "disconnectOthers": "Disconnect other devices",
+      "disconnecting": "Disconnecting...",
+      "daysAgo": "{{count}} days ago"
+    }
+  },
+  "identity": {
+    "title": "Identity Verification",
+    "badge": "coming soon · v2.0",
+    "description": "Optional. Once verified, an {{badgeLabel}} badge reassures your future roommates. Verification will be done via your mobile carrier (USSD: Telma / Orange / Airtel), with no SMS fees.",
+    "badgeLabel": "“Identity Verified”",
+    "notConfirmed": "Identity not verified",
+    "comingSoon": "Coming soon"
+  },
+  "privacy": {
+    "title": "Personal Data",
+    "subtitle": "You control the use of your data, in compliance with GDPR.",
+    "analytics": {
+      "title": "Data usage for anonymized analytics",
+      "description": "Helps understand the flatsharing market in Madagascar. Anonymized data, never resold."
+    },
+    "partners": {
+      "title": "Receive information from partners",
+      "description": "Solidarity offers, housing, student jobs. No intrusive commercial solicitation."
+    },
+    "retention": {
+      "title": "Data Retention",
+      "line1": "Listings and texts: archived for 5 years (publicly invisible), then automatically purged.",
+      "line2": "Photos: kept for up to 1 year max.",
+      "line3": "You can request the export or deletion of your data at any time."
+    },
+    "downloadData": "Download my data"
+  },
+  "deleteAccount": {
+    "title": "Delete My Account",
+    "description": "This action is permanent: your listings, alerts, and conversations will be deleted.",
+    "button": "Permanently delete my account",
+    "modal": {
+      "title": "Delete your account?",
+      "description": "All your data (listings, alerts, conversations) will be permanently erased. This action is irreversible.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "deleting": "Deleting..."
+    }
+  },
+  "messages": {
+    "passwordValidation": "Please check the filled fields (password must be at least 8 characters).",
+    "passwordUpdateSuccess": "Password updated successfully!",
+    "passwordUpdateError": "An error occurred during the update."
+  }
+}
