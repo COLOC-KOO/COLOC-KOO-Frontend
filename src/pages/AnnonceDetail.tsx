@@ -544,7 +544,6 @@ export default function AnnonceDetail() {
   }
 
   if (notFound || !listing) return <NotFound />
-
   return (
     <SiteLayout>
       {/* Modal Profil Utilisateur */}
@@ -763,40 +762,89 @@ export default function AnnonceDetail() {
             />
           </div>
 
-          {/* Property Details */}
+            {/* Property Details (Dynamique & Enrichi) */}
           <section className="mt-8">
             <h2 className="bebas text-2xl">{t('annonceDetail:sections.propertyDetails')}</h2>
             <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+              {/* Meublé / Non meublé */}
               <div className="flex items-center gap-2 text-sm">
                 <Shield className="w-4 h-4 text-brand-cyan-dark" />
                 <span className="text-foreground">
                   {listing.furnished ? t('annonceDetail:property.furnished') : t('annonceDetail:property.unfurnished')}
                 </span>
               </div>
+
+              {/* Date de disponibilité */}
               {listing.available ? (
                 <div className="flex items-center gap-2 text-sm">
                   <CalendarIcon className="w-4 h-4 text-brand-cyan-dark" />
-                  <span className="text-foreground">{t('annonceDetail:property.available', { date: listing.available })}</span>
+                  <span className="text-foreground">
+                    {t('annonceDetail:property.available', { date: listing.available })}
+                  </span>
                 </div>
               ) : null}
+
+              {/* Surface totale */}
+              {listing.surface > 0 ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <Building2 className="w-4 h-4 text-brand-cyan-dark" />
+                  <span className="text-foreground">Surface totale : {listing.surface} m²</span>
+                </div>
+              ) : null}
+
+              {/* Chambres */}
               {listing.bedrooms > 0 ? (
                 <div className="flex items-center gap-2 text-sm">
                   <BedDouble className="w-4 h-4 text-brand-cyan-dark" />
                   <span className="text-foreground">{listing.bedrooms} {t('annonceDetail:property.bedrooms')}</span>
                 </div>
               ) : null}
+
+              {/* Connexion Internet / Wifi */}
+              <div className="flex items-center gap-2 text-sm">
+                <Wifi className="w-4 h-4 text-brand-cyan-dark" />
+                <span className="text-foreground">
+                  {listing.internet ? "Internet / Wifi inclus" : "Pas d'internet"}
+                </span>
+              </div>
+
+              {/* Parking voitures */}
+              <div className="flex items-center gap-2 text-sm">
+                <Car className="w-4 h-4 text-brand-cyan-dark" />
+                <span className="text-foreground">
+                  {(listing.parkingVoitures ?? 0) > 0
+                    ? `Parking voiture : ${listing.parkingVoitures} place${listing.parkingVoitures! > 1 ? 's' : ''} ${listing.parkingCouvert ? '(Couvert)' : '(Non couvert)'}`
+                    : 'Pas de parking voiture'}
+                </span>
+              </div>
+
+              {/* Parking deux-roues */}
+              <div className="flex items-center gap-2 text-sm">
+                <Bike className="w-4 h-4 text-brand-cyan-dark" />
+                <span className="text-foreground">
+                  {(listing.parkingMotos ?? 0) > 0
+                    ? `2 roues : ${listing.parkingMotos} place${listing.parkingMotos! > 1 ? 's' : ''} ${listing.parkingCouvert ? '(Couvert)' : '(Non couvert)'}`
+                    : 'Pas de parking 2 roues'}
+                </span>
+              </div>
+
+              {/* Charges */}
               {listing.charges > 0 ? (
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="w-4 h-4 text-brand-cyan-dark" />
                   <span className="text-foreground">{t('annonceDetail:property.charges')}: {formatAr(listing.charges)} {t('annonceDetail:property.chargesUnit')}</span>
                 </div>
               ) : null}
+
+              {/* Adresse */}
               {listing.address ? (
                 <div className="flex items-center gap-2 text-sm">
                   <MapPinIcon className="w-4 h-4 text-brand-cyan-dark" />
                   <span className="text-foreground">{listing.address}</span>
                 </div>
               ) : null}
+
+              {/* Type d'annonce */}
               {listing.annonceType ? (
                 <div className="flex items-center gap-2 text-sm">
                   <Star className="w-4 h-4 text-brand-cyan-dark" />

@@ -1,6 +1,7 @@
 {
-  "title": "Mes conversations",
+  "title": "MES CONVERSATIONS",
+  "subtitle": "Chaque conversation est rattachée à l'annonce concernée. Tu peux signaler ou bloquer un utilisateur depuis une conversation.",
   "loading": "Chargement...",
-  "empty": "Aucune conversation",
-  "open": "Ouvrir la messagerie →"
+  "empty": "Aucune conversation pour le moment",
+  "open": "Ouvrir la messagerie"
 }

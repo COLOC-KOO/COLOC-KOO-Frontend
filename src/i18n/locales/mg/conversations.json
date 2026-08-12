@@ -1,6 +1,7 @@
 {
-  "title": "Ny resako",
+  "title": "NY RESAKO",
+  "subtitle": "Mifandray amin'ny fampahafantarana voakasika ny resaka tsirairay. Azonao atao ny mitatitra na mibalioka mpampiasa avy amin'ny resaka.",
   "loading": "Eo am-pampidirana...",
-  "empty": "Tsy misy resaka aloha",
-  "open": "Hanafoana ny hafatra →"
+  "empty": "Mbola tsy misy resaka aloha",
+  "open": "Sokafana ny hafatra"
 }
