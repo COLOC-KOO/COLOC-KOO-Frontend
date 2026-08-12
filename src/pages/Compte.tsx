@@ -1,17 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  ArrowLeft, Bell, Check, FileText, Lock, MessageSquare, Send, Upload, User,
-  Edit, Trash, AlertTriangle, X, Camera, Home, MapPin, DollarSign, Ruler,
-  Calendar, Bed, Building2, Users, Image as ImageIcon, Heart, Search,
-  Menu, ChevronLeft, UserPlus, Flag, Settings, ShieldCheck, ShieldOff, Eye,
-  Archive, RefreshCw, ChevronDown, Download, Smartphone, Laptop, Fingerprint,
-  LogOut, Key, EyeOff
+  Bell, Building2, Calendar, Camera, Heart, Home, MapPin, 
+  MessageSquare, Settings, ShieldCheck, ShieldOff, User
 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
-import { api, ApiAnnonce, AuthUser, getWebSocketUrl, Langue } from '../lib/api'
+import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import TabProfil from './compte/TabProfil'
 import TabMesAnnonces from './compte/TabMesAnnonces'
@@ -19,43 +15,29 @@ import TabPreference from './compte/TabPreference'
 import TabMessagesV2 from './compte/TabMessagesV2'
 import ConversationsPage from './compte/ConversationsPage'
 import TabMesFavoris from './compte/TabMesFavoris'
-import TabAlertes from './compte/TabAlertes'  // ✅ CORRECTION 1 : suppression de { ALERTES_MOCK }
-
+import TabAlertes from './compte/TabAlertes'
 import TabCompteDonnees from './compte/TabCompteDonnees'
 
-/* ------------------------------------------------------------------ */
-/*  Couleurs / tokens repris de la maquette (mappés sur les classes    */
-/*  tailwind déjà existantes dans le projet : brand-cyan / brand-green */
-/* ------------------------------------------------------------------ */
-// --cy   -> brand-cyan
-// --g2   -> brand-green
-// --dark -> #2C2C2C
-
-/* ------------------------------------------------------------------ */
-/*  Switch style maquette (pilule verte), utilisé pour 2FA + RGPD      */
-/* ------------------------------------------------------------------ */
-/* ------------------------------------------------------------------ */
-/*  PAGE COMPTE — header sombre + sidebar iconée, façon maquette       */
-/* ------------------------------------------------------------------ */
 export default function Compte() {
-  const { t } = useTranslation('compte')
+  // ✅ CORRECTION 1 : Chargement du namespace 'tableauCompte'
+  const { t } = useTranslation('tableauCompte')
   const location = useLocation()
   const navigate = useNavigate()
   const { user, loading, logout, updateProfile, isAdmin } = useAuth()
   const [counters, setCounters] = useState({ favoris: 0, notifications: 0, messages: 0 })
-  const [alertCount, setAlertCount] = useState(0) // ✅ CORRECTION 2 : nouveau state
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [alertCount, setAlertCount] = useState(0)
   const [avatarUpdating, setAvatarUpdating] = useState(false)
   const [avatarMessage, setAvatarMessage] = useState('')
   const isColocataire = user?.poste === 'colocataire'
 
+  // ✅ CORRECTION 2 : Utilisation des clés de traduction pour tous les onglets
   const tabs = [
     { id: 'profil', label: t('profile'), icon: User },
-    { id: isColocataire ? 'favoris' : 'dossier', label: isColocataire ? t('myFavoritesTab') : 'Mes annonces', icon: isColocataire ? Heart : Home },
-    { id: 'alertes', label: 'Mes alertes', icon: Bell },
-    { id: 'conversations', label: 'Conversations', icon: MessageSquare },
-    { id: 'notif', label: 'Préférences', icon: Settings },
-    { id: 'secu', label: 'Compte & données', icon: ShieldCheck },
+    { id: isColocataire ? 'favoris' : 'dossier', label: isColocataire ? t('myFavoritesTab') : t('myListings'), icon: isColocataire ? Heart : Home },
+    { id: 'alertes', label: t('myAlerts'), icon: Bell },
+    { id: 'conversations', label: t('conversations'), icon: MessageSquare },
+    { id: 'notif', label: t('preferences'), icon: Settings },
+    { id: 'secu', label: t('accountAndData'), icon: ShieldCheck },
   ]
 
   const getInitialTab = () => {
@@ -95,7 +77,6 @@ export default function Compte() {
     }
   }, [user])
 
-    // Charger dynamiquement le nombre d'alertes
   useEffect(() => {
     const userId = (user as any)?.id_utilisateur ?? (user as any)?.id
     if (!userId) return
@@ -113,7 +94,6 @@ export default function Compte() {
   const fullName = `${user?.prenom || ''} ${user?.nom || ''}`.trim() || user?.name || t('userProfile')
   const roleLabel = user?.poste === 'proprietaire' ? t('proprietaire') : user?.poste === 'colocataire' ? t('colocataire') : user?.poste || t('member')
 
-  // "Membre depuis" — statique en attendant que le champ date_inscription soit exposé par l'API
   const membreDepuis = user?.date_inscription
     ? new Date(user.date_inscription).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
     : 'mars 2026'
@@ -122,7 +102,7 @@ export default function Compte() {
     if (id === 'favoris') return counters.favoris
     if (id === 'notif') return counters.notifications
     if (id === 'paiements') return counters.messages
-    if (id === 'alertes') return alertCount // On utilise le state dynamique
+    if (id === 'alertes') return alertCount
     return 0
   }
 
@@ -137,21 +117,20 @@ export default function Compte() {
       formData.append('photo', file)
       const uploaded = await api.uploadProfilePicture(formData)
       await updateProfile({ profile_picture: uploaded.profilePicture || null })
-      setAvatarMessage('Photo de profil mise à jour')
+      setAvatarMessage(t('photoUpdated'))
     } catch {
-      setAvatarMessage('Impossible de mettre à jour la photo de profil')
+      setAvatarMessage(t('photoUpdateError'))
     } finally {
       setAvatarUpdating(false)
       event.target.value = ''
     }
   }
 
-  //  Helper pour récupérer l'ID de l'utilisateur connecté
   const currentUserId = (user as any)?.id_utilisateur ?? (user as any)?.id ?? null
 
   return (
     <SiteLayout>
-      {/* ---------- HEADER SOMBRE (façon maquette .account-head) ---------- */}
+      {/* HEADER SOMBRE */}
       <div className="bg-gradient-to-r from-[#2C2C2C] to-[#3a3a3a] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 flex items-center gap-4">
           <div className="relative shrink-0">
@@ -167,7 +146,7 @@ export default function Compte() {
           </div>
           <div className="min-w-0">
             <h1 className="bebas text-2xl sm:text-3xl leading-tight truncate">
-              {loading ? 'Chargement...' : `Compte personnel de ${user?.prenom || fullName}`}
+              {loading ? t('loading') : t('personalAccountOf', { name: user?.prenom || fullName })}
             </h1>
             <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
               <span className="bg-brand-green/20 text-brand-green border border-brand-green/40 rounded-full px-3 py-1 font-bold">
@@ -179,16 +158,16 @@ export default function Compte() {
               >
                 {user?.verification ? (
                   <>
-                    <ShieldCheck className="w-3.5 h-3.5" /> Identité vérifiée
+                    <ShieldCheck className="w-3.5 h-3.5" /> {t('identityVerified')}
                   </>
                 ) : (
                   <>
-                    <ShieldOff className="w-3.5 h-3.5" /> Identité non vérifiée
+                    <ShieldOff className="w-3.5 h-3.5" /> {t('identityNotVerified')}
                   </>
                 )}
               </button>
               <span className="flex items-center gap-1 text-white/60">
-                <Calendar className="w-3.5 h-3.5" /> Membre depuis {membreDepuis}
+                <Calendar className="w-3.5 h-3.5" /> {t('memberSince', { date: membreDepuis })}
               </span>
               {user?.ville && (
                 <span className="flex items-center gap-1 text-white/60">
@@ -198,26 +177,26 @@ export default function Compte() {
             </div>
             {avatarMessage ? (
               <p className={`mt-2 text-sm ${avatarUpdating ? 'text-white/70' : 'text-brand-green-light'}`}>
-                {avatarUpdating ? 'Mise à jour de la photo...' : avatarMessage}
+                {avatarUpdating ? t('updatingPhoto') : avatarMessage}
               </p>
             ) : null}
           </div>
           <div className="ml-auto hidden md:flex items-center gap-2">
             {user && isAdmin && (
               <Button variant="outline" onClick={() => navigate('/admin')} className="gap-2 bg-white/10 text-white border-white/20 hover:bg-white/20">
-                <Building2 className="w-4 h-4" /> Administration
+                <Building2 className="w-4 h-4" /> {t('administration')}
               </Button>
             )}
             {user && (
               <Button variant="outline" onClick={() => logout()} className="gap-2 bg-white/10 text-red-300 border-red-300/30 hover:bg-red-500 hover:text-white">
-                Déconnexion
+                {t('logout')}
               </Button>
             )}
           </div>
         </div>
       </div>
 
-      {/* ---------- CORPS : sidebar iconée + contenu ---------- */}
+      {/* CORPS : Sidebar + Contenu */}
       <div className="w-full px-4 sm:px-6 py-8 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-[220px_1fr] gap-6 items-start">
           {/* Sidebar desktop */}
@@ -245,7 +224,7 @@ export default function Compte() {
             })}
           </aside>
 
-          {/* Sidebar mobile (scroll horizontal, comme la maquette en <760px) */}
+          {/* Sidebar mobile */}
           <nav className="md:hidden flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {tabs.map((tItem) => {
               const count = badgeCountFor(tItem.id)
@@ -270,7 +249,6 @@ export default function Compte() {
           <div className={tab === 'paiements' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-6 shadow-sm'}>
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
             {tab === 'conversations' && <ConversationsPage />}
-            {/*  On passe l'idUtilisateur au composant */}
             {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
@@ -281,7 +259,7 @@ export default function Compte() {
         </div>
       </div>
 
-      {/* Mobile fixed icon nav (identique à l'existant) */}
+      {/* Navigation Mobile fixée en bas */}
       <nav className="md:hidden fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)]" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}>
         <div className="bg-white/95 backdrop-blur-md border border-border rounded-xl shadow-lg px-3 py-3 flex items-center justify-between">
           {['profil', 'conversations', 'alertes', 'notif', 'secu'].map((id) => {

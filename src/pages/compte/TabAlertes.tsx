@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { Bell, BellPlus, Check, Trash, X, Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 /* ------------------------------------------------------------------ */
-/*  MES ALERTES — branché sur l'API backend :                          */
-/*  GET    /api/alertes/:idUtilisateur                                 */
-/*  POST   /api/alertes                                                */
-/*  DELETE /api/alertes/:id                                            */
+/*  MES ALERTES — branché sur l'API backend :                         */
+/*  GET    /api/alertes/:idUtilisateur                                */
+/*  POST   /api/alertes                                               */
+/*  DELETE /api/alertes/:id                                           */
 /* ------------------------------------------------------------------ */
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
@@ -19,10 +20,6 @@ const VILLES = [
   { id: 5, nom: 'Antsirabe' },
   { id: 6, nom: 'Antsiranana' },
 ]
-
-const TYPES_BIEN = ['Appartement', 'Maison'] as const
-const REGLES_COLOC = ['Fille uniquement', 'Garçon uniquement', 'Animaux acceptés'] as const
-const TYPES_ANNONCE = ['Colocation existante', "Création d'une colocation", 'Bien immobilier potentiel'] as const
 
 interface AlerteForm {
   idVille: string
@@ -75,27 +72,28 @@ function Checkbox({ label, checked, onChange }: { label: string; checked: boolea
   )
 }
 
-function buildTitre(a: Alerte): string {
-  const ville = a.nom_ville ?? 'Toutes villes'
-  const suite = a.quartier ?? (a.type_annonce ? a.type_annonce.split(',')[0] : 'Colocation')
-  return `${ville} · ${suite}`
-}
-
-function buildCriteres(a: Alerte): string[] {
-  const criteres: string[] = []
-  if (a.prix_max) criteres.push(`Loyer ≤ ${Number(a.prix_max).toLocaleString('fr-FR')} Ar`)
-  if (a.type_propriete) criteres.push(...a.type_propriete.split(',').filter(Boolean))
-  if (a.regles) {
-    try { criteres.push(...(JSON.parse(a.regles) as string[])) } catch { /* ignore */ }
-  }
-  if (a.type_annonce) criteres.push(...a.type_annonce.split(',').filter(Boolean))
-  return criteres
-}
-
 export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number }) {
+  const { t } = useTranslation('alertes')
   const [alertes, setAlertes] = useState<Alerte[]>([])
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<AlerteForm>(EMPTY_FORM)
+
+  const TYPES_BIEN = [
+    { key: 'Appartement', label: t('options.appartement') },
+    { key: 'Maison', label: t('options.maison') },
+  ]
+
+  const REGLES_COLOC = [
+    { key: 'Fille uniquement', label: t('options.girlsOnly') },
+    { key: 'Garçon uniquement', label: t('options.boysOnly') },
+    { key: 'Animaux acceptés', label: t('options.petsAllowed') },
+  ]
+
+  const TYPES_ANNONCE = [
+    { key: 'Colocation existante', label: t('options.existingColoc') },
+    { key: "Création d'une colocation", label: t('options.colocCreation') },
+    { key: 'Bien immobilier potentiel', label: t('options.potentialProperty') },
+  ]
 
   const charger = async () => {
     try {
@@ -136,20 +134,37 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
     charger()
   }
 
+  const buildTitre = (a: Alerte): string => {
+    const ville = a.nom_ville ?? t('allCities')
+    const suite = a.quartier ?? (a.type_annonce ? a.type_annonce.split(',')[0] : t('colocation'))
+    return `${ville} · ${suite}`
+  }
+
+  const buildCriteres = (a: Alerte): string[] => {
+    const criteres: string[] = []
+    if (a.prix_max) criteres.push(t('maxRent', { price: Number(a.prix_max).toLocaleString('fr-FR') }))
+    if (a.type_propriete) criteres.push(...a.type_propriete.split(',').filter(Boolean))
+    if (a.regles) {
+      try { criteres.push(...(JSON.parse(a.regles) as string[])) } catch { /* ignore */ }
+    }
+    if (a.type_annonce) criteres.push(...a.type_annonce.split(',').filter(Boolean))
+    return criteres
+  }
+
   return (
     <div>
       <div className="flex items-center gap-2 mb-1">
         <Bell className="w-5 h-5 text-brand-cyan" />
-        <h2 className="bebas text-2xl">Mes alertes sauvegardées</h2>
+        <h2 className="bebas text-2xl">{t('title')}</h2>
       </div>
       <p className="text-sm text-muted-foreground mb-5">
-        Sois notifié·e dès qu'une nouvelle annonce correspond à tes critères.
+        {t('subtitle')}
       </p>
 
       {alertes.length === 0 ? (
         <div className="text-center py-10 text-muted-foreground">
           <Bell className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
-          <p className="text-sm font-semibold">Aucune alerte pour le moment</p>
+          <p className="text-sm font-semibold">{t('noAlerts')}</p>
         </div>
       ) : (
         alertes.map((a) => (
@@ -163,18 +178,18 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
               ))}
             </div>
             <div className="flex items-center gap-4 flex-wrap">
-              <span className="text-xs text-muted-foreground">Notification :</span>
+              <span className="text-xs text-muted-foreground">{t('notification')}</span>
               <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" defaultChecked={!!a.notif_push} className="accent-brand-green w-4 h-4" /> Push
+                <input type="checkbox" defaultChecked={!!a.notif_push} className="accent-brand-green w-4 h-4" /> {t('push')}
               </label>
               <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" defaultChecked={!!a.notif_email} className="accent-brand-green w-4 h-4" /> E-mail
+                <input type="checkbox" defaultChecked={!!a.notif_email} className="accent-brand-green w-4 h-4" /> {t('email')}
               </label>
               <button
                 onClick={() => removeAlerte(a.id)}
                 className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 border border-red-600 rounded-lg px-3 py-1.5 hover:bg-red-600 hover:text-white transition-colors"
               >
-                <Trash className="w-3.5 h-3.5" /> Supprimer
+                <Trash className="w-3.5 h-3.5" /> {t('delete')}
               </button>
             </div>
           </div>
@@ -185,7 +200,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
         onClick={() => setShowModal(true)}
         className="inline-flex items-center gap-2 text-sm font-semibold border border-border rounded-lg px-4 py-2 hover:bg-muted transition-colors"
       >
-        <Plus className="w-4 h-4" /> Créer une nouvelle alerte
+        <Plus className="w-4 h-4" /> {t('createNewAlert')}
       </button>
 
       {showModal && (
@@ -198,20 +213,20 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
             <div className="w-14 h-14 rounded-full bg-brand-green-light text-brand-green flex items-center justify-center mx-auto mb-3">
               <BellPlus className="w-6 h-6" />
             </div>
-            <h3 className="bebas text-xl text-center mb-1">Créer une alerte</h3>
+            <h3 className="bebas text-xl text-center mb-1">{t('createAlertTitle')}</h3>
             <p className="text-xs text-muted-foreground text-center mb-5">
-              Sois notifié·e dès qu'une annonce correspond à tes critères.
+              {t('subtitle')}
             </p>
 
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
-                <label className="block text-xs font-semibold mb-1">Ville</label>
+                <label className="block text-xs font-semibold mb-1">{t('city')}</label>
                 <select
                   value={form.idVille}
                   onChange={(e) => setForm((prev) => ({ ...prev, idVille: e.target.value }))}
                   className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
                 >
-                  <option value="">— Choisir —</option>
+                  <option value="">{t('chooseCity')}</option>
                   {VILLES.map((v) => (
                     <option key={v.id} value={v.id}>{v.nom}</option>
                   ))}
@@ -219,65 +234,65 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1">
-                  Quartier <span className="font-normal text-muted-foreground">— optionnel</span>
+                  {t('neighborhood')} <span className="font-normal text-muted-foreground">— {t('optional')}</span>
                 </label>
                 <input
                   value={form.quartier}
                   onChange={(e) => setForm((prev) => ({ ...prev, quartier: e.target.value }))}
                   className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-                  placeholder="Ex. Ankadindramamy"
+                  placeholder={t('neighborhoodPlaceholder')}
                 />
               </div>
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-semibold mb-1">Prix maximum (Ar)</label>
+              <label className="block text-xs font-semibold mb-1">{t('maxPrice')}</label>
               <input
                 type="number"
                 value={form.prixMax}
                 onChange={(e) => setForm((prev) => ({ ...prev, prixMax: e.target.value }))}
                 className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-                placeholder="Ex. 400 000"
+                placeholder={t('maxPricePlaceholder')}
               />
             </div>
 
             <div className="mb-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Type de bien</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('propertyType')}</div>
               <div className="grid grid-cols-2 gap-2">
-                {TYPES_BIEN.map((label) => (
+                {TYPES_BIEN.map((item) => (
                   <Checkbox
-                    key={label}
-                    label={label}
-                    checked={form.typeBien.includes(label)}
-                    onChange={() => setForm((prev) => ({ ...prev, typeBien: toggleInArray(prev.typeBien, label) }))}
+                    key={item.key}
+                    label={item.label}
+                    checked={form.typeBien.includes(item.key)}
+                    onChange={() => setForm((prev) => ({ ...prev, typeBien: toggleInArray(prev.typeBien, item.key) }))}
                   />
                 ))}
               </div>
             </div>
 
             <div className="mb-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Règles de la coloc</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('colocRules')}</div>
               <div className="grid grid-cols-2 gap-2">
-                {REGLES_COLOC.map((label) => (
+                {REGLES_COLOC.map((item) => (
                   <Checkbox
-                    key={label}
-                    label={label}
-                    checked={form.reglesColoc.includes(label)}
-                    onChange={() => setForm((prev) => ({ ...prev, reglesColoc: toggleInArray(prev.reglesColoc, label) }))}
+                    key={item.key}
+                    label={item.label}
+                    checked={form.reglesColoc.includes(item.key)}
+                    onChange={() => setForm((prev) => ({ ...prev, reglesColoc: toggleInArray(prev.reglesColoc, item.key) }))}
                   />
                 ))}
               </div>
             </div>
 
             <div className="mb-5">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Type d'annonce</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('announcementType')}</div>
               <div className="grid grid-cols-2 gap-2">
-                {TYPES_ANNONCE.map((label) => (
+                {TYPES_ANNONCE.map((item) => (
                   <Checkbox
-                    key={label}
-                    label={label}
-                    checked={form.typeAnnonce.includes(label)}
-                    onChange={() => setForm((prev) => ({ ...prev, typeAnnonce: toggleInArray(prev.typeAnnonce, label) }))}
+                    key={item.key}
+                    label={item.label}
+                    checked={form.typeAnnonce.includes(item.key)}
+                    onChange={() => setForm((prev) => ({ ...prev, typeAnnonce: toggleInArray(prev.typeAnnonce, item.key) }))}
                   />
                 ))}
               </div>
@@ -285,10 +300,10 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
 
             <div className="flex gap-3">
               <button onClick={closeModal} className="flex-1 border border-border rounded-lg py-2.5 text-sm font-semibold hover:bg-muted">
-                Annuler
+                {t('cancel')}
               </button>
               <button onClick={handleSubmit} className="flex-1 bg-brand-green text-white rounded-lg py-2.5 text-sm font-semibold hover:opacity-90">
-                Valider
+                {t('validate')}
               </button>
             </div>
           </div>

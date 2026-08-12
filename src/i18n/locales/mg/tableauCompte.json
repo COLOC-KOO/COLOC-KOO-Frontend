@@ -1,0 +1,23 @@
+{
+  "profile": "Mombamomba",
+  "myFavoritesTab": "Ireo tiako",
+  "myListings": "Ireo fampitandrenako",
+  "myAlerts": "Ireo fampandrenesana",
+  "conversations": "Ireo resaka",
+  "preferences": "Sombiny & Safidy",
+  "accountAndData": "Kaiky & Angona",
+  "userProfile": "Mombamomba ny mpampiasa",
+  "personalAccountOf": "Kaiky manokana an'i {{name}}",
+  "proprietaire": "Mponina / Tompony",
+  "colocataire": "Mpiray trano",
+  "member": "Mpikambana",
+  "identityVerified": "Mamaritra ny maha-izy azy",
+  "identityNotVerified": "Tsy voamarina ny maha-izy azy",
+  "memberSince": "Mpikambana hatramin'ny {{date}}",
+  "updatingPhoto": "Mampiditra sary...",
+  "photoUpdated": "Voaova ny sary mombamomba",
+  "photoUpdateError": "Tsy tafa ny fanovana ny sary mombamomba",
+  "administration": "Fitantanana",
+  "logout": "Hivoaka",
+  "loading": "Andrasana..."
+}
