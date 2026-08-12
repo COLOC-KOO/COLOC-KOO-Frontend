@@ -1,0 +1,23 @@
+{
+  "profile": "Profile",
+  "myFavoritesTab": "My Favorites",
+  "myListings": "My Listings",
+  "myAlerts": "My Alerts",
+  "conversations": "Conversations",
+  "preferences": "Preferences",
+  "accountAndData": "Account & Data",
+  "userProfile": "User Profile",
+  "personalAccountOf": "Personal account of {{name}}",
+  "proprietaire": "Landlord",
+  "colocataire": "Roommate",
+  "member": "Member",
+  "identityVerified": "Identity verified",
+  "identityNotVerified": "Identity not verified",
+  "memberSince": "Member since {{date}}",
+  "updatingPhoto": "Updating photo...",
+  "photoUpdated": "Profile photo updated",
+  "photoUpdateError": "Failed to update profile photo",
+  "administration": "Administration",
+  "logout": "Log out",
+  "loading": "Loading..."
+}

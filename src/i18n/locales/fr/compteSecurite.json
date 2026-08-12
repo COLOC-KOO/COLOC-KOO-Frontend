@@ -1,0 +1,75 @@
+{
+  "security": {
+    "title": "Sécurité du compte",
+    "subtitle": "Tes données sont chiffrées en transit (HTTPS) et au repos. Choisis un mot de passe solide pour protéger ton compte.",
+    "currentPassword": "Mot de passe actuel",
+    "changePasswordBtn": "Changer le mot de passe",
+    "modal": {
+      "title": "Changer le mot de passe",
+      "subtitle": "Choisis un nouveau mot de passe, différent de l'ancien.",
+      "newPassword": "Nouveau mot de passe",
+      "minChars": "8 caractères min.",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "cancel": "Annuler",
+      "submit": "Valider",
+      "updating": "Mise à jour..."
+    },
+    "twoFA": {
+      "title": "Double authentification (2FA)",
+      "badge": "recommandé",
+      "description": "Reçois un code à la connexion pour sécuriser ton compte. Elle est {{boldObligatory}} pour les comptes administrateurs.",
+      "obligatory": "obligatoire"
+    },
+    "devices": {
+      "title": "Appareils connectés",
+      "currentDevice": "cet appareil",
+      "disconnectOthers": "Déconnecter les autres appareils",
+      "disconnecting": "Déconnexion...",
+      "daysAgo": "il y a {{count}} jours"
+    }
+  },
+  "identity": {
+    "title": "Vérification d'identité",
+    "badge": "à venir · v2.0",
+    "description": "Optionnelle. Une fois confirmée, un badge {{boldBadge}} rassure tes futurs colocataires. La vérification se fera via ton opérateur mobile (USSD : Telma / Orange / Airtel), sans frais de SMS.",
+    "badgeLabel": "« Identité confirmée »",
+    "notConfirmed": "Identité non confirmée",
+    "comingSoon": "Bientôt disponible"
+  },
+  "privacy": {
+    "title": "Données personnelles",
+    "subtitle": "Tu contrôles l'usage de tes données, conformément au RGPD.",
+    "analytics": {
+      "title": "Usage des données à des fins d'analyse anonymisée",
+      "description": "Aide à comprendre le marché de la colocation à Madagascar. Données anonymisées, jamais revendues."
+    },
+    "partners": {
+      "title": "Recevoir des informations des partenaires",
+      "description": "Offres solidaires, logement, emploi étudiant. Aucun démarchage commercial intrusif."
+    },
+    "retention": {
+      "title": "Conservation de tes données",
+      "line1": "Annonces et textes : archivés 5 ans (invisibles publiquement), puis purge automatique.",
+      "line2": "Photos : conservées 1 an maximum.",
+      "line3": "Tu peux demander l'export ou la suppression de tes données à tout moment."
+    },
+    "downloadData": "Télécharger mes données"
+  },
+  "deleteAccount": {
+    "title": "Supprimer mon compte",
+    "description": "Cette action est définitive : tes annonces, alertes et conversations seront supprimées.",
+    "button": "Supprimer définitivement mon compte",
+    "modal": {
+      "title": "Supprimer ton compte ?",
+      "description": "Toutes tes données (annonces, alertes, conversations) seront définitivement effacées. Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer",
+      "deleting": "Suppression..."
+    }
+  },
+  "messages": {
+    "passwordValidation": "Veuillez vérifier les champs renseignés (mot de passe de 8 caractères minimum).",
+    "passwordUpdateSuccess": "Mot de passe mis à jour avec succès !",
+    "passwordUpdateError": "Une erreur est survenue lors de la mise à jour."
+  }
+}
