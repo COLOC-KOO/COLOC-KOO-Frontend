@@ -29,6 +29,7 @@ export default function Auth() {
     telephone: "",
     mot_de_passe: "",
     poste: "colocataire" as Poste,
+    date_naissance: "",
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -58,6 +59,7 @@ export default function Auth() {
               prenom: form.prenom,
               telephone: form.telephone || undefined,
               poste: form.poste,
+              date_naissance: form.date_naissance,
             });
 
       const redirect = params.get("redirect");
@@ -188,6 +190,20 @@ export default function Auth() {
                       }
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">
+                    {t("birthDate")}
+                  </label>
+                  <input
+                    required
+                    type="date"
+                    className="input"
+                    value={form.date_naissance}
+                    onChange={(e) =>
+                      setForm({ ...form, date_naissance: e.target.value })
+                    }
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1.5">
