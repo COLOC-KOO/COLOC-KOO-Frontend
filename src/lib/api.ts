@@ -684,6 +684,7 @@ export const api = {
         prenom: string
         telephone?: string
         poste: Poste
+        date_naissance: string
     }) {
         return request<{ user: AuthUser; token: string }>('/auth/register', {
             method: 'POST',
