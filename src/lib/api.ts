@@ -451,27 +451,31 @@ export interface DepotAnnonceRoomPayload {
     meublee?: string | null
     disponible_a_partir?: string | null
 }
-
 export interface CreateDepotAnnoncePayload {
-    adresse: string
-    ville?: string
-    quartier?: string
-    latitude?: number | null
-    longitude?: number | null
-    type_annonce: string
-    logement: string
-    nombre_pieces: string
-    surface?: number | string | null
-    commodites?: string[]
-    regles?: string[]
-    chambres: DepotAnnonceRoomPayload[]
-    email: string
-    telephone_code?: string
-    telephone?: string
-    message?: string
-    visite_3d?: string
-    photos?: string[]
-    boost_service_id?: number | null
+  adresse: string
+  ville?: string
+  quartier?: string
+  latitude?: number | null
+  longitude?: number | null
+  type_annonce: string
+  logement: string
+  nombre_pieces: string
+  surface?: number | string | null
+  internet?: string
+  parking_voitures?: number
+  parking_motos?: number
+  parking_couvert?: number
+  services_communs?: string[]
+  commodites?: string[]
+  regles?: string[]
+  chambres: DepotAnnonceRoomPayload[]
+  email: string
+  telephone_code?: string
+  telephone?: string
+  message?: string
+  visite_3d?: string
+  photos?: string[]
+  boost_service_id?: number | null
 }
 
 export interface DepotAnnonceResponse {
@@ -1753,7 +1757,10 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         address: row.adresse_exacte ?? row.adresse ?? undefined,
         regles,
         services: listingServices,
-        internet: row.internet != null ? String(row.internet).toLowerCase() === 'oui' : amenities.includes('wifi'),
+        // CORRECTION : row.internet contient 'Fibre' | 'ADSL' | 'Box' (jamais 'Oui'/'Non'),
+        // donc la comparaison à 'oui' ne matchait jamais et internet était toujours affiché
+        // comme absent même quand il était bien enregistré en base.
+        internet: row.internet != null && String(row.internet).trim() !== '' ? true : amenities.includes('wifi'),
         parkingVoitures: row.parking_voitures ?? (amenities.includes('parking') ? 1 : 0),
         parkingMotos: row.parking_motos ?? 0,
         parkingCouvert: row.parking_couvert ?? amenities.includes('garage'),

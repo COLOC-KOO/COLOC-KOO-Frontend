@@ -437,7 +437,7 @@ export function SiteHeader() {
                   {t('signin', { ns: 'header' })}
                 </Button>
               </Link>
-              <Link to="/compte?tab=dossier" className="hidden sm:block">
+              <Link to="/auth" className="hidden sm:block">
                 <Button size="sm" className="rounded-lg bg-brand-cyan hover:bg-brand-cyan-dark text-white transition-colors">
                   <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
                 </Button>
