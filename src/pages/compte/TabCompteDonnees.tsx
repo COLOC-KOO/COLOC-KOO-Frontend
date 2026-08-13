@@ -20,6 +20,7 @@ import {
 import { Button } from '../../components/ui/Button'
 import { api } from '../../lib/api'
 
+// Interrupteur on/off réutilisable pour les options de sécurité et de confidentialité
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
     <button
@@ -54,6 +55,7 @@ const APPAREILS_MOCK: AppareilConnecte[] = [
   { id: '2', type: 'desktop', label: 'Chrome / Windows', lieu: 'il y a 3 jours' },
 ]
 
+// Onglet principal regroupant la sécurité du compte et la gestion des données personnelles
 export default function TabCompteDonnees() {
   const { t } = useTranslation('compteSecurites')
   const [form, setForm] = useState({ current: '', next: '', confirm: '' })
@@ -66,6 +68,7 @@ export default function TabCompteDonnees() {
 
   const [twoFA, setTwoFA] = useState(true)
   const [savingTwoFA, setSavingTwoFA] = useState(false)
+  // Active ou désactive la double authentification et synchronise le changement avec l'API
   const handleToggleTwoFA = async (value: boolean) => {
     setTwoFA(value)
     setSavingTwoFA(true)
@@ -80,6 +83,7 @@ export default function TabCompteDonnees() {
 
   const [appareils, setAppareils] = useState<AppareilConnecte[]>(APPAREILS_MOCK)
   const [disconnecting, setDisconnecting] = useState(false)
+  // Déconnecte tous les appareils sauf l'appareil courant
   const handleDisconnectOthers = async () => {
     setDisconnecting(true)
     try {
@@ -95,6 +99,7 @@ export default function TabCompteDonnees() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  // Confirme et exécute la suppression définitive du compte utilisateur
   const handleConfirmDelete = async () => {
     setDeleting(true)
     try {
@@ -107,6 +112,7 @@ export default function TabCompteDonnees() {
     }
   }
 
+  // Valide puis envoie le changement de mot de passe à l'API
   const handleSave = async () => {
     if (!form.current || !form.next || form.next.length < 8 || form.next !== form.confirm) {
       setMessage(t('messages.passwordValidation'))

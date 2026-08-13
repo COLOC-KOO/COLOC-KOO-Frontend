@@ -40,6 +40,7 @@ export interface Langue {
     code_langue: string
     nom_langue: string
 }
+//pour le details du bien 
 
 export interface ApiAnnonce {
     id: number
@@ -1705,6 +1706,14 @@ export function annonceToListing(a: ApiAnnonce): Listing {
     const id = row.id_depot_annonce ?? row.id ?? row.id_annonce
     const isBoosted = isBoostActive(row)
     const boostServiceId = row.booster ?? row.boost_service_id ?? null
+    // Surface de chambre (dynamique, distincte de la surface totale)
+    const roomSurface = firstRoom?.surface != null ? Number(firstRoom.surface) : undefined
+    // Services proposés (dynamique, à partir des services liés à l'annonce)
+    const listingServices = Array.isArray(row.services_communs)
+        ? row.services_communs
+        : Array.isArray(row.services)
+            ? row.services
+            : []
     return {
         id: String(id),
         depotAnnonceId: row.id_depot_annonce != null ? Number(row.id_depot_annonce) : undefined,
@@ -1717,6 +1726,7 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         rooms: Number(row.total_colocataires || row.nombre_pieces || 1),
         bedrooms: Number(row.bedrooms_count || row.chambres?.length || row.rooms?.length || row.nombre_pieces || 1),
         surface,
+        roomSurface,
         furnished: Boolean(firstRoom?.est_meuble != null && String(firstRoom.est_meuble).toLowerCase() === 'oui') || Boolean(firstRoom?.meublee != null && String(firstRoom.meublee).toLowerCase() === 'oui'),
         available: String(firstRoom?.date_disponibilite || firstRoom?.disponible_a_partir || '').slice(0, 10),
         type: row.type_propriete === 'maison' || row.logement === 'Maison' ? 'maison' : row.type_propriete === 'appartement' || row.logement === 'Appartement' ? 'appartement' : 'chambre',
@@ -1742,6 +1752,7 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         candidatureCount: row.candidature_count != null ? Number(row.candidature_count) : undefined,
         address: row.adresse_exacte ?? row.adresse ?? undefined,
         regles,
+        services: listingServices,
         internet: row.internet != null ? String(row.internet).toLowerCase() === 'oui' : amenities.includes('wifi'),
         parkingVoitures: row.parking_voitures ?? (amenities.includes('parking') ? 1 : 0),
         parkingMotos: row.parking_motos ?? 0,
