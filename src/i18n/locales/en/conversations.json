@@ -1,6 +1,7 @@
 {
-  "title": "My conversations",
+  "title": "MY CONVERSATIONS",
+  "subtitle": "Each conversation is linked to the relevant listing. You can report or block a user from a conversation.",
   "loading": "Loading...",
-  "empty": "No conversations",
-  "open": "Open messaging →"
+  "empty": "No conversations yet",
+  "open": "Open messaging"
 }
