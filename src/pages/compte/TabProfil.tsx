@@ -177,63 +177,65 @@ export default function TabProfil({
       setVilleNom('')
     }
   }, [form.villeOrigine, villes])
-
   const handleSave = async () => {
-    if (form.telephone && !isValidPhoneNumber(form.telephone)) {
-      setPhoneError('Numéro invalide. Utilisez 032, 033, 034, 038 ou 039 (ex: 0341234567)')
-      return
-    } else {
-      setPhoneError('')
-    }
-
-    if (form.cin && !isValidCin(form.cin)) {
-      setCinError('CIN invalide. Le numéro doit contenir exactement 12 chiffres')
-      return
-    } else {
-      setCinError('')
-    }
-
-    setSaving(true)
-    setMessage('')
-    try {
-      let profilePicture = form.profilePicture || null
-      if (selectedProfileFile) {
-        setUploadingProfile(true)
-        const formData = new FormData()
-        formData.append('photo', selectedProfileFile)
-        const uploaded = await api.uploadProfilePicture(formData)
-        profilePicture = uploaded.profilePicture || null
-        setForm((prev) => ({ ...prev, profilePicture: profilePicture || '' }))
-      }
-
-      const birthDate = form.dateNaissance || null
-      await onSave({
-        prenom: form.prenom || null,
-        nom: form.nom || null,
-        email: form.email || null,
-        telephone: form.telephone || null,
-        cin: form.cin || null,
-        bio: form.bio || null,
-        date_naissance: birthDate,
-        age: computeAge(birthDate),
-        profession: form.profession || null,
-        ville_origine: form.villeOrigine ? Number(form.villeOrigine) : null,
-        langue_preferee: form.languePreferee ? Number(form.languePreferee) : null,
-        profile_picture: profilePicture,
-      })
-      setSelectedProfileFile(null)
-      setMessage(t('profileUpdated'))
-      if (form.cin) {
-        setCinLocked(true)
-      }
-    } catch {
-      setMessage(t('updateError'))
-    } finally {
-      setSaving(false)
-      setUploadingProfile(false)
-    }
+  if (form.telephone && !isValidPhoneNumber(form.telephone)) {
+    setPhoneError('Numéro invalide. Utilisez 032, 033, 034, 038 ou 039 (ex: 0341234567)')
+    return
+  } else {
+    setPhoneError('')
   }
 
+  if (form.cin && !isValidCin(form.cin)) {
+    setCinError('CIN invalide. Le numéro doit contenir exactement 12 chiffres')
+    return
+  } else {
+    setCinError('')
+  }
+
+  setSaving(true)
+  setMessage('')
+  try {
+    let profilePicture = form.profilePicture || null
+    if (selectedProfileFile) {
+      setUploadingProfile(true)
+      const formData = new FormData()
+      formData.append('photo', selectedProfileFile)
+      const uploaded = await api.uploadProfilePicture(formData)
+      profilePicture = uploaded.profilePicture || null
+      setForm((prev) => ({ ...prev, profilePicture: profilePicture || '' }))
+    }
+
+    const birthDate = form.dateNaissance || null
+    
+    // ✅ LOG DE DEBUG
+    console.log('=== DATE DE NAISSANCE ENVOYÉE ===')
+    console.log('birthDate:', birthDate)
+    
+    await onSave({
+      prenom: form.prenom || null,
+      nom: form.nom || null,
+      email: form.email || null,
+      telephone: form.telephone || null,
+      cin: form.cin || null,
+      bio: form.bio || null,
+      date_naissance: birthDate,  
+      profession: form.profession || null,
+      ville_origine: form.villeOrigine ? Number(form.villeOrigine) : null,
+      langue_preferee: form.languePreferee ? Number(form.languePreferee) : null,
+      profile_picture: profilePicture,
+    })
+    setSelectedProfileFile(null)
+    setMessage(t('profileUpdated'))
+    if (form.cin) {
+      setCinLocked(true)
+    }
+  } catch {
+    setMessage(t('updateError'))
+  } finally {
+    setSaving(false)
+    setUploadingProfile(false)
+  }
+}
   const initials = `${(form.prenom || user?.prenom || '').charAt(0)}${(form.nom || user?.nom || '').charAt(0)}`.toUpperCase() || 'U'
   const ageDisplay = user?.age || computeAge(form.dateNaissance)
   const bioLength = form.bio.length

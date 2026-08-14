@@ -65,7 +65,7 @@ export default function Auth() {
       const redirect = params.get("redirect");
       navigate(
         redirect || (roleLevel(connected.poste) > 0 ? "/admin" : "/compte"),
-        { replace: true },
+        { replace: true },  
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : t("loginError"));
