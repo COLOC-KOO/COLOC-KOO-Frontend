@@ -12,9 +12,12 @@ interface ListingCardProps {
   compact?: boolean
   isFavorite?: boolean
   onFavoriteClick?: (event: React.MouseEvent, listing: Listing) => void
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
+  highlighted?: boolean
 }
 
-export function ListingCard({ l, compact = false, isFavorite = false, onFavoriteClick }: ListingCardProps) {
+export function ListingCard({ l, compact = false, isFavorite = false, onFavoriteClick, onMouseEnter, onMouseLeave, highlighted = false }: ListingCardProps) {
   const navigate = useNavigate()
   const [imgIdx, setImgIdx] = useState(0)
 
@@ -31,7 +34,11 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
   return (
     <article
       onClick={handleCardClick}
-      className={`rounded-xl overflow-hidden border border-slate-200 bg-white cursor-pointer ${compact ? 'flex flex-row h-28' : ''}`}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className={`rounded-xl overflow-hidden border bg-white cursor-pointer transition-all duration-150 ${
+        highlighted ? 'border-sc-cy shadow-md ring-2 ring-sc-cy/40 -translate-y-0.5' : 'border-slate-200'
+      } ${compact ? 'flex flex-row h-28' : ''}`}
     >
       {/* Image area (carousel) */}
       <div className={`relative overflow-hidden bg-gray-100 ${compact ? 'w-[120px] min-w-[120px] h-28 flex-shrink-0 rounded-l-xl' : 'h-44'}`}>
@@ -90,6 +97,14 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
         <p className={`uppercase text-gray-500 tracking-wide ${compact ? 'text-[9px]' : 'text-[10px]'} mb-1`}>
           {l.type === 'chambre' ? 'Chambre' : l.type === 'appartement' ? 'Appartement' : 'Maison'}
         </p>
+
+        {/* Métadonnées en mode compact (amélioration) */}
+        {compact && (
+          <p className="flex items-center gap-2 text-[10px] text-gray-500 mb-0.5">
+            <span className="flex items-center gap-1"><BedDouble className="w-3 h-3 text-cyan-600" /> {l.surface ?? '-'} m²</span>
+            <span className="flex items-center gap-1"><Users className="w-3 h-3 text-cyan-600" /> {l.bedrooms ?? 1} coloc.</span>
+          </p>
+        )}
 
         {!compact && (
           <div className="flex gap-2 text-[12px] text-gray-600 flex-wrap mb-1">
