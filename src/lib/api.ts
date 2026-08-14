@@ -1707,7 +1707,6 @@ function isBoostActive(row: Record<string, any>) {
     if (Number.isNaN(start.getTime())) return true
     return addDuration(start, duration, unit).getTime() >= Date.now()
 }
-
 export function annonceToListing(a: ApiAnnonce): Listing {
     const row = a as ApiAnnonce & Record<string, any>
     const photos = normalizePhotos(a.photos)
@@ -1726,14 +1725,34 @@ export function annonceToListing(a: ApiAnnonce): Listing {
     const id = row.id_depot_annonce ?? row.id ?? row.id_annonce
     const isBoosted = isBoostActive(row)
     const boostServiceId = row.booster ?? row.boost_service_id ?? null
+    
     // Surface de chambre (dynamique, distincte de la surface totale)
     const roomSurface = firstRoom?.surface != null ? Number(firstRoom.surface) : undefined
+    
     // Services proposés (dynamique, à partir des services liés à l'annonce)
     const listingServices = Array.isArray(row.services_communs)
         ? row.services_communs
         : Array.isArray(row.services)
             ? row.services
             : []
+
+    //  EXTRACTION DE L'ENUM ('Oui', 'Partiellement', 'Non', 'Rachat')
+    const rawMeublee = String(
+        firstRoom?.meublee || 
+        firstRoom?.est_meuble || 
+        row.meublee || 
+        row.est_meuble || 
+        'Non'
+    ).trim();
+
+    const lowerMeublee = rawMeublee.toLowerCase();
+
+    //  CALCUL DU BOOLÉEN (True si Oui, Partiellement ou Rachat)
+    const isFurnished = 
+        ['oui', 'partiellement', 'rachat', 'true', '1'].includes(lowerMeublee) ||
+        row.furnished === true || 
+        row.furnished === 1;
+
     return {
         id: String(id),
         depotAnnonceId: row.id_depot_annonce != null ? Number(row.id_depot_annonce) : undefined,
@@ -1747,7 +1766,13 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         bedrooms: Number(row.bedrooms_count || row.chambres?.length || row.rooms?.length || row.nombre_pieces || 1),
         surface,
         roomSurface,
-        furnished: Boolean(firstRoom?.est_meuble != null && String(firstRoom.est_meuble).toLowerCase() === 'oui') || Boolean(firstRoom?.meublee != null && String(firstRoom.meublee).toLowerCase() === 'oui'),
+
+        //  Transmet le booléen pour les filtres et composant de base
+        furnished: isFurnished, 
+
+        //  Transmet la valeur brute de l'Enum BDD ("Oui", "Partiellement", "Rachat", "Non")
+        meublee: rawMeublee,
+
         available: String(firstRoom?.date_disponibilite || firstRoom?.disponible_a_partir || '').slice(0, 10),
         type: row.type_propriete === 'maison' || row.logement === 'Maison' ? 'maison' : row.type_propriete === 'appartement' || row.logement === 'Appartement' ? 'appartement' : 'chambre',
         image,
@@ -1773,10 +1798,12 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         address: row.adresse_exacte ?? row.adresse ?? undefined,
         regles,
         services: listingServices,
-        // CORRECTION : row.internet contient 'Fibre' | 'ADSL' | 'Box' (jamais 'Oui'/'Non'),
-        // donc la comparaison à 'oui' ne matchait jamais et internet était toujours affiché
-        // comme absent même quand il était bien enregistré en base.
-        internet: row.internet != null && String(row.internet).trim() !== '' ? true : amenities.includes('wifi'),
+
+        //  Conserve la valeur exacte ("Fibre", "ADSL", etc.)
+        internet: (row.internet != null && String(row.internet).trim() !== '') 
+            ? String(row.internet).trim() 
+            : (amenities.includes('wifi') ? 'Wifi' : null),
+
         parkingVoitures: row.parking_voitures ?? (amenities.includes('parking') ? 1 : 0),
         parkingMotos: row.parking_motos ?? 0,
         parkingCouvert: row.parking_couvert ?? amenities.includes('garage'),
