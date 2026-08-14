@@ -43,6 +43,29 @@ export default function TabMessagesV2() {
   const [groupSearchResults, setGroupSearchResults] = useState<AuthUser[]>([])
   const [groupLoading, setGroupLoading] = useState(false)
 
+  const [viewedProfile, setViewedProfile] = useState<any | null>(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+  const API_BASE_URL = API_URL.replace(/\/api\/?$/, '')
+
+  const resolveProfilePicture = (value: unknown, version?: number) => {
+    if (!value) return ''
+    const raw = String(value).trim()
+    if (!raw) return ''
+
+    let url = raw
+    if (!/^https?:\/\//i.test(url) && !url.startsWith('data:image/')) {
+      url = url.startsWith('/') ? `${API_BASE_URL}${url}` : `${API_BASE_URL}/${url.replace(/^\/+/, '')}`
+    }
+
+    if (version) {
+      url += `${url.includes('?') ? '&' : '?'}v=${version}`
+    }
+
+    return url
+  }
+
   useEffect(() => {
     activeRef.current = active
   }, [active])
@@ -77,6 +100,7 @@ export default function TabMessagesV2() {
       id: thread.interlocuteur_id,
       name: `${thread.interlocuteur_prenom} ${thread.interlocuteur_nom}`.trim() || 'Utilisateur',
       initials: `${thread.interlocuteur_prenom?.[0] || ''}${thread.interlocuteur_nom?.[0] || ''}`.toUpperCase() || 'U',
+      profilePicture: thread.interlocuteur_profile_picture ?? thread.profile_picture ?? thread.profilePicture ?? null,
       lastMessage: thread.dernier_message || t('no_message'),
       total: Number(thread.total_messages || 0),
       unread: Number(thread.non_lus || 0),
@@ -451,21 +475,193 @@ export default function TabMessagesV2() {
   }
 
   const viewProfile = async () => {
-    if (!active) return
-    if (active.type === 'direct') {
-      const q = active.name || ''
+    if (!active || active.type !== 'direct') return
+
+    setProfileLoading(true)
+    setViewedProfile(null)
+
+    const activeId = Number(active.id)
+    const query = String(active.name || '').trim()
+
+    const normalize = (value: unknown) =>
+      String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase()
+
+    try {
+      let found: any = null
+
+      // 1. Première source : /users/search.
       try {
-        const results = await api.searchUsers(q)
-        const found = results.find((u: AuthUser) => `${u.prenom} ${u.nom}`.trim() === q) || results[0]
-        if (found) {
-          window.open(`/profile/${found.id}`, '_blank')
-          return
+        const results = await api.searchUsers(query)
+        const users = Array.isArray(results) ? (results as any[]) : []
+
+        found = users.find((item: any) => {
+          const id = Number(item.id ?? item.id_utilisateur)
+          return Number.isFinite(id) && id === activeId
+        }) || null
+
+        if (!found && query) {
+          const normalizedQuery = normalize(query)
+          found = users.find((item: any) =>
+            normalize(`${item.prenom || ''} ${item.nom || ''}`) === normalizedQuery
+          ) || null
         }
-      } catch {
-        // ignore
+      } catch (error) {
+        console.warn('[MESSAGES] /users/search indisponible :', error)
       }
+
+      // 2. On essaie d'abord le profil direct par identifiant.
+      //    C'est la source la plus fiable pour obtenir la photo actuelle
+      //    de la personne avec qui la conversation est ouverte.
+      if (!found?.profilePicture && !found?.profile_picture) {
+        try {
+          const directProfile = await api.getUserById(activeId)
+          if (directProfile) {
+            found = {
+              ...(found || {}),
+              ...directProfile,
+              id: Number(directProfile.id ?? (directProfile as any).id_utilisateur ?? activeId),
+              profilePicture:
+                directProfile.profilePicture ??
+                (directProfile as any).profile_picture ??
+                null,
+            }
+          }
+        } catch (error) {
+          // Cette route peut ne pas exister sur certaines versions du backend.
+          // On continue alors avec la route publique déjà utilisée par le projet.
+          console.warn('[MESSAGES] /users/:id indisponible :', error)
+        }
+      }
+
+      // 3. Si /users/search et /users/:id ne renvoient pas la photo, on utilise
+      //    l'endpoint déjà présent dans le projet pour les profils publics.
+      //    Cet endpoint renvoie explicitement profile_picture.
+      if (!found?.profilePicture && !found?.profile_picture) {
+        const cities = Array.from(new Set([
+          active.annonce?.ville,
+          user?.villeActuelle,
+          '',
+        ].filter((value): value is string => typeof value === 'string')))
+
+        for (const ville of cities) {
+          try {
+            const response = await api.profilsRechercheLogement({
+              ville,
+              q: query || undefined,
+              months: 12,
+              roles: 'colocataire,proprietaire,agent',
+              includeAllRoles: true,
+            })
+
+            const profiles = Array.isArray(response?.profiles) ? response.profiles : []
+
+            const candidate = profiles.find((profile: any) =>
+              Number(profile.id_utilisateur) === activeId
+            ) || profiles.find((profile: any) =>
+              normalize(`${profile.prenom || ''} ${profile.nom || ''}`) === normalize(query)
+            ) || null
+
+            if (candidate) {
+              found = {
+                ...(found || {}),
+                ...candidate,
+                id: Number(candidate.id_utilisateur ?? activeId),
+                profilePicture:
+                  candidate.profile_picture ??
+                  (candidate as any).profilePicture ??
+                  found?.profilePicture ??
+                  found?.profile_picture ??
+                  null,
+              }
+              break
+            }
+          } catch (error) {
+            console.warn('[MESSAGES] Impossible de charger le profil public :', error)
+          }
+        }
+      }
+
+      // 3. Dernier secours : les données déjà présentes dans la conversation.
+      if (!found) {
+        found = {
+          id: activeId,
+          prenom: query.split(' ')[0] || 'Utilisateur',
+          nom: query.split(' ').slice(1).join(' '),
+          profilePicture: active.profilePicture ?? null,
+          profile_picture: active.profilePicture ?? null,
+          roleLabel: 'colocataire',
+        }
+      }
+
+      const rawPicture =
+        found.profilePicture ??
+        found.profile_picture ??
+        found.photo_profil ??
+        found.photo_url ??
+        found.avatar ??
+        active.profilePicture ??
+        null
+
+      const normalizedProfile = {
+        ...found,
+        id: Number(found.id ?? found.id_utilisateur ?? activeId),
+        prenom: found.prenom || query.split(' ')[0] || 'Utilisateur',
+        nom: found.nom || query.split(' ').slice(1).join(' '),
+        profilePicture: rawPicture,
+        profile_picture: rawPicture,
+        roleLabel: found.roleLabel || found.poste || found.role || 'colocataire',
+        bio: found.bio ?? null,
+        profession: found.profession ?? null,
+        age: found.age ?? null,
+        villeActuelle: found.villeActuelle ?? found.ville_actuelle ?? null,
+        profilePictureVersion: Date.now(),
+      }
+
+      setViewedProfile(normalizedProfile)
+
+      // On mémorise immédiatement la photo fraîche dans la conversation.
+      if (rawPicture) {
+        setActive((current: any) => current ? {
+          ...current,
+          profilePicture: rawPicture,
+          profilePictureVersion: normalizedProfile.profilePictureVersion,
+        } : current)
+
+        setConversations((previous) => previous.map((conversation) =>
+          conversation.key === active.key
+            ? {
+                ...conversation,
+                profilePicture: rawPicture,
+                profilePictureVersion: normalizedProfile.profilePictureVersion,
+              }
+            : conversation
+        ))
+      }
+    } catch (error) {
+      console.error('[MESSAGES] Impossible de charger le profil :', error)
+
+      setViewedProfile({
+        id: activeId,
+        prenom: query.split(' ')[0] || 'Utilisateur',
+        nom: query.split(' ').slice(1).join(' '),
+        profilePicture: active.profilePicture ?? null,
+        profile_picture: active.profilePicture ?? null,
+        roleLabel: 'colocataire',
+        bio: null,
+        profilePictureVersion: Date.now(),
+      })
+    } finally {
+      setProfileLoading(false)
     }
-    alert(t('profile_unavailable'))
+  }
+
+  const closeProfile = () => {
+    setViewedProfile(null)
   }
 
   const handleConversationClick = (c: any) => {
@@ -515,6 +711,14 @@ export default function TabMessagesV2() {
                     <img src={c.annonce.photo} alt="Déposition associée" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
                   ) : c.annonce ? (
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-brand-cyan-light/20 text-brand-cyan"><House className="h-5 w-5" /></div>
+                  ) : c.type === 'direct' && c.profilePicture ? (
+                    <img
+                      key={`${c.id}-${c.profilePicture}-${c.profilePictureVersion || ''}`}
+                      src={resolveProfilePicture(c.profilePicture, c.profilePictureVersion)}
+                      alt={c.name}
+                      className="h-12 w-12 shrink-0 rounded-full object-cover"
+                      onError={(event) => { event.currentTarget.style.display = 'none' }}
+                    />
                   ) : (
                     <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold ${c.type === 'group' ? 'bg-brand-green/15 text-brand-green' : 'bg-brand-cyan/15 text-brand-cyan'}`}>{c.initials}</div>
                   )}
@@ -617,12 +821,22 @@ export default function TabMessagesV2() {
       <main className={`${isSidebarOpen ? 'hidden' : 'flex'} min-h-0 min-w-0 flex-1 flex-col bg-[#f7f8fa] lg:flex`}>
         <header className="flex min-h-[64px] sm:min-h-[72px] items-center gap-3 border-b border-border bg-white px-3 py-3 sm:px-5">
           <button aria-label="Retour aux conversations" onClick={() => setIsSidebarOpen(true)} className="rounded-full p-2 hover:bg-muted lg:hidden shrink-0"><ChevronLeft className="h-5 w-5" /></button>
-          <div className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${active?.type === 'group' ? 'bg-brand-green/15 text-brand-green' : 'bg-brand-cyan/15 text-brand-cyan'}`}>{active?.initials || <MessageSquare className="h-5 w-5" />}</div>
+          {active?.type === 'direct' && active?.profilePicture ? (
+            <img
+              key={`${active.id}-${active.profilePicture}-${active.profilePictureVersion || ''}`}
+              src={resolveProfilePicture(active.profilePicture, active.profilePictureVersion)}
+              alt={active.name || 'Profil'}
+              className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-full object-cover"
+              onError={(event) => { event.currentTarget.style.display = 'none' }}
+            />
+          ) : (
+            <div className={`flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${active?.type === 'group' ? 'bg-brand-green/15 text-brand-green' : 'bg-brand-cyan/15 text-brand-cyan'}`}>{active?.initials || <MessageSquare className="h-5 w-5" />}</div>
+          )}
           <div className="min-w-0 flex-1">
             <div className="truncate font-semibold text-sm sm:text-base">{active?.annonce?.title || active?.name || t('title')}</div>
             <div className="truncate text-xs text-muted-foreground">{active?.annonce ? t('deposition', { name: active.name }) : active ? t('private_conversation') : t('select_conversation')}</div>
           </div>
-          {active && <button aria-label={t('profile')} onClick={viewProfile} className="shrink-0 rounded-full px-3 py-2 text-xs font-semibold text-brand-cyan hover:bg-brand-cyan-light/20 sm:text-sm">{t('profile')}</button>}
+          {active?.type === 'direct' && <button aria-label={t('profile')} onClick={() => { void viewProfile() }} className="shrink-0 rounded-full px-3 py-2 text-xs font-semibold text-brand-cyan hover:bg-brand-cyan-light/20 sm:text-sm">{t('profile')}</button>}
         </header>
 
         {/* Banner message épinglé */}
@@ -702,6 +916,82 @@ export default function TabMessagesV2() {
           </footer>
         )}
       </main>
+
+      {viewedProfile && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('profile')}
+          onClick={closeProfile}
+        >
+          <div
+            className="grid w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl sm:rounded-3xl md:grid-cols-[42%_58%]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="relative min-h-[320px] bg-[#f1f3f5] md:min-h-[620px]">
+              {viewedProfile.profilePicture ? (
+                <img
+                  key={`${viewedProfile.id}-${viewedProfile.profilePicture}-${viewedProfile.profilePictureVersion || ''}`}
+                  src={resolveProfilePicture(viewedProfile.profilePicture, viewedProfile.profilePictureVersion) || undefined}
+                  alt={`${viewedProfile.prenom || ''} ${viewedProfile.nom || ''}`.trim()}
+                  className="absolute inset-0 z-10 h-full w-full object-cover"
+                  onError={(event) => { event.currentTarget.style.display = 'none' }}
+                />
+              ) : null}
+
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-cyan to-brand-green text-7xl font-bold text-white">
+                {viewedProfile.initials || `${viewedProfile.prenom?.[0] || ''}${viewedProfile.nom?.[0] || ''}`.toUpperCase() || 'U'}
+              </div>
+            </div>
+
+            <div className="relative max-h-[90vh] overflow-y-auto p-7 sm:p-10">
+              <button
+                type="button"
+                aria-label="Fermer"
+                onClick={closeProfile}
+                className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-6 w-6" />
+              </button>
+
+              <div className="pr-10">
+                <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                  {viewedProfile.prenom || ''} {viewedProfile.nom || ''}
+                </h2>
+                <p className="mt-2 text-xl text-muted-foreground">
+                  {viewedProfile.roleLabel || viewedProfile.poste || viewedProfile.role || 'colocataire'}
+                </p>
+              </div>
+
+              <div className="my-8 h-px bg-border" />
+
+              <section>
+                <h3 className="flex items-center gap-2 text-xl font-semibold">
+                  <span className="text-brand-cyan">♙</span> PROFIL
+                </h3>
+
+                <p className="mt-7 text-base leading-7 text-foreground">
+                  {viewedProfile.bio || "Ce membre n'a pas encore complété sa présentation."}
+                </p>
+
+                <div className="mt-6 space-y-3 text-sm text-muted-foreground">
+                  {viewedProfile.profession ? (
+                    <p>Profession : <span className="font-semibold text-foreground">{viewedProfile.profession}</span></p>
+                  ) : null}
+                  <p>Type de profil : <span className="font-semibold text-foreground">{viewedProfile.poste || viewedProfile.roleLabel || viewedProfile.role || 'colocataire'}</span></p>
+                  {viewedProfile.villeActuelle ? (
+                    <p>Ville actuelle : <span className="font-semibold text-foreground">{viewedProfile.villeActuelle}</span></p>
+                  ) : null}
+                  {viewedProfile.age ? (
+                    <p>Âge : <span className="font-semibold text-foreground">{viewedProfile.age} ans</span></p>
+                  ) : null}
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

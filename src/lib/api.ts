@@ -1,5 +1,5 @@
 // src/lib/api.ts
-import { Listing } from '../types'
+import {Listing} from '../types'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 const API_BASE_URL = API_URL.replace(/\/api\/?$/, '')
@@ -33,9 +33,6 @@ export interface AuthUser {
     verification?: boolean
     statut?: string
     createdAt?: string
-    rgpd_analytics?: number
-    rgpd_partenaires?: number
-    two_fa_enabled?: number
 }
 
 export interface Langue {
@@ -172,6 +169,7 @@ export interface ApiProfilsRechercheResponse {
     profiles: ApiProfilRechercheLogement[]
 }
 
+// ===== TYPES POUR LES ÉQUIPES =====
 export interface ApiEquipe {
     id_equipe: number
     id_annonce: number
@@ -192,6 +190,7 @@ export interface ApiMembreEquipe {
     initials: string
 }
 
+// ===== TYPE POUR LES CAMPAGNES =====
 export interface Campagne {
     id_campagne: number
     id_partenaire: number
@@ -580,15 +579,6 @@ export interface BackofficeMember extends AuthUser {
     signalementsCount?: number
 }
 
-// ✅ Type pour les sessions (appareils connectés)
-export interface AppareilConnecte {
-    id: string
-    type: 'mobile' | 'desktop'
-    label: string
-    lieu: string
-    courant?: boolean
-}
-
 export function getToken() {
     return localStorage.getItem(TOKEN_KEY)
 }
@@ -740,11 +730,26 @@ export const api = {
     },
 
     // ===== SÉCURITÉ DU COMPTE =====
-    updateSecuritySettings(payload: { two_fa_enabled?: boolean; rgpd_analytics?: boolean; rgpd_partenaires?: boolean; [key: string]: unknown }) {
-        return request<{ message: string; user?: AuthUser }>('/auth/me/security', {
-            method: 'PATCH',
-            body: JSON.stringify(payload),
-        })
+
+// Récupérer la valeur enregistrée dans la BDD
+    getSecuritySettings() {
+        return request<{
+        two_fa_enabled: number | boolean
+    }>('/auth/me/security')
+    },
+
+// Enregistrer la nouvelle valeur dans la BDD
+    updateSecuritySettings(payload: { 
+        two_fa_enabled?: boolean; 
+        [key: string]: unknown 
+    }) {
+    return request<{ 
+        message: string; 
+        user?: AuthUser 
+    }>('/auth/me/security', {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+    })
     },
     disconnectOtherDevices() {
         return request<{ message: string }>('/auth/me/sessions/revoke-others', {
@@ -754,12 +759,6 @@ export const api = {
     deleteAccount() {
         return request<{ message: string }>('/auth/me', {
             method: 'DELETE',
-        })
-    },
-    // ✅ NOUVEAU : récupérer la liste des appareils connectés
-    listSessions() {
-        return request<AppareilConnecte[]>('/auth/me/sessions', {
-            method: 'GET',
         })
     },
 
@@ -793,6 +792,9 @@ export const api = {
     searchUsers(q = '') {
         const query = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ''
         return request<AuthUser[]>(`/users/search${query}`)
+    },
+    getUserById(id: string | number) {
+        return request<AuthUser>(`/users/${id}`)
     },
     deleteThread(userId: string | number) {
         return request<{ message: string }>(`/messages/thread/${userId}`, {method: 'DELETE'})
@@ -1101,6 +1103,7 @@ export const api = {
         return requestWithFallback<{ message: string }>(`/depot-annonce/${id}`, `/annonces/${id}`, {method: 'DELETE'})
     },
 
+    // ===== ARCHIVAGE D'ANNONCE =====
     archiveAnnonce(id: string | number) {
         return requestWithFallback<{ message: string; statut?: string }>(
             `/depot-annonce/${id}/archive`,
@@ -1134,6 +1137,7 @@ export const api = {
         })
     },
 
+    // ===== CANDIDATURES =====
     getCandidaturesByAnnonce(annonceId: string | number) {
         return requestWithFallback<ApiCandidature[]>(`/candidatures/depot-annonce/${annonceId}`, `/candidatures/annonce/${annonceId}`)
     },
@@ -1264,6 +1268,8 @@ export const api = {
             allPaid: boolean
         }>(`/candidatures/contrats/${contratId}/paiement`, {method: 'POST', body: JSON.stringify(payload)})
     },
+
+    // ===== GESTION DES ÉQUIPES =====
 
     getEquipesByAnnonce(annonceId: string | number): Promise<ApiEquipe[]> {
         return requestWithFallback<ApiEquipe[]>(`/equipes/depot-annonce/${annonceId}`, `/equipes/annonces/${annonceId}`)
@@ -1609,6 +1615,10 @@ export const api = {
         })
     },
 
+    // ================================================================
+    // ===== CAMPAGNES DE PUBLICITÉS NATIVES =====
+    // ================================================================
+
     campagnes() {
         return request<Campagne[]>('/backoffice/campagnes')
     },
@@ -1663,6 +1673,7 @@ export const api = {
             body: formData,
         })
     },
+    // ================================================================
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
