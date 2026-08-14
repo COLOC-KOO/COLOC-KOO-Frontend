@@ -38,18 +38,16 @@ export interface Listing {
   typeBail?: 'individuel' | 'collectif' | null
   clauseSolidarite?: 'avec' | 'sans' | null
   candidatureCount?: number
-
-  // 🟢 CORRECTION ICI : Ajout des '?' pour rendre les champs optionnels
-  est_meuble?: string
-  meublee?: string
+  // meuble
+  meublee?: 'Oui' | 'Partiellement' | 'Non' | 'Rachat' | string;
+  est_meuble?: string;
   chambres?: Array<{
-    id_depot_chambre?: number
-    id_depot_annonce?: number
-    meublee?: string
-    loyer?: number
-    surface?: number
-  }> | string
-
+    id_depot_chambre?: number;
+    id_depot_annonce?: number;
+    meublee?: 'Oui' | 'Partiellement' | 'Non' | 'Rachat' | string;
+    loyer?: number;
+    surface?: number;
+  }> | string;
   image: string
   address?: string
   latitude?: number
