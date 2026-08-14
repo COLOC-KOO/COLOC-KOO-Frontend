@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Check, CircleUserRound, Info, Lock, Store, Upload } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-import { api, Langue } from '../../lib/api'
+import { api, Langue, Ville } from '../../lib/api'
 
 function normalizeDateInputValue(value: unknown) {
   if (typeof value !== 'string' || !value.trim()) return ''
@@ -25,6 +25,17 @@ function computeAge(value: unknown) {
   return Math.max(0, age)
 }
 
+function isValidPhoneNumber(phone: string): boolean {
+  const cleanPhone = phone.replace(/[\s\-]/g, '')
+  const phoneRegex = /^(\+261|0)(32|33|34|38|39)[0-9]{7}$/
+  return phoneRegex.test(cleanPhone)
+}
+
+function isValidCin(cin: string): boolean {
+  const cinRegex = /^[0-9]{12}$/
+  return cinRegex.test(cin)
+}
+
 export default function TabProfil({
   user,
   onSave,
@@ -41,17 +52,32 @@ export default function TabProfil({
     cin: user?.cin || '',
     dateNaissance: normalizeDateInputValue(user?.dateNaissance),
     profession: user?.profession || '',
-    villeOrigine: user?.villeOrigine || '',
+    villeOrigine: user?.ville_origine || '',
     bio: user?.bio || '',
     languePreferee: user?.languePreferee || '',
     profilePicture: user?.profilePicture || '',
   })
   const [langues, setLangues] = useState<Langue[]>([])
+  const [villes, setVilles] = useState<Ville[]>([])
+  const [villeNom, setVilleNom] = useState<string>('')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [selectedProfileFile, setSelectedProfileFile] = useState<File | null>(null)
   const [uploadingProfile, setUploadingProfile] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  const [phoneError, setPhoneError] = useState('')
+  const [cinError, setCinError] = useState('')
+  const [cinLocked, setCinLocked] = useState(!!user?.cin)
+
+  // ✅ DEBUG : Voir ce que contient user
+  useEffect(() => {
+    console.log('=== DEBUG USER ===')
+    console.log('user.ville_origine:', user?.ville_origine)
+    console.log('user.ville_origine_nom:', user?.ville_origine_nom)
+    console.log('Type:', typeof user?.ville_origine)
+    console.log('user.languePreferee:', user?.languePreferee)
+  }, [user])
 
   useEffect(() => {
     setForm({
@@ -62,20 +88,111 @@ export default function TabProfil({
       cin: user?.cin || '',
       dateNaissance: normalizeDateInputValue(user?.dateNaissance),
       profession: user?.profession || '',
-      villeOrigine: user?.villeOrigine || '',
+      villeOrigine: user?.ville_origine || '',
       bio: user?.bio || '',
       languePreferee: user?.languePreferee || '',
       profilePicture: user?.profilePicture || '',
     })
+    setPhoneError('')
+    setCinError('')
+    setCinLocked(!!user?.cin)
   }, [user])
 
   useEffect(() => {
     api.langues()
-      .then(setLangues)
+      .then((languesList) => {
+        setLangues(languesList)
+        // ✅ Trouver la langue par ID ou par nom
+        if (user?.languePreferee) {
+          const valeur = user.languePreferee
+          const estUnId = !isNaN(Number(valeur)) && String(valeur).trim() !== ''
+          
+          let found
+          if (estUnId) {
+            found = languesList.find(l => l.id_langue === Number(valeur))
+          } else {
+            found = languesList.find(l => l.nom_langue.toLowerCase() === String(valeur).toLowerCase())
+          }
+          
+          if (found) {
+            setForm(prev => ({ ...prev, languePreferee: String(found.id_langue) }))
+          }
+        }
+      })
       .catch(() => setLangues([]))
-  }, [])
+  }, [user])
+
+  // ✅ Charger les villes et trouver la bonne (ID ou nom)
+  useEffect(() => {
+    api.villes()
+      .then((villesList) => {
+        setVilles(villesList)
+        
+        if (user?.ville_origine) {
+          const valeur = user.ville_origine
+          const estUnId = !isNaN(Number(valeur)) && String(valeur).trim() !== ''
+          
+          let found
+          if (estUnId) {
+            // C'est un ID
+            found = villesList.find(v => v.id_ville === Number(valeur))
+          } else {
+            // C'est un nom - recherche insensible à la casse
+            found = villesList.find(v => v.nom_ville.toLowerCase() === String(valeur).toLowerCase())
+          }
+          
+          if (found) {
+            setVilleNom(found.nom_ville)
+            // Mettre à jour le formulaire avec l'ID
+            setForm(prev => ({ ...prev, villeOrigine: String(found.id_ville) }))
+          } else {
+            // Si aucune ville trouvée, essayer avec le nom exact
+            const foundExact = villesList.find(v => v.nom_ville === String(valeur))
+            if (foundExact) {
+              setVilleNom(foundExact.nom_ville)
+              setForm(prev => ({ ...prev, villeOrigine: String(foundExact.id_ville) }))
+            } else {
+              // Si toujours pas trouvé, peut-être que c'est un ID qui n'existe pas
+              console.warn('Ville non trouvée:', valeur)
+            }
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Erreur lors du chargement des villes:', err)
+        setVilles([])
+      })
+  }, [user])
+
+  // ✅ Mettre à jour le nom de la ville quand la sélection change
+  useEffect(() => {
+    if (form.villeOrigine) {
+      const found = villes.find(v => v.id_ville === Number(form.villeOrigine))
+      if (found) {
+        setVilleNom(found.nom_ville)
+      } else {
+        setVilleNom('')
+      }
+    } else {
+      setVilleNom('')
+    }
+  }, [form.villeOrigine, villes])
 
   const handleSave = async () => {
+    if (form.telephone && !isValidPhoneNumber(form.telephone)) {
+      setPhoneError('Numéro invalide. Utilisez 032, 033, 034, 038 ou 039 (ex: 0341234567)')
+      return
+    } else {
+      setPhoneError('')
+    }
+
+    if (form.cin && !isValidCin(form.cin)) {
+      setCinError('CIN invalide. Le numéro doit contenir exactement 12 chiffres')
+      return
+    } else {
+      setCinError('')
+    }
+
     setSaving(true)
     setMessage('')
     try {
@@ -100,12 +217,15 @@ export default function TabProfil({
         date_naissance: birthDate,
         age: computeAge(birthDate),
         profession: form.profession || null,
-        ville_origine: form.villeOrigine || null,
+        ville_origine: form.villeOrigine ? Number(form.villeOrigine) : null,
         langue_preferee: form.languePreferee ? Number(form.languePreferee) : null,
         profile_picture: profilePicture,
       })
       setSelectedProfileFile(null)
       setMessage(t('profileUpdated'))
+      if (form.cin) {
+        setCinLocked(true)
+      }
     } catch {
       setMessage(t('updateError'))
     } finally {
@@ -118,6 +238,7 @@ export default function TabProfil({
   const ageDisplay = user?.age || computeAge(form.dateNaissance)
   const bioLength = form.bio.length
   const inputClass = 'w-full rounded-xl border border-[#d8d8d8] bg-white px-4 py-3 text-sm text-[#2b2b2b] outline-none transition-colors focus:border-brand-cyan focus:ring-2 focus:ring-brand-cyan/15 disabled:bg-[#f6f6f4] disabled:text-[#5c5c5c]'
+  const inputErrorClass = 'w-full rounded-xl border border-red-500 bg-white px-4 py-3 text-sm text-[#2b2b2b] outline-none transition-colors focus:border-red-500 focus:ring-2 focus:ring-red-500/15'
   const labelClass = 'mb-2 block text-sm font-semibold text-[#2b2b2b]'
   const lockNote = (
     <span className="ml-1 inline-flex items-center gap-1 text-xs font-normal text-[#9b9b9b]">
@@ -188,17 +309,52 @@ export default function TabProfil({
                 <option value="+261">MG +261</option>
                 <option value="+33">FR +33</option>
               </select>
-              <input className={inputClass} value={form.telephone} onChange={(e) => setForm((prev) => ({ ...prev, telephone: e.target.value }))} />
+              <input 
+                className={phoneError ? inputErrorClass : inputClass} 
+                value={form.telephone} 
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, telephone: e.target.value }))
+                  if (phoneError) setPhoneError('')
+                }}
+                placeholder="0341234567"
+              />
             </div>
+            {phoneError && (
+              <p className="mt-2 flex items-center gap-1 text-sm text-red-500">
+                <Info className="h-3.5 w-3.5" />
+                {phoneError}
+              </p>
+            )}
             <p className="mt-2 flex items-center gap-1 text-xs text-[#9b9b9b]">
               <Info className="h-3.5 w-3.5 text-lime-500" />
-              {t('phoneExample')}
+              {t('phoneExample') || 'Exemple: 0341234567 (Telma/Orange/Airtel)'}
             </p>
           </div>
 
+          {/* ✅ SELECT pour la ville */}
           <div>
-            <label className={labelClass}>{t('originCity')} <span className="font-normal text-[#a3a3a3]">({t('optional')})</span></label>
-            <input className={inputClass} value={form.villeOrigine} onChange={(e) => setForm((prev) => ({ ...prev, villeOrigine: e.target.value }))} />
+            <label className={labelClass}>
+              {t('originCity')} <span className="font-normal text-[#a3a3a3]">({t('optional')})</span>
+            </label>
+            <select 
+              className={inputClass}
+              value={form.villeOrigine || ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, villeOrigine: e.target.value }))}
+            >
+              <option value="">{t('selectCity') || 'Sélectionner une ville'}</option>
+              {villes.map((ville) => (
+                <option key={ville.id_ville} value={String(ville.id_ville)}>
+                  {ville.nom_ville}
+                </option>
+              ))}
+            </select>
+            {/* ✅ AFFICHAGE du nom de la ville sélectionnée */}
+            {villeNom && (
+              <p className="mt-2 flex items-center gap-1 text-sm text-brand-cyan">
+                <Check className="h-4 w-4" />
+                {t('selectedCity') || 'Ville sélectionnée :'} {villeNom}
+              </p>
+            )}
           </div>
 
           <div>
@@ -216,20 +372,43 @@ export default function TabProfil({
           </div>
 
           <div>
-            <label className={labelClass}>{t('cin')}</label>
-            <input className={inputClass} value={form.cin} onChange={(e) => setForm((prev) => ({ ...prev, cin: e.target.value }))} />
+            <label className={labelClass}>
+              {t('cin')}
+              {cinLocked && lockNote}
+            </label>
+            <input 
+              className={cinError ? inputErrorClass : inputClass} 
+              value={form.cin} 
+              onChange={(e) => {
+                if (!cinLocked) {
+                  setForm((prev) => ({ ...prev, cin: e.target.value }))
+                  if (cinError) setCinError('')
+                }
+              }}
+              placeholder="123456789012"
+              maxLength={12}
+              disabled={cinLocked}
+              readOnly={cinLocked}
+            />
+            {cinError && (
+              <p className="mt-2 flex items-center gap-1 text-sm text-red-500">
+                <Info className="h-3.5 w-3.5" />
+                {cinError}
+              </p>
+            )}
           </div>
 
+          {/* ✅ SELECT pour la langue (sans affichage supplémentaire) */}
           <div>
             <label className={labelClass}>{t('preferredLanguage')}</label>
             <select
               className={inputClass}
-              value={form.languePreferee ?? ''}
+              value={form.languePreferee || ''}
               onChange={(e) => setForm((prev) => ({ ...prev, languePreferee: e.target.value }))}
             >
-              <option value="">{t('chooseLanguage')}</option>
+              <option value="">{t('chooseLanguage') || 'Choisir une langue'}</option>
               {langues.map((langue) => (
-                <option key={langue.id_langue} value={langue.id_langue}>
+                <option key={langue.id_langue} value={String(langue.id_langue)}>
                   {langue.nom_langue}
                 </option>
               ))}
