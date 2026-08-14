@@ -768,37 +768,37 @@ export default function AnnonceDetail() {
               
               <div className="mt-3 space-y-2 text-sm">
              {/* 🟢 1. MEUBLÉ / NON MEUBLÉ */}
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-brand-cyan-dark" />
-                <span className="text-foreground">
-                  {(() => {
-                    // Récupération sécurisée du premier paramètre défini
-                    const chambresArray = Array.isArray(listing.chambres) ? listing.chambres : [];
-                    const firstChambreMeublee = chambresArray[0]?.meublee;
+<div className="flex items-center gap-2">
+  <Shield className="w-4 h-4 text-brand-cyan-dark" />
+  <span className="text-foreground">
+    {(() => {
+      // Récupération sécurisée du premier paramètre défini
+      const chambresArray = Array.isArray(listing.chambres) ? listing.chambres : [];
+      const firstChambreMeublee = chambresArray[0]?.meublee;
 
-                    const rawValue: string | boolean | null | undefined =
-                      listing.furnished ??
-                      listing.est_meuble ??
-                      firstChambreMeublee ??
-                      listing.meublee;
+      const rawValue: string | boolean | null | undefined =
+        listing.furnished ??
+        listing.est_meuble ??
+        firstChambreMeublee ??
+        listing.meublee;
 
-                    // Cas booléen
-                    if (typeof rawValue === 'boolean') {
-                      return rawValue
-                        ? t('annonceDetail:property.furnished')
-                        : t('annonceDetail:property.unfurnished');
-                    }
+      // Cas booléen
+      if (typeof rawValue === 'boolean') {
+        return rawValue
+          ? t('annonceDetail:property.furnished')
+          : t('annonceDetail:property.unfurnished');
+      }
 
-                    // Cas chaîne de caractères
-                    const strVal = String(rawValue ?? '').trim().toLowerCase();
-                    const isFurnished = ['oui', 'meublé', 'meuble', 'true', '1'].includes(strVal);
+      // Cas chaîne de caractères
+      const strVal = String(rawValue ?? '').trim().toLowerCase();
+      const isFurnished = ['oui', 'meublé', 'meuble', 'true', '1'].includes(strVal);
 
-                    return isFurnished
-                      ? t('annonceDetail:property.furnished')
-                      : t('annonceDetail:property.unfurnished');
-                  })()}
-                </span>
-              </div>
+      return isFurnished
+        ? t('annonceDetail:property.furnished')
+        : t('annonceDetail:property.unfurnished');
+    })()}
+  </span>
+</div>
 
                 {/* Date de disponibilité */}
                 {listing.available ? (
@@ -894,29 +894,13 @@ export default function AnnonceDetail() {
                   listing.womenOnly ||
                   listing.menOnly) ? (
                   <>
-                                    {/* 🟢 2. INTERNET (Affiche "Fibre", "ADSL", etc.) */}
-                  {(() => {
-                    const rawInternet: string = String(listing.internet ?? '').trim();
-                    const lowerInternet: string = rawInternet.toLowerCase();
-
-                    // Liste des valeurs considérées comme "pas d'internet"
-                    const isInvalid = !rawInternet || ['aucune', 'non', 'false', '0', 'undefined', 'null'].includes(lowerInternet);
-
-                    if (isInvalid) return null;
-
-                    // Détermination du libellé exact à afficher
-                    let labelText: string = rawInternet;
-                    if (['oui', 'true', '1'].includes(lowerInternet)) {
-                      labelText = t('annonceDetail:features.internetDefault', { defaultValue: 'Internet inclus' });
-                    }
-
-                    return (
+                    {/* Internet */}
+                    {listing.internet ? (
                       <div className="flex items-center gap-2 text-sm">
                         <Wifi className="w-4 h-4 text-brand-cyan-dark" />
-                        <span className="capitalize">{labelText}</span>
+                        <span>Internet</span>
                       </div>
-                    );
-                  })()}
+                    ) : null}
 
                     {/* Parking Voitures avec transmission explicite du count */}
                     {(listing.parkingVoitures ?? 0) > 0 ? (
