@@ -220,8 +220,7 @@ export function SiteHeader() {
           <Link to="/" className="sm:hidden flex items-center gap-1" aria-label="Accueil">
             <LogoMark className="h-8 w-8" />
             <span className="bebas flex flex-col whitespace-nowrap text-[13px] leading-[0.85]">
-              <span className="text-[--brand-cyan-dark]">Coloc’KOO</span>
-              <span className="text-[--brand-green-dark]">Miara-Trano</span>
+              <span className="text-[--brand-cyan-dark]">SARITANY'COLOC</span>
             </span>
           </Link>
           <div className="hidden sm:block">
@@ -438,7 +437,7 @@ export function SiteHeader() {
                   {t('signin', { ns: 'header' })}
                 </Button>
               </Link>
-              <Link to="/compte?tab=dossier" className="hidden sm:block">
+              <Link to="/auth" className="hidden sm:block">
                 <Button size="sm" className="rounded-lg bg-brand-cyan hover:bg-brand-cyan-dark text-white transition-colors">
                   <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
                 </Button>

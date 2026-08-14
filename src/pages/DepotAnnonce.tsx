@@ -5,7 +5,6 @@ import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
 import { Icon, LatLngExpression } from 'leaflet'
 import {
   Accessibility,
-  AirVent,
   Armchair,
   Bath,
   Bed,
@@ -62,7 +61,7 @@ const INITIAL_IMAGE_QUALITY = 0.82
 const MIN_IMAGE_QUALITY = 0.58
 const TARGET_IMAGE_BYTES = 1.2 * 1024 * 1024
 
-const amenities = [
+const servicesCommunsList = [
   ['accessibilite_handicape', 'Accessibilité handicapé', Accessibility],
   ['air_conditionne', 'Air conditionné', Snowflake],
   ['ascenseur', 'Ascenseur', Bath],
@@ -72,9 +71,7 @@ const amenities = [
   ['lave_vaisselle', 'Lave-vaisselle', Bath],
   ['machine_laver', 'Machine à laver', WashingMachine],
   ['meuble', 'Meublé', Armchair],
-  ['parking', 'Parking', ParkingCircle],
   ['piscine', 'Piscine', Waves],
-  ['wifi', 'Wifi', Wifi],
 ] as const
 
 const rules = [
@@ -106,17 +103,24 @@ interface FormState {
   telephone: string
   message: string
   visite_3d: string
+  internet: 'ADSL' | 'Fibre' | 'Box' | 'Aucune'
+  parking_voitures: number
+  parking_motos: number
+  parking_couvert: number
 }
 
+// Renvoie la date du jour au format ISO (AAAA-MM-JJ).
 function todayIso() {
   return new Date().toISOString().slice(0, 10)
 }
 
+// Formate une taille en octets en une chaîne lisible en Ko ou Mo.
 function formatFileSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`
   return `${(bytes / 1024 / 1024).toFixed(1)} Mo`
 }
 
+// Convertit un élément Canvas en objet Blob selon le type MIME et le niveau de qualité spécifiés.
 function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -129,6 +133,7 @@ function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) 
   })
 }
 
+// Charge un fichier image local dans un objet HTMLImageElement pour permettre son traitement.
 function loadImage(file: File) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const url = URL.createObjectURL(file)
@@ -145,6 +150,7 @@ function loadImage(file: File) {
   })
 }
 
+// Redimensionne et compresse un fichier image pour réduire son poids avant le téléversement.
 async function compressImageFile(file: File) {
   if (!file.type.startsWith('image/')) {
     throw new Error(`${file.name} n'est pas une image valide.`)
@@ -158,7 +164,7 @@ async function compressImageFile(file: File) {
   canvas.width = width
   canvas.height = height
   const context = canvas.getContext('2d')
-  if (!context) throw new Error("Impossible de preparer la compression de l'image.")
+  if (!context) throw new Error("Impossible de préparer la compression de l'image.")
 
   context.drawImage(image, 0, 0, width, height)
 
@@ -178,6 +184,7 @@ async function compressImageFile(file: File) {
   })
 }
 
+// Gère le comportement et l'emplacement du marqueur interactif sur la carte Leaflet.
 function DragMarker({
   position,
   onChange,
@@ -207,6 +214,7 @@ function DragMarker({
   )
 }
 
+// Composant React principal gérant l'ensemble de la page et du formulaire de dépôt d'annonce.
 export default function DepotAnnonce() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -226,9 +234,14 @@ export default function DepotAnnonce() {
     telephone: user?.telephone || '',
     message: '',
     visite_3d: '',
+    internet: 'Aucune',
+    parking_voitures: 0,
+    parking_motos: 0,
+    parking_couvert: 0,
   })
+
   const [position, setPosition] = useState<[number, number]>(defaultPosition)
-  const [commodites, setCommodites] = useState<string[]>([])
+  const [servicesCommuns, setServicesCommuns] = useState<string[]>([])
   const [regles, setRegles] = useState<string[]>([])
   const [rooms, setRooms] = useState<RoomForm[]>([
     { disponible_a_partir: todayIso(), loyer: '', charges: '', caution: '', surface: '', meublee: '' },
@@ -273,18 +286,22 @@ export default function DepotAnnonce() {
     )
   }, [form, rooms])
 
+  // Met à jour une propriété spécifique dans l'état du formulaire principal.
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
+  // Ajoute ou retire une valeur dans une liste d'éléments sélectionnés.
   function toggleValue(value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) {
     setter((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]))
   }
 
+  // Modifie les données d'une chambre particulière en fonction de son index dans la liste.
   function updateRoom(index: number, patch: Partial<RoomForm>) {
     setRooms((prev) => prev.map((room, i) => (i === index ? { ...room, ...patch } : room)))
   }
 
+  // Traite, compresse et ajoute les nouvelles photos sélectionnées à l'état du composant.
   async function handlePhotoSelection(files: File[]) {
     if (files.length === 0 || processingPhotos) return
 
@@ -297,15 +314,16 @@ export default function DepotAnnonce() {
       setPhotos((prev) => [...prev, ...compressedPhotos])
 
       if (compressedSize < originalSize) {
-        setToastMessage(`Photos reduites de ${formatFileSize(originalSize)} a ${formatFileSize(compressedSize)} avant upload.`)
+        setToastMessage(`Photos réduites de ${formatFileSize(originalSize)} à ${formatFileSize(compressedSize)} avant upload.`)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible de compresser les photos.")
+      setError(err instanceof Error ? err.message : 'Impossible de compresser les photos.')
     } finally {
       setProcessingPhotos(false)
     }
   }
 
+  // Géocode l'adresse saisie et met à jour les coordonnées du marqueur sur la carte.
   async function localiserAdresse() {
     if (!form.adresse.trim()) return
     setLoadingLocation(true)
@@ -313,7 +331,7 @@ export default function DepotAnnonce() {
     try {
       const result = await geocodeAddress(form.adresse)
       if (!result) {
-        setError("Adresse introuvable. Vous pouvez quand même déplacer le repère sur la carte.")
+        setError('Adresse introuvable. Vous pouvez quand même déplacer le repère sur la carte.')
         return
       }
       setPosition([result.latitude, result.longitude])
@@ -322,6 +340,7 @@ export default function DepotAnnonce() {
     }
   }
 
+  // Valide les données, téléverse les images et envoie le formulaire complet à l'API.
   async function handleSubmit() {
     if (!user) {
       navigate('/auth?mode=signin&redirect=/depot_annonce')
@@ -349,7 +368,13 @@ export default function DepotAnnonce() {
         logement: form.logement,
         nombre_pieces: form.nombre_pieces,
         surface: form.surface,
-        commodites,
+        internet: ['ADSL', 'Fibre', 'Box', 'Aucune'].includes(form.internet)
+        ? form.internet
+        : 'Aucune',
+        parking_voitures: Number(form.parking_voitures) || 0,
+        parking_motos: Number(form.parking_motos) || 0,
+        parking_couvert: form.parking_couvert ? 1 : 0, // tinyint(1) -> 1 ou 0
+        services_communs: servicesCommuns,
         regles,
         chambres: rooms.map((room) => ({
           loyer: room.loyer,
@@ -367,7 +392,7 @@ export default function DepotAnnonce() {
         photos: uploadedPhotos,
         boost_service_id: boost ? Number(boost) : null,
       })
-      const successMessage = "Annonce ajouté avec succés, en attente de validation par l'admin"
+      const successMessage = "Annonce ajoutée avec succès, en attente de validation par l'admin"
       setSuccess(`${successMessage}. Référence: ${response.reference}`)
       setToastMessage(successMessage)
       setPhotos([])
@@ -379,6 +404,7 @@ export default function DepotAnnonce() {
     }
   }
 
+  // Envoie des e-mails de notification de dépôt à l'utilisateur et à l'administrateur via EmailJS.
   async function sendDepotAnnonceEmails(reference: string) {
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
     const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID
@@ -397,7 +423,7 @@ export default function DepotAnnonce() {
       adresse: form.adresse,
       ville: form.ville,
       quartier: form.quartier,
-      message: "Annonce ajouté avec succés, en attente de validation par l'admin",
+      message: "Annonce ajoutée avec succès, en attente de validation par l'admin",
     }
 
     try {
@@ -407,7 +433,7 @@ export default function DepotAnnonce() {
         emailjs.send(serviceId, templateId, { ...templateParams, to_email: adminEmail }, publicKey),
       ])
     } catch {
-      // L'annonce est creee meme si le service email est momentanement indisponible.
+      // Ignorer l'erreur d'envoi d'email pour ne pas bloquer l'expérience utilisateur
     }
   }
 
@@ -421,7 +447,6 @@ export default function DepotAnnonce() {
       <main className="min-h-screen bg-gradient-to-br from-[var(--brand-cyan-light)] via-white to-[var(--brand-green-light)] py-10">
         <div className="mx-auto w-full max-w-5xl px-4">
           <div className="mb-8 text-center">
-            {/* <p className="bebas text-xl text-brand-green">VOUS RECHERCHEZ UN(E) LOCATAIRE OU COLOCATAIRE ?</p> */}
             <h1 className="text-lg text-foreground">Déposez votre annonce gratuitement et en moins de 5 minutes :</h1>
           </div>
 
@@ -430,7 +455,10 @@ export default function DepotAnnonce() {
           )}
           {success && (
             <div className="mb-5 rounded-lg border border-brand-green/30 bg-brand-green/10 px-4 py-3 text-sm text-brand-green-dark">
-              {success} <Link to="/annonces" className="font-semibold underline">Voir les annonces</Link>
+              {success}{' '}
+              <Link to="/annonces" className="font-semibold underline">
+                Voir les annonces
+              </Link>
             </div>
           )}
 
@@ -482,13 +510,74 @@ export default function DepotAnnonce() {
             </div>
           </FormSection>
 
-          <FormSection icon={Plus} label="COMMODITÉS">
-            <div className="grid gap-x-14 gap-y-4 md:grid-cols-2">
-              {amenities.map(([value, label, IconItem]) => (
-                <CheckboxRow key={value} checked={commodites.includes(value)} onChange={() => toggleValue(value, setCommodites)}>
-                  <IconItem className="h-4 w-4 text-[var(--brand-cyan-dark)]" /> {label}
-                </CheckboxRow>
-              ))}
+          <FormSection icon={Plus} label="COMMODITÉS & ÉQUIPEMENTS">
+            <div className="space-y-6">
+              <div className="grid items-center gap-3 md:grid-cols-[200px_1fr]">
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <Wifi className="h-4 w-4 text-[var(--brand-cyan-dark)]" /> Connexion Internet :
+                </label>
+                <select
+                  value={form.internet}
+                  onChange={(e) => update('internet', e.target.value as FormState['internet'])}
+                  className={selectClass}
+                >
+                  <option value="Aucune">Aucune connexion</option>
+                  <option value="Fibre">Fibre optique</option>
+                  <option value="ADSL">ADSL</option>
+                  <option value="Box">Box 4G/5G</option>
+                </select>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-[var(--brand-cyan-dark)]/15 bg-slate-50/50 p-4">
+                <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                  <ParkingCircle className="h-4 w-4 text-[var(--brand-cyan-dark)]" /> Parkings & Garages
+                </span>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <label className="block text-xs text-slate-600 mb-1">Places Voitures</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.parking_voitures}
+                      onChange={(e) => update('parking_voitures', Math.max(0, parseInt(e.target.value) || 0))}
+                      className={fieldClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-600 mb-1">Places Motos</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.parking_motos}
+                      onChange={(e) => update('parking_motos', Math.max(0, parseInt(e.target.value) || 0))}
+                      className={fieldClass}
+                    />
+                  </div>
+                  <div className="flex items-end pb-2">
+                    <CheckboxRow
+                      checked={form.parking_couvert === 1}
+                      onChange={() => update('parking_couvert', form.parking_couvert === 1 ? 0 : 1)}
+                    >
+                      Parking couvert / fermé
+                    </CheckboxRow>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <span className="block text-sm font-medium text-slate-700 mb-3">Autres équipements disponibles :</span>
+                <div className="grid gap-x-14 gap-y-4 md:grid-cols-2">
+                  {servicesCommunsList.map(([value, label, IconItem]) => (
+                    <CheckboxRow
+                      key={value}
+                      checked={servicesCommuns.includes(value)}
+                      onChange={() => toggleValue(value, setServicesCommuns)}
+                    >
+                      <IconItem className="h-4 w-4 text-[var(--brand-cyan-dark)]" /> {label}
+                    </CheckboxRow>
+                  ))}
+                </div>
+              </div>
             </div>
           </FormSection>
 
@@ -538,7 +627,9 @@ export default function DepotAnnonce() {
             <div className="grid gap-4">
               <InputLine label="E-mail :" value={form.email} onChange={(value) => update('email', value)} />
               <div className="grid items-center gap-3 md:grid-cols-[200px_1fr]">
-                <label className="text-sm text-foreground">Téléphone <span className="italic text-[var(--brand-cyan-dark)]">(facultatif)</span> :</label>
+                <label className="text-sm text-foreground">
+                  Téléphone <span className="italic text-[var(--brand-cyan-dark)]">(facultatif)</span> :
+                </label>
                 <div className="grid gap-2 sm:grid-cols-[96px_1fr]">
                   <select value={form.telephone_code} onChange={(event) => update('telephone_code', event.target.value)} className={selectClass}>
                     <option value="+261">🇲🇬 +261</option>
@@ -586,7 +677,7 @@ export default function DepotAnnonce() {
               </InfoBox>
               <label
                 className={cn(
-                  "mx-auto flex h-11 max-w-md cursor-pointer items-center justify-center gap-2 rounded-xl border border-[var(--brand-cyan-dark)]/25 bg-white text-sm font-medium text-slate-700 shadow-sm hover:border-[var(--brand-green-dark)] hover:text-[var(--brand-green-dark)]",
+                  'mx-auto flex h-11 max-w-md cursor-pointer items-center justify-center gap-2 rounded-xl border border-[var(--brand-cyan-dark)]/25 bg-white text-sm font-medium text-slate-700 shadow-sm hover:border-[var(--brand-green-dark)] hover:text-[var(--brand-green-dark)]',
                   processingPhotos && 'cursor-wait opacity-70',
                 )}
               >
@@ -646,7 +737,7 @@ export default function DepotAnnonce() {
               className="h-14 min-w-[320px] rounded-xl bg-[var(--brand-cyan-dark)] px-8 text-base font-extrabold text-white shadow-xl shadow-cyan-900/20 ring-2 ring-white hover:bg-[var(--brand-green-dark)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting || processingPhotos ? <Loader2 className="mr-3 h-4 w-4 animate-spin" /> : <Pencil className="mr-3 h-4 w-4" />}
-              {processingPhotos ? 'Preparation des photos...' : 'Publier votre annonce'}
+              {processingPhotos ? 'Préparation des photos...' : 'Publier votre annonce'}
             </Button>
           </div>
         </div>
@@ -655,6 +746,7 @@ export default function DepotAnnonce() {
   )
 }
 
+// Structuration réutilisable pour afficher chaque grande section du formulaire avec une icône et un titre.
 function FormSection({
   icon: IconItem,
   label,
@@ -675,79 +767,73 @@ function FormSection({
   )
 }
 
+// Affiche un bloc d'information mis en évidence avec une icône pour guider l'utilisateur.
 function InfoBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto flex max-w-2xl gap-4 rounded-2xl border border-[var(--brand-cyan-dark)]/10 bg-[var(--brand-cyan-light)] px-6 py-3 text-sm leading-6 text-slate-700">
-      <Info className="mt-1 h-4 w-4 shrink-0 text-[var(--brand-cyan-dark)]" />
-      <p>{children}</p>
+    <div className="mx-auto flex max-w-2xl gap-4 rounded-2xl border border-[var(--brand-cyan-dark)]/10 bg-[var(--brand-cyan-light)] p-4 text-xs text-slate-700">
+      <Info className="h-5 w-5 shrink-0 text-[var(--brand-cyan-dark)]" />
+      <div>{children}</div>
     </div>
   )
 }
 
+// Affiche une ligne de formulaire contenant un menu déroulant structuré.
 function SelectLine({
   label,
   value,
-  options,
   onChange,
+  options,
 }: {
   label: string
   value: string
-  options: string[]
   onChange: (value: string) => void
+  options: readonly string[]
 }) {
   return (
     <div className="grid items-center gap-3 md:grid-cols-[200px_1fr]">
-      <label className="text-sm font-medium text-slate-700">{label}</label>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={cn(
-          selectClass,
-          !value && 'text-gray-500',
-        )}
-      >
-        <option value="">- Sélectionner -</option>
+      <label className="text-sm text-foreground">{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={selectClass}>
+        <option value="">Sélectionner</option>
         {options.map((option) => (
-          <option key={option} value={option}>{option}</option>
+          <option key={option} value={option}>
+            {option}
+          </option>
         ))}
       </select>
     </div>
   )
 }
 
+// Affiche une ligne de formulaire avec un champ de saisie texte ou numérique personnalisé.
 function InputLine({
   label,
   hint,
   suffix,
   value,
-  type = 'text',
   onChange,
+  type = 'text',
 }: {
   label: string
   hint?: string
   suffix?: string
   value: string
-  type?: string
   onChange: (value: string) => void
+  type?: string
 }) {
   return (
     <div className="grid items-center gap-3 md:grid-cols-[200px_1fr]">
-      <label className="text-sm font-medium text-slate-700">
-        {label} {hint && <span className="italic text-[var(--brand-green-dark)]">({hint})</span>}:
+      <label className="text-sm text-foreground">
+        {label} {hint && <span className="italic text-[var(--brand-cyan-dark)]">({hint})</span>} :
       </label>
-      <div className="relative">
-        <input
-          type={type}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className={`${fieldClass} pr-12`}
-        />
-        {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-700">{suffix}</span>}
+      <div className="relative flex items-center">
+        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={cn(fieldClass, 'w-full', suffix && 'pr-12')} />
+        {suffix && <span className="absolute right-4 text-sm font-medium text-slate-400">{suffix}</span>}
       </div>
     </div>
   )
 }
 
+// Affiche une case à cocher personnalisée accompagnée de sa description texte ou visuelle.
 function CheckboxRow({
   checked,
   onChange,
@@ -758,22 +844,14 @@ function CheckboxRow({
   children: React.ReactNode
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-700">
-      <span className={cn(
-        'grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 transition-all duration-200',
-        checked 
-          ? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/25' 
-          : 'border-[var(--brand-cyan-dark)] bg-white hover:border-blue-400'
-      )}>
-        {checked && <Check className="h-4 w-4 stroke-[3]" />}
-      </span>
-      <input 
-        type="checkbox" 
-        checked={checked} 
-        onChange={onChange} 
-        className="sr-only" 
+    <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-700 select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="h-4 w-4 rounded border-slate-300 text-[var(--brand-cyan-dark)] focus:ring-[var(--brand-cyan-dark)]"
       />
-      <span className="inline-flex items-center gap-2">{children}</span>
+      <span className="flex items-center gap-2">{children}</span>
     </label>
   )
 }

@@ -1,185 +1,246 @@
 import React, { useEffect, useState } from 'react'
-import { Home, MapPin, MessageSquare, Clock } from 'lucide-react'
+import { Home, MessageSquare } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
 
-type Thread = {
-  interlocuteur_id: number
-  interlocuteur_nom: string
-  interlocuteur_prenom: string
-  dernier_message: string
-  date_dernier_message: string | null
-  non_lus: number
-  annonce_titre?: string | null
-  annonce_prix?: number | null
-  annonce_photo?: string | null
-  annonce_quartier?: string | null
-  annonce_ville?: string | null
-  /** true pour les conversations de démonstration (pas encore de vraies données) */
-  isStatic?: boolean
+type GroupedAnnonce = {
+  id_annonce: number | string
+  annonce_titre: string
+  annonce_photo: string | null
+  annonce_prix: number | null
+  annonce_lieu?: string
+  total_non_lus: number
+  primary_user_id: number
+  proprietaire_nom: string
+  dernier_message?: string
+  est_dernier_message_mien?: boolean
+  date_raw?: string | Date | number
 }
 
-/* ------------------------------------------------------------------ */
-/*  Conversations statiques — à retirer une fois l'API "messages"      */
-/*  pleinement branchée. Servent d'exemple / de remplissage visuel.    */
-/* ------------------------------------------------------------------ */
-const STATIC_THREADS: Thread[] = [
-  {
-    interlocuteur_id: -1,
-    interlocuteur_prenom: 'Mialy',
-    interlocuteur_nom: 'R.',
-    dernier_message: 'Merci pour les infos, je reviens vers toi vite !',
-    date_dernier_message: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    non_lus: 0,
-    annonce_titre: 'Maison partagée · Ivandry',
-    annonce_prix: 420000,
-    annonce_photo: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=200&q=70',
-    annonce_quartier: 'Ivandry',
-    annonce_ville: 'Antananarivo',
-    isStatic: true,
-  },
-  {
-    interlocuteur_id: -2,
-    interlocuteur_prenom: 'Tiana',
-    interlocuteur_nom: 'N.',
-    dernier_message: 'La chambre est-elle toujours disponible ?',
-    date_dernier_message: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-    non_lus: 1,
-    annonce_titre: 'Coloc lumineuse · Ankadifotsy',
-    annonce_prix: 350000,
-    annonce_photo: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=200&q=70',
-    annonce_quartier: 'Ankadifotsy',
-    annonce_ville: 'Antananarivo',
-    isStatic: true,
-  },
-]
+// Calcule dynamiquement le temps écoulé (ex: "il y a 2 h", "hier", "3 j")
+function formatTimeAgo(dateInput?: string | Date | number): string {
+  if (!dateInput) return ''
 
-function formatRelative(dateStr: string | null) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const diffMs = Date.now() - date.getTime()
-  const diffH = Math.round(diffMs / (1000 * 60 * 60))
-  if (diffH < 1) return "à l'instant"
-  if (diffH < 24) return `il y a ${diffH} h`
-  const diffJ = Math.round(diffH / 24)
-  if (diffJ === 1) return 'hier'
-  if (diffJ < 7) return `il y a ${diffJ} j`
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+  const date = new Date(dateInput)
+  if (isNaN(date.getTime())) return String(dateInput)
+
+  const now = new Date()
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+  if (diffInSeconds < 60) return "à l'instant"
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60)
+  if (diffInMinutes < 60) return `il y a ${diffInMinutes} min`
+
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) return `il y a ${diffInHours} h`
+
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays === 1) return 'hier'
+  if (diffInDays < 7) return `${diffInDays} j`
+
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+  })
 }
 
 export default function ConversationsPage() {
   const navigate = useNavigate()
-  const [threads, setThreads] = useState<Thread[]>([])
+  const { t, i18n } = useTranslation('conversations')
+
+  const [groups, setGroups] = useState<GroupedAnnonce[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
     setLoading(true)
+
     api.messagesThreads()
       .then((data) => {
         if (!mounted) return
-        const real: Thread[] = data.map((d: any) => ({
-          interlocuteur_id: d.interlocuteur_id,
-          interlocuteur_nom: d.interlocuteur_nom,
-          interlocuteur_prenom: d.interlocuteur_prenom,
-          dernier_message: d.dernier_message || '',
-          date_dernier_message: d.date_dernier_message || null,
-          non_lus: d.non_lus || 0,
-          annonce_titre: d.annonce_titre || null,
-          annonce_prix: d.annonce_prix || null,
-          annonce_photo: d.annonce_photo || null,
-          annonce_quartier: d.annonce_quartier || null,
-          annonce_ville: d.annonce_ville || null,
-        }))
-        // Les conversations statiques comblent la liste en attendant de vraies données
-        setThreads([...real, ...STATIC_THREADS])
+
+        const groupedMap = new Map<number | string, GroupedAnnonce>()
+
+        data.forEach((d: any) => {
+          if (!d.id_annonce && !d.annonce_titre) return
+
+          const key = d.id_annonce || d.annonce_titre
+          const nonLus = d.non_lus || 0
+
+          // Récupération du propriétaire (depot_annonce -> id_utilisateur / email)
+          const proprietaireNom = 
+            d.proprietaire_nom || 
+            d.nom_utilisateur || 
+            d.email || 
+            'Propriétaire'
+
+          const dernierMessage = 
+            d.dernier_message || 
+            d.last_message || 
+            d.message || 
+            ''
+
+          const dateRaw = 
+            d.date_creation || 
+            d.date_dernier_message || 
+            d.created_at || 
+            d.updated_at
+
+          if (!groupedMap.has(key)) {
+            groupedMap.set(key, {
+              id_annonce: key,
+              annonce_titre: d.annonce_titre,
+              annonce_photo: d.annonce_photo || null,
+              annonce_prix: d.annonce_prix || null,
+              annonce_lieu: d.quartier || d.adresse || '',
+              total_non_lus: nonLus,
+              primary_user_id: d.id_utilisateur || d.interlocuteur_id,
+              proprietaire_nom: proprietaireNom,
+              dernier_message: dernierMessage,
+              est_dernier_message_mien: Boolean(d.est_dernier_message_mien || d.is_mine),
+              date_raw: dateRaw,
+            })
+          } else {
+            const existingGroup = groupedMap.get(key)!
+            existingGroup.total_non_lus += nonLus
+          }
+        })
+
+        setGroups(Array.from(groupedMap.values()))
       })
-      .catch(() => setThreads([...STATIC_THREADS]))
+      .catch(() => setGroups([]))
       .finally(() => setLoading(false))
 
-    return () => { mounted = false }
+    return () => {
+      mounted = false
+    }
   }, [])
 
-  const openThread = (t: Thread) => {
-    if (t.isStatic) return // pas de vrai thread à ouvrir pour la démo
-    navigate(`/compte?tab=paiements&user=${t.interlocuteur_id}`)
+  const openConversation = (group: GroupedAnnonce) => {
+    navigate(`/compte?tab=messages&user=${group.primary_user_id}`)
   }
 
-  const getInitials = (p?: string, n?: string) => {
-    const a = (p || '')[0] || '?'
-    const b = (n || '')[0] || '?'
-    return (a + b).toUpperCase()
-  }
+  const lang = i18n.language.toLowerCase()
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <div className="flex items-center gap-2 mb-1">
-        <MessageSquare className="w-5 h-5 text-brand-cyan shrink-0" />
-        <h2 className="bebas text-xl sm:text-2xl">Mes conversations</h2>
+    <div className="w-full max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-3xl border border-border/80 shadow-sm">
+      {/* En-tête */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <MessageSquare className="w-5 h-5 text-brand-cyan shrink-0" />
+          <h2 className="bebas text-2xl tracking-wide text-foreground">
+            {t('title', 'MES CONVERSATIONS')}
+          </h2>
+        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          {t(
+            'subtitle',
+            'Chaque conversation est rattachée à l\'annonce concernée. Tu peux signaler ou bloquer un utilisateur depuis une conversation.'
+          )}
+        </p>
       </div>
-      <p className="text-sm text-muted-foreground mb-4">
-        Chaque conversation est rattachée à l'annonce concernée. Tu peux signaler ou bloquer un utilisateur depuis une conversation.
-      </p>
 
-      <div className="space-y-2.5">
-        {loading ? (
-          <div className="text-sm text-muted-foreground py-6 text-center">Chargement...</div>
-        ) : threads.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground">
-            <MessageSquare className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
-            Aucune conversation
-          </div>
-        ) : (
-          threads.map((t) => (
-            <div
-              key={t.interlocuteur_id}
-              onClick={() => openThread(t)}
-              className={`flex items-start gap-3 p-3 bg-white border border-border rounded-2xl transition-shadow ${
-                t.isStatic ? 'cursor-default' : 'cursor-pointer hover:shadow-md'
-              }`}
-            >
-              <img
-                src={t.annonce_photo || 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=200&q=70'}
-                alt=""
-                className="w-20 h-16 sm:w-24 sm:h-[70px] rounded-xl object-cover shrink-0 bg-muted"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-white flex items-center justify-center text-[10px] font-bold shrink-0">
-                    {getInitials(t.interlocuteur_prenom, t.interlocuteur_nom)}
-                  </div>
-                  <span className="text-sm font-bold text-foreground truncate">{t.interlocuteur_prenom} {t.interlocuteur_nom}</span>
-                  <span className="ml-auto text-[11px] text-muted-foreground shrink-0">{formatRelative(t.date_dernier_message)}</span>
-                </div>
+      {loading ? (
+        <div className="text-sm text-muted-foreground py-10 text-center">
+          {t('loading', 'Chargement...')}
+        </div>
+      ) : groups.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-2xl border border-border">
+          <MessageSquare className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
+          {t('empty', 'Aucune conversation pour le moment')}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {groups.map((group) => {
+            const initial = group.proprietaire_nom
+              ? group.proprietaire_nom.charAt(0).toUpperCase()
+              : 'P'
 
-                {t.annonce_titre && (
-                  <div className="inline-flex items-center gap-1.5 bg-muted/60 border border-border/60 rounded-lg px-2.5 py-1 mb-1.5 max-w-full">
-                    <Home className="w-3 h-3 text-brand-cyan shrink-0" />
-                    <span className="text-[11px] font-semibold text-foreground/80 truncate">{t.annonce_titre}</span>
-                    {t.annonce_prix ? (
-                      <span className="text-[11px] font-semibold text-brand-cyan shrink-0">· {t.annonce_prix.toLocaleString('fr-FR')} Ar</span>
-                    ) : null}
+            const timeAgo = formatTimeAgo(group.date_raw)
+
+            return (
+              <div
+                key={group.id_annonce}
+                onClick={() => openConversation(group)}
+                className="flex items-start gap-4 p-4 bg-white border border-border/70 rounded-2xl hover:border-brand-cyan/40 hover:shadow-sm transition-all cursor-pointer relative"
+              >
+                {/* Photo de l'annonce */}
+                {group.annonce_photo ? (
+                  <img
+                    src={group.annonce_photo}
+                    alt={group.annonce_titre}
+                    className="w-20 h-20 sm:w-24 sm:h-20 rounded-xl object-cover shrink-0 bg-muted"
+                  />
+                ) : (
+                  <div className="w-20 h-20 sm:w-24 sm:h-20 rounded-xl shrink-0 bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                    <Home className="w-8 h-8 opacity-40" />
                   </div>
                 )}
 
-                <div className={`text-xs truncate flex items-center gap-1.5 ${t.non_lus > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
-                  {t.non_lus === 0 && <Clock className="w-3 h-3 text-muted-foreground shrink-0" />}
-                  {t.dernier_message || 'Dernier message indisponible'}
+                {/* Information textuelle */}
+                <div className="flex-1 min-w-0 pr-16">
+                  {/* Badge initiale + Nom du propriétaire (issu de depot_annonce) */}
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                      {initial}
+                    </span>
+                    <h3 className="text-base font-bold text-foreground truncate">
+                      {group.proprietaire_nom}
+                    </h3>
+                  </div>
+
+                  {/* Détails Annonce (Titre, Quartier, Prix) */}
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium mb-2 max-w-full truncate">
+                    <Home className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="truncate">
+                      {group.annonce_titre}
+                      {group.annonce_lieu && ` · ${group.annonce_lieu}`}
+                    </span>
+                    {group.annonce_prix && (
+                      <span className="font-bold text-brand-cyan ml-1 shrink-0">
+                        {group.annonce_prix.toLocaleString(
+                          lang === 'mg' ? 'mg-MG' : lang === 'en' ? 'en-US' : 'fr-FR'
+                        )}{' '}
+                        Ar
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Dernier Message */}
+                  {group.dernier_message && (
+                    <p className="text-xs sm:text-sm text-slate-600 truncate">
+                      {group.est_dernier_message_mien && (
+                        <span className="font-semibold text-slate-800">Tu : </span>
+                      )}
+                      {group.dernier_message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Heure / Date calculée dynamiquement */}
+                <div className="absolute top-4 right-4 flex items-center gap-2">
+                  <span className="text-xs text-slate-400 font-medium">
+                    {timeAgo}
+                  </span>
+                  {group.total_non_lus > 0 && (
+                    <span className="w-2.5 h-2.5 bg-brand-cyan rounded-full inline-block shrink-0" />
+                  )}
                 </div>
               </div>
+            )
+          })}
+        </div>
+      )}
 
-              {t.non_lus > 0 && <div className="w-2.5 h-2.5 rounded-full bg-brand-cyan shrink-0 mt-1.5" />}
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="mt-5">
+      {/* Bouton d'action en bas */}
+      <div className="mt-8">
         <button
-          onClick={() => navigate('/compte?tab=paiements')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-cyan text-white text-sm font-semibold hover:bg-brand-cyan-dark transition-colors"
+          onClick={() => navigate('/compte?tab=messages')}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-cyan text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
         >
-          Ouvrir la messagerie →
+          <span>→</span> {t('open', 'Ouvrir la messagerie')}
         </button>
       </div>
     </div>

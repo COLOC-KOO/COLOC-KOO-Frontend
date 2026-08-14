@@ -17,7 +17,6 @@ export interface Owner {
 
 export type ListingType = 'chambre' | 'appartement' | 'maison'
 export type ListingTag = 'vedette' | 'verifie' | 'nouveau' | 'boost'
-
 export interface Listing {
   id: string
   depotAnnonceId?: number
@@ -30,6 +29,8 @@ export interface Listing {
   rooms: number
   bedrooms: number
   surface: number
+  roomSurface?: number         
+  chambreSurface?: number
   furnished: boolean
   available: string
   type: ListingType
@@ -44,6 +45,7 @@ export interface Listing {
   gallery: string[]
   description: string
   amenities: string[]
+  services?: string[]          
   colocs: Coloc[]
   owner: Owner
   tags: ListingTag[]
@@ -52,7 +54,10 @@ export interface Listing {
   parkingVoitures?: number
   parkingMotos?: number
   parkingCouvert?: boolean
-  elevator?: boolean
+  parkingTwoWheelsCount?: number
+  parkingCar?: boolean         
+  parkingCarCovered?: boolean  
+  elevator?: boolean 
   petsAllowed?: boolean
   smokersAllowed?: boolean
   womenOnly?: boolean
@@ -66,7 +71,6 @@ export interface Listing {
   boostServiceId?: number | null
   badge?: string
   badgeColor?: string
-  chambreSurface?: number
 }
 
 export interface CityInfo {

@@ -39,7 +39,7 @@
   "property": {
     "furnished": "Meublé",
     "unfurnished": "Non meublé",
-    "available": "Disponible depuis le {date}",
+    "available": "Disponible depuis le {{date}}",
     "bedrooms": "Chambre(s)",
     "charges": "Charges",
     "chargesUnit": "Ar/mois",
