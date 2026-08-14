@@ -688,6 +688,7 @@ export const api = {
         prenom: string
         telephone?: string
         poste: Poste
+        date_naissance: string
     }) {
         return request<{ user: AuthUser; token: string }>('/auth/register', {
             method: 'POST',
@@ -729,11 +730,26 @@ export const api = {
     },
 
     // ===== SÉCURITÉ DU COMPTE =====
-    updateSecuritySettings(payload: { two_fa_enabled?: boolean; [key: string]: unknown }) {
-        return request<{ message: string; user?: AuthUser }>('/auth/me/security', {
-            method: 'PATCH',
-            body: JSON.stringify(payload),
-        })
+
+// Récupérer la valeur enregistrée dans la BDD
+    getSecuritySettings() {
+        return request<{
+        two_fa_enabled: number | boolean
+    }>('/auth/me/security')
+    },
+
+// Enregistrer la nouvelle valeur dans la BDD
+    updateSecuritySettings(payload: { 
+        two_fa_enabled?: boolean; 
+        [key: string]: unknown 
+    }) {
+    return request<{ 
+        message: string; 
+        user?: AuthUser 
+    }>('/auth/me/security', {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+    })
     },
     disconnectOtherDevices() {
         return request<{ message: string }>('/auth/me/sessions/revoke-others', {
