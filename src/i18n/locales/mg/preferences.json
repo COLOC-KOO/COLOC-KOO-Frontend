@@ -1,0 +1,40 @@
+{
+  "displayNetwork": {
+    "title": "Fampiratiana & Rezo",
+    "subtitle": "Namboarina mba hiasana na dia miadana na tsy mafy aza ny rezo ny Sarintany'COLOC, na aiza na aiza any Madagasikara.",
+    "lightMode": "Mody maivana (fitsitsiana data)",
+    "lightModeDesc": "Mampidina sary maivana kokoa ary mametra ny sarimihetsika. {{boldActivated}} amin'ny rezo 3G+/4G na rehefa tsy misy rezo; azonao forosena eto koa izany.",
+    "activatedAutomatically": "Mivelona ho azy",
+    "offlineAvailability": "Fampiasana tsy misy rezo",
+    "offlineAvailabilityDesc": "Matahiry ireo fampitandremana sy dinika nojerena farany mba hahitana izany indray na tsy misy rezo aza.",
+    "installApp": "Hametraka ny fampiharana",
+    "installAppDesc": "Ampio amin'ny efijery fandraisanao ny Sarintany'COLOC, tsy mila mandalo amin'ny magazay fampiharana.",
+    "installButton": "Hametraka"
+  },
+  "notifications": {
+    "title": "Safidy amin'ny fampandrenesana",
+    "subtitle": "Safidio ny fomba tianao hampahafantarana anao.",
+    "smsInfo": "Hanolotra SMS izahay aorian'ny fandefasana amin mefio.",
+    "defaultMode": "Fomba mahazatra",
+    "pushOnly": "Push ihany",
+    "emailOnly": "E-mail ihany",
+    "both": "Izy roa",
+    "table": {
+      "event": "Zava-nitranga",
+      "push": "Push",
+      "email": "E-mail",
+      "notApplicable": "Tsy mihatra"
+    },
+    "events": {
+      "new_msg": "Hafatra vaovao voaray",
+      "expire_j7": "Fampitandremana ho lany daty (A-7)",
+      "expired": "Fampitandremana efa lany daty — fangatahana fanavaozana",
+      "alert_match": "Fampitandremana vaovao mifanaraka amin'ny alerte",
+      "msg_auto": "Hafatra tsy lasa (fanar think automatique)",
+      "msg_blocked": "Hafatra voasakana voaray",
+      "pub_confirm": "Fanamarinana ny famoahana fampitandremana"
+    },
+    "save": "Tahirizina",
+    "saved": "Voatahiry"
+  }
+}
