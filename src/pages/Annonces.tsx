@@ -924,7 +924,7 @@ export default function Annonces() {
 
         <div className="bg-white px-4 py-4">
           <Link
-            to="/depot_annoncedeux"
+            to="/depot_annonce"
             className="mx-auto flex min-h-[68px] w-full max-w-[520px] items-center justify-center gap-8 rounded border border-sc-bd bg-white px-8 py-3 text-center text-sm leading-5 text-sc-gr2 shadow-sm transition-colors hover:border-sc-cy hover:text-sc-dark"
           >
             <Pencil className="h-6 w-6 shrink-0 text-emerald-500" />
