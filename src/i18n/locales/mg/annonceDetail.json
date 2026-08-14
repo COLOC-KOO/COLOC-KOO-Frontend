@@ -39,7 +39,7 @@
   "property": {
     "furnished": "Meublé",
     "unfurnished": "Tsy meublé",
-    "available": "Azo ampiasina hatry ny {date}",
+    "available": "Azo ampiasina hatry ny {{date}}",
     "bedrooms": "Fombatra",
     "charges": "Fandaniana",
     "chargesUnit": "Ar/volana",
@@ -49,10 +49,10 @@
     "announcementTypeCreate": "Mpiara-monina hoforonina"
   },
   "features": {
-    "internet": "Internet",
+    "internet": "{{Internet}}",
     "parking": "Fariaty",
-    "parkingCars": "{count} toerana fariaty",
-    "parkingMotorcycles": "{count} toerana fariaty moto",
+    "parkingCars": "{{count}} toerana fariaty",
+    "parkingMotorcycles": "{{count}} toerana fariaty moto",
     "parkingCovered": "Fariaty voafetra",
     "elevator": "Elevator",
     "petsAllowed": "Omby azo ampiasaina",
@@ -104,8 +104,8 @@
     "messageRequired": "Ilaina ny hafatra.",
     "success": "Hafatra alefa amin'ny tompon-trano.",
     "error": "Tsy afaka nandefa ny hafatra.",
-    "candidateSubject": "Fifandraisana momba ny fanambarana {id}",
-    "ownerSubject": "Hafatra avy amin'ny mombamomba anao ho an'ny fanambarana {id}"
+    "candidateSubject": "Fifandraisana momba ny fanambarana {{id}}",
+    "ownerSubject": "Hafatra avy amin'ny mombamomba anao ho an'ny fanambarana {{id}}"
   },
   "modal": {
     "title": "Hafatra ho an'i {name}",
@@ -134,7 +134,7 @@
     "error": "Tsy afaka nanomboka ny trano fiarahamonina."
   },
   "user": {
-    "connected": "Tafiditra amin'ny maha {name}",
+    "connected": "Tafiditra amin'ny maha {{name}}",
     "connectedDesc": "Afaka mandefa ny fangatahanao mivantana avy amin'ity pejy ity ianao.",
     "ownerTitle": "Fitantanana ny fangatahana",
     "ownerDesc": "Ny fitantanana ny fangatahana dia atao avy amin'ny pejy natokana.",

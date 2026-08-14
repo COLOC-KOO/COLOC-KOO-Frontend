@@ -38,6 +38,18 @@ export interface Listing {
   typeBail?: 'individuel' | 'collectif' | null
   clauseSolidarite?: 'avec' | 'sans' | null
   candidatureCount?: number
+
+  // 🟢 CORRECTION ICI : Ajout des '?' pour rendre les champs optionnels
+  est_meuble?: string
+  meublee?: string
+  chambres?: Array<{
+    id_depot_chambre?: number
+    id_depot_annonce?: number
+    meublee?: string
+    loyer?: number
+    surface?: number
+  }> | string
+
   image: string
   address?: string
   latitude?: number
@@ -50,7 +62,7 @@ export interface Listing {
   owner: Owner
   tags: ListingTag[]
   regles?: string[]
-  internet?: boolean
+  internet?: boolean | string | null
   parkingVoitures?: number
   parkingMotos?: number
   parkingCouvert?: boolean
@@ -72,7 +84,6 @@ export interface Listing {
   badge?: string
   badgeColor?: string
 }
-
 export interface CityInfo {
   name: string
   count: number
