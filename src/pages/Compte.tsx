@@ -27,6 +27,7 @@ import ConversationsPage from './compte/ConversationsPage'
 import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerprint, Lock, RefreshCw, Download, Trash } from 'lucide-react'
 import TabAlertes from './compte/TabAlertes'
 import TabCompteDonnees from './compte/TabCompteDonnees'
+import TabMesFavoris from './compte/TabMesFavoris'
 
 /* ------------------------------------------------------------------ */
 /*  Switch style maquette (pilule verte), utilisé pour 2FA + RGPD      */
