@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { api } from '../../lib/api'
+import { useAuth } from '../../lib/auth'
 
 // AJOUT : prop pour rediriger après suppression du compte
 interface TabCompteDonneesProps {
@@ -63,6 +64,7 @@ const APPAREILS_MOCK: AppareilConnecte[] = [
 // Onglet principal regroupant la sécurité du compte et la gestion des données personnelles
 export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesProps) {
   const { t } = useTranslation('compteSecurites')
+  const { user } = useAuth()
   const [form, setForm] = useState({ current: '', next: '', confirm: '' })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -74,16 +76,12 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
   const [twoFA, setTwoFA] = useState(true)
   const [savingTwoFA, setSavingTwoFA] = useState(false)
 
-  // AJOUT : récupère la vraie valeur enregistrée en DB au chargement du composant
+  // Récupère la valeur chargée avec le profil utilisateur.
   useEffect(() => {
-    api.getSecuritySettings?.()
-      .then((data) => {
-        setTwoFA(Boolean(data.two_fa_enabled))
-      })
-      .catch(() => {
-        // en cas d'erreur on ne touche pas au state (garde la valeur par défaut)
-      })
-  }, [])
+    if (user) {
+      setTwoFA(Boolean(user.two_fa_enabled))
+    }
+  }, [user])
 
   // Active ou désactive la double authentification et synchronise le changement avec l'API
   const handleToggleTwoFA = async (value: boolean) => {
