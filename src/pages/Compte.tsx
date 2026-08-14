@@ -24,7 +24,7 @@ import TabMesAnnonces from './compte/TabMesAnnonces'
 import TabPreference from './compte/TabPreference'
 import TabMessagesV2 from './compte/TabMessagesV2'
 import ConversationsPage from './compte/ConversationsPage'
-import TabMesFavoris from './compte/TabMesFavoris'
+import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerprint, Lock, RefreshCw, Download, Trash } from 'lucide-react'
 import TabAlertes from './compte/TabAlertes'
 import TabCompteDonnees from './compte/TabCompteDonnees'
 
