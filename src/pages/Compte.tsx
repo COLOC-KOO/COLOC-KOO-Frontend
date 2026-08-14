@@ -712,6 +712,11 @@ export default function Compte() {
 
   const currentUserId = (user as any)?.id_utilisateur ?? (user as any)?.id ?? null
 
+  const handleAccountDeleted = () => {
+    logout()        // Supprime le token + user du localStorage (depuis useAuth)
+    navigate('/')   // Redirige vers la page d'accueil publique
+  }
+
   return (
     <SiteLayout>
 
@@ -941,7 +946,7 @@ export default function Compte() {
             {tab === 'favoris' && <TabMesFavoris />}
             {tab === 'notif' && <TabPreference />}
             {tab === 'paiements' && <TabMessagesV2 />}
-            {tab === 'secu' && <TabCompteDonnees />}
+            {tab === 'secu' && <TabCompteDonnees onAccountDeleted={handleAccountDeleted} />}
           </div>
 
         </div>
