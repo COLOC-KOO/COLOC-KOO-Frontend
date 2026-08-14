@@ -39,7 +39,7 @@
   "property": {
     "furnished": "Furnished",
     "unfurnished": "Unfurnished",
-    "available": "Available from {date}",
+    "available": "Available from {{date}}",
     "bedrooms": "Bedroom(s)",
     "charges": "Charges",
     "chargesUnit": "Ar/month",
@@ -49,10 +49,10 @@
     "announcementTypeCreate": "Housemates to create"
   },
   "features": {
-    "internet": "Internet",
+    "internet": "{{Intern}}",
     "parking": "Parking",
-    "parkingCars": "{count} parking spot(s)",
-    "parkingMotorcycles": "{count} motorcycle spot(s)",
+    "parkingCars": "{{count}} parking spot(s)",
+    "parkingMotorcycles": "{{count}} motorcycle spot(s)",
     "parkingCovered": "Covered parking",
     "elevator": "Elevator",
     "petsAllowed": "Pets allowed",

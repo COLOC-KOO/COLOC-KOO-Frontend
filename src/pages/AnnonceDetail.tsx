@@ -762,191 +762,243 @@ export default function AnnonceDetail() {
             />
           </div>
 
-            {/* Property Details (Dynamique & Enrichi) */}
-          <section className="mt-8">
-            <h2 className="bebas text-2xl">{t('annonceDetail:sections.propertyDetails')}</h2>
-            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-              {/* Meublé / Non meublé */}
-              <div className="flex items-center gap-2 text-sm">
+                      {/* Détails du bien */}
+            <section className="mt-8">
+              <h2 className="bebas text-2xl">{t('annonceDetail:sections.propertyDetails')}</h2>
+              
+              <div className="mt-3 space-y-2 text-sm">
+             {/* 🟢 1. MEUBLÉ / NON MEUBLÉ */}
+              <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-brand-cyan-dark" />
                 <span className="text-foreground">
-                  {listing.furnished ? t('annonceDetail:property.furnished') : t('annonceDetail:property.unfurnished')}
+                  {(() => {
+                    // Récupération sécurisée du premier paramètre défini
+                    const chambresArray = Array.isArray(listing.chambres) ? listing.chambres : [];
+                    const firstChambreMeublee = chambresArray[0]?.meublee;
+
+                    const rawValue: string | boolean | null | undefined =
+                      listing.furnished ??
+                      listing.est_meuble ??
+                      firstChambreMeublee ??
+                      listing.meublee;
+
+                    // Cas booléen
+                    if (typeof rawValue === 'boolean') {
+                      return rawValue
+                        ? t('annonceDetail:property.furnished')
+                        : t('annonceDetail:property.unfurnished');
+                    }
+
+                    // Cas chaîne de caractères
+                    const strVal = String(rawValue ?? '').trim().toLowerCase();
+                    const isFurnished = ['oui', 'meublé', 'meuble', 'true', '1'].includes(strVal);
+
+                    return isFurnished
+                      ? t('annonceDetail:property.furnished')
+                      : t('annonceDetail:property.unfurnished');
+                  })()}
                 </span>
               </div>
 
-              {/* Date de disponibilité */}
-              {listing.available ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <CalendarIcon className="w-4 h-4 text-brand-cyan-dark" />
-                  <span className="text-foreground">
-                    {t('annonceDetail:property.available', { date: listing.available })}
-                  </span>
-                </div>
-              ) : null}
-
-              {/* Surface totale */}
-              {listing.surface > 0 ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <Building2 className="w-4 h-4 text-brand-cyan-dark" />
-                  <span className="text-foreground">Surface totale : {listing.surface} m²</span>
-                </div>
-              ) : null}
-
-              {/* Chambres */}
-              {listing.bedrooms > 0 ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <BedDouble className="w-4 h-4 text-brand-cyan-dark" />
-                  <span className="text-foreground">{listing.bedrooms} {t('annonceDetail:property.bedrooms')}</span>
-                </div>
-              ) : null}
-
-              {/* Connexion Internet / Wifi */}
-              <div className="flex items-center gap-2 text-sm">
-                <Wifi className="w-4 h-4 text-brand-cyan-dark" />
-                <span className="text-foreground">
-                  {listing.internet ? "Internet / Wifi inclus" : "Pas d'internet"}
-                </span>
-              </div>
-
-              {/* Parking voitures */}
-              <div className="flex items-center gap-2 text-sm">
-                <Car className="w-4 h-4 text-brand-cyan-dark" />
-                <span className="text-foreground">
-                  {(listing.parkingVoitures ?? 0) > 0
-                    ? `Parking voiture : ${listing.parkingVoitures} place${listing.parkingVoitures! > 1 ? 's' : ''} ${listing.parkingCouvert ? '(Couvert)' : '(Non couvert)'}`
-                    : 'Pas de parking voiture'}
-                </span>
-              </div>
-
-              {/* Parking deux-roues */}
-              <div className="flex items-center gap-2 text-sm">
-                <Bike className="w-4 h-4 text-brand-cyan-dark" />
-                <span className="text-foreground">
-                  {(listing.parkingMotos ?? 0) > 0
-                    ? `2 roues : ${listing.parkingMotos} place${listing.parkingMotos! > 1 ? 's' : ''} ${listing.parkingCouvert ? '(Couvert)' : '(Non couvert)'}`
-                    : 'Pas de parking 2 roues'}
-                </span>
-              </div>
-
-              {/* Charges */}
-              {listing.charges > 0 ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <DollarSign className="w-4 h-4 text-brand-cyan-dark" />
-                  <span className="text-foreground">{t('annonceDetail:property.charges')}: {formatAr(listing.charges)} {t('annonceDetail:property.chargesUnit')}</span>
-                </div>
-              ) : null}
-
-              {/* Adresse */}
-              {listing.address ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPinIcon className="w-4 h-4 text-brand-cyan-dark" />
-                  <span className="text-foreground">{listing.address}</span>
-                </div>
-              ) : null}
-
-              {/* Type d'annonce */}
-              {listing.annonceType ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <Star className="w-4 h-4 text-brand-cyan-dark" />
-                  <span className="text-foreground">{t('annonceDetail:property.announcementType')}: {listing.annonceType === 'existante' ? t('annonceDetail:property.announcementTypeExisting') : t('annonceDetail:property.announcementTypeCreate')}</span>
-                </div>
-              ) : null}
-            </div>
-          </section>
-
-          {listing.energyClass || listing.ghgClass ? (
-            <section className="mt-6">
-              <div className="flex flex-wrap gap-2">
-                {listing.energyClass ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold bg-brand-olive/10 text-brand-olive-dark px-3 py-1 rounded-full border border-brand-olive/30">
-                    <Zap className="w-3 h-3" /> {t('annonceDetail:energy.class')}: {listing.energyClass}
-                  </span>
-                ) : null}
-                {listing.ghgClass ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold bg-brand-green/10 text-brand-green-dark px-3 py-1 rounded-full border border-brand-green/30">
-                    <Cloud className="w-3 h-3" /> {t('annonceDetail:energy.ghg')}: {listing.ghgClass}
-                  </span>
-                ) : null}
-              </div>
-            </section>
-          ) : null}
-
-          <section className="mt-8">
-            <h2 className="bebas text-2xl">{t('annonceDetail:sections.description')}</h2>
-            <p className="mt-3 text-muted-foreground leading-relaxed">{listing.description || t('annonceDetail:noDescription')}</p>
-          </section>
-
-          {/* Rules */}
-          {listing.regles && listing.regles.length > 0 && (
-            <section className="mt-8">
-              <h2 className="bebas text-2xl">{t('annonceDetail:sections.rules')}</h2>
-              <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
-                {listing.regles.map((r) => (
-                  <div key={r} className="flex items-center gap-2 text-sm">
-                    <Shield className="w-4 h-4 text-brand-cyan-dark" /> {r}
+                {/* Date de disponibilité */}
+                {listing.available ? (
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4 text-brand-cyan-dark" />
+                    <span className="text-foreground">
+                      {t('annonceDetail:property.available', { date: listing.available })}
+                    </span>
                   </div>
-                ))}
+                ) : null}
+
+                {/* Surface totale */}
+                {listing.surface > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-brand-cyan-dark" />
+                    <span className="text-foreground">Surface totale : {listing.surface} m²</span>
+                  </div>
+                ) : null}
+
+                {/* Chambres */}
+                {listing.bedrooms > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <BedDouble className="w-4 h-4 text-brand-cyan-dark" />
+                    <span className="text-foreground">
+                      {listing.bedrooms} {t('annonceDetail:property.bedrooms')}
+                    </span>
+                  </div>
+                ) : null}
+
+                {/* Type d'annonce */}
+                {listing.annonceType ? (
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-brand-cyan-dark" />
+                    <span className="text-foreground">
+                      Type d'annonce: {listing.annonceType === 'existante' ? 'Colocataires existants' : 'Colocataires à créer'}
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </section>
-          )}
 
-          {/* Features */}
-          <section className="mt-8">
-            <h2 className="bebas text-2xl">{t('annonceDetail:sections.features')}</h2>
-            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
-              {(listing.internet || (listing.parkingVoitures ?? 0) > 0 || (listing.parkingMotos ?? 0) > 0 || listing.parkingCouvert || listing.elevator || listing.petsAllowed || listing.smokersAllowed || listing.womenOnly || listing.menOnly) ? (
-                <>
-                  {listing.internet ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Wifi className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.internet')}
-                    </div>
+            {/* Diagnostics Énergétiques (Optionnel) */}
+            {listing.energyClass || listing.ghgClass ? (
+              <section className="mt-6">
+                <div className="flex flex-wrap gap-2">
+                  {listing.energyClass ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold bg-brand-olive/10 text-brand-olive-dark px-3 py-1 rounded-full border border-brand-olive/30">
+                      <Zap className="w-3 h-3" /> {t('annonceDetail:energy.class')}: {listing.energyClass}
+                    </span>
                   ) : null}
-                  {(listing.parkingVoitures ?? 0) > 0 ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Car className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.parkingCars', { count: listing.parkingVoitures })}
-                    </div>
+                  {listing.ghgClass ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold bg-brand-green/10 text-brand-green-dark px-3 py-1 rounded-full border border-brand-green/30">
+                      <Cloud className="w-3 h-3" /> {t('annonceDetail:energy.ghg')}: {listing.ghgClass}
+                    </span>
                   ) : null}
-                  {(listing.parkingMotos ?? 0) > 0 ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Bike className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.parkingMotorcycles', { count: listing.parkingMotos })}
+                </div>
+              </section>
+            ) : null}
+
+            {/* Description */}
+            <section className="mt-8">
+              <h2 className="bebas text-2xl">{t('annonceDetail:sections.description')}</h2>
+              <p className="mt-3 text-muted-foreground leading-relaxed">
+                {listing.description || t('annonceDetail:noDescription')}
+              </p>
+            </section>
+
+            {/* Règles de la colocation */}
+            {listing.regles && listing.regles.length > 0 && (
+              <section className="mt-8">
+                <h2 className="bebas text-2xl">{t('annonceDetail:sections.rules')}</h2>
+                <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {listing.regles.map((r) => (
+                    <div key={r} className="flex items-center gap-2 text-sm">
+                      <Shield className="w-4 h-4 text-brand-cyan-dark" /> {r}
                     </div>
-                  ) : null}
-                  {listing.parkingCouvert ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Home className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.parkingCovered')}
-                    </div>
-                  ) : null}
-                  {listing.elevator ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <ArrowUp className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.elevator')}
-                    </div>
-                  ) : null}
-                  {listing.petsAllowed ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <PawPrint className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.petsAllowed')}
-                    </div>
-                  ) : null}
-                  {listing.smokersAllowed ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Flame className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.smokersAllowed')}
-                    </div>
-                  ) : null}
-                  {listing.womenOnly ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Circle className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.womenOnly')}
-                    </div>
-                  ) : null}
-                  {listing.menOnly ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Circle className="w-4 h-4 text-brand-cyan-dark" /> {t('annonceDetail:features.menOnly')}
-                    </div>
-                  ) : null}
-                </>
-              ) : (
-                <div className="text-sm text-muted-foreground">{t('annonceDetail:features.noFeatures')}</div>
-              )}
-            </div>
-          </section>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Équipements supplémentaires */}
+            <section className="mt-8">
+              <h2 className="bebas text-2xl">{t('annonceDetail:sections.features')}</h2>
+              <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                {(listing.internet ||
+                  (listing.parkingVoitures ?? 0) > 0 ||
+                  (listing.parkingMotos ?? 0) > 0 ||
+                  listing.parkingCouvert ||
+                  listing.elevator ||
+                  listing.petsAllowed ||
+                  listing.smokersAllowed ||
+                  listing.womenOnly ||
+                  listing.menOnly) ? (
+                  <>
+                                    {/* 🟢 2. INTERNET (Affiche "Fibre", "ADSL", etc.) */}
+                  {(() => {
+                    const rawInternet: string = String(listing.internet ?? '').trim();
+                    const lowerInternet: string = rawInternet.toLowerCase();
+
+                    // Liste des valeurs considérées comme "pas d'internet"
+                    const isInvalid = !rawInternet || ['aucune', 'non', 'false', '0', 'undefined', 'null'].includes(lowerInternet);
+
+                    if (isInvalid) return null;
+
+                    // Détermination du libellé exact à afficher
+                    let labelText: string = rawInternet;
+                    if (['oui', 'true', '1'].includes(lowerInternet)) {
+                      labelText = t('annonceDetail:features.internetDefault', { defaultValue: 'Internet inclus' });
+                    }
+
+                    return (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Wifi className="w-4 h-4 text-brand-cyan-dark" />
+                        <span className="capitalize">{labelText}</span>
+                      </div>
+                    );
+                  })()}
+
+                    {/* Parking Voitures avec transmission explicite du count */}
+                    {(listing.parkingVoitures ?? 0) > 0 ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Car className="w-4 h-4 text-brand-cyan-dark" />
+                        <span>
+                          {t('annonceDetail:features.parkingCars', {
+                            count: listing.parkingVoitures,
+                            defaultValue: `${listing.parkingVoitures} place(s) de parking`,
+                          })}
+                        </span>
+                      </div>
+                    ) : null}
+
+                    {/* Parking 2 roues / Motos avec transmission explicite du count */}
+                    {(listing.parkingMotos ?? 0) > 0 ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Bike className="w-4 h-4 text-brand-cyan-dark" />
+                        <span>
+                          {t('annonceDetail:features.parkingMotorcycles', {
+                            count: listing.parkingMotos,
+                            defaultValue: `${listing.parkingMotos} place(s) pour motos`,
+                          })}
+                        </span>
+                      </div>
+                    ) : null}
+
+                    {/* Parking Couvert */}
+                    {listing.parkingCouvert ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Home className="w-4 h-4 text-brand-cyan-dark" />
+                        <span>{t('annonceDetail:features.parkingCovered')}</span>
+                      </div>
+                    ) : null}
+
+                    {/* Ascenseur */}
+                    {listing.elevator ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <ArrowUp className="w-4 h-4 text-brand-cyan-dark" />
+                        <span>{t('annonceDetail:features.elevator')}</span>
+                      </div>
+                    ) : null}
+
+                    {/* Animaux */}
+                    {listing.petsAllowed ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <PawPrint className="w-4 h-4 text-brand-cyan-dark" />
+                        <span>{t('annonceDetail:features.petsAllowed')}</span>
+                      </div>
+                    ) : null}
+
+                    {/* Fumeurs */}
+                    {listing.smokersAllowed ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Flame className="w-4 h-4 text-brand-cyan-dark" />
+                        <span>{t('annonceDetail:features.smokersAllowed')}</span>
+                      </div>
+                    ) : null}
+
+                    {/* Femmes seulement */}
+                    {listing.womenOnly ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Circle className="w-4 h-4 text-brand-cyan-dark" />
+                        <span>{t('annonceDetail:features.womenOnly')}</span>
+                      </div>
+                    ) : null}
+
+                    {/* Hommes seulement */}
+                    {listing.menOnly ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Circle className="w-4 h-4 text-brand-cyan-dark" />
+                        <span>{t('annonceDetail:features.menOnly')}</span>
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    {t('annonceDetail:features.noFeatures')}
+                  </div>
+                )}
+              </div>
+            </section>
 
           <section className="mt-8 rounded-2xl border border-cyan-200 bg-cyan-50/70 p-5 shadow-sm">
             <div className="flex items-center gap-2 text-cyan-900">
