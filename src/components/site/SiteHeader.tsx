@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Menu, User, X, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell } from 'lucide-react'
+import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell } from 'lucide-react'
 import { Logo, LogoMark } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
@@ -449,126 +449,130 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <div className="sm:hidden border-t border-border bg-white px-4 py-4 flex flex-col gap-3">
-          {visibleNavItems.map((item) => {
-            const isActive = location.pathname.startsWith(item.to)
-            const label = getNavLabel(item.label)
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
-                  isActive
-                    ? 'bg-brand-cyan-light text-brand-cyan-dark'
-                    : 'hover:bg-muted text-foreground/70 hover:text-foreground'
-                )}
-              >
-                <item.icon className={cn('w-4 h-4', isActive ? 'text-brand-cyan' : 'opacity-60')} />
-                {label}
-                {isActive && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-cyan" />
-                )}
-              </Link>
-            )
-          })}
-
-          <div className="border-t border-border/50 mt-3 pt-3 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={handleToggleLiteMode}
-              aria-pressed={liteMode}
-              className={cn(
-                'flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl border-2 transition-all duration-150 w-full justify-center',
-                liteMode
-                  ? 'border-brand-green bg-brand-green/10 text-brand-green-dark'
-                  : 'border-border/50 bg-white text-foreground/70'
-              )}
-            >
-              <Leaf className="w-4 h-4" />
-              <span className="font-semibold">Mode Lite</span>
-              <span className={cn(
-                'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase',
-                liteMode ? 'bg-brand-green text-white' : 'bg-muted text-muted-foreground'
-              )}>
-                {liteMode ? 'ON' : 'OFF'}
-              </span>
-            </button>
-
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              {availableLanguages.map((language) => (
-                <button
-                  key={language.code}
-                  type="button"
-                  onClick={() => {
-                    handleLanguageChange(language.code)
-                    setOpen(false)
-                  }}
+        <React.Fragment>
+          <div className="sm:hidden fixed inset-0 top-14 bg-black/50 z-40" onClick={() => setOpen(false)} />
+          <div className="sm:hidden border-t border-border bg-white px-4 py-4 flex flex-col gap-3 relative z-50">
+            {visibleNavItems.map((item) => {
+              const isActive = location.pathname.startsWith(item.to)
+              const label = getNavLabel(item.label)
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
                   className={cn(
-                    'flex flex-col items-center justify-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all duration-150',
-                    language.code.toLowerCase() === i18n.language
-                      ? 'border-brand-cyan bg-brand-cyan/10 shadow-sm'
-                      : 'border-border/50 bg-white text-foreground/70 hover:border-brand-cyan/30 hover:bg-muted'
+                    'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
+                    isActive
+                      ? 'bg-brand-cyan-light text-brand-cyan-dark'
+                      : 'hover:bg-muted text-foreground/70 hover:text-foreground'
                   )}
                 >
-                  <FlagIcon code={language.code} size="lg" />
-                  <span className="text-[10px] uppercase tracking-wider font-semibold">
-                    {language.code}
-                  </span>
-                  <span className="text-[8px] text-muted-foreground truncate max-w-full">
-                    {language.nativeName}
-                  </span>
-                </button>
-              ))}
-            </div>
+                  <item.icon className={cn('w-4 h-4', isActive ? 'text-brand-cyan' : 'opacity-60')} />
+                  {label}
+                  {isActive && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-cyan" />
+                  )}
+                </Link>
+              )
+            })}
 
-            <div className="mt-4 space-y-3">
-              {user ? (
-                <>
-                  <Link to={getAccountMenuTarget()} className="w-full block" onClick={() => setOpen(false)}>
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white shadow-md hover:shadow-lg transition-all duration-200">
-                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                        {profileImageUrl ? (
-                          <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
-                        ) : (
-                          getUserInitials()
-                        )}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <div className="text-sm font-semibold">
-                          {getUserDisplayName()}
-                        </div>
-                        <div className="text-xs opacity-80 truncate">{user.email}</div>
-                      </div>
-                    </div>
-                  </Link>
+            <div className="border-t border-border/50 mt-3 pt-3 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleToggleLiteMode}
+                aria-pressed={liteMode}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl border-2 transition-all duration-150 w-full justify-center',
+                  liteMode
+                    ? 'border-brand-green bg-brand-green/10 text-brand-green-dark'
+                    : 'border-border/50 bg-white text-foreground/70'
+                )}
+              >
+                <Leaf className="w-4 h-4" />
+                <span className="font-semibold">Mode Lite</span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase',
+                  liteMode ? 'bg-brand-green text-white' : 'bg-muted text-muted-foreground'
+                )}>
+                  {liteMode ? 'ON' : 'OFF'}
+                </span>
+              </button>
+
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                {availableLanguages.map((language) => (
                   <button
-                    onClick={() => { logout(); setOpen(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-red-200 hover:border-red-300 hover:bg-red-50 text-red-600 transition-all duration-200"
+                    key={language.code}
+                    type="button"
+                    onClick={() => {
+                      handleLanguageChange(language.code)
+                      setOpen(false)
+                    }}
+                    className={cn(
+                      'flex flex-col items-center justify-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all duration-150',
+                      language.code.toLowerCase() === i18n.language
+                        ? 'border-brand-cyan bg-brand-cyan/10 shadow-sm'
+                        : 'border-border/50 bg-white text-foreground/70 hover:border-brand-cyan/30 hover:bg-muted'
+                    )}
                   >
-                    <LogOut className="w-4 h-4" />
+                    <FlagIcon code={language.code} size="lg" />
+                    <span className="text-[10px] uppercase tracking-wider font-semibold">
+                      {language.code}
+                    </span>
+                    <span className="text-[8px] text-muted-foreground truncate max-w-full">
+                      {language.nativeName}
+                    </span>
                   </button>
-                    {t('logout', { ns: 'header' })}
-                </>
-              ) : (
-                <>
-                  <Link to="/auth" className="w-full block" onClick={() => setOpen(false)}>
-                    <Button variant="outline" className="w-full rounded-xl border-2" size="sm">
-                      {t('signin', { ns: 'header' })}
-                    </Button>
-                  </Link>
-                  <Link to="/compte?tab=dossier" className="w-full block" onClick={() => setOpen(false)}>
-                    <Button className="w-full rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200" size="sm">
-                      <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
-                    </Button>
-                  </Link>
-                </>
-              )}
+                ))}
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {user ? (
+                  <React.Fragment>
+                    <Link to={getAccountMenuTarget()} className="w-full block" onClick={() => setOpen(false)}>
+                      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white shadow-md hover:shadow-lg transition-all duration-200">
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                          {profileImageUrl ? (
+                            <img src={profileImageUrl} alt={getUserDisplayName()} className="w-full h-full object-cover" />
+                          ) : (
+                            getUserInitials()
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <div className="text-sm font-semibold">
+                            {getUserDisplayName()}
+                          </div>
+                          <div className="text-xs opacity-80 truncate">{user.email}</div>
+                        </div>
+                      </div>
+                    </Link>
+                    <button
+                      onClick={() => { logout(); setOpen(false) }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-red-200 hover:border-red-300 hover:bg-red-50 text-red-600 transition-all duration-200"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>{t('logout', { ns: 'header' })}</span>
+                    </button>
+                  </React.Fragment>
+                ) : (
+                  <React.Fragment>
+                    <Link to="/auth" className="w-full block" onClick={() => setOpen(false)}>
+                      <Button variant="outline" className="w-full rounded-xl border-2" size="sm">
+                        {t('signin', { ns: 'header' })}
+                      </Button>
+                    </Link>
+                    <Link to="/compte?tab=dossier" className="w-full block" onClick={() => setOpen(false)}>
+                      <Button className="w-full rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200" size="sm">
+                        <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
+                      </Button>
+                    </Link>
+                  </React.Fragment>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </React.Fragment>
       )}
     </header>
+
   )
 }
