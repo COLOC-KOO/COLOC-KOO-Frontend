@@ -1,14 +1,6 @@
-// Annonces.tsx (version refondue)
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  X,
-  Users,
-  PlusCircle,
-  List,
-  Map,
-  Pencil,
-} from "lucide-react";
+import { X, Users, PlusCircle, List, Map, Pencil } from "lucide-react";
 import { DivIcon, LatLngBounds, LatLngExpression } from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -20,58 +12,16 @@ import { useAuth } from "../lib/auth";
 import { formatAr } from "../lib/utils";
 import { Listing } from "../types";
 
-// ---- Liste de villes de secours (inchangée) ----
 const MADAGASCAR_CITIES_FALLBACK = [
-  "Antananarivo",
-  "Toamasina",
-  "Antsirabe",
-  "Fianarantsoa",
-  "Mahajanga",
-  "Toliara",
-  "Antsiranana",
-  "Ambatondrazaka",
-  "Antalaha",
-  "Ambositra",
-  "Manakara",
-  "Farafangana",
-  "Marovoay",
-  "Sambava",
-  "Morondava",
-  "Ambanja",
-  "Nosy Be",
-  "Fenoarivo Atsinanana",
-  "Ihosy",
-  "Moramanga",
-  "Vatomandry",
-  "Maevatanana",
-  "Miandrivazo",
-  "Mandritsara",
-  "Vangaindrano",
-  "Betroka",
-  "Tsiroanomandidy",
-  "Mananjary",
-  "Ambovombe",
-  "Amparafaravola",
-  "Ambatolampy",
-  "Andapa",
-  "Antsohihy",
-  "Vohipeno",
-  "Sakaraha",
-  "Ejeda",
-  "Mananara Avaratra",
-  "Nosy Varika",
-  "Bealanana",
-  "Mahanoro",
-  "Vohemar",
-  "Marolambo",
-  "Maroantsetra",
-  "Ankazobe",
-  "Faratsiho",
-  "Betafo",
-  "Ambalavao",
-  "Ihandra",
-  "Ivato",
-  "Sainte-Marie",
+  "Antananarivo", "Toamasina", "Antsirabe", "Fianarantsoa", "Mahajanga", "Toliara",
+  "Antsiranana", "Ambatondrazaka", "Antalaha", "Ambositra", "Manakara", "Farafangana",
+  "Marovoay", "Sambava", "Morondava", "Ambanja", "Nosy Be", "Fenoarivo Atsinanana",
+  "Ihosy", "Moramanga", "Vatomandry", "Maevatanana", "Miandrivazo", "Mandritsara",
+  "Vangaindrano", "Betroka", "Tsiroanomandidy", "Mananjary", "Ambovombe",
+  "Amparafaravola", "Ambatolampy", "Andapa", "Antsohihy", "Vohipeno", "Sakaraha",
+  "Ejeda", "Mananara Avaratra", "Nosy Varika", "Bealanana", "Mahanoro", "Vohemar",
+  "Marolambo", "Maroantsetra", "Ankazobe", "Faratsiho", "Betafo", "Ambalavao",
+  "Ihandra", "Ivato", "Sainte-Marie",
 ];
 
 const CITY_COORDINATES: Record<string, [number, number]> = {
@@ -86,11 +36,7 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
 };
 
 function normalizeText(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
+  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
 
 function fallbackPositionForListing(listing: Listing, index: number): [number, number] {
@@ -108,19 +54,75 @@ function getListingPosition(listing: Listing, index: number): [number, number] {
   return fallbackPositionForListing(listing, index);
 }
 
-function createPriceIcon(price: number) {
+const MARKER_CSS = `
+  .ck-price-marker { background: transparent; border: none; }
+  .ck-marker {
+    width: 190px; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    transform-origin: 50% 100%; transition: transform .15s ease;
+  }
+  .ck-badge {
+    display: flex; flex-direction: column; align-items: center; max-width: 186px;
+    background: #111827; color: #fff; border: 2px solid #fff; border-radius: 12px;
+    padding: 5px 10px; box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  }
+  .ck-line1 { display: flex; align-items: center; gap: 6px; }
+  .ck-price { font-size: 12px; font-weight: 800; white-space: nowrap; }
+  .ck-sep { width: 1px; height: 10px; background: rgba(255,255,255,.4); flex-shrink: 0; }
+  .ck-district {
+    font-size: 10px; font-weight: 600; white-space: nowrap;
+    max-width: 90px; overflow: hidden; text-overflow: ellipsis; opacity: .9;
+  }
+  .ck-details {
+    display: flex; align-items: center; gap: 8px; margin-top: 4px; padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,.3); font-size: 10px; font-weight: 700; white-space: nowrap;
+  }
+  .ck-caret {
+    width: 0; height: 0;
+    border-left: 7px solid transparent; border-right: 7px solid transparent;
+    border-top: 9px solid #111827; border-bottom: none;
+  }
+  .ck-dot {
+    width: 10px; height: 10px; margin-top: 1px; border-radius: 50%;
+    background: #111827; border: 2.5px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  }
+  .ck-marker.is-active { transform: scale(1.08); }
+  .ck-marker.is-active .ck-badge { background: #46BDD6; }
+  .ck-marker.is-active .ck-caret { border-top-color: #46BDD6; }
+  .ck-marker.is-active .ck-dot { background: #46BDD6; animation: ck-pulse 1.1s ease-out infinite; }
+  @keyframes ck-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(70,189,214,.55); }
+    100% { box-shadow: 0 0 0 16px rgba(70,189,214,0); }
+  }
+`;
+
+function MarkerStyles() {
+  return <style>{MARKER_CSS}</style>;
+}
+
+function createPriceIcon(listing: Listing, isActive: boolean) {
   return new DivIcon({
     className: "ck-price-marker",
-    html: `<div style="background:#2b2b2b;color:#fff;border-radius:9px;padding:6px 10px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.22);">${formatAr(price || 0)}</div>`,
-    iconSize: [92, 30],
-    iconAnchor: [46, 15],
-    popupAnchor: [0, -18],
+    html: `
+      <div class="ck-marker${isActive ? " is-active" : ""}">
+        <div class="ck-badge">
+          <span class="ck-line1">
+            <span class="ck-price">${formatAr(listing.price || 0)}</span>
+            <span class="ck-sep"></span>
+            <span class="ck-district">${listing.district || "Madagascar"}</span>
+          </span>
+        </div>
+        <div class="ck-caret"></div>
+        <div class="ck-dot"></div>
+      </div>`,
+    iconSize: [190, 56],
+    iconAnchor: [95, 49],
+    popupAnchor: [0, -52],
   });
 }
 
 function MapBounds({ listings }: { listings: Listing[] }) {
   const map = useMap();
-
   useEffect(() => {
     if (listings.length === 0) return;
     const first = getListingPosition(listings[0], 0);
@@ -130,7 +132,18 @@ function MapBounds({ listings }: { listings: Listing[] }) {
     });
     map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
   }, [listings, map]);
+  return null;
+}
 
+function MapFocusController({ target }: { target: [number, number] | null }) {
+  const map = useMap();
+  const key = target ? target.join(",") : "";
+  useEffect(() => {
+    if (!target) return;
+    const zoom = Math.max(map.getZoom(), 15);
+    map.flyTo(target, zoom, { duration: 0.6 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   return null;
 }
 
@@ -146,34 +159,53 @@ function InteractiveListingsMap({
   locationLabel: string;
 }) {
   const navigate = useNavigate();
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const listRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   const firstPosition: LatLngExpression =
     listings.length > 0 ? getListingPosition(listings[0], 0) : CITY_COORDINATES.antananarivo;
+
+  const activeIndex = activeId ? listings.findIndex((l) => String(l.id) === activeId) : -1;
+  const activeListing = activeIndex >= 0 ? listings[activeIndex] : null;
+  const activePosition = activeListing ? getListingPosition(activeListing, activeIndex) : null;
+
+  useEffect(() => {
+    if (!activeId) return;
+    const el = listRefs.current[activeId];
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [activeId]);
 
   return (
     <div className="grid min-h-[calc(100vh-190px)] grid-cols-1 overflow-hidden border-t border-sc-bd bg-white lg:grid-cols-[1fr_470px]">
       <div className="relative min-h-[420px] bg-[#dfead4] lg:min-h-[calc(100vh-190px)]">
+        <MarkerStyles />
         <MapContainer center={firstPosition} zoom={12} className="h-full w-full" zoomControl={false}>
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · précision quartier'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapBounds listings={listings} />
+          <MapFocusController target={activePosition} />
           {listings.map((listing, index) => {
             const position = getListingPosition(listing, index);
+            const isActive = activeId === String(listing.id);
             return (
               <Marker
                 key={listing.id}
                 position={position}
-                icon={createPriceIcon(listing.price)}
-                eventHandlers={{ click: () => navigate(`/annonces/${listing.id}`) }}
+                icon={createPriceIcon(listing, isActive)}
+                zIndexOffset={isActive ? 1000 : 0}
+                eventHandlers={{
+                  click: () => navigate(`/annonces/${listing.id}`),
+                  mouseover: () => setActiveId(String(listing.id)),
+                  mouseout: () => setActiveId((current) => (current === String(listing.id) ? null : current)),
+                }}
               >
                 <Popup>
                   <div className="w-56">
                     <img src={listing.image} alt={listing.title} className="mb-2 h-28 w-full rounded-lg object-cover" />
                     <p className="text-sm font-bold text-slate-900">{listing.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {listing.district}, {listing.city}
-                    </p>
+                    <p className="mt-1 text-xs text-slate-500">{listing.district}, {listing.city}</p>
                     <p className="mt-2 text-sm font-bold text-sc-cy">{formatAr(listing.price)}/mois</p>
                   </div>
                 </Popup>
@@ -181,6 +213,9 @@ function InteractiveListingsMap({
             );
           })}
         </MapContainer>
+        <div className="pointer-events-none absolute bottom-3 left-3 z-[500] rounded-lg bg-black/55 px-2.5 py-1.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+          Survolez une annonce pour voir les détails sur la carte
+        </div>
       </div>
 
       <aside className="max-h-[calc(100vh-190px)] overflow-y-auto border-l border-sc-bd bg-white">
@@ -191,13 +226,22 @@ function InteractiveListingsMap({
         </div>
         <div className="space-y-3 p-4">
           {listings.map((listing) => (
-            <ListingCard
+            <div
               key={listing.id}
-              l={listing}
-              compact
-              isFavorite={favoriteIds.has(String(listing.id))}
-              onFavoriteClick={onFavoriteClick}
-            />
+              ref={(el) => {
+                listRefs.current[String(listing.id)] = el;
+              }}
+            >
+              <ListingCard
+                l={listing}
+                compact
+                isFavorite={favoriteIds.has(String(listing.id))}
+                onFavoriteClick={onFavoriteClick}
+                highlighted={activeId === String(listing.id)}
+                onMouseEnter={() => setActiveId(String(listing.id))}
+                onMouseLeave={() => setActiveId((current) => (current === String(listing.id) ? null : current))}
+              />
+            </div>
           ))}
         </div>
       </aside>
@@ -221,7 +265,6 @@ async function fetchMadagascarCities(): Promise<string[]> {
   }
 }
 
-// ---- Composant DropdownPill (copié depuis ResultsPage) ----
 interface DropdownPillProps {
   label: string;
   icon: string;
@@ -232,15 +275,7 @@ interface DropdownPillProps {
   children: React.ReactNode;
 }
 
-function DropdownPill({
-  label,
-  icon,
-  isOpen,
-  onToggle,
-  active,
-  minWidth = 180,
-  children,
-}: DropdownPillProps) {
+function DropdownPill({ label, icon, isOpen, onToggle, active, minWidth = 180, children }: DropdownPillProps) {
   return (
     <div className="relative">
       <button
@@ -255,11 +290,7 @@ function DropdownPill({
       >
         <i className={`ti ${icon} text-xs`} />
         {label}
-        <i
-          className={`ti ti-chevron-down text-[10px] transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
+        <i className={`ti ti-chevron-down text-[10px] transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
       {isOpen && (
         <div
@@ -279,14 +310,12 @@ function DropdownPill({
   );
 }
 
-// ---- Page principale ----
 export default function Annonces() {
   const { t } = useTranslation(["annonces", "common"]);
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // États (inchangés)
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [type, setType] = useState("");
@@ -308,16 +337,9 @@ export default function Annonces() {
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteMessage, setFavoriteMessage] = useState("");
-
-  // États pour les dropdowns (ouverts/fermés)
   const [openDrop, setOpenDrop] = useState<string | null>(null);
-
-  // Références pour fermeture au clic extérieur
-  const searchRef = useRef<HTMLDivElement>(null);
-  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [externalCities, setExternalCities] = useState<string[]>([]);
 
-  // Options (inchangées)
   const equipmentOptions = useMemo(
     () => [
       { value: "accessibilite_handicape", label: "Accessibilité handicapé" },
@@ -359,45 +381,26 @@ export default function Annonces() {
     [t]
   );
 
-  // Initialisation des villes externes
   useEffect(() => {
     fetchMadagascarCities().then(setExternalCities);
   }, []);
 
-  // Lecture des paramètres d'URL (inchangé)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const urlQuery = params.get("q") || "";
-    const urlType = params.get("type") || "";
-    const urlCity = params.get("ville") || params.get("city") || "";
-    const urlDistrict = params.get("quartier") || params.get("district") || "";
-    const urlColoc = params.get("coloc") || "";
-    const urlServices =
-      params.get("services")?.split(",").map(Number).filter(Boolean) || [];
-    const urlEquipments =
-      params.get("equipements")?.split(",").map((item) => item.trim()).filter(Boolean) ||
-      [];
-    const urlMinPrice = Number(params.get("minPrice") || 0);
-    const urlMaxPrice = Number(params.get("maxPrice") || 0);
-    const urlMinSurface = Number(params.get("minSurface") || 0);
-    const urlMaxSurface = Number(params.get("maxSurface") || 0);
-    const urlBedrooms = params.get("chambres") || "";
-
-    setQuery(urlQuery);
-    setType(urlType);
-    setCity(urlCity);
-    setDistrict(urlDistrict);
-    setColocFilter(urlColoc);
-    setSelectedServiceIds(urlServices);
-    setSelectedEquipments(urlEquipments);
-    setMinPrice(urlMinPrice);
-    setMaxPrice(urlMaxPrice);
-    setMinSurface(urlMinSurface);
-    setMaxSurface(urlMaxSurface);
-    setBedrooms(urlBedrooms);
+    setQuery(params.get("q") || "");
+    setType(params.get("type") || "");
+    setCity(params.get("ville") || params.get("city") || "");
+    setDistrict(params.get("quartier") || params.get("district") || "");
+    setColocFilter(params.get("coloc") || "");
+    setSelectedServiceIds(params.get("services")?.split(",").map(Number).filter(Boolean) || []);
+    setSelectedEquipments(params.get("equipements")?.split(",").map((i) => i.trim()).filter(Boolean) || []);
+    setMinPrice(Number(params.get("minPrice") || 0));
+    setMaxPrice(Number(params.get("maxPrice") || 0));
+    setMinSurface(Number(params.get("minSurface") || 0));
+    setMaxSurface(Number(params.get("maxSurface") || 0));
+    setBedrooms(params.get("chambres") || "");
   }, [location.search]);
 
-  // Chargement des données (inchangé)
   useEffect(() => {
     setLoading(true);
     setError("");
@@ -411,9 +414,7 @@ export default function Annonces() {
       q: query || undefined,
       coloc: colocFilter || undefined,
     };
-    if (selectedServiceIds.length > 0) {
-      params.service = selectedServiceIds.join(",");
-    }
+    if (selectedServiceIds.length > 0) params.service = selectedServiceIds.join(",");
     if (selectedEquipments.length > 0) {
       params.equipements = selectedEquipments.join(",");
       params.regles = selectedEquipments.join(",");
@@ -426,59 +427,33 @@ export default function Annonces() {
     ])
       .then(([annonces, villesList, servicesList]) => {
         setListings(
-          annonces
-            .map(annonceToListing)
-            .sort(
-              (a, b) =>
-                Number(Boolean(b.isBoosted)) - Number(Boolean(a.isBoosted))
-            )
+          annonces.map(annonceToListing).sort((a, b) => Number(Boolean(b.isBoosted)) - Number(Boolean(a.isBoosted)))
         );
         setVilles(villesList);
         setServices(
-          Array.isArray(servicesList)
-            ? servicesList.filter((s) => String(s.cle_service || "").startsWith("service_"))
-            : []
+          Array.isArray(servicesList) ? servicesList.filter((s) => String(s.cle_service || "").startsWith("service_")) : []
         );
       })
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : t("common:common.error"))
-      )
+      .catch((err) => setError(err instanceof Error ? err.message : t("common:common.error")))
       .finally(() => setLoading(false));
-  }, [
-    city,
-    district,
-    type,
-    selectedServiceIds,
-    selectedEquipments,
-    minPrice,
-    maxPrice,
-    query,
-    colocFilter,
-    t,
-  ]);
+  }, [city, district, type, selectedServiceIds, selectedEquipments, minPrice, maxPrice, query, colocFilter, t]);
 
   useEffect(() => {
     if (!user) {
       setFavoriteIds(new Set());
       return;
     }
-
     let cancelled = false;
     api
       .favoris()
       .then((items) => {
         if (cancelled) return;
-        const ids = items.flatMap((item) => [
-          item.id,
-          item.id_depot_annonce,
-          item.id_annonce,
-        ]);
+        const ids = items.flatMap((item) => [item.id, item.id_depot_annonce, item.id_annonce]);
         setFavoriteIds(new Set(ids.filter(Boolean).map(String)));
       })
       .catch(() => {
         if (!cancelled) setFavoriteIds(new Set());
       });
-
     return () => {
       cancelled = true;
     };
@@ -490,23 +465,12 @@ export default function Annonces() {
     return () => window.clearTimeout(timer);
   }, [favoriteMessage]);
 
-  // Listes de villes (inchangé)
   const citiesList = useMemo(() => {
     const fromDb = villes.map((v) => v.nom_ville);
     const fromListings = listings.map((l) => l.city);
-    const merged = [...new Set([...fromDb, ...fromListings, ...externalCities])];
-    return merged.sort((a, b) => a.localeCompare(b, "fr"));
+    return [...new Set([...fromDb, ...fromListings, ...externalCities])].sort((a, b) => a.localeCompare(b, "fr"));
   }, [listings, villes, externalCities]);
 
-  const searchSuggestions = useMemo(() => {
-    const normalizedQuery = normalizeText(query);
-    if (!normalizedQuery) return [];
-    return citiesList
-      .filter((c) => normalizeText(c).includes(normalizedQuery))
-      .slice(0, 6);
-  }, [query, citiesList]);
-
-  // Filtrage supplémentaire (surface, chambres, équipements) – inchangé
   const visibleListings = useMemo(() => {
     return listings.filter((listing) => {
       if (minSurface && listing.surface < minSurface) return false;
@@ -522,35 +486,19 @@ export default function Annonces() {
       }
       if (selectedEquipments.length > 0) {
         const normalizedAmenities = listing.amenities.map((item) =>
-          item
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/\s+/g, "_")
+          item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_")
         );
         const normalizedRules = (listing.regles || []).map((item) =>
-          item
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/\s+/g, "_")
+          item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_")
         );
         const hasEveryEquipment = selectedEquipments.every((equipment) => {
           if (equipment === "wifi" && listing.internet) return true;
           if (equipment === "ascenseur" && listing.elevator) return true;
-          if (
-            equipment === "parking" &&
-            ((listing.parkingVoitures ?? 0) > 0 || listing.parkingCouvert)
-          )
-            return true;
-          if (equipment === "animaux_acceptes" && listing.petsAllowed)
-            return true;
-          if (equipment === "fumeurs_acceptes" && listing.smokersAllowed)
-            return true;
-          if (equipment === "filles_uniquement" && listing.womenOnly)
-            return true;
-          if (equipment === "garcons_uniquement" && listing.menOnly)
-            return true;
+          if (equipment === "parking" && ((listing.parkingVoitures ?? 0) > 0 || listing.parkingCouvert)) return true;
+          if (equipment === "animaux_acceptes" && listing.petsAllowed) return true;
+          if (equipment === "fumeurs_acceptes" && listing.smokersAllowed) return true;
+          if (equipment === "filles_uniquement" && listing.womenOnly) return true;
+          if (equipment === "garcons_uniquement" && listing.menOnly) return true;
           return (
             normalizedAmenities.some((amenity) => amenity.includes(equipment)) ||
             normalizedRules.some((rule) => rule.includes(equipment))
@@ -562,21 +510,11 @@ export default function Annonces() {
     });
   }, [listings, minSurface, maxSurface, bedrooms, selectedEquipments]);
 
-  // Toggles (inchangés)
   const toggleService = (id: number) => {
-    setSelectedServiceIds((prev) =>
-      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
-    );
+    setSelectedServiceIds((prev) => (prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]));
   };
   const toggleEquipment = (value: string) => {
-    setSelectedEquipments((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
-    );
-  };
-  const selectCitySuggestion = (cityName: string) => {
-    setCity(cityName);
-    setQuery("");
-    setShowSearchSuggestions(false);
+    setSelectedEquipments((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
   };
 
   const resetFilters = () => {
@@ -603,55 +541,24 @@ export default function Annonces() {
   const handleFavoriteClick = async (event: React.MouseEvent, listing: Listing) => {
     event.preventDefault();
     event.stopPropagation();
-
     if (!user) {
       navigate(`/auth?mode=signin&redirect=/annonces`);
       return;
     }
-
     const listingId = String(listing.id);
     if (favoriteIds.has(listingId)) {
       showFavoriteToast("C'est déjà dans vos favoris.");
       return;
     }
-
     try {
       const response = await api.addFavori(listing.id);
       setFavoriteIds((prev) => new Set([...prev, listingId]));
-      showFavoriteToast(
-        response.alreadyExists
-          ? "C'est déjà dans vos favoris."
-          : "Ajouté avec succès."
-      );
+      showFavoriteToast(response.alreadyExists ? "C'est déjà dans vos favoris." : "Ajouté avec succès.");
     } catch (err) {
-      showFavoriteToast(
-        err instanceof Error ? err.message : "Impossible d'ajouter ce favori."
-      );
+      showFavoriteToast(err instanceof Error ? err.message : "Impossible d'ajouter ce favori.");
     }
   };
 
-  // Fermeture des dropdowns au clic extérieur (géré via `openDrop`)
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      // On ferme tous les dropdowns si on clique en dehors de tous les boutons
-      // Cette approche est simplifiée : on ferme si on clique sur un élément qui n'est pas un dropdown
-      // On pourrait faire plus précis, mais on garde la logique de ResultsPage qui utilisait des refs.
-      // On va simplement fermer si le clic n'est pas sur un bouton de dropdown.
-      // On peut aussi laisser les refs individuelles, mais je vais simplifier.
-      // Pour être sûr, on utilise les refs des conteneurs de dropdown.
-      // Comme on a plusieurs dropdowns, on utilise un tableau de refs ou on vérifie le parent.
-      // Ici, je vais fermer si on clique en dehors du conteneur parent de la barre de filtres.
-      // Mais pour une solution robuste, je vais ajouter des refs pour chaque dropdown.
-      // Pour gagner du temps, je vais utiliser un gestionnaire global : si le clic est à l'intérieur d'un dropdown, on ne ferme pas.
-      // On peut vérifier si l'élément cliqué a un parent avec la classe 'relative' (le conteneur du dropdown).
-      // Mais je vais plutôt utiliser des refs pour chaque dropdown.
-      // Je vais définir des refs pour chaque dropdown.
-    };
-  }, []);
-
-  // On va plutôt gérer la fermeture en utilisant des refs pour chaque dropdown.
-  // Créons des refs pour chaque type de dropdown
   const typeRef = useRef<HTMLDivElement>(null);
   const colocRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
@@ -662,42 +569,22 @@ export default function Annonces() {
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (typeRef.current && !typeRef.current.contains(target)) {
-        if (openDrop === "type") setOpenDrop(null);
-      }
-      if (colocRef.current && !colocRef.current.contains(target)) {
-        if (openDrop === "coloc") setOpenDrop(null);
-      }
-      if (servicesRef.current && !servicesRef.current.contains(target)) {
-        if (openDrop === "services") setOpenDrop(null);
-      }
-      if (equipmentsRef.current && !equipmentsRef.current.contains(target)) {
-        if (openDrop === "equipments") setOpenDrop(null);
-      }
-      if (bedroomsRef.current && !bedroomsRef.current.contains(target)) {
-        if (openDrop === "bedrooms") setOpenDrop(null);
-      }
-      if (cityRef.current && !cityRef.current.contains(target)) {
-        if (openDrop === "city") setOpenDrop(null);
-      }
-      if (searchRef.current && !searchRef.current.contains(target)) {
-        setShowSearchSuggestions(false);
-      }
+      if (openDrop === "type" && typeRef.current && !typeRef.current.contains(target)) setOpenDrop(null);
+      if (openDrop === "coloc" && colocRef.current && !colocRef.current.contains(target)) setOpenDrop(null);
+      if (openDrop === "services" && servicesRef.current && !servicesRef.current.contains(target)) setOpenDrop(null);
+      if (openDrop === "equipments" && equipmentsRef.current && !equipmentsRef.current.contains(target)) setOpenDrop(null);
+      if (openDrop === "bedrooms" && bedroomsRef.current && !bedroomsRef.current.contains(target)) setOpenDrop(null);
+      if (openDrop === "city" && cityRef.current && !cityRef.current.contains(target)) setOpenDrop(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openDrop]);
 
-  // Helper pour les labels
-  const getTypeLabel = (val: string) =>
-    typeOptions.find((t) => t.value === val)?.label || t("annonces:filters.types.all");
-  const getColocLabel = (val: string) =>
-    colocOptions.find((c) => c.value === val)?.label || t("annonces:filters.coloc.all");
+  const getTypeLabel = (val: string) => typeOptions.find((o) => o.value === val)?.label || t("annonces:filters.types.all");
+  const getColocLabel = (val: string) => colocOptions.find((c) => c.value === val)?.label || t("annonces:filters.coloc.all");
   const getCityLabel = (val: string) => val || t("annonces:filters.city.all");
-  const getBedroomsLabel = (val: string) =>
-    val ? `${val} chambre${val === "1" ? "" : "s"}` : "Chambres";
+  const getBedroomsLabel = (val: string) => (val ? `${val} chambre${val === "1" ? "" : "s"}` : "Chambres");
 
-  // Nombre de filtres actifs
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (city) count++;
@@ -712,60 +599,30 @@ export default function Annonces() {
     if (bedrooms) count++;
     if (colocFilter) count++;
     return count;
-  }, [
-    city,
-    district,
-    type,
-    selectedServiceIds,
-    selectedEquipments,
-    minPrice,
-    maxPrice,
-    minSurface,
-    maxSurface,
-    bedrooms,
-    colocFilter,
-  ]);
+  }, [city, district, type, selectedServiceIds, selectedEquipments, minPrice, maxPrice, minSurface, maxSurface, bedrooms, colocFilter]);
 
-  const emptyMessage =
-    city || query ? "Aucune annonce disponible." : t("annonces:emptySub");
+  const emptyMessage = city || query ? "Aucune annonce disponible." : t("annonces:emptySub");
   const searchedCityLabel = city || query;
 
-  // ---- Composant MobileFilters (style adapté au thème sc) ----
   const MobileFilters = () => (
-    <div
-      className="lg:hidden fixed inset-0 z-50 bg-black/50"
-      onClick={() => setShowMobileFilters(false)}
-    >
-      <div
-        className="absolute bottom-0 left-0 right-0 bg-sc-bg rounded-t-3xl max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setShowMobileFilters(false)}>
+      <div className="absolute bottom-0 left-0 right-0 bg-sc-bg rounded-t-3xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 bg-sc-bg z-10 px-4 py-4 border-b border-sc-bd flex items-center justify-between rounded-t-3xl">
-          <h3 className="font-bebas text-xl text-sc-dark">
-            {t("annonces:filters.title")}
-          </h3>
-          <button
-            onClick={() => setShowMobileFilters(false)}
-            className="p-2 hover:bg-sc-bd/30 rounded-full transition-colors"
-          >
+          <h3 className="font-bebas text-xl text-sc-dark">{t("annonces:filters.title")}</h3>
+          <button onClick={() => setShowMobileFilters(false)} className="p-2 hover:bg-sc-bd/30 rounded-full transition-colors">
             <X className="w-5 h-5 text-sc-dark" />
           </button>
         </div>
         <div className="p-4 space-y-6">
-          {/* Type */}
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">
-              {t("annonces:filters.types.title")}
-            </label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">{t("annonces:filters.types.title")}</label>
             <div className="flex flex-wrap gap-2">
               {typeOptions.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => setType(opt.value)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    type === opt.value
-                      ? "bg-sc-cy text-white shadow-md"
-                      : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
+                    type === opt.value ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
                   {opt.label}
@@ -773,20 +630,15 @@ export default function Annonces() {
               ))}
             </div>
           </div>
-          {/* Coloc */}
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">
-              {t("annonces:filters.coloc.title")}
-            </label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">{t("annonces:filters.coloc.title")}</label>
             <div className="flex flex-wrap gap-2">
               {colocOptions.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => setColocFilter(opt.value)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    colocFilter === opt.value
-                      ? "bg-sc-cy text-white shadow-md"
-                      : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
+                    colocFilter === opt.value ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
                   {opt.label}
@@ -794,11 +646,8 @@ export default function Annonces() {
               ))}
             </div>
           </div>
-          {/* Ville */}
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">
-              {t("annonces:filters.city.title")}
-            </label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">{t("annonces:filters.city.title")}</label>
             <select
               value={city}
               onChange={(e) => setCity(e.target.value)}
@@ -806,17 +655,12 @@ export default function Annonces() {
             >
               <option value="">{t("annonces:filters.city.all")}</option>
               {citiesList.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
-          {/* Quartier */}
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">
-              {t("annonces:filters.district.title")}
-            </label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">{t("annonces:filters.district.title")}</label>
             <input
               type="text"
               value={district}
@@ -825,68 +669,29 @@ export default function Annonces() {
               className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
             />
           </div>
-          {/* Budget */}
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">
-              Budget
-            </label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">Budget</label>
             <div className="grid grid-cols-2 gap-3">
-              <input
-                type="number"
-                min={0}
-                value={minPrice || ""}
-                onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
-                placeholder="Minimum"
-                className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
-              />
-              <input
-                type="number"
-                min={0}
-                value={maxPrice || ""}
-                onChange={(e) => setMaxPrice(Number(e.target.value) || 0)}
-                placeholder="Maximum"
-                className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
-              />
+              <input type="number" min={0} value={minPrice || ""} onChange={(e) => setMinPrice(Number(e.target.value) || 0)} placeholder="Minimum" className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark" />
+              <input type="number" min={0} value={maxPrice || ""} onChange={(e) => setMaxPrice(Number(e.target.value) || 0)} placeholder="Maximum" className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark" />
             </div>
           </div>
-          {/* Surface */}
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">
-              Surface
-            </label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">Surface</label>
             <div className="grid grid-cols-2 gap-3">
-              <input
-                type="number"
-                min={0}
-                value={minSurface || ""}
-                onChange={(e) => setMinSurface(Number(e.target.value) || 0)}
-                placeholder="Minimum"
-                className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
-              />
-              <input
-                type="number"
-                min={0}
-                value={maxSurface || ""}
-                onChange={(e) => setMaxSurface(Number(e.target.value) || 0)}
-                placeholder="Maximum"
-                className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark"
-              />
+              <input type="number" min={0} value={minSurface || ""} onChange={(e) => setMinSurface(Number(e.target.value) || 0)} placeholder="Minimum" className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark" />
+              <input type="number" min={0} value={maxSurface || ""} onChange={(e) => setMaxSurface(Number(e.target.value) || 0)} placeholder="Maximum" className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark" />
             </div>
           </div>
-          {/* Chambres */}
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">
-              Nombre de chambres
-            </label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">Nombre de chambres</label>
             <div className="flex flex-wrap gap-2">
               {bedroomOptions.map((opt) => (
                 <button
                   key={opt}
                   onClick={() => setBedrooms(bedrooms === opt ? "" : opt)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    bedrooms === opt
-                      ? "bg-sc-cy text-white shadow-md"
-                      : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
+                    bedrooms === opt ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
                   {opt}
@@ -894,43 +699,31 @@ export default function Annonces() {
               ))}
             </div>
           </div>
-          {/* Services */}
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">
-              {t("annonces:filters.services")}
-            </label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">{t("annonces:filters.services")}</label>
             <div className="flex flex-wrap gap-2">
-              {services
-                .filter((s) => s.est_actif === 1)
-                .map((service) => (
-                  <button
-                    key={service.id_service}
-                    onClick={() => toggleService(service.id_service)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      selectedServiceIds.includes(service.id_service)
-                        ? "bg-sc-cy text-white shadow-md"
-                        : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
-                    }`}
-                  >
-                    {service.nom}
-                  </button>
-                ))}
+              {services.filter((s) => s.est_actif === 1).map((service) => (
+                <button
+                  key={service.id_service}
+                  onClick={() => toggleService(service.id_service)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    selectedServiceIds.includes(service.id_service) ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
+                  }`}
+                >
+                  {service.nom}
+                </button>
+              ))}
             </div>
           </div>
-          {/* Equipements */}
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">
-              Equipement
-            </label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">Equipement</label>
             <div className="flex flex-wrap gap-2">
               {equipmentOptions.map((equipment) => (
                 <button
                   key={equipment.value}
                   onClick={() => toggleEquipment(equipment.value)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedEquipments.includes(equipment.value)
-                      ? "bg-sc-cy text-white shadow-md"
-                      : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
+                    selectedEquipments.includes(equipment.value) ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
                   {equipment.label}
@@ -938,18 +731,11 @@ export default function Annonces() {
               ))}
             </div>
           </div>
-          {/* Actions */}
           <div className="flex gap-3 pt-4 border-t border-sc-bd">
-            <button
-              onClick={resetFilters}
-              className="flex-1 px-4 py-3 border border-sc-bd rounded-xl text-sm font-medium text-sc-dark hover:bg-sc-bd/30 transition-colors"
-            >
+            <button onClick={resetFilters} className="flex-1 px-4 py-3 border border-sc-bd rounded-xl text-sm font-medium text-sc-dark hover:bg-sc-bd/30 transition-colors">
               {t("common:common.reset")}
             </button>
-            <button
-              onClick={() => setShowMobileFilters(false)}
-              className="flex-1 px-4 py-3 bg-sc-cy text-white rounded-xl text-sm font-medium hover:bg-sc-cy-d transition-colors shadow-md"
-            >
+            <button onClick={() => setShowMobileFilters(false)} className="flex-1 px-4 py-3 bg-sc-cy text-white rounded-xl text-sm font-medium hover:bg-sc-cy-d transition-colors shadow-md">
               {t("common:common.apply")}
             </button>
           </div>
@@ -958,10 +744,8 @@ export default function Annonces() {
     </div>
   );
 
-  // ---- Rendu principal ----
   return (
     <SiteLayout>
-      {/* Contenu principal avec fond sc-bg */}
       <div className="min-h-screen bg-sc-bg flex flex-col">
         {favoriteMessage && (
           <div className="fixed right-5 top-20 z-[90] rounded-xl border border-sc-bd bg-white px-4 py-3 text-sm font-semibold text-sc-dark shadow-2xl">
@@ -969,7 +753,6 @@ export default function Annonces() {
           </div>
         )}
 
-        {/* En-tête (similaire à ResultsPage) */}
         <div className="px-4 py-5 border-b border-sc-bd bg-white">
           <h1 className="font-bebas text-2xl text-sc-dark tracking-wide">
             Annonces récentes — {(city || query || "Madagascar").toUpperCase()}
@@ -977,194 +760,72 @@ export default function Annonces() {
           <p className="text-xs text-sc-gr2">
             {loading
               ? t("common:common.loading")
-              : `${visibleListings.length} logement${
-                  visibleListings.length > 1 ? "s" : ""
-                } disponible${visibleListings.length > 1 ? "s" : ""}`}
+              : `${visibleListings.length} logement${visibleListings.length > 1 ? "s" : ""} disponible${visibleListings.length > 1 ? "s" : ""}`}
           </p>
         </div>
 
-        {/* Barre de filtres (sticky) – style ResultsPage */}
         <div className="bg-white border-b border-sc-bd px-4 py-2 flex items-center gap-2 flex-wrap sticky top-14 z-30">
           <span className="text-xs font-bold text-sc-dark flex items-center gap-1">
             <i className="ti ti-adjustments-horizontal text-sm" /> Filtres
             {activeFiltersCount > 0 && (
-              <span className="ml-1 bg-sc-cy text-white text-[10px] font-bold px-1.5 rounded-full">
-                {activeFiltersCount}
-              </span>
+              <span className="ml-1 bg-sc-cy text-white text-[10px] font-bold px-1.5 rounded-full">{activeFiltersCount}</span>
             )}
           </span>
           <div className="w-px h-4 bg-sc-bd" />
 
-          {/* Type */}
           <div ref={typeRef} className="relative">
-            <DropdownPill
-              label={getTypeLabel(type)}
-              icon="ti-home"
-              isOpen={openDrop === "type"}
-              onToggle={() => setOpenDrop((v) => (v === "type" ? null : "type"))}
-              active={type !== ""}
-            >
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
-                Type d'annonce
-              </p>
+            <DropdownPill label={getTypeLabel(type)} icon="ti-home" isOpen={openDrop === "type"} onToggle={() => setOpenDrop((v) => (v === "type" ? null : "type"))} active={type !== ""}>
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Type d'annonce</p>
               {typeOptions.map((opt) => (
-                <label
-                  key={opt.value}
-                  className="flex items-center gap-2 text-sm py-1 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="type"
-                    checked={type === opt.value}
-                    onChange={() => {
-                      setType(opt.value);
-                      setOpenDrop(null);
-                    }}
-                    className="accent-sc-cy"
-                  />
+                <label key={opt.value} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                  <input type="radio" name="type" checked={type === opt.value} onChange={() => { setType(opt.value); setOpenDrop(null); }} className="accent-sc-cy" />
                   {opt.label}
                 </label>
               ))}
             </DropdownPill>
           </div>
 
-          {/* Coloc */}
           <div ref={colocRef} className="relative">
-            <DropdownPill
-              label={getColocLabel(colocFilter)}
-              icon="ti-users"
-              isOpen={openDrop === "coloc"}
-              onToggle={() => setOpenDrop((v) => (v === "coloc" ? null : "coloc"))}
-              active={colocFilter !== ""}
-            >
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
-                Type de colocation
-              </p>
+            <DropdownPill label={getColocLabel(colocFilter)} icon="ti-users" isOpen={openDrop === "coloc"} onToggle={() => setOpenDrop((v) => (v === "coloc" ? null : "coloc"))} active={colocFilter !== ""}>
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Type de colocation</p>
               {colocOptions.map((opt) => (
-                <label
-                  key={opt.value}
-                  className="flex items-center gap-2 text-sm py-1 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="coloc"
-                    checked={colocFilter === opt.value}
-                    onChange={() => {
-                      setColocFilter(opt.value);
-                      setOpenDrop(null);
-                    }}
-                    className="accent-sc-cy"
-                  />
+                <label key={opt.value} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                  <input type="radio" name="coloc" checked={colocFilter === opt.value} onChange={() => { setColocFilter(opt.value); setOpenDrop(null); }} className="accent-sc-cy" />
                   {opt.label}
                 </label>
               ))}
             </DropdownPill>
           </div>
 
-          {/* Budget */}
-          <DropdownPill
-            label="Budget"
-            icon="ti-coin"
-            isOpen={openDrop === "budget"}
-            onToggle={() => setOpenDrop((v) => (v === "budget" ? null : "budget"))}
-            active={!!(minPrice || maxPrice)}
-          >
-            <p className="text-[11px] font-bold text-sc-gr2 mb-2">
-              Loyer mensuel (Ar)
-            </p>
+          <DropdownPill label="Budget" icon="ti-coin" isOpen={openDrop === "budget"} onToggle={() => setOpenDrop((v) => (v === "budget" ? null : "budget"))} active={!!(minPrice || maxPrice)}>
+            <p className="text-[11px] font-bold text-sc-gr2 mb-2">Loyer mensuel (Ar)</p>
             <div className="flex items-center gap-2">
-              <input
-                type="number"
-                placeholder="Min"
-                value={minPrice || ""}
-                onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
-                className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy"
-                step={10000}
-              />
+              <input type="number" placeholder="Min" value={minPrice || ""} onChange={(e) => setMinPrice(Number(e.target.value) || 0)} className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy" step={10000} />
               <span className="text-sc-gr2">—</span>
-              <input
-                type="number"
-                placeholder="Max"
-                value={maxPrice || ""}
-                onChange={(e) => setMaxPrice(Number(e.target.value) || 0)}
-                className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy"
-                step={10000}
-              />
+              <input type="number" placeholder="Max" value={maxPrice || ""} onChange={(e) => setMaxPrice(Number(e.target.value) || 0)} className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy" step={10000} />
             </div>
           </DropdownPill>
 
-          {/* Surface */}
-          <DropdownPill
-            label="Surface"
-            icon="ti-ruler-2"
-            isOpen={openDrop === "surface"}
-            onToggle={() => setOpenDrop((v) => (v === "surface" ? null : "surface"))}
-            active={!!(minSurface || maxSurface)}
-          >
+          <DropdownPill label="Surface" icon="ti-ruler-2" isOpen={openDrop === "surface"} onToggle={() => setOpenDrop((v) => (v === "surface" ? null : "surface"))} active={!!(minSurface || maxSurface)}>
             <p className="text-[11px] font-bold text-sc-gr2 mb-2">Surface (m²)</p>
             <div className="flex items-center gap-2">
-              <input
-                type="number"
-                placeholder="Min"
-                value={minSurface || ""}
-                onChange={(e) => setMinSurface(Number(e.target.value) || 0)}
-                className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy"
-                step={1}
-              />
+              <input type="number" placeholder="Min" value={minSurface || ""} onChange={(e) => setMinSurface(Number(e.target.value) || 0)} className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy" step={1} />
               <span className="text-sc-gr2">—</span>
-              <input
-                type="number"
-                placeholder="Max"
-                value={maxSurface || ""}
-                onChange={(e) => setMaxSurface(Number(e.target.value) || 0)}
-                className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy"
-                step={1}
-              />
+              <input type="number" placeholder="Max" value={maxSurface || ""} onChange={(e) => setMaxSurface(Number(e.target.value) || 0)} className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy" step={1} />
             </div>
           </DropdownPill>
 
-          {/* Chambres */}
           <div ref={bedroomsRef} className="relative">
-            <DropdownPill
-              label={getBedroomsLabel(bedrooms)}
-              icon="ti-bed"
-              isOpen={openDrop === "bedrooms"}
-              onToggle={() => setOpenDrop((v) => (v === "bedrooms" ? null : "bedrooms"))}
-              active={bedrooms !== ""}
-              minWidth={140}
-            >
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
-                Nombre de chambres
-              </p>
+            <DropdownPill label={getBedroomsLabel(bedrooms)} icon="ti-bed" isOpen={openDrop === "bedrooms"} onToggle={() => setOpenDrop((v) => (v === "bedrooms" ? null : "bedrooms"))} active={bedrooms !== ""} minWidth={140}>
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Nombre de chambres</p>
               <div className="space-y-1">
                 <label className="flex items-center gap-2 text-sm py-1 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="bedrooms"
-                    checked={bedrooms === ""}
-                    onChange={() => {
-                      setBedrooms("");
-                      setOpenDrop(null);
-                    }}
-                    className="accent-sc-cy"
-                  />
+                  <input type="radio" name="bedrooms" checked={bedrooms === ""} onChange={() => { setBedrooms(""); setOpenDrop(null); }} className="accent-sc-cy" />
                   Toutes
                 </label>
                 {bedroomOptions.map((opt) => (
-                  <label
-                    key={opt}
-                    className="flex items-center gap-2 text-sm py-1 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="bedrooms"
-                      checked={bedrooms === opt}
-                      onChange={() => {
-                        setBedrooms(opt);
-                        setOpenDrop(null);
-                      }}
-                      className="accent-sc-cy"
-                    />
+                  <label key={opt} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                    <input type="radio" name="bedrooms" checked={bedrooms === opt} onChange={() => { setBedrooms(opt); setOpenDrop(null); }} className="accent-sc-cy" />
                     {opt} chambre{opt === "1" ? "" : "s"}
                   </label>
                 ))}
@@ -1172,65 +833,27 @@ export default function Annonces() {
             </DropdownPill>
           </div>
 
-          {/* Services */}
           <div ref={servicesRef} className="relative">
-            <DropdownPill
-              label="Services"
-              icon="ti-sparkles"
-              isOpen={openDrop === "services"}
-              onToggle={() => setOpenDrop((v) => (v === "services" ? null : "services"))}
-              active={selectedServiceIds.length > 0}
-              minWidth={220}
-            >
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
-                Services inclus
-              </p>
+            <DropdownPill label="Services" icon="ti-sparkles" isOpen={openDrop === "services"} onToggle={() => setOpenDrop((v) => (v === "services" ? null : "services"))} active={selectedServiceIds.length > 0} minWidth={220}>
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Services inclus</p>
               <div className="space-y-1 max-h-48 overflow-y-auto">
-                {services
-                  .filter((s) => s.est_actif === 1)
-                  .map((service) => (
-                    <label
-                      key={service.id_service}
-                      className="flex items-center gap-2 text-xs cursor-pointer py-0.5"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedServiceIds.includes(service.id_service)}
-                        onChange={() => toggleService(service.id_service)}
-                        className="accent-sc-cy"
-                      />
-                      {service.nom}
-                    </label>
-                  ))}
+                {services.filter((s) => s.est_actif === 1).map((service) => (
+                  <label key={service.id_service} className="flex items-center gap-2 text-xs cursor-pointer py-0.5">
+                    <input type="checkbox" checked={selectedServiceIds.includes(service.id_service)} onChange={() => toggleService(service.id_service)} className="accent-sc-cy" />
+                    {service.nom}
+                  </label>
+                ))}
               </div>
             </DropdownPill>
           </div>
 
-          {/* Equipements */}
           <div ref={equipmentsRef} className="relative">
-            <DropdownPill
-              label="Equipement"
-              icon="ti-building"
-              isOpen={openDrop === "equipments"}
-              onToggle={() => setOpenDrop((v) => (v === "equipments" ? null : "equipments"))}
-              active={selectedEquipments.length > 0}
-              minWidth={220}
-            >
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">
-                Equipements et règles
-              </p>
+            <DropdownPill label="Equipement" icon="ti-building" isOpen={openDrop === "equipments"} onToggle={() => setOpenDrop((v) => (v === "equipments" ? null : "equipments"))} active={selectedEquipments.length > 0} minWidth={220}>
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Equipements et règles</p>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {equipmentOptions.map((eq) => (
-                  <label
-                    key={eq.value}
-                    className="flex items-center gap-2 text-xs cursor-pointer py-0.5"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedEquipments.includes(eq.value)}
-                      onChange={() => toggleEquipment(eq.value)}
-                      className="accent-sc-cy"
-                    />
+                  <label key={eq.value} className="flex items-center gap-2 text-xs cursor-pointer py-0.5">
+                    <input type="checkbox" checked={selectedEquipments.includes(eq.value)} onChange={() => toggleEquipment(eq.value)} className="accent-sc-cy" />
                     {eq.label}
                   </label>
                 ))}
@@ -1238,46 +861,17 @@ export default function Annonces() {
             </DropdownPill>
           </div>
 
-          {/* Ville */}
           <div ref={cityRef} className="relative">
-            <DropdownPill
-              label={getCityLabel(city)}
-              icon="ti-map-pin"
-              isOpen={openDrop === "city"}
-              onToggle={() => setOpenDrop((v) => (v === "city" ? null : "city"))}
-              active={city !== ""}
-              minWidth={200}
-            >
+            <DropdownPill label={getCityLabel(city)} icon="ti-map-pin" isOpen={openDrop === "city"} onToggle={() => setOpenDrop((v) => (v === "city" ? null : "city"))} active={city !== ""} minWidth={200}>
               <p className="text-[11px] font-bold text-sc-gr2 mb-2">Ville</p>
               <div className="max-h-48 overflow-y-auto space-y-1">
                 <label className="flex items-center gap-2 text-sm py-1 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="city"
-                    checked={city === ""}
-                    onChange={() => {
-                      setCity("");
-                      setOpenDrop(null);
-                    }}
-                    className="accent-sc-cy"
-                  />
+                  <input type="radio" name="city" checked={city === ""} onChange={() => { setCity(""); setOpenDrop(null); }} className="accent-sc-cy" />
                   Toutes les villes
                 </label>
                 {citiesList.map((c) => (
-                  <label
-                    key={c}
-                    className="flex items-center gap-2 text-sm py-1 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="city"
-                      checked={city === c}
-                      onChange={() => {
-                        setCity(c);
-                        setOpenDrop(null);
-                      }}
-                      className="accent-sc-cy"
-                    />
+                  <label key={c} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
+                    <input type="radio" name="city" checked={city === c} onChange={() => { setCity(c); setOpenDrop(null); }} className="accent-sc-cy" />
                     {c}
                   </label>
                 ))}
@@ -1285,7 +879,6 @@ export default function Annonces() {
             </DropdownPill>
           </div>
 
-          {/* Quartier (champ texte) */}
           <div className="flex items-center gap-2 px-2 py-1.5">
             <input
               type="text"
@@ -1298,39 +891,28 @@ export default function Annonces() {
 
           <div className="w-px h-4 bg-sc-bd" />
 
-          {/* Bouton Réinitialiser */}
-          <button
-            onClick={resetFilters}
-            className="text-xs font-bold text-sc-cy px-2 py-1 hover:bg-sc-cy-lt rounded-lg transition-colors"
-          >
+          <button onClick={resetFilters} className="text-xs font-bold text-sc-cy px-2 py-1 hover:bg-sc-cy-lt rounded-lg transition-colors">
             Réinitialiser
           </button>
 
-          {/* Bouton d'alerte (similaire à ResultsPage) */}
           <div className="flex items-center rounded-xl border border-sc-bd bg-white p-0.5">
             <button
               type="button"
               onClick={() => setViewMode("map")}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                viewMode === "map"
-                  ? "bg-sc-cy text-white"
-                  : "text-sc-dark hover:bg-sc-cy-lt"
+                viewMode === "map" ? "bg-sc-cy text-white" : "text-sc-dark hover:bg-sc-cy-lt"
               }`}
             >
-              <Map className="h-3.5 w-3.5" />
-              Carte
+              <Map className="h-3.5 w-3.5" /> Carte
             </button>
             <button
               type="button"
               onClick={() => setViewMode("list")}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                viewMode === "list"
-                  ? "bg-white text-sc-dark shadow-sm"
-                  : "text-sc-dark hover:bg-sc-cy-lt"
+                viewMode === "list" ? "bg-white text-sc-dark shadow-sm" : "text-sc-dark hover:bg-sc-cy-lt"
               }`}
             >
-              <List className="h-3.5 w-3.5" />
-              Liste
+              <List className="h-3.5 w-3.5" /> Liste
             </button>
           </div>
 
@@ -1340,16 +922,13 @@ export default function Annonces() {
           </button>
         </div>
 
-        {/* Contenu principal avec grille */}
         <div className="bg-white px-4 py-4">
           <Link
             to="/depot_annoncedeux"
             className="mx-auto flex min-h-[68px] w-full max-w-[520px] items-center justify-center gap-8 rounded border border-sc-bd bg-white px-8 py-3 text-center text-sm leading-5 text-sc-gr2 shadow-sm transition-colors hover:border-sc-cy hover:text-sc-dark"
           >
             <Pencil className="h-6 w-6 shrink-0 text-emerald-500" />
-            <span>
-              Cliquer ici pour déposer une annonce et trouver gratuitement vos prochains locataires.
-            </span>
+            <span>Cliquer ici pour déposer une annonce et trouver gratuitement vos prochains locataires.</span>
           </Link>
         </div>
 
@@ -1361,85 +940,70 @@ export default function Annonces() {
             locationLabel={city || query || "Madagascar"}
           />
         ) : (
-        <div className="flex-1 px-4 py-5">
-          {/* Compteur supplémentaire (déjà dans l'en-tête, mais on garde la structure) */}
-          <div className="mb-4 flex items-center justify-between">
-            <div>
+          <div className="flex-1 px-4 py-5">
+            <div className="mb-4 flex items-center justify-between">
               <h2 className="font-bebas text-xl text-sc-dark tracking-wide">
                 {visibleListings.length} annonce{visibleListings.length > 1 ? "s" : ""}
               </h2>
             </div>
-            {/* On pourrait ajouter un tri ici, mais on garde le filtre par défaut */}
-          </div>
 
-          {visibleListings.length === 0 && !loading && (
-            <div className="text-center py-16">
-              <i className="ti ti-map-search text-5xl text-sc-gr2 mb-4 block" />
-              <h3 className="font-bebas text-xl text-sc-dark mb-2">
-                {t("annonces:empty")}
-              </h3>
-              <p className="text-sm text-sc-gr2 mb-4">{emptyMessage}</p>
-              {searchedCityLabel && (
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <a
-                    href={`/profils-recherche-logement?ville=${encodeURIComponent(
-                      searchedCityLabel
-                    )}`}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 border border-sc-bd text-sm font-medium text-sc-dark hover:bg-sc-bd/30 transition-colors rounded-xl"
-                  >
-                    <Users className="w-4 h-4 text-sc-cy" />
-                    Voir les profils qui recherchent aussi à {searchedCityLabel}
-                  </a>
-                  <a
-                    href={`/depot_annoncedeux?ville=${encodeURIComponent(
-                      searchedCityLabel
-                    )}`}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-sc-cy text-white text-sm font-medium hover:bg-sc-cy-d transition-colors shadow-md rounded-xl"
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    Déposer une annonce
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
-
-          {loading && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="bg-sc-bd aspect-[4/3] w-full rounded-xl"></div>
-                  <div className="mt-2 space-y-1.5">
-                    <div className="h-3 bg-sc-bd w-3/4 rounded"></div>
-                    <div className="h-2.5 bg-sc-bd w-1/2 rounded"></div>
+            {visibleListings.length === 0 && !loading && (
+              <div className="text-center py-16">
+                <i className="ti ti-map-search text-5xl text-sc-gr2 mb-4 block" />
+                <h3 className="font-bebas text-xl text-sc-dark mb-2">{t("annonces:empty")}</h3>
+                <p className="text-sm text-sc-gr2 mb-4">{emptyMessage}</p>
+                {searchedCityLabel && (
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <a
+                      href={`/profils-recherche-logement?ville=${encodeURIComponent(searchedCityLabel)}`}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 border border-sc-bd text-sm font-medium text-sc-dark hover:bg-sc-bd/30 transition-colors rounded-xl"
+                    >
+                      <Users className="w-4 h-4 text-sc-cy" />
+                      Voir les profils qui recherchent aussi à {searchedCityLabel}
+                    </a>
+                    <a
+                      href={`/depot_annoncedeux?ville=${encodeURIComponent(searchedCityLabel)}`}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-sc-cy text-white text-sm font-medium hover:bg-sc-cy-d transition-colors shadow-md rounded-xl"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      Déposer une annonce
+                    </a>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
-          {!loading && !error && visibleListings.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {visibleListings.map((l) => (
-                <ListingCard
-                  key={l.id}
-                  l={l}
-                  isFavorite={favoriteIds.has(String(l.id))}
-                  onFavoriteClick={handleFavoriteClick}
-                />
-              ))}
-            </div>
-          )}
+            {loading && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-sc-bd aspect-[4/3] w-full rounded-xl"></div>
+                    <div className="mt-2 space-y-1.5">
+                      <div className="h-3 bg-sc-bd w-3/4 rounded"></div>
+                      <div className="h-2.5 bg-sc-bd w-1/2 rounded"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
-          {error && (
-            <div className="border border-red-200 bg-red-50/80 p-5 text-sm text-red-700 rounded-xl">
-              {error}
-            </div>
-          )}
-        </div>
+            {!loading && !error && visibleListings.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {visibleListings.map((l) => (
+                  <ListingCard
+                    key={l.id}
+                    l={l}
+                    isFavorite={favoriteIds.has(String(l.id))}
+                    onFavoriteClick={handleFavoriteClick}
+                  />
+                ))}
+              </div>
+            )}
+
+            {error && <div className="border border-red-200 bg-red-50/80 p-5 text-sm text-red-700 rounded-xl">{error}</div>}
+          </div>
         )}
 
-        {/* Mobile filters modal */}
         {showMobileFilters && <MobileFilters />}
       </div>
     </SiteLayout>
