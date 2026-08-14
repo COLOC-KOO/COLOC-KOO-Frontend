@@ -767,39 +767,36 @@ export default function AnnonceDetail() {
               <h2 className="bebas text-2xl">{t('annonceDetail:sections.propertyDetails')}</h2>
               
               <div className="mt-3 space-y-2 text-sm">
-             {/* 🟢 1. MEUBLÉ / NON MEUBLÉ */}
-<div className="flex items-center gap-2">
-  <Shield className="w-4 h-4 text-brand-cyan-dark" />
-  <span className="text-foreground">
-    {(() => {
-      // Récupération sécurisée du premier paramètre défini
-      const chambresArray = Array.isArray(listing.chambres) ? listing.chambres : [];
-      const firstChambreMeublee = chambresArray[0]?.meublee;
+                    {/* Meublé / Partiellement / Rachat / Non meublé */}
+            {(() => {
+              const isFurnished = Boolean(listing.furnished);
+              const rawStatus = listing.meublee ?? listing.est_meuble ?? '';
+              const statusStr = String(rawStatus).trim().toLowerCase();
 
-      const rawValue: string | boolean | null | undefined =
-        listing.furnished ??
-        listing.est_meuble ??
-        firstChambreMeublee ??
-        listing.meublee;
+              let label = 'Non meublé';
 
-      // Cas booléen
-      if (typeof rawValue === 'boolean') {
-        return rawValue
-          ? t('annonceDetail:property.furnished')
-          : t('annonceDetail:property.unfurnished');
-      }
+              if (
+                isFurnished || 
+                statusStr === '1' || 
+                statusStr === 'true' || 
+                statusStr === 'oui' || 
+                statusStr === 'meuble' || 
+                statusStr === 'meublée'
+              ) {
+                label = 'Meublé';
+              } else if (statusStr === 'partiellement') {
+                label = 'Partiellement meublé';
+              } else if (statusStr === 'rachat') {
+                label = 'Meubles à racheter';
+              }
 
-      // Cas chaîne de caractères
-      const strVal = String(rawValue ?? '').trim().toLowerCase();
-      const isFurnished = ['oui', 'meublé', 'meuble', 'true', '1'].includes(strVal);
-
-      return isFurnished
-        ? t('annonceDetail:property.furnished')
-        : t('annonceDetail:property.unfurnished');
-    })()}
-  </span>
-</div>
-
+              return (
+                <div className="flex items-center gap-2 text-sm">
+                  <Shield className="w-4 h-4 text-brand-cyan-dark" />
+                  <span>{label}</span>
+                </div>
+              );
+            })()}
                 {/* Date de disponibilité */}
                 {listing.available ? (
                   <div className="flex items-center gap-2">
@@ -894,14 +891,23 @@ export default function AnnonceDetail() {
                   listing.womenOnly ||
                   listing.menOnly) ? (
                   <>
-                    {/* Internet */}
-                    {listing.internet ? (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Wifi className="w-4 h-4 text-brand-cyan-dark" />
-                        <span>Internet</span>
-                      </div>
-                    ) : null}
+              {/* Internet */}
+              {(() => {
+                if (!listing.internet) return null;
 
+                const rawValue = String(listing.internet).trim();
+                const lowerValue = rawValue.toLowerCase();
+
+                // On filtre uniquement si la valeur signifie explicitement "Pas d'internet"
+                const isNegative = ['aucune', 'non', 'false', '0'].includes(lowerValue);
+                if (isNegative) return null;
+                return (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Wifi className="w-4 h-4 text-brand-cyan-dark" />
+                    <span className="capitalize">{rawValue}</span>
+                  </div>
+                );
+              })()}
                     {/* Parking Voitures avec transmission explicite du count */}
                     {(listing.parkingVoitures ?? 0) > 0 ? (
                       <div className="flex items-center gap-2 text-sm">
