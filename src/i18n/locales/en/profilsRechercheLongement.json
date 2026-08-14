@@ -1,0 +1,66 @@
+{
+  "search": {
+    "title_with_city": "Profiles in {{city}}",
+    "title_default": "Find your next roommates",
+    "subtitle": "{{count}} person currently looking for housing in this city, based on listings posted within the last 3 months.",
+    "subtitle_plural": "{{count}} people currently looking for housing in this city, based on listings posted within the last 3 months.",
+    "loading": "Loading...",
+    "cta_banner_title": "Click here to post an ad and find your next tenants",
+    "cta_banner_subtitle": "for free.",
+    "placeholder_city": "Desired city",
+    "placeholder_query": "Name, bio, keyword",
+    "placeholder_profession": "Profession",
+    "placeholder_max_age": "Max age",
+    "reset_filters": "Reset filters"
+  },
+  "banners": {
+    "roommates_title": "Connecting roommates",
+    "roommates_desc": "These profiles can also team up to find a shared apartment together.",
+    "agencies_title": "Real estate agencies",
+    "agencies_desc": "Agencies can review candidate profiles and offer suitable housing options."
+  },
+  "card": {
+    "my_profile": "My profile",
+    "age_not_specified": "Age not specified",
+    "default_bio": "This profile is looking for a flatshare in this city.",
+    "verified": "Verified",
+    "requests_count": "{{count}} request",
+    "requests_count_plural": "{{count}} requests",
+    "since": "Since {{date}}",
+    "source_listing": "Posted an ad",
+    "source_search": "Searching this area",
+    "source_applied": "Applied"
+  },
+  "modal": {
+    "candidate_role": "Roommate candidate",
+    "searching_in": "Searching in {{city}}",
+    "last_request": "Last request on {{date}}",
+    "current_city": "Current city: {{city}}",
+    "candidate_profile": "Candidate profile",
+    "no_bio": "This candidate hasn't completed their bio yet.",
+    "profession_label": "Profession:",
+    "profile_type_label": "Profile type:",
+    "age_label": "Age:",
+    "age_value": "{{age}} years old",
+    "phone_not_provided": "Phone number not provided",
+    "send_message": "Send a message",
+    "login_to_contact": "Sign in to contact this person",
+    "post_ad_for_profile": "Post a listing for this profile"
+  },
+  "roles": {
+    "super_admin": "Super admin",
+    "verified_owner": "Verified owner",
+    "roommate": "Roommate"
+  },
+  "empty": {
+    "no_profiles": "No profiles available for {{city}}"
+  },
+  "messages": {
+    "subject": "Your roommate search in {{city}}",
+    "body": "Hello {{name}}, I have a place available in {{city}} and I'm interested in your profile.",
+    "success": "Message sent successfully.",
+    "error_send": "Unable to send the message.",
+    "error_load": "Unable to load profiles.",
+    "date_not_specified": "date not specified"
+  }
+}

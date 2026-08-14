@@ -25,6 +25,7 @@ import frTableauCompte from './locales/fr/tableauCompte.json'
 import frAlertes from './locales/fr/alertes.json'
 import frPreferences from './locales/fr/preferences.json'
 import frCompteSecurites from './locales/fr/compteSecurite.json'
+import frProfilsRecherche from'./locales/fr/profilsRecherecheLongement.json'
 // Importer toutes les traductions (MG)
 import mgCommon from './locales/mg/common.json'
 import mgHome from './locales/mg/home.json'
@@ -46,6 +47,7 @@ import mgTableauCompte from './locales/mg/tableauCompte.json'
 import mgAlertes from './locales/mg/alertes.json'
 import mgPreferences from './locales/mg/preferences.json'
 import mgCompteSecurites from './locales/mg/compteSecurite.json'
+import mgProfilsRecherche from './locales/mg/profilsRecherecheLongement.json'
 // Importer toutes les traductions (EN)
 import enCommon from './locales/en/common.json'
 import enHome from './locales/en/home.json'
@@ -67,6 +69,7 @@ import enTableauCompte from './locales/en/tableauCompte.json'
 import enAlertes from './locales/en/alertes.json'
 import enPreferences from './locales/en/preferences.json'
 import enCompteSecurite from './locales/en/compteSecurite.json'
+import enProfilsRecherche from'./locales/en/profilsRechercheLongement.json'
 const resources = {
   fr: {
     common: frCommon,
@@ -89,6 +92,7 @@ const resources = {
     alertes:frAlertes,
     preferences:frPreferences,
     compteSecurites:frCompteSecurites,
+    profilsRecherche:frProfilsRecherche,
   },
   mg: {
     common: mgCommon,
@@ -111,6 +115,7 @@ const resources = {
     alertes:mgAlertes,
     preferences:mgPreferences,
     compteSecurites:mgCompteSecurites,
+    profilsRecherche:mgProfilsRecherche,
 
   },
   en: {
@@ -133,7 +138,8 @@ const resources = {
     tableauCompte:enTableauCompte,
     alertes:enAlertes,
     preferences:enPreferences,
-    compteSecurites:enCompteSecurite
+    compteSecurites:enCompteSecurite,
+    profilsRecherche:enProfilsRecherche,
   },
 }
 
@@ -167,7 +173,8 @@ i18n
       'tableauCompte',
       'alertes',
       'preferences',
-      'compteSecurites'
+      'compteSecurites',
+      'profilsRecherche'
     ],
     defaultNS: 'common',
     detection: {
@@ -177,4 +184,4 @@ i18n
     },
   })
 
-export default i18n
+export default i18n 
