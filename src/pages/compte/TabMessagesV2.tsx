@@ -87,33 +87,161 @@ export default function TabMessagesV2() {
     }
   }
 
+  // Récupère la photo la plus récente de l'interlocuteur.
+  // On utilise d'abord l'ID exact, puis les autres sources déjà présentes
+  // dans le projet en cas d'indisponibilité de /users/:id.
+  const getFreshProfilePicture = async (
+    userId: number | string,
+    fallbackPicture: unknown,
+    userName: string,
+    city?: string | null,
+  ): Promise<string | null> => {
+    const activeId = Number(userId)
+    if (!Number.isFinite(activeId) || activeId <= 0) {
+      return fallbackPicture ? String(fallbackPicture) : null
+    }
+
+    // 1. Source la plus fiable : profil exact par ID.
+    try {
+      const profile = await api.getUserById(activeId)
+      const picture =
+        profile?.profilePicture ??
+        (profile as any)?.profile_picture ??
+        null
+
+      if (picture) return String(picture)
+    } catch (error) {
+      console.warn('[MESSAGES] Impossible de charger /users/:id :', error)
+    }
+
+    // 2. Secours : recherche utilisateur avec comparaison d'ID.
+    try {
+      const results = await api.searchUsers(userName || '')
+      const found = (Array.isArray(results) ? results : []).find((item: any) =>
+        Number(item?.id ?? item?.id_utilisateur) === activeId
+      )
+
+      const picture =
+        (found as any)?.profilePicture ??
+        (found as any)?.profile_picture ??
+        null
+
+      if (picture) return String(picture)
+    } catch (error) {
+      console.warn('[MESSAGES] Impossible de charger /users/search :', error)
+    }
+
+    // 3. Dernier secours : endpoint public déjà utilisé par le projet.
+    try {
+      const response = await api.profilsRechercheLogement({
+        ville: city || '',
+        q: userName || undefined,
+        months: 12,
+        roles: 'colocataire,proprietaire,agent',
+        includeAllRoles: true,
+      })
+
+      const profiles = Array.isArray(response?.profiles)
+        ? response.profiles
+        : []
+
+      const found = profiles.find(
+        (item: any) => Number(item?.id_utilisateur) === activeId
+      )
+
+      const picture =
+        (found as any)?.profile_picture ??
+        (found as any)?.profilePicture ??
+        null
+
+      if (picture) return String(picture)
+    } catch (error) {
+      console.warn('[MESSAGES] Impossible de charger le profil public :', error)
+    }
+
+    // 4. Si aucune source ne répond, on conserve la photo déjà connue.
+    return fallbackPicture ? String(fallbackPicture) : null
+  }
+
   // 1. Regroupement dynamique par Déposition / Annonce
-  const loadConversations = async () => {
+  const loadConversations = async (refreshProfilePictures = false) => {
     const [directThreads, groups] = await Promise.all([
       api.messagesThreads().catch(() => []),
       api.groupThreads().catch(() => []),
     ])
 
-    const direct = directThreads.map((thread: any) => ({
-      key: `direct:${thread.interlocuteur_id}`,
-      type: 'direct',
-      id: thread.interlocuteur_id,
-      name: `${thread.interlocuteur_prenom} ${thread.interlocuteur_nom}`.trim() || 'Utilisateur',
-      initials: `${thread.interlocuteur_prenom?.[0] || ''}${thread.interlocuteur_nom?.[0] || ''}`.toUpperCase() || 'U',
-      profilePicture: thread.interlocuteur_profile_picture ?? thread.profile_picture ?? thread.profilePicture ?? null,
-      lastMessage: thread.dernier_message || t('no_message'),
-      total: Number(thread.total_messages || 0),
-      unread: Number(thread.non_lus || 0),
-      date: thread.date_dernier_message || thread.dernier_message || null,
-      annonce: thread.id_annonce ? {
-        id: thread.id_annonce,
-        title: thread.annonce_titre,
-        quartier: thread.annonce_quartier,
-        ville: thread.annonce_ville,
-        price: thread.annonce_prix,
-        photo: thread.annonce_photo,
-      } : null,
-    }))
+    // IMPORTANT : lors de l'entrée dans la messagerie, on enrichit les
+    // conversations DIRECTES avec la photo actuelle de chaque interlocuteur.
+    // Pour les rafraîchissements déclenchés par le WebSocket, on conserve
+    // les photos déjà connues afin d'éviter de multiplier les requêtes API.
+    const direct = refreshProfilePictures
+      ? await Promise.all(
+          directThreads.map(async (thread: any) => {
+            const id = Number(thread.interlocuteur_id)
+            const name = `${thread.interlocuteur_prenom || ''} ${thread.interlocuteur_nom || ''}`.trim() || 'Utilisateur'
+            const initialPicture =
+              thread.interlocuteur_profile_picture ??
+              thread.profile_picture ??
+              thread.profilePicture ??
+              null
+
+            const profilePicture = await getFreshProfilePicture(
+              id,
+              initialPicture,
+              name,
+              thread.annonce_ville ?? null,
+            )
+
+            return {
+              key: `direct:${thread.interlocuteur_id}`,
+              type: 'direct',
+              id: thread.interlocuteur_id,
+              name,
+              initials: `${thread.interlocuteur_prenom?.[0] || ''}${thread.interlocuteur_nom?.[0] || ''}`.toUpperCase() || 'U',
+              profilePicture,
+              profilePictureVersion: profilePicture ? Date.now() : undefined,
+              lastMessage: thread.dernier_message || t('no_message'),
+              total: Number(thread.total_messages || 0),
+              unread: Number(thread.non_lus || 0),
+              date: thread.date_dernier_message || thread.dernier_message || null,
+              annonce: thread.id_annonce ? {
+                id: thread.id_annonce,
+                title: thread.annonce_titre,
+                quartier: thread.annonce_quartier,
+                ville: thread.annonce_ville,
+                price: thread.annonce_prix,
+                photo: thread.annonce_photo,
+              } : null,
+            }
+          })
+        )
+      : directThreads.map((thread: any) => ({
+          key: `direct:${thread.interlocuteur_id}`,
+          type: 'direct',
+          id: thread.interlocuteur_id,
+          name: `${thread.interlocuteur_prenom || ''} ${thread.interlocuteur_nom || ''}`.trim() || 'Utilisateur',
+          initials: `${thread.interlocuteur_prenom?.[0] || ''}${thread.interlocuteur_nom?.[0] || ''}`.toUpperCase() || 'U',
+          profilePicture:
+            thread.interlocuteur_profile_picture ??
+            thread.profile_picture ??
+            thread.profilePicture ??
+            null,
+          profilePictureVersion: thread.interlocuteur_profile_picture || thread.profile_picture || thread.profilePicture
+            ? Date.now()
+            : undefined,
+          lastMessage: thread.dernier_message || t('no_message'),
+          total: Number(thread.total_messages || 0),
+          unread: Number(thread.non_lus || 0),
+          date: thread.date_dernier_message || thread.dernier_message || null,
+          annonce: thread.id_annonce ? {
+            id: thread.id_annonce,
+            title: thread.annonce_titre,
+            quartier: thread.annonce_quartier,
+            ville: thread.annonce_ville,
+            price: thread.annonce_prix,
+            photo: thread.annonce_photo,
+          } : null,
+        }))
 
     const groupItems = groups.map((group: any) => ({
       key: `group:${group.id_groupe}`,
@@ -174,7 +302,7 @@ export default function TabMessagesV2() {
 
   useEffect(() => {
     setLoading(true)
-    loadConversations()
+    loadConversations(true)
       .then((items) => {
         setActive(items[0] || null)
         if (typeof window !== 'undefined') setIsSidebarOpen(window.innerWidth >= 1024)
@@ -212,6 +340,14 @@ export default function TabMessagesV2() {
       id: item.id,
       name: `${item.prenom} ${item.nom}`.trim() || item.email,
       initials: item.initials || `${item.prenom?.[0] || ''}${item.nom?.[0] || ''}`.toUpperCase() || 'U',
+      profilePicture:
+        item.profilePicture ??
+        (item as any).profile_picture ??
+        null,
+      profilePictureVersion:
+        item.profilePicture || (item as any).profile_picture
+          ? Date.now()
+          : undefined,
       lastMessage: t('no_message'),
       total: 0,
       unread: 0,
@@ -571,12 +707,12 @@ export default function TabMessagesV2() {
                 ...(found || {}),
                 ...candidate,
                 id: Number(candidate.id_utilisateur ?? activeId),
-                profilePicture:
-                  candidate.profile_picture ??
-                  (candidate as any).profilePicture ??
-                  found?.profilePicture ??
-                  found?.profile_picture ??
-                  null,
+              profilePicture:
+                candidate.profile_picture ??
+                (candidate as any).profilePicture ??
+                found?.profilePicture ??
+                found?.profile_picture ??
+                null,
               }
               break
             }

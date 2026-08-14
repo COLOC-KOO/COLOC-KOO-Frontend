@@ -7,7 +7,16 @@ const TOKEN_KEY = 'colockoo_token'
 const USER_KEY = 'colockoo_user'
 
 export type Poste = 'superadmin' | 'admin' | 'moderateur' | 'proprietaire' | 'agent' | 'colocataire'
-
+export interface AppareilConnecte {
+  id: number | string
+  type: 'mobile' | 'desktop' | string
+  label: string
+  lieu: string
+  courant: boolean
+  derniere_activite?: string
+  ip?: string
+  user_agent?: string
+}
 export interface AuthUser {
     id: number
     email: string
@@ -750,6 +759,10 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(payload),
     })
+    },
+    
+    listSessions() {
+        return request<AppareilConnecte[]>('/auth/me/sessions')
     },
     disconnectOtherDevices() {
         return request<{ message: string }>('/auth/me/sessions/revoke-others', {
