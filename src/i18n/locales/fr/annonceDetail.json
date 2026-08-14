@@ -49,10 +49,11 @@
     "announcementTypeCreate": "Colocataires à créer"
   },
   "features": {
-    "internet": "Internet",
+   "internet": "Internet : {{type}}",
+  "internetDefault": "Internet inclus",
     "parking": "Parking",
-    "parkingCars": "{count} place(s) de parking",
-    "parkingMotorcycles": "{count} place(s) pour motos",
+    "parkingCars": "{{count}} place(s) de parking",
+    "parkingMotorcycles": "{{count}} place(s) pour motos",
     "parkingCovered": "Parking couvert",
     "elevator": "Ascenseur",
     "petsAllowed": "Animaux acceptés",
@@ -104,8 +105,8 @@
     "messageRequired": "Le message est requis.",
     "success": "Message envoyé au propriétaire.",
     "error": "Impossible d'envoyer le message.",
-    "candidateSubject": "Contact à propos de l'annonce {id}",
-    "ownerSubject": "Message depuis votre profil pour l'annonce {id}"
+    "candidateSubject": "Contact à propos de l'annonce {{id}}",
+    "ownerSubject": "Message depuis votre profil pour l'annonce {{id}}"
   },
   "modal": {
     "title": "Message à {name}",
@@ -134,7 +135,7 @@
     "error": "Impossible de lancer la colocation."
   },
   "user": {
-    "connected": "Connecté en tant que {name}",
+    "connected": "Connecté en tant que {{name}}",
     "connectedDesc": "Tu peux envoyer ta candidature directement depuis cette page.",
     "ownerTitle": "Gestion des candidatures",
     "ownerDesc": "La gestion des candidatures se fait depuis la page dédiée.",

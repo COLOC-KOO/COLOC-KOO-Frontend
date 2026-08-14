@@ -690,51 +690,58 @@ export default function DepotAnnonceDeux() {
       }
 
       const response = await api.createDepotAnnonce({
-        adresse: locAddr,
-        ville: '',
-        quartier,
-        latitude,
-        longitude,
-        type_annonce: typeAnnonce || (role === 'membre' ? 'existante' : 'creation'),
-        logement: typeLogement,
-        nombre_pieces: nbColoc,
-        surface: surfaceTotale,
-        commodites: equipements,
-        regles,
-        chambres: [
-          {
-            loyer: loyer.replace(/\D/g, ''),
-            charges: charges.replace(/\D/g, ''),
-            caution: cautionType === 'autre' ? cautionAutre : cautionType === '1mois' ? '1 mois de loyer' : '',
-            surface: chambreSurface,
-            meublee: meublee.join(', '),
-            disponible_a_partir: dispoDate,
-          },
-        ],
-        email: user.email || '',
-        telephone_code: '+261',
-        telephone: user.telephone || '',
-        message: presentation,
-        visite_3d: '',
-        photos: uploadedPhotos,
-        boost_service_id: null,
-        extra: {
-          role,
-          mode,
-          nombre_colocataires_recherches: role === 'membre' ? nbColoc : undefined,
-          ambiance_age: ambianceAge,
-          ambiance,
-          equipements,
-          internet,
-          parking: { cars: parkingCars, cars_couvert: parkingCarsCouvert, moto: parkingMoto, moto_couvert: parkingMotoCouvert },
-          services_personnel: servicesPersonnel,
-          services_autre: servAutre,
-          services_ckoo: ckooIntegrated ? { services: ckooChosenNames, total_mensuel: ckooTotal } : null,
-          rachat_meubles: meublee.includes('Rachat des meubles') ? { prix: rachatPrix, descriptif: rachatDescriptif } : null,
-          offre: isPaidRole ? offer : null,
-          engagement_pro: role === 'pro' ? proEngageChecked : null,
-        },
-      } as any)
+  adresse: locAddr,
+  ville: '',
+  quartier,
+  latitude,
+  longitude,
+  type_annonce: typeAnnonce || (role === 'membre' ? 'existante' : 'creation'),
+  logement: typeLogement,
+  nombre_pieces: nbColoc,
+  surface: surfaceTotale,
+  commodites: equipements,
+  regles,
+
+  // 🟢 AJOUTEZ CES 4 LIGNES À LA RACINE :
+  internet: internet,                           // ex: 'Fibre', 'Wifi', etc.
+  parking_voitures: parkingCars,                // ex: 2
+  parking_motos: parkingMoto,                   // ex: 0
+  parking_couvert: parkingCarsCouvert ? 1 : 0,  // 1 ou 0
+
+  chambres: [
+    {
+      loyer: loyer.replace(/\D/g, ''),
+      charges: charges.replace(/\D/g, ''),
+      caution: cautionType === 'autre' ? cautionAutre : cautionType === '1mois' ? '1 mois de loyer' : '',
+      surface: chambreSurface,
+      meublee: meublee.join(', '),
+      disponible_a_partir: dispoDate,
+    },
+  ],
+  email: user.email || '',
+  telephone_code: '+261',
+  telephone: user.telephone || '',
+  message: presentation,
+  visite_3d: '',
+  photos: uploadedPhotos,
+  boost_service_id: null,
+  extra: {
+    role,
+    mode,
+    nombre_colocataires_recherches: role === 'membre' ? nbColoc : undefined,
+    ambiance_age: ambianceAge,
+    ambiance,
+    equipements,
+    internet,
+    parking: { cars: parkingCars, cars_couvert: parkingCarsCouvert, moto: parkingMoto, moto_couvert: parkingMotoCouvert },
+    services_personnel: servicesPersonnel,
+    services_autre: servAutre,
+    services_ckoo: ckooIntegrated ? { services: ckooChosenNames, total_mensuel: ckooTotal } : null,
+    rachat_meubles: meublee.includes('Rachat des meubles') ? { prix: rachatPrix, descriptif: rachatDescriptif } : null,
+    offre: isPaidRole ? offer : null,
+    engagement_pro: role === 'pro' ? proEngageChecked : null,
+  },
+} as any)
 
       const successMessage = "Annonce ajoutée avec succès, en attente de validation par l'admin"
       setSuccess(`${successMessage}. Référence : ${response.reference}`)

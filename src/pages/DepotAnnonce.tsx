@@ -358,40 +358,59 @@ export default function DepotAnnonce() {
         uploadedPhotos = (await api.uploadDepotAnnoncePhotos(formData)).photos
       }
 
-      const response = await api.createDepotAnnonce({
-        adresse: form.adresse,
-        ville: form.ville,
-        quartier: form.quartier,
-        latitude: position[0],
-        longitude: position[1],
-        type_annonce: form.type_annonce,
-        logement: form.logement,
-        nombre_pieces: form.nombre_pieces,
-        surface: form.surface,
-        internet: ['ADSL', 'Fibre', 'Box', 'Aucune'].includes(form.internet)
-        ? form.internet
-        : 'Aucune',
-        parking_voitures: Number(form.parking_voitures) || 0,
-        parking_motos: Number(form.parking_motos) || 0,
-        parking_couvert: form.parking_couvert ? 1 : 0, // tinyint(1) -> 1 ou 0
-        services_communs: servicesCommuns,
-        regles,
-        chambres: rooms.map((room) => ({
-          loyer: room.loyer,
-          charges: room.charges,
-          caution: room.caution,
-          surface: room.surface,
-          meublee: room.meublee,
-          disponible_a_partir: room.disponible_a_partir,
-        })),
-        email: form.email,
-        telephone_code: form.telephone_code,
-        telephone: form.telephone,
-        message: form.message,
-        visite_3d: form.visite_3d,
-        photos: uploadedPhotos,
-        boost_service_id: boost ? Number(boost) : null,
-      })
+const validInternet = ['ADSL', 'Fibre', 'Box', 'Aucune']
+const internetValue = validInternet.includes(form.internet) ? form.internet : 'Aucune'
+
+const response = await api.createDepotAnnonce({
+  adresse: form.adresse,
+  ville: form.ville,
+  quartier: form.quartier,
+  latitude: Number(position?.[0]) || null,
+  longitude: Number(position?.[1]) || null,
+  type_annonce: form.type_annonce,
+  logement: form.logement,
+  nombre_pieces: String(form.nombre_pieces || 0),
+  
+  // CORRECTION : Renommer 'surface' en 'surface_totale' si votre API communique directement avec MySQL
+ surface: Number(form.surface) || 0,
+
+  // CORRECTION INTERNET : S'assure de ne jamais envoyer NULL ou chaîne vide
+  internet: internetValue,
+
+  // PARKINGS
+  parking_voitures: Number(form.parking_voitures) || 0,
+  parking_motos: Number(form.parking_motos) || 0,
+  parking_couvert: form.parking_couvert ? 1 : 0,
+
+  // CORRECTION : le backend (depotAnnonce.model.js) lit payload.commodites,
+  // pas payload.services_communs. Sans ce renommage les équipements cochés
+  // (dont "Meublé") n'étaient jamais enregistrés.
+  commodites: servicesCommuns,
+  regles,
+
+
+   chambres: rooms.map((room) => ({
+  loyer: room.loyer,
+  charges: room.charges,
+  caution: room.caution,
+  surface: room.surface,
+
+  // CORRECTION : room.meublee est une chaîne ('Oui' | 'Non' | 'Partiellement' | 'Rachat').
+  // `room.meublee ? '1' : '0'` était toujours vrai (toute chaîne non vide est truthy),
+  // donc "Non" finissait quand même enregistré comme meublé. On envoie la vraie valeur.
+  meublee: room.meublee,
+
+  disponible_a_partir: room.disponible_a_partir,
+})),
+
+  email: form.email,
+  telephone_code: form.telephone_code,
+  telephone: form.telephone,
+  message: form.message,
+  visite_3d: form.visite_3d,
+  photos: uploadedPhotos,
+  boost_service_id: boost ? Number(boost) : null,
+})
       const successMessage = "Annonce ajoutée avec succès, en attente de validation par l'admin"
       setSuccess(`${successMessage}. Référence: ${response.reference}`)
       setToastMessage(successMessage)
