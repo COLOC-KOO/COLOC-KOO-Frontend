@@ -58,8 +58,8 @@ export default function App() {
       <Route path="/annonces" element={<Annonces />} />
       <Route path="/annonces/:id" element={<AnnonceDetail />} />
       <Route path="/deposer" element={<Deposer />} />
-      <Route path="/depot_annonce" element={<DepotAnnonce />} />
-      <Route path="/depot_annoncedeux" element={<DepotAnnonceDeux />} />
+      {/* <Route path="/depot_annonce" element={<DepotAnnonce />} /> */}
+      <Route path="/depot_annonce" element={<DepotAnnonceDeux />} />
       <Route path="/partenaires" element={<Partenaires />} />
       <Route path="/partenaires-tous" element={<PartenairesTous />} />
       <Route path="/contact" element={<Contact />} />
