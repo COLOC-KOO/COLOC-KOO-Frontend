@@ -1,0 +1,66 @@
+{
+  "search": {
+    "title_with_city": "Profils à {{city}}",
+    "title_default": "Trouver vos prochains colocataires",
+    "subtitle": "{{count}} personne recherche actuellement un logement dans cette ville, sur la base des annonces de moins de 3 mois.",
+    "subtitle_plural": "{{count}} personnes recherchent actuellement un logement dans cette ville, sur la base des annonces de moins de 3 mois.",
+    "loading": "Chargement...",
+    "cta_banner_title": "Cliquer ici pour déposer une annonce et trouver gratuitement",
+    "cta_banner_subtitle": "vos prochains locataires.",
+    "placeholder_city": "Ville recherchée",
+    "placeholder_query": "Nom, bio, mot-clé",
+    "placeholder_profession": "Profession",
+    "placeholder_max_age": "Âge max",
+    "reset_filters": "Réinitialiser les filtres"
+  },
+  "banners": {
+    "roommates_title": "Mise en relation entre colocataires",
+    "roommates_desc": "Ces profils peuvent aussi se regrouper pour créer leur propre colocation.",
+    "agencies_title": "Agences immobilières",
+    "agencies_desc": "Les agences peuvent consulter les profils des candidats et proposer des logements adaptés."
+  },
+  "card": {
+    "my_profile": "Mon profil",
+    "age_not_specified": "Âge non précisé",
+    "default_bio": "Ce profil cherche une colocation dans cette ville.",
+    "verified": "Vérifié",
+    "requests_count": "{{count}} demande",
+    "requests_count_plural": "{{count}} demandes",
+    "since": "Depuis {{date}}",
+    "source_listing": "Déposé annonce",
+    "source_search": "Recherche ce lieu",
+    "source_applied": "A postulé"
+  },
+  "modal": {
+    "candidate_role": "Colocataire candidat",
+    "searching_in": "Recherche à {{city}}",
+    "last_request": "Dernière demande le {{date}}",
+    "current_city": "Ville actuelle : {{city}}",
+    "candidate_profile": "Profil du candidat",
+    "no_bio": "Ce candidat n'a pas encore complété sa présentation.",
+    "profession_label": "Profession :",
+    "profile_type_label": "Type de profil :",
+    "age_label": "Âge :",
+    "age_value": "{{age}} ans",
+    "phone_not_provided": "Numéro non renseigné",
+    "send_message": "Envoyer un message",
+    "login_to_contact": "Connectez-vous pour contacter cette personne",
+    "post_ad_for_profile": "Déposer une annonce pour ce profil"
+  },
+  "roles": {
+    "super_admin": "Super administrateur",
+    "verified_owner": "Propriétaire vérifié",
+    "roommate": "Colocataire"
+  },
+  "empty": {
+    "no_profiles": "Aucun profil disponible pour {{city}}"
+  },
+  "messages": {
+    "subject": "Votre recherche de colocation à {{city}}",
+    "body": "Bonjour {{name}}, je propose un logement à {{city}} et votre profil m'intéresse.",
+    "success": "Message envoyé avec succès.",
+    "error_send": "Impossible d'envoyer le message.",
+    "error_load": "Impossible de charger les profils.",
+    "date_not_specified": "date non précisée"
+  }
+}

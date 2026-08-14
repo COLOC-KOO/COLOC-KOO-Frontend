@@ -1,0 +1,66 @@
+{
+  "search": {
+    "title_with_city": "Kandida ao {{city}}",
+    "title_default": "Mitady ny mpiray trano aminao",
+    "subtitle": "Misy olona {{count}} mitady trano ao amin'ity tanàna ity amin'izao fotoana izao, araka ny fampidirana latsaky ny 3 mois.",
+    "subtitle_plural": "Misy olona {{count}} mitady trano ao amin'ity tanàna ity amin'izao fotoana izao, araka ny fampidirana latsaky ny 3 mois.",
+    "loading": "Am-pakana ny angona...",
+    "cta_banner_title": "Kitiho eto raha handefa fampidirana trano ary hahita maimaimpoana",
+    "cta_banner_subtitle": "ireo mpanofa trano aminao manaraka.",
+    "placeholder_city": "Tanàna karohina",
+    "placeholder_query": "Anarana, tantara fohy, teny lakile",
+    "placeholder_profession": "Asa atao",
+    "placeholder_max_age": "Taona ambony indrindra",
+    "reset_filters": "Averina amin'ny tsotra ny sivana"
+  },
+  "banners": {
+    "roommates_title": "Mampifandray ny samy mpiray trano",
+    "roommates_desc": "Ireo mombamomba ireto dia afaka mitambatra ihany koa hamorona ny fiaraha-monina mpiray trano aminy.",
+    "agencies_title": "Agence immobilière",
+    "agencies_desc": "Ireo agence dia afaka mijery ny mombamomba ny kandidà ary manolotra trano mifanaraka amin'izany."
+  },
+  "card": {
+    "my_profile": "Ny mombamomba ahy",
+    "age_not_specified": "Taona tsy voalaza",
+    "default_bio": "Ity olona ity dia mitady mpiray trano ao amin'ity tanàna ity.",
+    "verified": "Efa voamarina",
+    "requests_count": "Fangatahana {{count}}",
+    "requests_count_plural": "Fangatahana {{count}}",
+    "since": "Hatramin'ny {{date}}",
+    "source_listing": "Nampiditra trano",
+    "source_search": "Mitady amin'ity toerana ity",
+    "source_applied": "Efa nangataka"
+  },
+  "modal": {
+    "candidate_role": "Kandidà mpiray trano",
+    "searching_in": "Mitady ao {{city}}",
+    "last_request": "Fangatahana farany tamin'ny {{date}}",
+    "current_city": "Tanàna misy ankehitriny : {{city}}",
+    "candidate_profile": "Mombamomba ny kandidà",
+    "no_bio": "Mbola tsy hameno ny mombamomba azy ity kandidà ity.",
+    "profession_label": "Asa atao :",
+    "profile_type_label": "Karazana mombamomba :",
+    "age_label": "Taona :",
+    "age_value": "{{age}} taona",
+    "phone_not_provided": "Laharana tsy voalaza",
+    "send_message": "Handefa hafatra",
+    "login_to_contact": "Mahaiza miditra mba handefasana hafatra amin'ity olona ity",
+    "post_ad_for_profile": "Handefa fampidirana trano ho an'ity kandidà ity"
+  },
+  "roles": {
+    "super_admin": "Mpitantana faratampony",
+    "verified_owner": "Tompon-trano voamarina",
+    "roommate": "Mpiray trano"
+  },
+  "empty": {
+    "no_profiles": "Tsy misy mombamomba azo ampiasaina ao {{city}}"
+  },
+  "messages": {
+    "subject": "Ny fikaroahanao mpiray trano ao {{city}}",
+    "body": "Manao ahoana {{name}}, manolotra trano ao {{city}} aho ary mahaliana ahy ny mombamomba anao.",
+    "success": "Lasa soa aman-tsara ny hafatra.",
+    "error_send": "Tsy afaka nalefa ny hafatra.",
+    "error_load": "Tsy afaka nalaidana ireo mombamomba.",
+    "date_not_specified": "daty tsy voalaza"
+  }
+}

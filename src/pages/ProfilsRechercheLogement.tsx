@@ -1,6 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Briefcase, Building2, CalendarClock, Heart, Mail, MapPin, MessageCircle, Phone, Search, ShieldCheck, SlidersHorizontal, UserRound, Users } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import {
+  Briefcase,
+  Building2,
+  CalendarClock,
+  Heart,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Pencil,
+  Phone,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  UserRound,
+  Users,
+  X,
+  Send
+} from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api, ApiProfilRechercheLogement } from '../lib/api'
@@ -9,23 +27,16 @@ import { LazyImage } from '../components/ui/LazyImage'
 
 const FALLBACK_AVATAR = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80'
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'date non precisee'
-  return new Date(value).toLocaleDateString('fr-FR')
-}
-
-function profileName(profile: ApiProfilRechercheLogement) {
-  return `${profile.prenom || ''} ${profile.nom || ''}`.trim() || 'Colocataire candidat'
-}
-
 function uniqueProfiles(profiles: ApiProfilRechercheLogement[]) {
   return Array.from(new Map(profiles.map((profile) => [Number(profile.id_utilisateur), profile])).values())
 }
 
 export default function ProfilsRechercheLogement() {
+  const { t, i18n } = useTranslation('profilsRecherche')
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+
   const initialCity = searchParams.get('ville') || ''
   const [city, setCity] = useState(initialCity)
   const [q, setQ] = useState(searchParams.get('q') || '')
@@ -35,11 +46,29 @@ export default function ProfilsRechercheLogement() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  
+  // Modals state
   const [selectedProfile, setSelectedProfile] = useState<ApiProfilRechercheLogement | null>(null)
-  const [messageStatus, setMessageStatus] = useState('')
+  const [contactTarget, setContactTarget] = useState<ApiProfilRechercheLogement | null>(null)
+  
+  // Formulaire de message
+  const [messageSubject, setMessageSubject] = useState('')
+  const [messageBody, setMessageBody] = useState('')
+  const [sendingMessage, setSendingMessage] = useState(false)
+  const [messageStatus, setMessageStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  
   const [currentUserProfile, setCurrentUserProfile] = useState<ApiProfilRechercheLogement | null>(null)
 
   const normalizedCity = city.trim()
+
+  function formatDate(value: string | null | undefined) {
+    if (!value) return t('messages.date_not_specified')
+    return new Date(value).toLocaleDateString(i18n.language || 'fr-FR')
+  }
+
+  function profileName(profile: ApiProfilRechercheLogement) {
+    return `${profile.prenom || ''} ${profile.nom || ''}`.trim() || t('modal.candidate_role')
+  }
 
   useEffect(() => {
     const ville = searchParams.get('ville') || ''
@@ -73,12 +102,12 @@ export default function ProfilsRechercheLogement() {
         setTotal(data.total)
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Impossible de charger les profils.')
+        setError(err instanceof Error ? err.message : t('messages.error_load'))
         setProfiles([])
         setTotal(0)
       })
       .finally(() => setLoading(false))
-  }, [normalizedCity, q, profession, maxAge, user?.id])
+  }, [normalizedCity, q, profession, maxAge, user?.id, t])
 
   useEffect(() => {
     if (!user) return
@@ -123,22 +152,43 @@ export default function ProfilsRechercheLogement() {
     setSearchParams(next)
   }
 
-  async function sendMessage(profile: ApiProfilRechercheLogement) {
+  // Ouverture de la modal pour rédiger un message
+  function openContactModal(profile: ApiProfilRechercheLogement) {
     if (!user) {
       navigate(`/auth?mode=signin&redirect=${encodeURIComponent(`/profils-recherche-logement?ville=${normalizedCity}`)}`)
       return
     }
+    setContactTarget(profile)
+    setMessageSubject(t('messages.subject', { city: normalizedCity }))
+    setMessageBody(t('messages.body', { name: profile.prenom || '', city: normalizedCity }))
+    setMessageStatus(null)
+  }
 
-    setMessageStatus('')
+  // Soumission du message personnalisé
+  async function handleSendMessage(e: React.FormEvent) {
+    e.preventDefault()
+    if (!contactTarget) return
+
+    setSendingMessage(true)
+    setMessageStatus(null)
     try {
       await api.sendMessage({
-        id_destinataire: profile.id_utilisateur,
-        sujet: `Votre recherche de colocation a ${normalizedCity}`,
-        contenu: `Bonjour ${profile.prenom || ''}, je propose un logement a ${normalizedCity} et votre profil m'interesse.`,
+        id_destinataire: contactTarget.id_utilisateur,
+        sujet: messageSubject,
+        contenu: messageBody,
       })
-      setMessageStatus('Message envoye avec succes.')
+      setMessageStatus({ type: 'success', text: t('messages.success') })
+      setTimeout(() => {
+        setContactTarget(null)
+        setMessageStatus(null)
+      }, 1500)
     } catch (err) {
-      setMessageStatus(err instanceof Error ? err.message : "Impossible d'envoyer le message.")
+      setMessageStatus({
+        type: 'error',
+        text: err instanceof Error ? err.message : t('messages.error_send')
+      })
+    } finally {
+      setSendingMessage(false)
     }
   }
 
@@ -146,33 +196,41 @@ export default function ProfilsRechercheLogement() {
     <SiteLayout>
       <section className="bg-white border-b border-border">
         <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-8">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+          <div className="flex flex-col items-center justify-center text-center gap-5">
             <div>
-               <p className="text-sm font-semibold text-brand-cyan-dark">Mise en relation</p>
-               <h1 className="bebas text-3xl md:text-5xl text-foreground mt-1">
-                 {normalizedCity ? `Profils a ${normalizedCity}` : 'Trouver vos prochains colocataires'}
-               </h1>
-               <p className="text-sm text-muted-foreground mt-2">
-                 {loading
-                   ? 'Chargement...'
-                   : `${total} personne${total > 1 ? 's' : ''} recherche${total > 1 ? 'nt' : ''} actuellement un logement dans cette ville, sur la base des annonces de moins de 3 mois.`}
-               </p>
-             </div>
-             <Button
-               onClick={() => navigate(`/depot_annonce${normalizedCity ? `?ville=${encodeURIComponent(normalizedCity)}` : ''}`)}
-               className="rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green text-white"
-             >
-               Je propose un logement
-             </Button>
+              <p className="text-sm font-semibold text-brand-cyan-dark">{t('banners.roommates_title')}</p>
+              <h1 className="bebas text-3xl md:text-5xl text-foreground mt-1">
+                {normalizedCity ? t('search.title_with_city', { city: normalizedCity }) : t('search.title_default')}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-2 max-w-2xl mx-auto">
+                {loading
+                  ? t('search.loading')
+                  : t('search.subtitle', { count: total })}
+              </p>
+            </div>
+
+            <div className="flex justify-center w-full my-2">
+              <button
+                type="button"
+                onClick={() => navigate(`/depot_annonce${normalizedCity ? `?ville=${encodeURIComponent(normalizedCity)}` : ''}`)}
+                className="flex items-center justify-center gap-4 bg-white border border-gray-200 hover:border-gray-300 rounded-lg px-8 py-4 shadow-sm hover:shadow transition-all text-center max-w-xl w-full"
+              >
+                <Pencil className="w-6 h-6 text-emerald-500 shrink-0" />
+                <span className="text-sm font-medium text-gray-800 leading-tight">
+                  {t('search.cta_banner_title')}<br />
+                  {t('search.cta_banner_subtitle')}
+                </span>
+              </button>
+            </div>
           </div>
 
-          <form onSubmit={submitSearch} className="mt-6 grid lg:grid-cols-[1.3fr_1fr_180px_140px] gap-3">
+          <form onSubmit={submitSearch} className="mt-8 grid lg:grid-cols-[1.3fr_1fr_180px_140px] gap-3">
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                placeholder="Ville recherchee"
+                placeholder={t('search.placeholder_city')}
                 className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-cyan/30"
               />
             </div>
@@ -181,14 +239,14 @@ export default function ProfilsRechercheLogement() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Nom, bio, mot-cle"
+                placeholder={t('search.placeholder_query')}
                 className="w-full rounded-xl border border-border pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-cyan/30"
               />
             </div>
             <input
               value={profession}
               onChange={(e) => setProfession(e.target.value)}
-              placeholder="Profession"
+              placeholder={t('search.placeholder_profession')}
               className="w-full rounded-xl border border-border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-cyan/30"
             />
             <div className="flex gap-2">
@@ -197,7 +255,7 @@ export default function ProfilsRechercheLogement() {
                 min={0}
                 value={maxAge || ''}
                 onChange={(e) => setMaxAge(Number(e.target.value || 0))}
-                placeholder="Age max"
+                placeholder={t('search.placeholder_max_age')}
                 className="w-full rounded-xl border border-border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand-cyan/30"
               />
               <Button type="submit" className="rounded-xl bg-brand-cyan text-white px-4">
@@ -207,51 +265,53 @@ export default function ProfilsRechercheLogement() {
           </form>
 
           {activeFilterCount > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setQ('')
-                setProfession('')
-                setMaxAge(0)
-                const next = new URLSearchParams()
-                if (normalizedCity) next.set('ville', normalizedCity)
-                setSearchParams(next)
-              }}
-              className="mt-3 text-sm font-medium text-brand-cyan-dark hover:underline"
-            >
-              Reinitialiser les filtres
-            </button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setQ('')
+                  setProfession('')
+                  setMaxAge(0)
+                  const next = new URLSearchParams()
+                  if (normalizedCity) next.set('ville', normalizedCity)
+                  setSearchParams(next)
+                }}
+                className="mt-3 text-sm font-medium text-brand-cyan-dark hover:underline"
+              >
+                {t('search.reset_filters')}
+              </button>
+            </div>
           )}
         </div>
       </section>
 
       <section className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12 py-6">
-         <div className="mb-5 border border-brand-cyan/25 bg-brand-cyan/5 px-4 py-3 text-sm text-foreground flex flex-col md:flex-row md:items-center gap-3">
-           <div className="flex items-center gap-2 font-semibold">
-             <Users className="w-4 h-4 text-brand-cyan-dark" />
-             Mise en relation entre colocataires
-           </div>
-           <p className="text-muted-foreground md:ml-auto">
-             Ces profils peuvent aussi se regrouper pour creer leur propre colocation.
-           </p>
-         </div>
+        <div className="mb-5 border border-brand-cyan/25 bg-brand-cyan/5 px-4 py-3 text-sm text-foreground flex flex-col md:flex-row md:items-center gap-3">
+          <div className="flex items-center gap-2 font-semibold">
+            <Users className="w-4 h-4 text-brand-cyan-dark" />
+            {t('banners.roommates_title')}
+          </div>
+          <p className="text-muted-foreground md:ml-auto">
+            {t('banners.roommates_desc')}
+          </p>
+        </div>
 
-         <div className="mb-4 rounded-xl bg-brand-green/5 border border-brand-green/20 px-4 py-3 text-sm text-foreground flex flex-col md:flex-row md:items-center gap-3">
-           <div className="flex items-center gap-2 font-semibold">
-             <Building2 className="w-4 h-4 text-brand-green-dark" />
-             Agences immobilières
-           </div>
-           <p className="text-muted-foreground md:ml-auto">
-             Les agences peuvent consulter les profils des candidats et proposer des logements adaptés.
-           </p>
-         </div>
+        <div className="mb-4 rounded-xl bg-brand-green/5 border border-brand-green/20 px-4 py-3 text-sm text-foreground flex flex-col md:flex-row md:items-center gap-3">
+          <div className="flex items-center gap-2 font-semibold">
+            <Building2 className="w-4 h-4 text-brand-green-dark" />
+            {t('banners.agencies_title')}
+          </div>
+          <p className="text-muted-foreground md:ml-auto">
+            {t('banners.agencies_desc')}
+          </p>
+        </div>
 
         {error && <div className="border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
         {!loading && normalizedCity && profiles.length === 0 && !error && (
           <div className="text-center py-16 border border-dashed border-border bg-white">
             <UserRound className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-            <h2 className="bebas text-2xl text-foreground">Aucun profil disponible pour {normalizedCity}</h2>
+            <h2 className="bebas text-2xl text-foreground">{t('empty.no_profiles', { city: normalizedCity })}</h2>
           </div>
         )}
 
@@ -264,7 +324,10 @@ export default function ProfilsRechercheLogement() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {currentUserProfile && (
-              <div className="group text-left bg-brand-cyan-light/30 border-2 border-brand-cyan/40 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all">
+              <div 
+                onClick={() => setSelectedProfile(currentUserProfile)}
+                className="group text-left bg-brand-cyan-light/30 border-2 border-brand-cyan/40 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
                 <div className="relative aspect-[4/3] bg-muted overflow-hidden">
                   <LazyImage
                     src={currentUserProfile.profile_picture || FALLBACK_AVATAR}
@@ -273,17 +336,17 @@ export default function ProfilsRechercheLogement() {
                   />
                   <span className="absolute top-3 left-3 bg-brand-cyan text-white text-xs font-semibold px-2 py-1 inline-flex items-center gap-1">
                     <UserRound className="w-3 h-3" />
-                    Mon profil
+                    {t('card.my_profile')}
                   </span>
                 </div>
                 <div className="p-4">
                   <h3 className="font-bold text-lg leading-tight">{profileName(currentUserProfile)}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {currentUserProfile.age ? `${currentUserProfile.age} ans` : 'Age non precise'}
+                    {currentUserProfile.age ? t('modal.age_value', { age: currentUserProfile.age }) : t('card.age_not_specified')}
                     {currentUserProfile.profession ? ` - ${currentUserProfile.profession}` : ''}
                   </p>
                   <p className="mt-2 text-sm line-clamp-3 text-foreground">
-                    {currentUserProfile.bio || 'Ce profil cherche une colocation dans cette ville.'}
+                    {currentUserProfile.bio || t('card.default_bio')}
                   </p>
                   {currentUserProfile.telephone && (
                     <div className="mt-2 flex items-center gap-1.5 text-xs text-brand-cyan-dark font-semibold">
@@ -298,11 +361,8 @@ export default function ProfilsRechercheLogement() {
               <button
                 key={profile.id_utilisateur}
                 type="button"
-                onClick={() => {
-                  setSelectedProfile(profile)
-                  setMessageStatus('')
-                }}
-                className="group text-left bg-card border border-border overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                onClick={() => setSelectedProfile(profile)}
+                className="group text-left bg-card border border-border overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all w-full"
               >
                 <div className="relative aspect-[4/3] bg-muted overflow-hidden">
                   <LazyImage
@@ -313,28 +373,28 @@ export default function ProfilsRechercheLogement() {
                   {profile.est_verifie && (
                     <span className="absolute top-3 right-3 bg-white text-brand-green-dark text-xs font-semibold px-2 py-1 inline-flex items-center gap-1">
                       <ShieldCheck className="w-3 h-3" />
-                      Verifie
+                      {t('card.verified')}
                     </span>
                   )}
                 </div>
                 <div className="p-4">
                   <h3 className="font-bold text-lg leading-tight">{profileName(profile)}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {profile.age ? `${profile.age} ans` : 'Age non precise'}
+                    {profile.age ? t('modal.age_value', { age: profile.age }) : t('card.age_not_specified')}
                     {profile.profession ? ` - ${profile.profession}` : ''}
                   </p>
                   <p className="mt-2 text-sm line-clamp-3 text-foreground">
-                    {profile.bio || 'Ce profil cherche une colocation dans cette ville.'}
+                    {profile.bio || t('card.default_bio')}
                   </p>
                   <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{profile.demandes_count} demande{profile.demandes_count > 1 ? 's' : ''}</span>
-                    <span>Depuis {formatDate(profile.derniere_demande)}</span>
+                    <span>{t('card.requests_count', { count: profile.demandes_count })}</span>
+                    <span>{t('card.since', { date: formatDate(profile.derniere_demande) })}</span>
                   </div>
                   {profile.sources?.length ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {profile.sources.map((source) => (
                         <span key={source} className="rounded-full bg-brand-cyan-light px-2 py-0.5 text-[10px] font-semibold text-brand-cyan-dark">
-                          {source === 'annonce' ? 'Depose annonce' : source === 'recherche' ? 'Recherche ce lieu' : 'A postule'}
+                          {source === 'annonce' ? t('card.source_listing') : source === 'recherche' ? t('card.source_search') : t('card.source_applied')}
                         </span>
                       ))}
                     </div>
@@ -352,9 +412,10 @@ export default function ProfilsRechercheLogement() {
         )}
       </section>
 
+      {/* MODAL 1: Détails du profil sélectionné */}
       {selectedProfile && (
         <div className="fixed inset-0 z-[70] bg-black/60 p-4 grid place-items-center" onClick={() => setSelectedProfile(null)}>
-          <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-hidden grid lg:grid-cols-[0.9fr_1.1fr] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-hidden grid lg:grid-cols-[0.9fr_1.1fr] shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
             <div className="bg-black">
               <LazyImage
                 src={selectedProfile.profile_picture || FALLBACK_AVATAR}
@@ -362,85 +423,159 @@ export default function ProfilsRechercheLogement() {
                 className="w-full h-full min-h-[360px] object-cover"
               />
             </div>
-            <div className="p-6 overflow-y-auto">
-              <button onClick={() => setSelectedProfile(null)} className="float-right text-2xl leading-none text-muted-foreground hover:text-foreground">
-                x
-              </button>
-              <h2 className="text-2xl font-bold">{profileName(selectedProfile)}</h2>
-              <p className="text-muted-foreground">
-                   {selectedProfile.profession || selectedProfile.poste || 'Colocataire candidat'}{selectedProfile.age ? `, ${selectedProfile.age} ans` : ''}
-              </p>
-               <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                 <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
-                   <MapPin className="w-3 h-3" />
-                   Recherche a {selectedProfile.ville_recherchee || normalizedCity}
-                 </span>
-                 <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
-                   <CalendarClock className="w-3 h-3" />
-                   Derniere demande le {formatDate(selectedProfile.derniere_demande)}
-                 </span>
-                 {selectedProfile.ville_actuelle && (
-                   <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
-                     <Briefcase className="w-3 h-3" />
-                     Ville actuelle : {selectedProfile.ville_actuelle}
-                   </span>
-                 )}
-               </div>
+            <div className="p-6 overflow-y-auto flex flex-col justify-between">
+              <div>
+                <button onClick={() => setSelectedProfile(null)} className="float-right text-muted-foreground hover:text-foreground">
+                  <X className="w-6 h-6" />
+                </button>
+                <h2 className="text-2xl font-bold">{profileName(selectedProfile)}</h2>
+                <p className="text-muted-foreground">
+                  {selectedProfile.profession || selectedProfile.poste || t('modal.candidate_role')}{selectedProfile.age ? `, ${t('modal.age_value', { age: selectedProfile.age })}` : ''}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
+                    <MapPin className="w-3 h-3" />
+                    {t('modal.searching_in', { city: selectedProfile.ville_recherchee || normalizedCity })}
+                  </span>
+                  <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
+                    <CalendarClock className="w-3 h-3" />
+                    {t('modal.last_request', { date: formatDate(selectedProfile.derniere_demande) })}
+                  </span>
+                  {selectedProfile.ville_actuelle && (
+                    <span className="inline-flex items-center gap-1 border border-border px-2 py-1">
+                      <Briefcase className="w-3 h-3" />
+                      {t('modal.current_city', { city: selectedProfile.ville_actuelle })}
+                    </span>
+                  )}
+                </div>
 
-               <div className="mt-6 border-t border-border pt-5">
-                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                   <UserRound className="w-4 h-4 text-brand-cyan" />
-                   Profil du candidat
-                 </h3>
-                 <p className="mt-3 whitespace-pre-line text-sm leading-7">
-                   {selectedProfile.bio || 'Ce candidat n a pas encore complete sa presentation.'}
-                 </p>
-                 {selectedProfile.profession && (
-                   <p className="mt-2 text-sm text-muted-foreground">
-                     Profession : <span className="text-foreground font-medium">{selectedProfile.profession}</span>
-                   </p>
-                 )}
-                 {(selectedProfile.poste || selectedProfile.role) && (
-                   <p className="mt-2 text-sm text-muted-foreground">
-                     Type de profil : <span className="text-foreground font-medium">{selectedProfile.poste || selectedProfile.role}</span>
-                   </p>
-                 )}
-                 {selectedProfile.age && (
-                   <p className="text-sm text-muted-foreground">
-                     Age : <span className="text-foreground font-medium">{selectedProfile.age} ans</span>
-                   </p>
-                 )}
-               </div>
+                <div className="mt-6 border-t border-border pt-5">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <UserRound className="w-4 h-4 text-brand-cyan" />
+                    {t('modal.candidate_profile')}
+                  </h3>
+                  <p className="mt-3 whitespace-pre-line text-sm leading-7">
+                    {selectedProfile.bio || t('modal.no_bio')}
+                  </p>
+                  {selectedProfile.profession && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {t('modal.profession_label')} <span className="text-foreground font-medium">{selectedProfile.profession}</span>
+                    </p>
+                  )}
+                  {(selectedProfile.poste || selectedProfile.role) && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {t('modal.profile_type_label')} <span className="text-foreground font-medium">{selectedProfile.poste || selectedProfile.role}</span>
+                    </p>
+                  )}
+                  {selectedProfile.age && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('modal.age_label')} <span className="text-foreground font-medium">{t('modal.age_value', { age: selectedProfile.age })}</span>
+                    </p>
+                  )}
+                </div>
 
-               <div className="mt-6 border-t border-border pt-5 grid sm:grid-cols-2 gap-3">
-                 {user ? (
-                   <>
-                     <a href={selectedProfile.telephone ? `tel:${selectedProfile.telephone}` : undefined} className="inline-flex items-center justify-center gap-2 bg-brand-green text-white px-4 py-3 font-semibold">
-                       <Phone className="w-4 h-4" />
-                       {selectedProfile.telephone || 'Numero non renseigne'}
-                     </a>
-                     <Button onClick={() => sendMessage(selectedProfile)} className="rounded-none bg-brand-cyan text-white">
-                       <Mail className="w-4 h-4 mr-2" />
-                       Envoyer un message
-                     </Button>
-                   </>
-                 ) : (
-                   <Link to={`/auth?mode=signin&redirect=${encodeURIComponent(`/profils-recherche-logement?ville=${normalizedCity}`)}`} className="sm:col-span-2 inline-flex items-center justify-center gap-2 bg-brand-cyan text-white px-4 py-3 font-semibold">
-                     <MessageCircle className="w-4 h-4" />
-                     Connectez-vous pour contacter cette personne
-                   </Link>
-                 )}
-               </div>
-              {messageStatus && <p className="mt-3 text-sm font-medium text-brand-cyan-dark">{messageStatus}</p>}
-              <button
-                type="button"
-                onClick={() => navigate(`/deposer${normalizedCity ? `?ville=${encodeURIComponent(normalizedCity)}` : ''}`)}
-                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand-cyan-dark hover:underline"
-              >
-                <Heart className="w-4 h-4" />
-                Deposer une annonce pour ce profil
+                <div className="mt-6 border-t border-border pt-5 grid sm:grid-cols-2 gap-3">
+                  {user ? (
+                    <>
+                      <a href={selectedProfile.telephone ? `tel:${selectedProfile.telephone}` : undefined} className="inline-flex items-center justify-center gap-2 bg-brand-green text-white px-4 py-3 font-semibold hover:opacity-90 transition">
+                        <Phone className="w-4 h-4" />
+                        {selectedProfile.telephone || t('modal.phone_not_provided')}
+                      </a>
+                      <Button onClick={() => openContactModal(selectedProfile)} className="rounded-none bg-brand-cyan text-white hover:bg-brand-cyan-dark">
+                        <Mail className="w-4 h-4 mr-2" />
+                        {t('modal.send_message')}
+                      </Button>
+                    </>
+                  ) : (
+                    <Link to={`/auth?mode=signin&redirect=${encodeURIComponent(`/profils-recherche-logement?ville=${normalizedCity}`)}`} className="sm:col-span-2 inline-flex items-center justify-center gap-2 bg-brand-cyan text-white px-4 py-3 font-semibold hover:bg-brand-cyan-dark transition">
+                      <MessageCircle className="w-4 h-4" />
+                      {t('modal.login_to_contact')}
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/deposer${normalizedCity ? `?ville=${encodeURIComponent(normalizedCity)}` : ''}`)}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-brand-cyan-dark hover:underline"
+                >
+                  <Heart className="w-4 h-4" />
+                  {t('modal.post_ad_for_profile')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Écrire et envoyer un message */}
+      {contactTarget && (
+        <div className="fixed inset-0 z-[80] bg-black/60 p-4 grid place-items-center" onClick={() => setContactTarget(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl p-6 shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-4 border-b border-border">
+              <h3 className="text-lg font-bold text-foreground">
+                Contacter {profileName(contactTarget)}
+              </h3>
+              <button onClick={() => setContactTarget(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-5 h-5" />
               </button>
             </div>
+
+            <form onSubmit={handleSendMessage} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">
+                  Sujet
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={messageSubject}
+                  onChange={(e) => setMessageSubject(e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-cyan/40"
+                  placeholder="Objet du message..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">
+                  Message
+                </label>
+                <textarea
+                  required
+                  rows={5}
+                  value={messageBody}
+                  onChange={(e) => setMessageBody(e.target.value)}
+                  className="w-full rounded-lg border border-border p-3 text-sm outline-none focus:ring-2 focus:ring-brand-cyan/40 resize-none"
+                  placeholder="Rédigez votre message ici..."
+                />
+              </div>
+
+              {messageStatus && (
+                <p className={`text-sm font-medium ${messageStatus.type === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {messageStatus.text}
+                </p>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setContactTarget(null)}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={sendingMessage}
+                  className="bg-brand-cyan text-white hover:bg-brand-cyan-dark flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  {sendingMessage ? 'Envoi...' : 'Envoyer le message'}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
