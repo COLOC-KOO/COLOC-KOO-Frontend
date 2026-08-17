@@ -40,6 +40,8 @@ export interface AuthUser {
     date_inscription?: string
     languePreferee?: number | null
     verification?: boolean
+    /** Indique si la double authentification est activée pour ce compte. */
+    two_fa_enabled?: boolean | number
     statut?: string
     createdAt?: string
 }
