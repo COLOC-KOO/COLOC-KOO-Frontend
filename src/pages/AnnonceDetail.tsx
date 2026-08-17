@@ -1049,33 +1049,47 @@ export default function AnnonceDetail() {
                             <ChevronDown className={`h-4 w-4 text-cyan-700 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                           </div>
                         </button>
-                        {/* Bouton Détails utilisateur pour chaque candidat */}
-                        <button
-                          type="button"
-                          onClick={() => openProfileModal({
-                            name: fullName,
-                            age: candidate.age || undefined,
-                            budget: '850 €',
-                            memberSince: '3 mois',
-                            avatar: candidate.profile_picture || undefined,
-                            bio: candidate.bio || t('annonceDetail:profile.bio', { 
-                              name: fullName, 
-                              age: candidate.age || 27, 
+
+                        {/* Boutons Profil + Message pour chaque candidat */}
+                        <div className="flex flex-col gap-2 flex-shrink-0">
+                          {/* Bouton Profil : ouvre le modal profil */}
+                          <button
+                            type="button"
+                            onClick={() => openProfileModal({
+                              name: fullName,
+                              age: candidate.age || undefined,
+                              budget: '850 €',
+                              memberSince: '3 mois',
+                              avatar: candidate.profile_picture || undefined,
+                              bio: candidate.bio || t('annonceDetail:profile.bio', { 
+                                name: fullName, 
+                                age: candidate.age || 27, 
+                                city: candidate.ville_actuelle || 'Paris',
+                                origin: candidate.ville_origine || 'Lyon'
+                              }),
+                              email: candidate.email || 'contact@email.com',
+                              phone: candidate.telephone || '+33 6 12 34 56 78',
+                              profession: candidate.profession || t('annonceDetail:profile.profession'),
                               city: candidate.ville_actuelle || 'Paris',
-                              origin: candidate.ville_origine || 'Lyon'
-                            }),
-                            email: candidate.email || 'contact@email.com',
-                            phone: candidate.telephone || '+33 6 12 34 56 78',
-                            profession: candidate.profession || t('annonceDetail:profile.profession'),
-                            city: candidate.ville_actuelle || 'Paris',
-                            origin: candidate.ville_origine || 'Lyon',
-                            status: 'Salariée, 26 ans'
-                          })}
-                          className="rounded-full border border-cyan-200 bg-cyan-50 p-2 text-cyan-700 transition hover:bg-cyan-100 flex-shrink-0"
-                          title={t('annonceDetail:candidates.viewProfile')}
-                        >
-                          <User className="h-4 w-4" />
-                        </button>
+                              origin: candidate.ville_origine || 'Lyon',
+                              status: 'Salariée, 26 ans'
+                            })}
+                            className="rounded-full border border-cyan-200 bg-cyan-50 p-2 text-cyan-700 transition hover:bg-cyan-100"
+                            title={t('annonceDetail:candidates.viewProfile')}
+                          >
+                            <User className="h-4 w-4" />
+                          </button>
+
+                          {/* Bouton Message : ouvre le modal d'envoi de message */}
+                          <button
+                            type="button"
+                            onClick={() => openMessageModal(candidate)}
+                            className="rounded-full border border-brand-cyan/30 bg-brand-cyan-light/40 p-2 text-brand-cyan-dark transition hover:bg-brand-cyan-light"
+                            title={t('annonceDetail:candidates.sendMessage')}
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                       {isExpanded ? (
                         <div className="mt-3 space-y-3 border-t border-cyan-100 pt-3">
@@ -1148,186 +1162,251 @@ export default function AnnonceDetail() {
           )}
         </div>
 
-        <aside className="lg:sticky lg:top-24 h-fit space-y-4">
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-            <div className="flex items-baseline gap-2">
-              <div className="bebas text-4xl text-brand-cyan-dark">{formatAr(listing.price)}</div>
-              <div className="text-sm text-muted-foreground">{t('annonceDetail:perMonth')}</div>
-            </div>
-            <div className="mt-5 space-y-2">
-              {user ? (
-                <div className="rounded-xl border border-brand-cyan/20 bg-brand-cyan-light/50 p-3 text-sm">
-                  <div className="font-semibold text-brand-cyan-dark">{t('annonceDetail:user.connected', { name: user.prenom || user.name || user.email })}</div>
-                  <div className="text-muted-foreground mt-1">{t('annonceDetail:user.connectedDesc')}</div>
-                </div>
-              ) : null}
-              {user ? (
-                Number(listing.owner.id) === Number(user.id) ? (
-                  <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
-                    <div className="font-semibold text-foreground">{t('annonceDetail:user.ownerTitle')}</div>
-                    <p className="mt-2">{t('annonceDetail:user.ownerDesc')}</p>
-                  </div>
-                ) : hasApplied ? (
-                  <div className="rounded-xl border border-brand-green/20 bg-brand-green-light/50 p-3 text-sm text-brand-green-dark">
-                    <div className="font-semibold">{t('annonceDetail:user.applied')}</div>
-                    <div className="mt-1 text-muted-foreground">{t('annonceDetail:user.appliedDesc')}</div>
-                    <Button type="button" size="sm" className="mt-3 w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white" onClick={handleViewMyCandidature}>
-                      <Eye className="w-4 h-4" /> {t('annonceDetail:user.viewApplication')}
-                    </Button>
-                    {showMyCandidature ? (
-                      <div className="mt-3 space-y-3 text-left">
-                        <div className="rounded-lg border border-brand-green/20 bg-background p-3">
-                          <div className="font-semibold text-foreground">{t('annonceDetail:user.myApplication')}</div>
-                          <div className="mt-2 text-xs text-muted-foreground">{t('annonceDetail:user.status')} {myCandidature?.statut || t('annonceDetail:user.statusPending')}</div>
-                          {myCandidature?.message ? <div className="mt-2 text-sm text-foreground">{myCandidature.message}</div> : <div className="mt-2 text-sm text-muted-foreground">{t('annonceDetail:user.noMessage')}</div>}
-                        </div>
-                        <div className="rounded-lg border border-border bg-background p-3">
-                          <div className="font-semibold text-foreground">{t('annonceDetail:user.otherCandidates')}</div>
-                          <div className="mt-2 space-y-2">
-                            {otherCandidates.length === 0 ? (
-                              <div className="text-sm text-muted-foreground">{t('annonceDetail:user.noOtherCandidates')}</div>
-                            ) : otherCandidates.map((candidate) => (
-                                <div key={candidate.id_candidature} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                                  <div>
-                                    <div className="text-sm font-semibold text-foreground">{candidate.prenom || candidate.nom || t('annonceDetail:candidates.defaultName')}</div>
-                                    <div className="text-xs text-muted-foreground">{candidate.statut || t('annonceDetail:user.statusPending')}</div>
-                                  </div>
-                                  <span className="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">{t('annonceDetail:user.statusPending')}</span>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <form onSubmit={handleApply} className="space-y-2">
-                    <textarea
-                      value={message}
-                      onChange={(event) => setMessage(event.target.value)}
-                      rows={4}
-                      placeholder={t('annonceDetail:apply.placeholder')}
-                      className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
-                    />
-                    <Button type="submit" className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11" disabled={submitting}>
-                      {submitting ? t('common:common.loading') : t('annonceDetail:apply.submit')}
-                    </Button>
-                    {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
-                  </form>
-                )
-              ) : (
-                <Link to={`/auth?mode=signin&redirect=/annonces/${id}`}>
-                  <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11">
-                    {t('annonceDetail:apply.loginToApply')}
-                  </Button>
-                </Link>
-              )}
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!canViewCandidatures}
-                  onClick={handleViewMyCandidature}
-                >
-                  <Eye className="w-4 h-4" /> {t('annonceDetail:actions.viewApplication')}
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Share2 className="w-4 h-4" /> {t('annonceDetail:actions.share')}
-                </Button>
-              </div>
-            </div>
-            <div className="mt-6 pt-5 border-t border-border">
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-muted-foreground">{t('annonceDetail:owner.title')}</div>
-                {/* Bouton Détails utilisateur pour le déposant */}
-                <button
-                  type="button"
-                  onClick={() => openProfileModal({
-                    name: listing.owner.name,
-                    age: 35,
-                    budget: '850 €',
-                    memberSince: '1 an',
-                    avatar: listing.owner.profilePicture || undefined,
-                    bio: t('annonceDetail:profile.ownerBio', { name: listing.owner.name }),
-                    email: listing.owner.email || undefined,
-                    phone: listing.owner.phone || undefined,
-                    profession: t('annonceDetail:profile.ownerProfession'),
-                    city: listing.city,
-                    origin: 'Antananarivo',
-                    status: 'Propriétaire'
-                  })}
-                  className="flex items-center gap-1 text-xs text-brand-cyan hover:text-brand-cyan-dark transition-colors"
-                >
-                  <User className="w-3 h-3" /> {t('annonceDetail:owner.viewProfile')}
-                </button>
-              </div>
-              <div className="flex items-center gap-3 mt-2">
-                <div className="w-10 h-10 rounded-full bg-brand-green-light flex items-center justify-center font-bold text-brand-green-dark">
-                  {listing.owner.name[0]}
-                </div>
-                <div>
-                  <div className="text-sm font-semibold flex items-center gap-1">
-                    {listing.owner.name}
-                    <Shield className="w-3.5 h-3.5 text-brand-cyan-dark" />
-                  </div>
-                  <div className="text-xs text-muted-foreground">{t('annonceDetail:owner.verified')}</div>
-                </div>
-              </div>
+<aside className="lg:sticky lg:top-24 h-fit space-y-4">
+  <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+    <div className="flex items-baseline gap-2">
+      <div className="bebas text-4xl text-brand-cyan-dark">{formatAr(listing?.price)}</div>
+      <div className="text-sm text-muted-foreground">{t('annonceDetail:perMonth')}</div>
+    </div>
 
-              {user ? (
-                listing.owner.id ? (
-                  user.id === listing.owner.id ? (
-                    <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground mt-4">
-                      {t('annonceDetail:owner.self')}
-                    </div>
-                  ) : (
-                    <div className="space-y-3 mt-4">
-                      <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        {t('annonceDetail:contact.subject')}
-                      </label>
-                      <input
-                        value={contactSubject}
-                        onChange={(event) => setContactSubject(event.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
-                        placeholder={t('annonceDetail:contact.subjectPlaceholder')}
-                      />
-                      <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        {t('annonceDetail:contact.message')}
-                      </label>
-                      <textarea
-                        value={contactMessage}
-                        onChange={(event) => setContactMessage(event.target.value)}
-                        rows={4}
-                        placeholder={t('annonceDetail:contact.messagePlaceholder')}
-                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
-                      />
-                      {contactError ? <p className="text-sm text-red-600">{contactError}</p> : null}
-                      {contactSuccess ? <p className="text-sm text-green-600">{contactSuccess}</p> : null}
-                      <Button
-                        type="button"
-                        className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11"
-                        disabled={contactSubmitting}
-                        onClick={handleContactOwner}
-                      >
-                        {contactSubmitting ? t('common:common.loading') : t('annonceDetail:contact.submit')}
-                      </Button>
-                    </div>
-                  )
-                ) : (
-                  <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground mt-4">
-                    {t('annonceDetail:owner.unavailable')}
-                  </div>
-                )
-              ) : (
-                <Link to={`/auth?mode=signin&redirect=/annonces/${id}`} className="mt-4 block">
-                  <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11">
-                    {t('annonceDetail:contact.loginToContact')}
-                  </Button>
-                </Link>
-              )}
-            </div>
+    <div className="mt-5 space-y-2">
+      {user ? (
+        <div className="rounded-xl border border-brand-cyan/20 bg-brand-cyan-light/50 p-3 text-sm">
+          <div className="font-semibold text-brand-cyan-dark">
+            {t('annonceDetail:user.connected', { name: user.prenom || user.name || user.email })}
           </div>
-        </aside>
+          <div className="text-muted-foreground mt-1">{t('annonceDetail:user.connectedDesc')}</div>
+        </div>
+      ) : null}
+
+      {user ? (
+        Number(listing?.owner?.id) === Number(user.id) ? (
+          <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
+            <div className="font-semibold text-foreground">{t('annonceDetail:user.ownerTitle')}</div>
+            <p className="mt-2">{t('annonceDetail:user.ownerDesc')}</p>
+          </div>
+        ) : hasApplied ? (
+          <div className="rounded-xl border border-brand-green/20 bg-brand-green-light/50 p-3 text-sm text-brand-green-dark">
+            <div className="font-semibold">{t('annonceDetail:user.applied')}</div>
+            <div className="mt-1 text-muted-foreground">{t('annonceDetail:user.appliedDesc')}</div>
+            <Button
+              type="button"
+              size="sm"
+              className="mt-3 w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white"
+              onClick={handleViewMyCandidature}
+            >
+              <Eye className="w-4 h-4" /> {t('annonceDetail:user.viewApplication')}
+            </Button>
+            {showMyCandidature ? (
+              <div className="mt-3 space-y-3 text-left">
+                <div className="rounded-lg border border-brand-green/20 bg-background p-3">
+                  <div className="font-semibold text-foreground">{t('annonceDetail:user.myApplication')}</div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {t('annonceDetail:user.status')} {myCandidature?.statut || t('annonceDetail:user.statusPending')}
+                  </div>
+                  {myCandidature?.message ? (
+                    <div className="mt-2 text-sm text-foreground">{myCandidature.message}</div>
+                  ) : (
+                    <div className="mt-2 text-sm text-muted-foreground">{t('annonceDetail:user.noMessage')}</div>
+                  )}
+                </div>
+                <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="font-semibold text-foreground">{t('annonceDetail:user.otherCandidates')}</div>
+                  <div className="mt-2 space-y-2">
+                    {otherCandidates.length === 0 ? (
+                      <div className="text-sm text-muted-foreground">{t('annonceDetail:user.noOtherCandidates')}</div>
+                    ) : (
+                      otherCandidates.map((candidate) => (
+                        <div
+                          key={candidate.id_candidature}
+                          className="flex items-center justify-between rounded-lg border border-border px-3 py-2"
+                        >
+                          <div>
+                            <div className="text-sm font-semibold text-foreground">
+                              {candidate.prenom || candidate.nom || t('annonceDetail:candidates.defaultName')}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {candidate.statut || t('annonceDetail:user.statusPending')}
+                            </div>
+                          </div>
+                          <span className="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                            {t('annonceDetail:user.statusPending')}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <form onSubmit={handleApply} className="space-y-2">
+            <textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              rows={4}
+              placeholder={t('annonceDetail:apply.placeholder')}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
+            />
+            <Button
+              type="submit"
+              className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11"
+              disabled={submitting}
+            >
+              {submitting ? t('common:common.loading') : t('annonceDetail:apply.submit')}
+            </Button>
+            {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
+          </form>
+        )
+      ) : (
+        <Link to={`/auth?mode=signin&redirect=/annonces/${id}`}>
+          <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11">
+            {t('annonceDetail:apply.loginToApply')}
+          </Button>
+        </Link>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!canViewCandidatures}
+          onClick={handleViewMyCandidature}
+        >
+          <Eye className="w-4 h-4" /> {t('annonceDetail:actions.viewApplication')}
+        </Button>
+        <Button variant="outline" size="sm">
+          <Share2 className="w-4 h-4" /> {t('annonceDetail:actions.share')}
+        </Button>
+      </div>
+    </div>
+
+    {/* Section Propriétaire */}
+    <div className="mt-6 pt-5 border-t border-border">
+      <div className="text-xs text-muted-foreground mb-2">{t('annonceDetail:owner.title')}</div>
+
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-brand-green-light flex items-center justify-center font-bold text-brand-green-dark">
+          {listing?.owner?.name ? listing.owner.name[0].toUpperCase() : 'U'}
+        </div>
+        <div>
+          <div className="text-sm font-semibold flex items-center gap-1">
+            {listing?.owner?.name || 'Propriétaire'}
+            <Shield className="w-3.5 h-3.5 text-brand-cyan-dark" />
+          </div>
+          <div className="text-xs text-muted-foreground">{t('annonceDetail:owner.verified')}</div>
+        </div>
+      </div>
+
+      {/* Boutons d'action : Message & Profil */}
+      <div className="grid grid-cols-2 gap-2 mt-4">
+        {/* Bouton Message : ouvre le modal message vers le propriétaire (id: -1) */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full flex items-center justify-center gap-1.5 text-xs"
+          onClick={() => {
+            if (!user) {
+              navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
+              return
+            }
+            if (listing?.owner?.id) {
+              setMessageModalCandidate({
+                id: -1,
+                userId: Number(listing.owner.id),
+                name: listing.owner.name,
+              })
+            }
+          }}
+        >
+          <Mail className="w-3.5 h-3.5" /> Message
+        </Button>
+
+        {/* Bouton Profil : ouvre le modal profil du propriétaire */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full flex items-center justify-center gap-1.5 text-xs text-brand-cyan border-brand-cyan/30 hover:bg-brand-cyan/10"
+          onClick={() =>
+            openProfileModal({
+              name: listing?.owner?.name || '',
+              age: 35,
+              budget: '850 €',
+              memberSince: '1 an',
+              avatar: listing?.owner?.profilePicture || undefined,
+              bio: t('annonceDetail:profile.ownerBio', { name: listing?.owner?.name || '' }),
+              email: listing?.owner?.email || undefined,
+              phone: listing?.owner?.phone || undefined,
+              profession: t('annonceDetail:profile.ownerProfession'),
+              city: listing?.city,
+              origin: 'Antananarivo',
+              status: 'Propriétaire',
+            })
+          }
+        >
+          <User className="w-3.5 h-3.5" /> {t('annonceDetail:owner.viewProfile')}
+        </Button>
+      </div>
+
+      {/* Zone du formulaire de contact direct */}
+      <div id="contact-form-section">
+        {user ? (
+          listing?.owner?.id ? (
+            user.id === listing.owner.id ? (
+              <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground mt-4">
+                {t('annonceDetail:owner.self')}
+              </div>
+            ) : (
+              <div className="space-y-3 mt-4">
+                <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {t('annonceDetail:contact.subject')}
+                </label>
+                <input
+                  value={contactSubject}
+                  onChange={(event) => setContactSubject(event.target.value)}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
+                  placeholder={t('annonceDetail:contact.subjectPlaceholder')}
+                />
+                <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {t('annonceDetail:contact.message')}
+                </label>
+                <textarea
+                  value={contactMessage}
+                  onChange={(event) => setContactMessage(event.target.value)}
+                  rows={4}
+                  placeholder={t('annonceDetail:contact.messagePlaceholder')}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand-cyan"
+                />
+                {contactError ? <p className="text-sm text-red-600">{contactError}</p> : null}
+                {contactSuccess ? <p className="text-sm text-green-600">{contactSuccess}</p> : null}
+
+                <Button
+                  type="button"
+                  className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11"
+                  disabled={contactSubmitting}
+                  onClick={handleContactOwner}
+                >
+                  {contactSubmitting ? t('common:common.loading') : t('annonceDetail:contact.submit')}
+                </Button>
+              </div>
+            )
+          ) : (
+            <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground mt-4">
+              {t('annonceDetail:owner.unavailable')}
+            </div>
+          )
+        ) : (
+          <Link to={`/auth?mode=signin&redirect=/annonces/${id}`} className="mt-4 block">
+            <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11">
+              {t('annonceDetail:contact.loginToContact')}
+            </Button>
+          </Link>
+        )}
+      </div>
+    </div>
+  </div>
+</aside>
       </div>
     </SiteLayout>
   )
