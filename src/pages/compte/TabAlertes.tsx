@@ -2,13 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { Bell, BellPlus, Check, Trash, X, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-/* ------------------------------------------------------------------ */
-/*  MES ALERTES — branché sur l'API backend :                         */
-/*  GET    /api/alertes/:idUtilisateur                                */
-/*  POST   /api/alertes                                               */
-/*  DELETE /api/alertes/:id                                           */
-/* ------------------------------------------------------------------ */
-
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
 const API = BASE.endsWith('/api') ? BASE.slice(0, -4) : BASE
 
@@ -28,6 +21,8 @@ interface AlerteForm {
   typeBien: string[]
   reglesColoc: string[]
   typeAnnonce: string[]
+  notifPush: boolean
+  notifEmail: boolean
 }
 
 const EMPTY_FORM: AlerteForm = {
@@ -37,6 +32,8 @@ const EMPTY_FORM: AlerteForm = {
   typeBien: [],
   reglesColoc: [],
   typeAnnonce: [],
+  notifPush: true,
+  notifEmail: true,
 }
 
 /* Ligne renvoyée par l'API (table recherches_sauvegardees) */
@@ -111,6 +108,26 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
     setAlertes((prev) => prev.filter((a) => a.id !== id))
   }
 
+  /* Toggle push/email sur une alerte existante -> persiste en DB (1/0) */
+  const toggleNotif = async (id: number, champ: 'notif_push' | 'notif_email', valeurActuelle: number) => {
+    const nouvelleValeur = valeurActuelle ? 0 : 1
+    setAlertes((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, [champ]: nouvelleValeur } : a))
+    )
+    try {
+      await fetch(`${API}/api/alertes/${id}/notifications`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [champ]: !!nouvelleValeur }),
+      })
+    } catch (err) {
+      console.error('Erreur mise à jour notification :', err)
+      setAlertes((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, [champ]: valeurActuelle } : a))
+      )
+    }
+  }
+
   const closeModal = () => {
     setShowModal(false)
     setForm(EMPTY_FORM)
@@ -128,6 +145,8 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
         types_bien: form.typeBien,
         regles: form.reglesColoc,
         types_annonce: form.typeAnnonce,
+        notif_push: form.notifPush,
+        notif_email: form.notifEmail,
       }),
     })
     closeModal()
@@ -180,10 +199,20 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
             <div className="flex items-center gap-4 flex-wrap">
               <span className="text-xs text-muted-foreground">{t('notification')}</span>
               <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" defaultChecked={!!a.notif_push} className="accent-brand-green w-4 h-4" /> {t('push')}
+                <input
+                  type="checkbox"
+                  checked={!!a.notif_push}
+                  onChange={() => toggleNotif(a.id, 'notif_push', a.notif_push)}
+                  className="accent-brand-green w-4 h-4"
+                /> {t('push')}
               </label>
               <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" defaultChecked={!!a.notif_email} className="accent-brand-green w-4 h-4" /> {t('email')}
+                <input
+                  type="checkbox"
+                  checked={!!a.notif_email}
+                  onChange={() => toggleNotif(a.id, 'notif_email', a.notif_email)}
+                  className="accent-brand-green w-4 h-4"
+                /> {t('email')}
               </label>
               <button
                 onClick={() => removeAlerte(a.id)}
@@ -284,7 +313,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
               </div>
             </div>
 
-            <div className="mb-5">
+            <div className="mb-4">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('announcementType')}</div>
               <div className="grid grid-cols-2 gap-2">
                 {TYPES_ANNONCE.map((item) => (
@@ -295,6 +324,22 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
                     onChange={() => setForm((prev) => ({ ...prev, typeAnnonce: toggleInArray(prev.typeAnnonce, item.key) }))}
                   />
                 ))}
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('notification')}</div>
+              <div className="grid grid-cols-2 gap-2">
+                <Checkbox
+                  label={t('push')}
+                  checked={form.notifPush}
+                  onChange={() => setForm((prev) => ({ ...prev, notifPush: !prev.notifPush }))}
+                />
+                <Checkbox
+                  label={t('email')}
+                  checked={form.notifEmail}
+                  onChange={() => setForm((prev) => ({ ...prev, notifEmail: !prev.notifEmail }))}
+                />
               </div>
             </div>
 
