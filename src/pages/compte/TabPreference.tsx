@@ -15,7 +15,7 @@ export interface EventPreference {
 }
 
 interface TabPreferenceProps {
-  idUtilisateur: number | string
+  idUtilisateur?: number | string
 }
 
 const DEFAULT_EVENTS: EventPreference[] = [

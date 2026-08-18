@@ -945,7 +945,7 @@ export default function Compte() {
             {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
-            {tab === 'notif' && <TabPreference />}
+            {tab === 'notif' && <TabPreference idUtilisateur={currentUserId ?? 0} />}
             {tab === 'paiements' && <TabMessagesV2 />}
             {tab === 'secu' && <TabCompteDonnees onAccountDeleted={handleAccountDeleted} />}
           </div>
