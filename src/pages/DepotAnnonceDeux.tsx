@@ -38,6 +38,11 @@ import {
   Wrench,
   X,
 } from 'lucide-react'
+import { MapContainer, TileLayer, Marker, ZoomControl, useMap, useMapEvents } from 'react-leaflet'
+import { Icon as LeafletIcon } from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import iconUrl from 'leaflet/dist/images/marker-icon.png'
+import iconShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
@@ -51,29 +56,43 @@ import { cn } from '../lib/utils'
  * (parcours de dépôt d'annonce) + corrections du PDF
  * "Suite réunion 20260804 - DEPOT".
  *
- * Changements appliqués suite au PDF (par rapport à la version précédente) :
- *  1. Étape 2 (esprit) : SUPPRESSION du bloc "devis Coloc'KOO" pour la
- *     création de colocation — explicitement demandé par le client
- *     ("cet élément proposé par Coloc'KOO doit être supprimé à ce niveau").
- *  2. Étape 3 (logement) : le placement du repère sur la carte est
- *     désormais OBLIGATOIRE (auparavant, une adresse texte suffisait).
- *     Le quartier est dérivé de l'adresse saisie / du géocodage et
- *     réellement transmis au backend (auparavant toujours vide).
- *  3. Étape 5 (chambre) : "La chambre est meublée" passe d'un <select>
- *     à choix unique à des cases à cocher à choix multiples, conformément
- *     au PDF ("Plusieurs réponses sont possibles").
- *  4. Étape 1 (statut) : contrôle "1 seule annonce possible par compte"
- *     pour le profil Colocataire — ⚠️ IMPORTANT : ce contrôle appelle
- *     `api.checkAnnonceExistante(role)`, une méthode que je suppose sur
- *     votre client API mais que je n'ai pas pu vérifier (api.ts ne
- *     m'a pas été fourni). Adaptez le nom/la forme de l'appel à votre
- *     implémentation réelle — voir le commentaire "TODO API" ci-dessous.
+ * AMÉLIORATION CARTE : la fausse carte CSS a été remplacée par une VRAIE carte
+ * Leaflet (tuiles OpenStreetMap). Quand on tape un lieu dans
+ * « Localisation du bien », la carte se recentre automatiquement dessus et le
+ * repère y est placé. Le repère reste déplaçable / plaçable au clic.
  * ==========================================================================*/
 
 type Lang = 'FR' | 'MG' | 'ENG'
 type Role = 'membre' | 'proprio' | 'pro' | null
 
 const LAUNCH_FREE = true // offre partenaire offerte pendant le lancement (cf. PDF étape 4/7)
+
+/* ---------------------------------------------------------------------- */
+/*  Brouillon "publier après connexion"                                    */
+/* ---------------------------------------------------------------------- */
+// Quand un visiteur non connecté clique sur « Publier », on enregistre tout
+// son formulaire ici avant de l'envoyer se connecter. Une fois connecté et
+// redirigé vers cette page, le formulaire est restauré et la publication se
+// termine automatiquement, sans que la personne ait à tout ressaisir.
+const DEPOT_DRAFT_KEY = 'colockoo_depot_annonce_draft_v1'
+const DEPOT_DRAFT_MAX_AGE_MS = 2 * 60 * 60 * 1000 // 2h
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
+function dataUrlToFile(dataUrl: string, filename: string, mime: string): File {
+  const [, base64 = ''] = dataUrl.split(',')
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new File([bytes], filename, { type: mime })
+}
 
 /* ---------------------------------------------------------------------- */
 /*  i18n minimal                                                           */
@@ -151,9 +170,6 @@ interface SimSelection {
 
 /* ---------------------------------------------------------------------- */
 /*  Dérivation du quartier à partir d'une adresse saisie librement.        */
-/*  Heuristique simple : premier segment avant la première virgule.       */
-/*  À remplacer par la valeur retournée par le géocodage si l'API la      */
-/*  fournit (ex. geo.quartier / geo.district) — voir handlePublish().     */
 /* ---------------------------------------------------------------------- */
 function deriveQuartierFromAddress(addr: string): string {
   const trimmed = addr.trim()
@@ -162,127 +178,107 @@ function deriveQuartierFromAddress(addr: string): string {
   return firstSegment || trimmed
 }
 
+// Géocodage de secours via OpenStreetMap (couvre Madagascar, contrairement
+// à certaines API qui ne couvrent que la France).
+async function geocodeMadagascar(query: string): Promise<[number, number] | null> {
+  try {
+    const base = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1'
+    const urls = [
+      `${base}&countrycodes=mg&q=${encodeURIComponent(query)}`,
+      `${base}&q=${encodeURIComponent(`${query}, Madagascar`)}`,
+    ]
+    for (const url of urls) {
+      const res = await fetch(url, { headers: { 'Accept-Language': 'fr' } })
+      if (!res.ok) continue
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        const lat = parseFloat(data[0].lat)
+        const lon = parseFloat(data[0].lon)
+        if (Number.isFinite(lat) && Number.isFinite(lon)) return [lat, lon]
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 /* ---------------------------------------------------------------------- */
-/*  Carte interactive "maison" — pan / zoom / glisser le repère           */
+/*  VRAIE carte Leaflet — tuiles OSM, repère déplaçable, recentrage auto   */
 /* ---------------------------------------------------------------------- */
+const markerIcon = new LeafletIcon({
+  iconUrl: iconUrl,
+  shadowUrl: iconShadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+})
+
+const DEFAULT_CENTER: [number, number] = [-18.8792, 47.5079]
+
+// Recentre la carte en douceur vers le lieu trouvé (sans recharger la carte).
+function MapController({ target }: { target: [number, number] | null }) {
+  const map = useMap()
+  const key = target ? target.join(',') : ''
+  useEffect(() => {
+    if (!target) return
+    map.flyTo(target, Math.max(map.getZoom(), 15), { duration: 0.9 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
+  return null
+}
+
+// Place le repère quand on clique sur la carte.
+function MapClickCatcher({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      onPick(e.latlng.lat, e.latlng.lng)
+    },
+  })
+  return null
+}
+
 function InteractiveMap({
   pin,
   onPlacePin,
+  focus,
 }: {
   pin: { x: number; y: number } | null
   onPlacePin: (pin: { x: number; y: number }) => void
+  focus: [number, number] | null
 }) {
-  const panelRef = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(1)
-  const [tx, setTx] = useState(0)
-  const [ty, setTy] = useState(0)
-  const drag = useRef({ active: false, moved: false, sx: 0, sy: 0, stx: 0, sty: 0 })
-
-  function clamp(nextTx: number, nextTy: number, nextScale: number) {
-    const panel = panelRef.current
-    if (!panel) return { tx: nextTx, ty: nextTy }
-    const pw = panel.clientWidth
-    const ph = panel.clientHeight
-    return {
-      tx: Math.min(0, Math.max(nextTx, pw - 1000 * nextScale)),
-      ty: Math.min(0, Math.max(nextTy, ph - 800 * nextScale)),
-    }
-  }
-
-  function zoom(factor: number) {
-    const panel = panelRef.current
-    if (!panel) return
-    const pw = panel.clientWidth / 2
-    const ph = panel.clientHeight / 2
-    const ns = Math.min(4, Math.max(0.6, scale * factor))
-    const nextTx = pw - (pw - tx) * (ns / scale)
-    const nextTy = ph - (ph - ty) * (ns / scale)
-    const c = clamp(nextTx, nextTy, ns)
-    setScale(ns)
-    setTx(c.tx)
-    setTy(c.ty)
-  }
-
-  function placePin(clientX: number, clientY: number) {
-    const panel = panelRef.current
-    if (!panel) return
-    const r = panel.getBoundingClientRect()
-    const x = (clientX - r.left - tx) / scale
-    const y = (clientY - r.top - ty) / scale
-    onPlacePin({ x, y })
-  }
-
-  function onWheel(e: React.WheelEvent) {
-    e.preventDefault()
-    const panel = panelRef.current
-    if (!panel) return
-    const r = panel.getBoundingClientRect()
-    const mx = e.clientX - r.left
-    const my = e.clientY - r.top
-    const f = e.deltaY < 0 ? 1.15 : 0.87
-    const ns = Math.min(4, Math.max(0.6, scale * f))
-    const nextTx = mx - (mx - tx) * (ns / scale)
-    const nextTy = my - (my - ty) * (ns / scale)
-    const c = clamp(nextTx, nextTy, ns)
-    setScale(ns)
-    setTx(c.tx)
-    setTy(c.ty)
-  }
-
-  function onPointerDown(e: React.PointerEvent) {
-    if ((e.target as HTMLElement).closest('.dmap-zoom')) return
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-    drag.current = { active: true, moved: false, sx: e.clientX, sy: e.clientY, stx: tx, sty: ty }
-  }
-  function onPointerMove(e: React.PointerEvent) {
-    if (!drag.current.active) return
-    const nextTx = drag.current.stx + (e.clientX - drag.current.sx)
-    const nextTy = drag.current.sty + (e.clientY - drag.current.sy)
-    if (Math.abs(e.clientX - drag.current.sx) + Math.abs(e.clientY - drag.current.sy) > 4) drag.current.moved = true
-    const c = clamp(nextTx, nextTy, scale)
-    setTx(c.tx)
-    setTy(c.ty)
-  }
-  function onPointerUp(e: React.PointerEvent) {
-    if (drag.current.active && !drag.current.moved) placePin(e.clientX, e.clientY)
-    drag.current.active = false
-  }
-
   return (
-    <div className="dmap" id="dmap" ref={panelRef} onWheel={onWheel}>
-      <div
-        className="dmap-canvas"
-        style={{ transform: `translate(${tx}px,${ty}px) scale(${scale})` }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
+    <div className="realmap">
+      <MapContainer
+        center={pin ? [pin.x, pin.y] : DEFAULT_CENTER}
+        zoom={14}
+        zoomControl={false}
+        scrollWheelZoom
+        className="h-full w-full"
       >
-        <div className="dwater" style={{ left: 0, top: 520, width: 1000, height: 120 }} />
-        <div className="droad" style={{ top: 180, left: 0, width: 1000, height: 14 }} />
-        <div className="droad" style={{ top: 420, left: 0, width: 1000, height: 10 }} />
-        <div className="droad" style={{ top: 0, left: 300, width: 14, height: 800 }} />
-        <div className="droad" style={{ top: 0, left: 680, width: 10, height: 800 }} />
-        <div
-          className="droad"
-          style={{ top: 90, left: 120, width: 520, height: 7, transform: 'rotate(18deg)', transformOrigin: '0 0' }}
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · précision quartier'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <div className="droad" style={{ top: 300, left: 380, width: 380, height: 7 }} />
+        <ZoomControl position="bottomright" />
+        <MapController target={focus} />
+        <MapClickCatcher onPick={(lat, lng) => onPlacePin({ x: lat, y: lng })} />
         {pin && (
-          <MapPin
-            className="dmap-pin show"
-            style={{ left: pin.x, top: pin.y, position: 'absolute', transform: 'translate(-50%,-100%)' }}
-            fill="var(--cy)"
+          <Marker
+            position={[pin.x, pin.y]}
+            icon={markerIcon}
+            draggable
+            eventHandlers={{
+              dragend(e) {
+                const next = (e.target as any).getLatLng()
+                onPlacePin({ x: next.lat, y: next.lng })
+              },
+            }}
           />
         )}
-      </div>
+      </MapContainer>
       <div className="dmap-hint">
         <Hand size={12} style={{ color: 'var(--cy)' }} /> Glisse pour te déplacer · molette pour zoomer · clique pour placer ton bien
       </div>
-      <div className="dmap-zoom">
-        <button type="button" onClick={() => zoom(1.25)} aria-label="Zoom avant">+</button>
-        <button type="button" onClick={() => zoom(0.8)} aria-label="Zoom arrière">−</button>
-      </div>
-      <div className="dmap-credit">© OpenStreetMap · précision quartier</div>
     </div>
   )
 }
@@ -401,10 +397,8 @@ export default function DepotAnnonceDeux() {
     { key: 'photos', title: 'Les photos', part: 7 },
     { key: 'publier', title: 'Publier', part: null },
   ] as const
-  const steps = useMemo(
-    () => allStepDefs.filter((s) => !(s.key === 'regles' && role === 'proprio')),
-    [role],
-  )
+  const stepsForRole = (r: Role) => allStepDefs.filter((s) => !(s.key === 'regles' && r === 'proprio'))
+  const steps = useMemo(() => stepsForRole(role), [role])
   useEffect(() => {
     if (cur > steps.length - 1) setCur(steps.length - 1)
     if (maxStep > steps.length - 1) setMaxStep(steps.length - 1)
@@ -414,10 +408,6 @@ export default function DepotAnnonceDeux() {
   const isPaidRole = role === 'proprio' || role === 'pro'
   const mode: 'flux' | 'complete' = role === 'membre' ? 'flux' : 'complete'
 
-  /* --- PDF étape 1 : "1 seule annonce possible par compte" pour Colocataire --- */
-  /* TODO API : j'ai supposé `api.checkAnnonceExistante(role)` renvoyant       */
-  /* `{ hasActiveListing: boolean }`. Remplacez par l'appel réel de votre      */
-  /* client API si le nom/la forme diffère (ex. api.getMesAnnonces()).        */
   const [checkingExistingListing, setCheckingExistingListing] = useState(false)
   const [blockedExistingListing, setBlockedExistingListing] = useState(false)
 
@@ -436,8 +426,6 @@ export default function DepotAnnonceDeux() {
           setBlockedExistingListing(Boolean(result?.hasActiveListing))
         }
       } catch {
-        // en cas d'échec du contrôle, on ne bloque pas l'utilisateur ;
-        // la contrainte réelle doit de toute façon être vérifiée côté backend.
         if (!cancelled) setBlockedExistingListing(false)
       } finally {
         if (!cancelled) setCheckingExistingListing(false)
@@ -464,7 +452,35 @@ export default function DepotAnnonceDeux() {
   const [surfaceTotale, setSurfaceTotale] = useState('')
   const [locAddr, setLocAddr] = useState('')
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null)
+  const [focus, setFocus] = useState<[number, number] | null>(null)
   const ckooEligible = /antananarivo|tananarive|\btana\b/i.test(locAddr)
+
+  /* AMÉLIORATION CARTE : quand on tape un lieu, la carte se recentre dessus
+     et le repère y est placé automatiquement (délai anti-spam de 700 ms).
+     Essaie d'abord geocodeAddress, puis le géocodeur OSM en secours. */
+  useEffect(() => {
+    const query = locAddr.trim()
+    if (!query) return
+    const timer = window.setTimeout(() => {
+      ;(async () => {
+        let coords: [number, number] | null = null
+        try {
+          const geo = await geocodeAddress(query)
+          if (geo && Number.isFinite(geo.latitude) && Number.isFinite(geo.longitude)) {
+            coords = [geo.latitude, geo.longitude]
+          }
+        } catch {
+          coords = null
+        }
+        if (!coords) coords = await geocodeMadagascar(query)
+        if (coords) {
+          setFocus(coords)
+          setPin({ x: coords[0], y: coords[1] })
+        }
+      })()
+    }, 700)
+    return () => window.clearTimeout(timer)
+  }, [locAddr])
 
   /* ---- Étape 4 : services & commodités ---- */
   const EQUIPEMENTS = [
@@ -534,7 +550,6 @@ export default function DepotAnnonceDeux() {
   const [charges, setCharges] = useState('')
   const [cautionType, setCautionType] = useState<'' | '1mois' | 'autre'>('')
   const [cautionAutre, setCautionAutre] = useState('')
-  /* PDF étape 5 : "La chambre est meublée" — plusieurs réponses possibles */
   const MEUBLEE_OPTIONS = ['Oui', 'Partiellement', 'Non', 'Rachat des meubles']
   const [meublee, setMeublee] = useState<string[]>([])
   const [rachatPrix, setRachatPrix] = useState('')
@@ -576,6 +591,91 @@ export default function DepotAnnonceDeux() {
   }, [toastMessage])
 
   /* ---------------------------------------------------------------- */
+  /*  Reprise automatique après connexion                              */
+  /* ---------------------------------------------------------------- */
+  const [pendingAutoPublish, setPendingAutoPublish] = useState(false)
+  const autoPublishTriggered = useRef(false)
+
+  function restoreDraft(draft: any) {
+    if (draft.role !== undefined) setRole(draft.role)
+    if (draft.typeAnnonce !== undefined) setTypeAnnonce(draft.typeAnnonce)
+    if (draft.ambianceAge !== undefined) setAmbianceAge(draft.ambianceAge)
+    if (draft.ambiance !== undefined) setAmbiance(draft.ambiance)
+    if (draft.presentation !== undefined) setPresentation(draft.presentation)
+    if (draft.typeLogement !== undefined) setTypeLogement(draft.typeLogement)
+    if (draft.nbColoc !== undefined) setNbColoc(draft.nbColoc)
+    if (draft.surfaceTotale !== undefined) setSurfaceTotale(draft.surfaceTotale)
+    if (draft.locAddr !== undefined) setLocAddr(draft.locAddr)
+    if (draft.pin !== undefined) setPin(draft.pin)
+    if (draft.equipements !== undefined) setEquipements(draft.equipements)
+    if (draft.internet !== undefined) setInternet(draft.internet)
+    if (draft.parkingCars !== undefined) setParkingCars(draft.parkingCars)
+    if (draft.parkingCarsCouvert !== undefined) setParkingCarsCouvert(draft.parkingCarsCouvert)
+    if (draft.parkingMoto !== undefined) setParkingMoto(draft.parkingMoto)
+    if (draft.parkingMotoCouvert !== undefined) setParkingMotoCouvert(draft.parkingMotoCouvert)
+    if (draft.servicesPersonnel !== undefined) setServicesPersonnel(draft.servicesPersonnel)
+    if (draft.servAutre !== undefined) setServAutre(draft.servAutre)
+    if (draft.servAutreOn !== undefined) setServAutreOn(draft.servAutreOn)
+    if (draft.sim !== undefined) setSim(draft.sim)
+    if (draft.ckooIntegrated !== undefined) setCkooIntegrated(draft.ckooIntegrated)
+    if (draft.ckooTotal !== undefined) setCkooTotal(draft.ckooTotal)
+    if (draft.ckooChosenNames !== undefined) setCkooChosenNames(draft.ckooChosenNames)
+    if (draft.dispoDate !== undefined) setDispoDate(draft.dispoDate)
+    if (draft.chambreSurface !== undefined) setChambreSurface(draft.chambreSurface)
+    if (draft.loyer !== undefined) setLoyer(draft.loyer)
+    if (draft.charges !== undefined) setCharges(draft.charges)
+    if (draft.cautionType !== undefined) setCautionType(draft.cautionType)
+    if (draft.cautionAutre !== undefined) setCautionAutre(draft.cautionAutre)
+    if (draft.meublee !== undefined) setMeublee(draft.meublee)
+    if (draft.rachatPrix !== undefined) setRachatPrix(draft.rachatPrix)
+    if (draft.rachatDescriptif !== undefined) setRachatDescriptif(draft.rachatDescriptif)
+    if (draft.regles !== undefined) setRegles(draft.regles)
+    if (draft.proEngageChecked !== undefined) setProEngageChecked(draft.proEngageChecked)
+    if (draft.offer !== undefined) setOffer(draft.offer)
+
+    if (Array.isArray(draft.photosData)) {
+      const restoredPhotos: (File | null)[] = draft.photosData.map((p: any) =>
+        p ? dataUrlToFile(p.dataUrl, p.name, p.type) : null,
+      )
+      setPhotos(restoredPhotos)
+      setPhotoPreviews(restoredPhotos.map((f) => (f ? URL.createObjectURL(f) : null)))
+    }
+
+    const restoredSteps = stepsForRole(draft.role ?? null)
+    setCur(restoredSteps.length - 1)
+    setMaxStep(restoredSteps.length - 1)
+  }
+
+  // Dès qu'on a un utilisateur connecté, on regarde si un brouillon en
+  // attente existe (déposé juste avant un envoi vers /auth). Si oui, on
+  // restaure tout le formulaire et on relance automatiquement la publication.
+  useEffect(() => {
+    if (!user || autoPublishTriggered.current) return
+    const raw = sessionStorage.getItem(DEPOT_DRAFT_KEY)
+    if (!raw) return
+    autoPublishTriggered.current = true
+    try {
+      const draft = JSON.parse(raw)
+      if (!draft || Date.now() - (draft.savedAt || 0) > DEPOT_DRAFT_MAX_AGE_MS) {
+        sessionStorage.removeItem(DEPOT_DRAFT_KEY)
+        return
+      }
+      restoreDraft(draft)
+      setToastMessage('Bon retour ! On finalise la publication de ton annonce…')
+      setPendingAutoPublish(true)
+    } catch {
+      sessionStorage.removeItem(DEPOT_DRAFT_KEY)
+    }
+  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!pendingAutoPublish || !user) return
+    setPendingAutoPublish(false)
+    sessionStorage.removeItem(DEPOT_DRAFT_KEY)
+    handlePublish()
+  }, [pendingAutoPublish]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ---------------------------------------------------------------- */
   /*  Validation par étape                                             */
   /* ---------------------------------------------------------------- */
   function validateCurrentStep(): boolean {
@@ -592,8 +692,6 @@ export default function DepotAnnonceDeux() {
       }
     }
     if (key === 'logement') {
-      // PDF étape 3 : le placement du repère sur la carte est obligatoire,
-      // indépendamment de la saisie d'une adresse texte.
       const locOk = pin !== null
       const ok =
         (role === 'membre' || typeAnnonce !== '') &&
@@ -650,10 +748,36 @@ export default function DepotAnnonceDeux() {
   /* ---------------------------------------------------------------- */
   /*  Soumission                                                       */
   /* ---------------------------------------------------------------- */
+  async function persistDraftAndRedirect() {
+    const photosData = await Promise.all(
+      photos.map(async (file) => (file ? { name: file.name, type: file.type, dataUrl: await fileToDataUrl(file) } : null)),
+    )
+    const draft = {
+      savedAt: Date.now(),
+      role, typeAnnonce, ambianceAge, ambiance, presentation,
+      typeLogement, nbColoc, surfaceTotale, locAddr, pin,
+      equipements, internet, parkingCars, parkingCarsCouvert, parkingMoto, parkingMotoCouvert,
+      servicesPersonnel, servAutre, servAutreOn,
+      sim, ckooIntegrated, ckooTotal, ckooChosenNames,
+      dispoDate, chambreSurface, loyer, charges, cautionType, cautionAutre,
+      meublee, rachatPrix, rachatDescriptif,
+      regles,
+      photosData,
+      proEngageChecked, offer,
+    }
+    try {
+      sessionStorage.setItem(DEPOT_DRAFT_KEY, JSON.stringify(draft))
+    } catch {
+      // Stockage indisponible ou plein : la personne devra ressaisir son
+      // formulaire après connexion, mais la redirection reste correcte.
+    }
+    navigate('/auth?mode=signin&redirect=/depot_annonce')
+  }
+
   async function handlePublish() {
     if (!validateCurrentStep()) return
     if (!user) {
-      navigate('/auth?mode=signin&redirect=/depot_annonce_deux')
+      await persistDraftAndRedirect()
       return
     }
     setSubmitting(true)
@@ -670,78 +794,78 @@ export default function DepotAnnonceDeux() {
 
       let latitude = -18.8792
       let longitude = 47.5079
-      // PDF étape 3 : le quartier correspond à l'adresse administrative du bien
-      // et doit être réellement transmis (auparavant toujours vide).
       let quartier = deriveQuartierFromAddress(locAddr)
+      // Le repère placé sur la vraie carte est prioritaire s'il existe.
+      if (pin) {
+        latitude = pin.x
+        longitude = pin.y
+      }
       if (locAddr.trim()) {
         try {
           const geo = await geocodeAddress(locAddr)
           if (geo) {
-            latitude = geo.latitude
-            longitude = geo.longitude
-            // Si l'API de géocodage renvoie un quartier/district plus précis,
-            // on le préfère à l'heuristique locale.
+            if (!pin) {
+              latitude = geo.latitude
+              longitude = geo.longitude
+            }
             const geoQuartier = (geo as any).quartier || (geo as any).district || (geo as any).neighbourhood
             if (geoQuartier) quartier = geoQuartier
           }
         } catch {
-          // le repère "maison" reste l'indicateur principal côté UI
+          // le repère placé par l'utilisateur reste l'indicateur principal
         }
       }
 
       const response = await api.createDepotAnnonce({
-  adresse: locAddr,
-  ville: '',
-  quartier,
-  latitude,
-  longitude,
-  type_annonce: typeAnnonce || (role === 'membre' ? 'existante' : 'creation'),
-  logement: typeLogement,
-  nombre_pieces: nbColoc,
-  surface: surfaceTotale,
-  commodites: equipements,
-  regles,
-
-  // 🟢 AJOUTEZ CES 4 LIGNES À LA RACINE :
-  internet: internet,                           // ex: 'Fibre', 'Wifi', etc.
-  parking_voitures: parkingCars,                // ex: 2
-  parking_motos: parkingMoto,                   // ex: 0
-  parking_couvert: parkingCarsCouvert ? 1 : 0,  // 1 ou 0
-
-  chambres: [
-    {
-      loyer: loyer.replace(/\D/g, ''),
-      charges: charges.replace(/\D/g, ''),
-      caution: cautionType === 'autre' ? cautionAutre : cautionType === '1mois' ? '1 mois de loyer' : '',
-      surface: chambreSurface,
-      meublee: meublee.join(', '),
-      disponible_a_partir: dispoDate,
-    },
-  ],
-  email: user.email || '',
-  telephone_code: '+261',
-  telephone: user.telephone || '',
-  message: presentation,
-  visite_3d: '',
-  photos: uploadedPhotos,
-  boost_service_id: null,
-  extra: {
-    role,
-    mode,
-    nombre_colocataires_recherches: role === 'membre' ? nbColoc : undefined,
-    ambiance_age: ambianceAge,
-    ambiance,
-    equipements,
-    internet,
-    parking: { cars: parkingCars, cars_couvert: parkingCarsCouvert, moto: parkingMoto, moto_couvert: parkingMotoCouvert },
-    services_personnel: servicesPersonnel,
-    services_autre: servAutre,
-    services_ckoo: ckooIntegrated ? { services: ckooChosenNames, total_mensuel: ckooTotal } : null,
-    rachat_meubles: meublee.includes('Rachat des meubles') ? { prix: rachatPrix, descriptif: rachatDescriptif } : null,
-    offre: isPaidRole ? offer : null,
-    engagement_pro: role === 'pro' ? proEngageChecked : null,
-  },
-} as any)
+        adresse: locAddr,
+        ville: '',
+        quartier,
+        latitude,
+        longitude,
+        type_annonce: typeAnnonce || (role === 'membre' ? 'existante' : 'creation'),
+        logement: typeLogement,
+        nombre_pieces: nbColoc,
+        surface: surfaceTotale,
+        commodites: equipements,
+        regles,
+        internet: internet,
+        parking_voitures: parkingCars,
+        parking_motos: parkingMoto,
+        parking_couvert: parkingCarsCouvert ? 1 : 0,
+        chambres: [
+          {
+            loyer: loyer.replace(/\D/g, ''),
+            charges: charges.replace(/\D/g, ''),
+            caution: cautionType === 'autre' ? cautionAutre : cautionType === '1mois' ? '1 mois de loyer' : '',
+            surface: chambreSurface,
+            meublee: meublee.join(', '),
+            disponible_a_partir: dispoDate,
+          },
+        ],
+        email: user.email || '',
+        telephone_code: '+261',
+        telephone: user.telephone || '',
+        message: presentation,
+        visite_3d: '',
+        photos: uploadedPhotos,
+        boost_service_id: null,
+        extra: {
+          role,
+          mode,
+          nombre_colocataires_recherches: role === 'membre' ? nbColoc : undefined,
+          ambiance_age: ambianceAge,
+          ambiance,
+          equipements,
+          internet,
+          parking: { cars: parkingCars, cars_couvert: parkingCarsCouvert, moto: parkingMoto, moto_couvert: parkingMotoCouvert },
+          services_personnel: servicesPersonnel,
+          services_autre: servAutre,
+          services_ckoo: ckooIntegrated ? { services: ckooChosenNames, total_mensuel: ckooTotal } : null,
+          rachat_meubles: meublee.includes('Rachat des meubles') ? { prix: rachatPrix, descriptif: rachatDescriptif } : null,
+          offre: isPaidRole ? offer : null,
+          engagement_pro: role === 'pro' ? proEngageChecked : null,
+        },
+      } as any)
 
       const successMessage = "Annonce ajoutée avec succès, en attente de validation par l'admin"
       setSuccess(`${successMessage}. Référence : ${response.reference}`)
@@ -957,13 +1081,6 @@ export default function DepotAnnonceDeux() {
                 </div>
               )}
 
-              {/*
-                PDF étape 2 : le bloc "devis Coloc'KOO" pour la création de
-                colocation a été explicitement demandé en SUPPRESSION par le
-                client ("cet élément proposé par Coloc'KOO doit être
-                supprimé à ce niveau"). Il n'est donc plus affiché ici.
-              */}
-
               <div className="grp">
                 <label className="lbl">
                   Ambiance de la colocation souhaitée <span className="opt">(recommandé)</span>
@@ -1057,7 +1174,7 @@ export default function DepotAnnonceDeux() {
                   value={locAddr}
                   onChange={(e) => setLocAddr(e.target.value)}
                 />
-                <InteractiveMap pin={pin} onPlacePin={setPin} />
+                <InteractiveMap pin={pin} onPlacePin={setPin} focus={focus} />
                 <div className="note">
                   <Lock size={13} /> Pour des raisons de confidentialité, si tu renseignes ton adresse
                   exacte, celle-ci n'apparaîtra jamais sur ton annonce — seul le quartier sera visible.
@@ -1289,7 +1406,7 @@ export default function DepotAnnonceDeux() {
                   <div className="cond show" style={{ marginTop: 10 }}>
                     <label className="lbl">Prix de rachat des meubles</label>
                     <div style={{ maxWidth: 260 }}>
-                      <MoneyInput value={rachatPrix} onChange={setRachatPrix} placeholder="ex : 500 000" />
+                      <MoneyInput value={rachatPrix} onChange={setRachatPrix} placeholder="ex : 50 000" />
                     </div>
                     <label className="lbl" style={{ marginTop: 11 }}>Descriptif des meubles à racheter</label>
                     <textarea
@@ -1656,6 +1773,8 @@ const depotAnnonceDeuxCss = `
 .hint{font-size:11px;color:var(--gr2);margin-top:5px;display:flex;align-items:center;gap:5px;}
 .err{font-size:11px;color:#cc3333;margin-top:6px;align-items:center;gap:5px;}
 .err.show{display:flex;}
+.realmap{position:relative;height:260px;border-radius:11px;overflow:hidden;border:1px solid var(--bd);background:#dce8d0;}
+.realmap .leaflet-container{height:100%;width:100%;}
 .dmap{position:relative;height:210px;border-radius:11px;overflow:hidden;border:1px solid var(--bd);background:#dce8d0;cursor:grab;touch-action:none;}
 .dmap-canvas{position:absolute;top:0;left:0;width:1000px;height:800px;transform-origin:0 0;will-change:transform;background:repeating-linear-gradient(0deg,#e6efdd,#e6efdd 38px,#dde9d0 38px,#dde9d0 40px),repeating-linear-gradient(90deg,#e6efdd,#e6efdd 38px,#dde9d0 38px,#dde9d0 40px);}
 .droad{position:absolute;background:#cdd9c0;border-radius:2px;}
