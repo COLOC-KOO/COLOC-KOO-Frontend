@@ -1840,3 +1840,59 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         boostServiceId: boostServiceId != null ? Number(boostServiceId) : null,
     }
 }
+
+// preference 
+export interface EventPreference {
+  id: string;
+  push: boolean;
+  email: boolean | null;
+}
+
+export interface UserPreferencesPayload {
+  mode_defaut?: 'push' | 'email' | 'both' | string;
+  evenements?: EventPreference[];
+  defaultMode?: 'push' | 'email' | 'both' | string;
+  events?: EventPreference[];
+}
+
+export async function getUserPreferences(
+  idUtilisateur: number | string
+): Promise<UserPreferencesPayload> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  const response = await fetch(`${API_BASE_URL}/api/preferences/${idUtilisateur}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Erreur lors de la récupération des préférences');
+  }
+
+  return await response.json();
+}
+
+export async function updateUserPreferences(
+  idUtilisateur: number | string,
+  preferences: UserPreferencesPayload
+): Promise<{ ok: boolean }> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  const response = await fetch(`${API_BASE_URL}/api/preferences/${idUtilisateur}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(preferences),
+  });
+
+  if (!response.ok) {
+    throw new Error('Erreur lors de la mise à jour des préférences');
+  }
+
+  return await response.json();
+}
