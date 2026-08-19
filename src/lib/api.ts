@@ -1850,6 +1850,8 @@ export interface EventPreference {
 
 export interface UserPreferencesPayload {
   mode_defaut?: 'push' | 'email' | 'both' | string;
+  mode_allege?: boolean;
+  disponibilite_hors_ligne?: boolean;
   evenements?: EventPreference[];
   defaultMode?: 'push' | 'email' | 'both' | string;
   events?: EventPreference[];
