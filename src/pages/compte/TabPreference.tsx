@@ -134,11 +134,11 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
     const myRequestId = ++requestIdRef.current
     const url = `${API}/api/preferences/${resolvedId}`
     console.log('[TabPreference] GET vers', url, '(requestId =', myRequestId, ')')
-
+    
     try {
       setLoading(true)
       setErrorMsg(null)
-
+      
       const res = await fetch(url, { headers: authHeaders() })
       console.log('[TabPreference] GET réponse status =', res.status, res.ok ? 'OK' : 'ERREUR')
 
@@ -170,6 +170,15 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
         setEvents(loadedEvents)
       } else {
         console.warn('[TabPreference] evenements vide ou absent côté serveur → on garde DEFAULT_EVENTS (donc les toggles semblent "revenir à zéro")')
+      }
+       const loadedModeAllege = data.mode_allege
+      if (typeof loadedModeAllege === 'boolean') {
+        setModeAllege(loadedModeAllege)
+      }
+
+      const loadedHorsLigne = data.disponibilite_hors_ligne
+      if (typeof loadedHorsLigne === 'boolean') {
+        setHorsLigne(loadedHorsLigne)
       }
     } catch (err) {
       if (myRequestId !== requestIdRef.current) return
@@ -213,7 +222,12 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
     }
 
     const url = `${API}/api/preferences/${resolvedId}`
-    const payload = { mode_defaut: defaultMode, evenements: events }
+    const payload = {
+      mode_defaut: defaultMode,
+      mode_allege: modeAllege,
+      disponibilite_hors_ligne: horsLigne,
+      evenements: events,
+    }
     console.log('[TabPreference] PUT vers', url)
     console.log('[TabPreference] payload envoyé =', payload)
 
@@ -288,7 +302,13 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
               />
             </div>
           </div>
-          <Toggle checked={modeAllege} onChange={setModeAllege} />
+            <Toggle
+            checked={modeAllege}
+            onChange={(v) => {
+              dirtyRef.current = true
+              setModeAllege(v)
+            }}
+          />
         </div>
 
         <div className="flex items-start justify-between gap-4 py-4 border-b border-border/60">
@@ -300,9 +320,14 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
               {t('displayNetwork.offlineAvailabilityDesc')}
             </div>
           </div>
-          <Toggle checked={horsLigne} onChange={setHorsLigne} />
+         <Toggle
+            checked={horsLigne}
+            onChange={(v) => {
+              dirtyRef.current = true
+              setHorsLigne(v)
+            }}
+          />
         </div>
-
         <div className="flex items-center justify-between gap-4 py-4">
           <div className="min-w-0">
             <div className="text-sm font-bold text-foreground">
