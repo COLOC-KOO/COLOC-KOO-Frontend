@@ -178,6 +178,21 @@ function deriveQuartierFromAddress(addr: string): string {
   return firstSegment || trimmed
 }
 
+// La ville affichée sur l'annonce doit venir de l'adresse saisie ici, dans le
+// formulaire de dépôt (ex : "Mahazoarivo, Antsirabe" → ville = "Antsirabe"),
+// et non de la ville choisie sur la page d'accueil avant de commencer le dépôt.
+function deriveVilleFromAddress(addr: string): string {
+  const trimmed = addr.trim()
+  if (!trimmed) return ''
+  const parts = trimmed
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return ''
+  // Le dernier segment de l'adresse est la ville (ex: "Quartier, Ville").
+  return parts[parts.length - 1]
+}
+
 // Géocodage de secours via OpenStreetMap (couvre Madagascar, contrairement
 // à certaines API qui ne couvrent que la France).
 async function geocodeMadagascar(query: string): Promise<[number, number] | null> {
@@ -795,6 +810,7 @@ export default function DepotAnnonceDeux() {
       let latitude = -18.8792
       let longitude = 47.5079
       let quartier = deriveQuartierFromAddress(locAddr)
+      let ville = deriveVilleFromAddress(locAddr)
       // Le repère placé sur la vraie carte est prioritaire s'il existe.
       if (pin) {
         latitude = pin.x
@@ -810,6 +826,8 @@ export default function DepotAnnonceDeux() {
             }
             const geoQuartier = (geo as any).quartier || (geo as any).district || (geo as any).neighbourhood
             if (geoQuartier) quartier = geoQuartier
+            const geoVille = (geo as any).ville || (geo as any).city || (geo as any).town
+            if (geoVille) ville = geoVille
           }
         } catch {
           // le repère placé par l'utilisateur reste l'indicateur principal
@@ -818,7 +836,7 @@ export default function DepotAnnonceDeux() {
 
       const response = await api.createDepotAnnonce({
         adresse: locAddr,
-        ville: '',
+        ville,
         quartier,
         latitude,
         longitude,
