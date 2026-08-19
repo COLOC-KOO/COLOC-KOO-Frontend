@@ -39,10 +39,11 @@ export default function Auth() {
 
   useEffect(() => {
     if (!user) return;
-    navigate(roleLevel(user.poste) > 0 ? "/admin" : "/compte", {
+    const redirect = params.get("redirect");
+    navigate(redirect || (roleLevel(user.poste) > 0 ? "/admin" : "/compte"), {
       replace: true,
     });
-  }, [navigate, user]);
+  }, [navigate, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

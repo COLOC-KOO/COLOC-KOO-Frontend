@@ -870,6 +870,9 @@ export default function DepotAnnonceDeux() {
       const successMessage = "Annonce ajoutée avec succès, en attente de validation par l'admin"
       setSuccess(`${successMessage}. Référence : ${response.reference}`)
       setToastMessage(successMessage)
+      window.setTimeout(() => {
+        navigate('/compte?tab=dossier')
+      }, 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Impossible de publier l'annonce.")
     } finally {
