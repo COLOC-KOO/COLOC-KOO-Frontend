@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Bell, BellPlus, Check, Trash, X, Plus } from 'lucide-react'
+import { Bell, BellPlus, Check, Trash, X, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
@@ -74,6 +74,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
   const [alertes, setAlertes] = useState<Alerte[]>([])
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<AlerteForm>(EMPTY_FORM)
+  const [currentStep, setCurrentStep] = useState(0)
 
   const TYPES_BIEN = [
     { key: 'Appartement', label: t('options.appartement') },
@@ -90,6 +91,12 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
     { key: 'Colocation existante', label: t('options.existingColoc') },
     { key: "Création d'une colocation", label: t('options.colocCreation') },
     { key: 'Bien immobilier potentiel', label: t('options.potentialProperty') },
+  ]
+
+  const steps = [
+    { id: 'localisation', label: t('stepLocalisation') || 'Localisation' },
+    { id: 'criteria', label: t('stepCriteria') || 'Critères' },
+    { id: 'notifications', label: t('stepNotifications') || 'Notifications' },
   ]
 
   const charger = async () => {
@@ -131,6 +138,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
   const closeModal = () => {
     setShowModal(false)
     setForm(EMPTY_FORM)
+    setCurrentStep(0)
   }
 
   const handleSubmit = async () => {
@@ -168,6 +176,144 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
     }
     if (a.type_annonce) criteres.push(...a.type_annonce.split(',').filter(Boolean))
     return criteres
+  }
+
+  const nextStep = () => {
+    if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1)
+  }
+
+  const prevStep = () => {
+    if (currentStep > 0) setCurrentStep(currentStep - 1)
+  }
+
+  const isStepValid = (step: number): boolean => {
+    switch (step) {
+      case 0: // Localisation
+        return !!form.idVille
+      case 1: // Critères
+        return form.typeBien.length > 0 || form.reglesColoc.length > 0 || form.typeAnnonce.length > 0 || !!form.prixMax
+      case 2: // Notifications
+        return true
+      default:
+        return false
+    }
+  }
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-xs font-semibold mb-1">
+                  {t('city')} <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={form.idVille}
+                  onChange={(e) => setForm((prev) => ({ ...prev, idVille: e.target.value }))}
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-brand-green focus:border-transparent outline-none"
+                >
+                  <option value="">{t('chooseCity')}</option>
+                  {VILLES.map((v) => (
+                    <option key={v.id} value={v.id}>{v.nom}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">
+                  {t('neighborhood')} <span className="font-normal text-muted-foreground">— {t('optional')}</span>
+                </label>
+                <input
+                  value={form.quartier}
+                  onChange={(e) => setForm((prev) => ({ ...prev, quartier: e.target.value }))}
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-green focus:border-transparent outline-none"
+                  placeholder={t('neighborhoodPlaceholder')}
+                />
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-xs font-semibold mb-1">{t('maxPrice')}</label>
+              <input
+                type="number"
+                value={form.prixMax}
+                onChange={(e) => setForm((prev) => ({ ...prev, prixMax: e.target.value }))}
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-green focus:border-transparent outline-none"
+                placeholder={t('maxPricePlaceholder')}
+              />
+            </div>
+          </>
+        )
+
+      case 1:
+        return (
+          <>
+            <div className="mb-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('propertyType')}</div>
+              <div className="grid grid-cols-2 gap-2">
+                {TYPES_BIEN.map((item) => (
+                  <Checkbox
+                    key={item.key}
+                    label={item.label}
+                    checked={form.typeBien.includes(item.key)}
+                    onChange={() => setForm((prev) => ({ ...prev, typeBien: toggleInArray(prev.typeBien, item.key) }))}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('colocRules')}</div>
+              <div className="grid grid-cols-2 gap-2">
+                {REGLES_COLOC.map((item) => (
+                  <Checkbox
+                    key={item.key}
+                    label={item.label}
+                    checked={form.reglesColoc.includes(item.key)}
+                    onChange={() => setForm((prev) => ({ ...prev, reglesColoc: toggleInArray(prev.reglesColoc, item.key) }))}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('announcementType')}</div>
+              <div className="grid grid-cols-2 gap-2">
+                {TYPES_ANNONCE.map((item) => (
+                  <Checkbox
+                    key={item.key}
+                    label={item.label}
+                    checked={form.typeAnnonce.includes(item.key)}
+                    onChange={() => setForm((prev) => ({ ...prev, typeAnnonce: toggleInArray(prev.typeAnnonce, item.key) }))}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )
+
+      case 2:
+        return (
+          <div className="mb-5">
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('notification')}</div>
+            <div className="grid grid-cols-2 gap-2">
+              <Checkbox
+                label={t('push')}
+                checked={form.notifPush}
+                onChange={() => setForm((prev) => ({ ...prev, notifPush: !prev.notifPush }))}
+              />
+              <Checkbox
+                label={t('email')}
+                checked={form.notifEmail}
+                onChange={() => setForm((prev) => ({ ...prev, notifEmail: !prev.notifEmail }))}
+              />
+            </div>
+          </div>
+        )
+
+      default:
+        return null
+    }
   }
 
   return (
@@ -247,109 +393,81 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
               {t('subtitle')}
             </p>
 
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="block text-xs font-semibold mb-1">{t('city')}</label>
-                <select
-                  value={form.idVille}
-                  onChange={(e) => setForm((prev) => ({ ...prev, idVille: e.target.value }))}
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
-                >
-                  <option value="">{t('chooseCity')}</option>
-                  {VILLES.map((v) => (
-                    <option key={v.id} value={v.id}>{v.nom}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-1">
-                  {t('neighborhood')} <span className="font-normal text-muted-foreground">— {t('optional')}</span>
-                </label>
-                <input
-                  value={form.quartier}
-                  onChange={(e) => setForm((prev) => ({ ...prev, quartier: e.target.value }))}
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-                  placeholder={t('neighborhoodPlaceholder')}
-                />
-              </div>
+            {/* Stepper */}
+            <div className="flex items-center justify-between mb-6 px-2">
+              {steps.map((step, index) => (
+                <div key={step.id} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center flex-1">
+                    <button
+                      onClick={() => setCurrentStep(index)}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                        currentStep === index
+                          ? 'bg-brand-green text-white'
+                          : index < currentStep
+                          ? 'bg-brand-green/30 text-brand-green'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {index + 1}
+                    </button>
+                    <span className={`text-[10px] mt-1 text-center ${
+                      currentStep === index ? 'text-foreground font-semibold' : 'text-muted-foreground'
+                    }`}>
+                      {step.label}
+                    </span>
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className={`h-0.5 flex-1 mx-1 ${
+                      index < currentStep ? 'bg-brand-green' : 'bg-muted'
+                    }`} />
+                  )}
+                </div>
+              ))}
             </div>
 
-            <div className="mb-4">
-              <label className="block text-xs font-semibold mb-1">{t('maxPrice')}</label>
-              <input
-                type="number"
-                value={form.prixMax}
-                onChange={(e) => setForm((prev) => ({ ...prev, prixMax: e.target.value }))}
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm"
-                placeholder={t('maxPricePlaceholder')}
-              />
+            {/* Step Content */}
+            <div className="min-h-[220px]">
+              {renderStepContent()}
             </div>
 
-            <div className="mb-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('propertyType')}</div>
-              <div className="grid grid-cols-2 gap-2">
-                {TYPES_BIEN.map((item) => (
-                  <Checkbox
-                    key={item.key}
-                    label={item.label}
-                    checked={form.typeBien.includes(item.key)}
-                    onChange={() => setForm((prev) => ({ ...prev, typeBien: toggleInArray(prev.typeBien, item.key) }))}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('colocRules')}</div>
-              <div className="grid grid-cols-2 gap-2">
-                {REGLES_COLOC.map((item) => (
-                  <Checkbox
-                    key={item.key}
-                    label={item.label}
-                    checked={form.reglesColoc.includes(item.key)}
-                    onChange={() => setForm((prev) => ({ ...prev, reglesColoc: toggleInArray(prev.reglesColoc, item.key) }))}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('announcementType')}</div>
-              <div className="grid grid-cols-2 gap-2">
-                {TYPES_ANNONCE.map((item) => (
-                  <Checkbox
-                    key={item.key}
-                    label={item.label}
-                    checked={form.typeAnnonce.includes(item.key)}
-                    onChange={() => setForm((prev) => ({ ...prev, typeAnnonce: toggleInArray(prev.typeAnnonce, item.key) }))}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-5">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('notification')}</div>
-              <div className="grid grid-cols-2 gap-2">
-                <Checkbox
-                  label={t('push')}
-                  checked={form.notifPush}
-                  onChange={() => setForm((prev) => ({ ...prev, notifPush: !prev.notifPush }))}
-                />
-                <Checkbox
-                  label={t('email')}
-                  checked={form.notifEmail}
-                  onChange={() => setForm((prev) => ({ ...prev, notifEmail: !prev.notifEmail }))}
-                />
-              </div>
-            </div>
-
+            {/* Navigation Buttons */}
             <div className="flex gap-3">
-              <button onClick={closeModal} className="flex-1 border border-border rounded-lg py-2.5 text-sm font-semibold hover:bg-muted">
-                {t('cancel')}
-              </button>
-              <button onClick={handleSubmit} className="flex-1 bg-brand-green text-white rounded-lg py-2.5 text-sm font-semibold hover:opacity-90">
-                {t('validate')}
-              </button>
+              {currentStep > 0 ? (
+                <button
+                  onClick={prevStep}
+                  className="flex-1 border border-border rounded-lg py-2.5 text-sm font-semibold hover:bg-muted transition-colors flex items-center justify-center gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" /> {t('previous') || 'Précédent'}
+                </button>
+              ) : (
+                <button
+                  onClick={closeModal}
+                  className="flex-1 border border-border rounded-lg py-2.5 text-sm font-semibold hover:bg-muted transition-colors"
+                >
+                  {t('cancel')}
+                </button>
+              )}
+
+              {currentStep < steps.length - 1 ? (
+                <button
+                  onClick={nextStep}
+                  disabled={!isStepValid(currentStep)}
+                  className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+                    isStepValid(currentStep)
+                      ? 'bg-brand-green text-white hover:opacity-90'
+                      : 'bg-muted text-muted-foreground cursor-not-allowed'
+                  }`}
+                >
+                  {t('next') || 'Suivant'} <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  className="flex-1 bg-brand-green text-white rounded-lg py-2.5 text-sm font-semibold hover:opacity-90 transition-colors"
+                >
+                  {t('validate')}
+                </button>
+              )}
             </div>
           </div>
         </div>
