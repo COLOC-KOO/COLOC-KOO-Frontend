@@ -1126,7 +1126,14 @@ export const api = {
             `/annonces/${id}/archive`,
             { method: 'PATCH' },
         )
+    }, renouvelerAnnonce(id: string | number) {
+        return requestWithFallback<{ message: string; date_expiration: string; statut?: string }>(
+            `/depot-annonce/${id}/renouveler`,
+            `/annonces/${id}/renouveler`,
+            { method: 'PATCH' },
+        )
     },
+
 
     candidatures() {
         return request<ApiCandidature[]>('/candidatures')

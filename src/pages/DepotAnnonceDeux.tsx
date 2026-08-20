@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   AlertCircle,
   ArrowLeft,
@@ -44,7 +44,7 @@ import 'leaflet/dist/leaflet.css'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import { SiteLayout } from '../components/site/SiteLayout'
-import { api } from '../lib/api'
+import { api, type ApiAnnonce } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { geocodeAddress } from '../lib/geocoding'
 import { cn } from '../lib/utils'
@@ -381,6 +381,21 @@ export default function DepotAnnonceDeux() {
   const { user } = useAuth()
   const { lang, setLang, t } = useLang()
 
+  /* ---- Mode renouvellement -------------------------------------------
+     Si la page est montée sur /annonces/:id/renouveler (lien envoyé par
+     l'email et la notification push dans cronExpired.js), `id` est défini.
+     On réutilise alors tout le formulaire, préchargé avec les données de
+     l'annonce, en affichant directement la dernière étape avec un bouton
+     "Renouveler" à la place du bouton "Publier". Pas de stockage de
+     données côté client : on relit l'annonce existante via l'API. ---- */
+  const { id: annonceId } = useParams<{ id?: string }>()
+  const isRenewal = !!annonceId
+
+  const [loadingAnnonce, setLoadingAnnonce] = useState(isRenewal)
+  const [renewing, setRenewing] = useState(false)
+  const [renewSuccess, setRenewSuccess] = useState('')
+  const [renewError, setRenewError] = useState('')
+
   /* ---- Navigation du wizard ---- */
   const [role, setRole] = useState<Role>(null)
   const [cur, setCur] = useState(0)
@@ -646,6 +661,77 @@ export default function DepotAnnonceDeux() {
     setMaxStep(restoredSteps.length - 1)
   }
 
+  /* ---------------------------------------------------------------- */
+  /*  Mode renouvellement : chargement d'une annonce existante          */
+  /* ---------------------------------------------------------------- */
+  // Traduit la réponse API (ApiAnnonce) vers la forme attendue par
+  // restoreDraft(). Ne stocke rien : on relit simplement l'annonce en base
+  // à chaque ouverture de la page de renouvellement.
+  function mapAnnonceToDraft(a: ApiAnnonce & Record<string, any>) {
+    const chambre = a.chambre ?? a.chambres?.[0] ?? a.rooms?.[0] ?? null
+    const meubleeRaw = String(chambre?.est_meuble ?? chambre?.meublee ?? '').trim()
+
+    return {
+      // ⚠️ À confirmer côté backend : le champ réel qui porte le rôle
+      // (membre / proprio / pro) pour cette annonce.
+      role: (a.type_bailleur as any) ?? a.extra?.role ?? null,
+      typeAnnonce: a.type_annonce === 'existante' ? 'existante' : 'creation',
+      ambianceAge: a.extra?.ambiance_age ?? '',
+      ambiance: a.extra?.ambiance ?? [],
+      presentation: a.description ?? a.message ?? '',
+      typeLogement:
+        a.type_propriete === 'maison' ? 'Maison' : a.type_propriete === 'appartement' ? 'Appartement' : 'Autre',
+      nbColoc: String(a.total_colocataires ?? a.nombre_pieces ?? ''),
+      surfaceTotale: String(a.surface_totale ?? a.surface ?? ''),
+      locAddr: a.adresse_exacte ?? a.adresse ?? a.quartier ?? '',
+      pin: a.latitude && a.longitude ? { x: Number(a.latitude), y: Number(a.longitude) } : null,
+      equipements: a.amenities ?? a.commodites ?? [],
+      internet: a.internet ?? '',
+      parkingCars: String(a.parking_voitures ?? ''),
+      parkingCarsCouvert: a.parking_couvert ? 'Couvert' : '',
+      parkingMoto: String(a.parking_motos ?? ''),
+      servicesPersonnel: a.services ?? a.extra?.services_personnel ?? [],
+      servAutre: a.extra?.services_autre ?? [],
+      servAutreOn: (a.extra?.services_autre ?? []).length > 0,
+      dispoDate: (chambre?.date_disponibilite ?? chambre?.disponible_a_partir ?? '').slice(0, 10),
+      chambreSurface: chambre?.surface != null ? String(chambre.surface) : '',
+      loyer: chambre?.prix_loyer != null ? String(chambre.prix_loyer) : '',
+      charges: chambre?.prix_charges != null ? String(chambre.prix_charges) : '',
+      meublee: meubleeRaw ? meubleeRaw.split(', ').filter(Boolean) : [],
+      regles: a.regles ?? [],
+      offer: a.extra?.offre ?? 'annonce',
+      proEngageChecked: a.extra?.engagement_pro ?? false,
+    }
+  }
+
+  // Si la page est montée sur /annonces/:id/renouveler, on charge l'annonce
+  // (statut 'expired') et on préremplit tout le formulaire, directement à
+  // la dernière étape (récap + bouton Renouveler).
+  useEffect(() => {
+    if (!isRenewal || !annonceId) return
+    let cancelled = false
+    ;(async () => {
+      setLoadingAnnonce(true)
+      setRenewError('')
+      try {
+        const data = await api.annonce(annonceId)
+        if (cancelled) return
+        const draft = mapAnnonceToDraft(data)
+        restoreDraft(draft)
+        const s = stepsForRole(draft.role ?? null)
+        setCur(s.length - 1)
+        setMaxStep(s.length - 1)
+      } catch (err) {
+        if (!cancelled) setRenewError(err instanceof Error ? err.message : "Impossible de charger l'annonce.")
+      } finally {
+        if (!cancelled) setLoadingAnnonce(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isRenewal, annonceId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Dès qu'on a un utilisateur connecté, on regarde si un brouillon en
   // attente existe (déposé juste avant un envoi vers /auth). Si oui, on
   // restaure tout le formulaire et on relance automatiquement la publication.
@@ -878,6 +964,27 @@ export default function DepotAnnonceDeux() {
   }
 
   /* ---------------------------------------------------------------- */
+  /*  Renouvellement                                                    */
+  /* ---------------------------------------------------------------- */
+  async function handleRenouveler() {
+    if (!annonceId) return
+    setRenewing(true)
+    setRenewError('')
+    setRenewSuccess('')
+    try {
+      const res = await api.renouvelerAnnonce(annonceId)
+      setRenewSuccess(
+        `Ton annonce a été renouvelée. Nouvelle échéance : ${new Date(res.date_expiration).toLocaleDateString('fr-FR')}.`,
+      )
+      setToastMessage('Annonce renouvelée avec succès')
+    } catch (err) {
+      setRenewError(err instanceof Error ? err.message : 'Impossible de renouveler cette annonce.')
+    } finally {
+      setRenewing(false)
+    }
+  }
+
+  /* ---------------------------------------------------------------- */
   /*  Rendu                                                             */
   /* ---------------------------------------------------------------- */
   const stepKey = steps[cur]?.key
@@ -936,6 +1043,10 @@ export default function DepotAnnonceDeux() {
         )}
 
         <div className="card">
+          {isRenewal && loadingAnnonce && (
+            <div className="hint"><Loader2 size={14} className="animate-spin" /> Chargement de ton annonce...</div>
+          )}
+
           <div className="draft-bar">
             <button
               className="btn-draft"
@@ -1496,6 +1607,20 @@ export default function DepotAnnonceDeux() {
               <div className="s-title bb"><Send size={22} /> Étape finale — Publie ton annonce</div>
               <div className="s-sub">Vérifie le récapitulatif ci-dessous avant de publier.</div>
 
+              {isRenewal && (
+                <div className="note" style={{ marginBottom: 14 }}>
+                  <Clock size={13} /> Cette annonce a expiré. Renouvelle-la pour qu'elle redevienne visible
+                  {' '}pendant {recapDuration} de plus, sans avoir à ressaisir tes informations.
+                </div>
+              )}
+
+              {isRenewal && renewError && <ErrBox>{renewError}</ErrBox>}
+              {isRenewal && renewSuccess && (
+                <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                  {renewSuccess}
+                </div>
+              )}
+
               {role === 'pro' && (
                 <div className="cond show" style={{ marginBottom: 16 }}>
                   <div className="callout" style={{ background: 'linear-gradient(135deg,#fff4f1,#fff9ec)', borderColor: 'rgba(216,84,63,.28)' }}>
@@ -1585,19 +1710,24 @@ export default function DepotAnnonceDeux() {
 
           {/* NAV BUTTONS */}
           <div className="formnav">
-            {cur > 0 && (
+            {cur > 0 && !isRenewal && (
               <button className="btn-back" onClick={prevStep}>
                 <ArrowLeft size={16} /> {t('back')}
               </button>
             )}
-            {!isLast && (
+            {!isLast && !isRenewal && (
               <button className="btn-next" onClick={nextStep}>
                 {t('next')} <ArrowRight size={16} />
               </button>
             )}
-            {isLast && (
+            {isLast && !isRenewal && (
               <button className="btn-publish" onClick={handlePublish} disabled={submitting}>
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t('publish')}
+              </button>
+            )}
+            {isRenewal && !renewSuccess && (
+              <button className="btn-publish" onClick={handleRenouveler} disabled={renewing || loadingAnnonce}>
+                {renewing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Renouveler mon annonce
               </button>
             )}
           </div>
