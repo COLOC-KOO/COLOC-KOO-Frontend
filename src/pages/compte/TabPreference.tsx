@@ -134,11 +134,11 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
     const myRequestId = ++requestIdRef.current
     const url = `${API}/api/preferences/${resolvedId}`
     console.log('[TabPreference] GET vers', url, '(requestId =', myRequestId, ')')
-    
+
     try {
       setLoading(true)
       setErrorMsg(null)
-      
+
       const res = await fetch(url, { headers: authHeaders() })
       console.log('[TabPreference] GET réponse status =', res.status, res.ok ? 'OK' : 'ERREUR')
 
@@ -161,6 +161,7 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
       if (loadedMode === 'push' || loadedMode === 'email' || loadedMode === 'both') {
         console.log('[TabPreference] mode par défaut chargé =', loadedMode)
         setDefaultMode(loadedMode)
+
       }
 
       const loadedEvents = data.evenements || data.events
@@ -209,10 +210,29 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
     })
   }
 
+  // Les 3 boutons "Push uniquement" / "Email uniquement" / "Les deux" appliquent
+  // désormais réellement le mode choisi à tous les événements de la liste,
+  // exactement comme le fait un toggle "push" individuel — avant, ce bouton
+  // se contentait de changer la sélection visuelle sans toucher aux toggles.
   const handleDefaultModeChange = (mode: 'push' | 'email' | 'both') => {
     dirtyRef.current = true
     console.log('[TabPreference] changement de mode par défaut →', mode, '(dirty = true)')
     setDefaultMode(mode)
+
+    setEvents((prev) => {
+      const wantPush = mode === 'push' || mode === 'both'
+      const wantEmail = mode === 'email' || mode === 'both'
+      const next = prev.map((ev) => ({
+        ...ev,
+        push: wantPush,
+        // Certains événements n'ont pas d'option email (ev.email === null,
+        // affiché avec un "—") : on laisse null pour eux, on ne force
+        // l'email que pour les événements qui la supportent.
+        email: ev.email === null ? null : wantEmail,
+      }))
+      console.log('[TabPreference] events mis à jour suite au changement de mode par défaut =', next)
+      return next
+    })
   }
 
   const handleSave = async () => {
