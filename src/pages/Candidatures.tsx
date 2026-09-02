@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Calendar,
   Check,
@@ -223,12 +224,14 @@ function formatCountdown(ms: number) {
 
 export default function Candidatures() {
   const { user, loading: authLoading } = useAuth();
+  const { t, i18n } = useTranslation('candidatures');
   const { annonceId: paramsAnnonceId } = useParams<{ annonceId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+
   const userName = useMemo(
-    () => (user ? `${user.prenom || user.name || user.nom || "Toi"}` : "Toi"),
-    [user],
+    () => (user ? `${user.prenom || user.name || user.nom || t('common.you')}` : t('common.you')),
+    [user, t],
   );
 
   //Extraire annonceId de l'URL si useParams ne fonctionne pas
@@ -340,12 +343,12 @@ export default function Candidatures() {
     { who: string; txt: string }[]
   >([
     {
-      who: "Toi",
-      txt: "Bonjour ! J'aimerais discuter un peu avant de me décider.",
+      who: t('common.you'),
+      txt: t('chat.defaultMessage'),
     },
     {
-      who: "Candidat",
-      txt: "Bien sûr ! N'hésite pas à poser toutes tes questions.",
+      who: t('common.participant'),
+      txt: t('chat.defaultReply'),
     },
   ]);
   const [newMessage, setNewMessage] = useState("");
@@ -431,8 +434,8 @@ export default function Candidatures() {
         return {
           id: String(cand.id_candidature),
           initials: (cand.prenom?.[0] || "") + (cand.nom?.[0] || ""),
-          name: `${cand.prenom || ""} ${cand.nom || ""}`.trim() || "Candidat",
-          subtitle: cand.email || "Candidat",
+          name: `${cand.prenom || ""} ${cand.nom || ""}`.trim() || t('realPanel.candidate'),
+          subtitle: cand.email || t('realPanel.candidate'),
           status: status,
           id_candidature: cand.id_candidature,
           id_utilisateur: cand.id_utilisateur,
@@ -483,15 +486,15 @@ export default function Candidatures() {
         const formattedTeams: Team[] = data.map((equipe: EquipeReelle) => ({
           id: String(equipe.id_equipe),
           title: equipe.nom,
-          mood: equipe.ambiance || "Ambiance à définir",
+          mood: equipe.ambiance || t('cand.vibePlaceholder'),
           members: equipe.membres.map((m) => {
             const fullName =
-              `${m.prenom} ${m.nom}`.trim() || m.email || "Membre";
+              `${m.prenom} ${m.nom}`.trim() || m.email || t('cand.member');
             return fullName;
           }),
           chat: equipe.membres.map((m) => ({
-            who: `${m.prenom} ${m.nom}`.trim() || m.email || "Membre",
-            txt: `${m.statut === "owner" ? "👑 Créateur" : m.statut === "accepted" ? "✅ Membre" : "⏳ En attente"}`,
+            who: `${m.prenom} ${m.nom}`.trim() || m.email || t('cand.member'),
+            txt: `${m.statut === "owner" ? t('cand.creatorBadge') : m.statut === "accepted" ? "✅ " + t('cand.member') : "⏳ " + t('statuts.enAttente')}`,
           })),
         }));
         setTeams(formattedTeams);
@@ -506,7 +509,7 @@ export default function Candidatures() {
   // ===== GESTION DES ÉQUIPES =====
   const handleCreateEquipe = async () => {
     if (!annonceId || !newEquipeNom.trim()) {
-      alert("Veuillez saisir un nom pour l'équipe.");
+      alert(t('cand.teamNameRequired'));
       return;
     }
 
@@ -524,44 +527,44 @@ export default function Candidatures() {
       setNewEquipeNom("");
       setNewEquipeAmbiance("");
       await loadEquipes();
-      alert("✅ Équipe créée avec succès !");
+      alert(t('cand.teamCreated'));
     } catch (error: any) {
       console.error("❌ Erreur création équipe:", error);
-      alert(error?.message || "Erreur lors de la création de l'équipe.");
+      alert(error?.message || t('cand.teamCreationError'));
     }
   };
 
   const handleJoinEquipe = async (equipeId: number) => {
     if (!user) {
-      alert("Veuillez vous connecter pour rejoindre une équipe.");
+      alert(t('cand.loginToJoin'));
       return;
     }
 
     try {
       await api.addMemberToEquipe(equipeId, user.id);
       await loadEquipes();
-      alert("✅ Vous avez rejoint l'équipe !");
+      alert(t('cand.joinedTeam'));
     } catch (error: any) {
       console.error("❌ Erreur:", error);
-      alert(error?.message || "Erreur lors de l'inscription à l'équipe.");
+      alert(error?.message || t('cand.joinError'));
     }
   };
 
   const handleLeaveEquipe = async (equipeId: number) => {
     if (!user) {
-      alert("Veuillez vous connecter.");
+      alert(t('common.loading'));
       return;
     }
 
-    if (!confirm("Voulez-vous vraiment quitter cette équipe ?")) return;
+    if (!confirm(t('cand.leaveTeamConfirm'))) return;
 
     try {
       await api.removeMemberFromEquipe(equipeId, user.id);
       await loadEquipes();
-      alert("✅ Vous avez quitté l'équipe.");
+      alert(t('cand.leftTeam'));
     } catch (error: any) {
       console.error("❌ Erreur:", error);
-      alert(error?.message || "Erreur lors du retrait de l'équipe.");
+      alert(error?.message || t('cand.leaveError'));
     }
   };
 
@@ -607,12 +610,12 @@ export default function Candidatures() {
     console.log("🔵 annonceId:", annonceId);
 
     if (!user) {
-      alert("Veuillez vous connecter pour postuler");
+      alert(t('common.loading'));
       return;
     }
 
     if (!annonceId) {
-      alert("Annonce non trouvée");
+      alert(t('realPanel.empty'));
       return;
     }
 
@@ -621,7 +624,7 @@ export default function Candidatures() {
         id_annonce: parseInt(annonceId),
         id_depot_annonce: parseInt(annonceId),
         message:
-          candidatureMessage || "Je souhaite postuler à cette colocation",
+          candidatureMessage || t('modals.applyPlaceholder'),
         statut: "envoyee",
       };
 
@@ -635,7 +638,7 @@ export default function Candidatures() {
       setShowNotAppliedMessage(false);
       setShowPostulerModal(false);
       setCandidatureMessage("");
-      alert("✅ Candidature envoyée avec succès !");
+      alert(t('realPanel.alreadyApplied'));
       await loadRealCandidatures();
     } catch (error: any) {
       console.error("❌ ERREUR DÉTAILLÉE:", error);
@@ -646,7 +649,7 @@ export default function Candidatures() {
       if (error.response?.data?.message) {
         alert(`❌ ${error.response.data.message}`);
       } else {
-        alert("❌ Erreur lors de l'envoi de la candidature");
+        alert(t('common.loading'));
       }
     }
     console.log("🔵 === FIN handlePostuler ===");
@@ -693,16 +696,16 @@ export default function Candidatures() {
 
       setCandidateActionFeedback(
         action === "accept"
-          ? "Candidature acceptée et enregistrée en base."
+          ? t('realPanel.accepted')
           : action === "refuse"
-            ? "Candidature refusée et enregistrée en base."
-            : "Discussion ouverte et enregistrée en base.",
+            ? t('realPanel.refused')
+            : t('realPanel.discuss'),
       );
       await loadRealCandidatures();
     } catch (error: any) {
       console.error("❌ Erreur action candidature:", error);
       setCandidateActionFeedback(
-        error?.message || "Impossible de traiter cette candidature.",
+        error?.message || t('common.loading'),
       );
     } finally {
       setCandidateActionLoading(null);
@@ -711,7 +714,7 @@ export default function Candidatures() {
 
   const handleDeleteCandidature = async (candidateId: number) => {
     if (!candidateId) return;
-    const confirmed = window.confirm("Supprimer cette candidature ?");
+    const confirmed = window.confirm(t('realPanel.deleteTitle'));
     if (!confirmed) return;
 
     setCandidateActionLoading(candidateId);
@@ -724,10 +727,10 @@ export default function Candidatures() {
       setOwnerCandidates((prev) =>
         prev.filter((candidate) => candidate.id_candidature !== candidateId),
       );
-      setCandidateActionFeedback("Candidature supprimée.");
+      setCandidateActionFeedback(t('realPanel.deleteTitle'));
     } catch (error: any) {
       setCandidateActionFeedback(
-        error?.message || "Impossible de supprimer cette candidature.",
+        error?.message || t('common.loading'),
       );
     } finally {
       setCandidateActionLoading(null);
@@ -740,7 +743,7 @@ export default function Candidatures() {
       const result = await api.launchColocation(annonceId);
       const members = Array.isArray((result as any).membres)
         ? (result as any).membres.map((member: any) => ({
-            nom: member.nom || member.prenom || member.email || "Membre",
+            nom: member.nom || member.prenom || member.email || t('cand.member'),
             initiales:
               member.initiales ||
               [member.prenom, member.nom]
@@ -753,12 +756,12 @@ export default function Candidatures() {
           }))
         : [];
       setCompletedMembers(members);
-      setCandidateActionFeedback("Colocation lancée et membres enregistrés.");
+      setCandidateActionFeedback(t('track.membersValidatedTitle'));
       await loadRealCandidatures();
       return true;
     } catch (error: any) {
       setCandidateActionFeedback(
-        error?.message || "Impossible de lancer la colocation.",
+        error?.message || t('common.loading'),
       );
       return false;
     }
@@ -767,7 +770,7 @@ export default function Candidatures() {
   // ===== VOIR MA CANDIDATURE =====
   const handleViewMyCandidature = () => {
     if (!user) {
-      alert("Veuillez vous connecter pour voir votre candidature");
+      alert(t('common.loading'));
       return;
     }
 
@@ -895,7 +898,7 @@ export default function Candidatures() {
     const candidate = ownerCandidates.find((cand) => cand.id === id);
     if (!candidate?.id_candidature) return;
     if (ownerFilled >= TARGET) {
-      alert("Toutes les places sont pourvues.");
+      alert(t('track.teamCompleteTitle'));
       return;
     }
     await handleCandidateDecision(candidate.id_candidature, "accept");
@@ -918,7 +921,7 @@ export default function Candidatures() {
   async function launchColoc() {
     if (!user) {
       setCandidateActionFeedback(
-        "Veuillez vous connecter pour lancer la colocation.",
+        t('common.loading'),
       );
       return;
     }
@@ -958,7 +961,7 @@ export default function Candidatures() {
   const activeMailNote = pricing?.mailNote ?? FALLBACK_MAIL_NOTE;
 
   // Logement reel (annonce) — remplace les valeurs demo codees en dur.
-  const logementTitre = annonceData?.titre || "Logement";
+  const logementTitre = annonceData?.titre || t('common.emptyDash');
   const logementResume = [
     annonceData?.type_propriete,
     annonceData?.surface_totale ? `${annonceData.surface_totale} m²` : null,
@@ -989,12 +992,12 @@ export default function Candidatures() {
   const retainedTeamLabel =
     retainedCandidateNames.length > 0
       ? retainedCandidateNames.join(", ")
-      : activeWinner?.members.join(", ") || "les colocataires retenus";
-  const retainedTeamTitle = activeWinner?.title || "l'equipe retenue";
-  const wonIndividualMessage = `${currentCandidateName}, ta candidature est retenue : tu fais partie de la colocation ${logementTitre}. Bienvenue ! Emmenagement prevu le ${moveInLabel}.`;
-  const wonGroupMessage = `L'equipe ${retainedTeamTitle} est officiellement validee pour ${logementTitre}. Colocataires retenus : ${retainedTeamLabel}. Emmenagement prevu le ${moveInLabel}.`;
-  const lostIndividualMessage = `${currentCandidateName}, ta candidature n'a pas ete retenue pour ${logementTitre}. Une autre equipe est maintenant validee, mais tu peux continuer a chercher une colocation qui te correspond.`;
-  const lostGroupMessage = `Une autre equipe a ete officiellement validee pour ${logementTitre}. Merci pour votre candidature : votre groupe peut retenter sa chance sur une autre colocation.`;
+      : activeWinner?.members.join(", ") || t('contract.parties');
+  const retainedTeamTitle = activeWinner?.title || t('contract.parties');
+  const wonIndividualMessage = t('notifications.congratsName', { name: currentCandidateName }) + " " + t('notifications.moveIn') + " " + moveInLabel + ".";
+  const wonGroupMessage = t('notifications.congratsTeam', { team: retainedTeamTitle }) + " " + t('notifications.moveIn') + " " + moveInLabel + ".";
+  const lostIndividualMessage = t('notifications.notThisTime') + " " + logementTitre + ".";
+  const lostGroupMessage = t('notifications.thanksApplication') + " " + logementTitre + ".";
 
   useEffect(() => {
     api
@@ -1036,7 +1039,7 @@ export default function Candidatures() {
       refreshMyContracts();
     } catch (error: any) {
       setOfficialFeedback(
-        error?.message || "Impossible de lancer officiellement la colocation.",
+        error?.message || t('common.loading'),
       );
     } finally {
       setLaunchingOfficial(false);
@@ -1141,7 +1144,7 @@ export default function Candidatures() {
       setCelebrateOpen(true);
     } catch (error: any) {
       setContractError(
-        error?.message || "Impossible d'enregistrer le contrat.",
+        error?.message || t('common.loading'),
       );
     } finally {
       setContractSubmitting(false);
@@ -1151,16 +1154,16 @@ export default function Candidatures() {
   // Etape 3 : enregistre le paiement Mobile Money manuel
   async function confirmPayment() {
     if (!moyenPaiement) {
-      setContractError("Choisis un moyen de paiement (Orange Money ou MVOLA).");
+      setContractError(t('contract.paymentMethod'));
       return;
     }
     if (payRef.trim().length < 4) {
-      setContractError("Saisis la référence de ton paiement Mobile Money.");
+      setContractError(t('contract.paymentRef'));
       return;
     }
     const contractId = payContractId ?? createdContracts[0]?.id_contrat;
     if (!contractId) {
-      setContractError("Aucun contrat à régler.");
+      setContractError(t('common.emptyDash'));
       return;
     }
     const total = createdContracts.reduce(
@@ -1186,7 +1189,7 @@ export default function Candidatures() {
       refreshMyContracts();
     } catch (error: any) {
       setContractError(
-        error?.message || "Impossible d'enregistrer le paiement.",
+        error?.message || t('common.loading'),
       );
     } finally {
       setContractSubmitting(false);
@@ -1207,7 +1210,7 @@ export default function Candidatures() {
       window.open(url, "_blank");
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (error: any) {
-      setContractError(error?.message || "Impossible d'ouvrir le document.");
+      setContractError(error?.message || t('common.loading'));
     }
   }
 
@@ -1255,8 +1258,8 @@ function openChat(candidate: any) {
         id_candidature: candidate.id_candidature,
         id_utilisateur: candidate.id_utilisateur,
         initials: (candidate.prenom?.[0] || "") + (candidate.nom?.[0] || ""),
-        name: `${candidate.prenom || ""} ${candidate.nom || ""}`.trim() || "Candidat",
-        subtitle: candidate.email || "Candidat",
+        name: `${candidate.prenom || ""} ${candidate.nom || ""}`.trim() || t('realPanel.candidate'),
+        subtitle: candidate.email || t('realPanel.candidate'),
         status: "pending",
         email: candidate.email,
         telephone: candidate.telephone,
@@ -1267,12 +1270,12 @@ function openChat(candidate: any) {
   setSelectedCandidate(normalized);
   setChatMessages([
     {
-      who: "Toi",
-      txt: `Bonjour ${normalized.name.split(" ")[0]} ! J'aimerais discuter un peu avant de me décider.`,
+      who: t('common.you'),
+      txt: t('chat.defaultMessage'),
     },
     {
       who: normalized.name,
-      txt: "Bien sûr ! N'hésite pas à poser toutes tes questions.",
+      txt: t('chat.defaultReply'),
     },
   ]);
   setChatModalOpen(true);
@@ -1294,12 +1297,12 @@ function openChat(candidate: any) {
         "discuss",
         message,
       );
-      setChatMessages((prev) => [...prev, { who: "Toi", txt: message }]);
+      setChatMessages((prev) => [...prev, { who: t('common.you'), txt: message }]);
       setChatModalOpen(false);
       setSelectedCandidate(null);
       navigate("/compte?tab=messages"); // ✅ redirige vers la section messages
     } catch {
-      setChatMessages((prev) => [...prev, { who: "Toi", txt: message }]);
+      setChatMessages((prev) => [...prev, { who: t('common.you'), txt: message }]);
     }
   }
 
@@ -1348,8 +1351,8 @@ function openChat(candidate: any) {
   }
 
   function createTeam() {
-    const title = createTitle.trim() || "Mon équipe";
-    const mood = createMood.trim() || "(Ambiance à préciser)";
+    const title = createTitle.trim() || t('cand.teamNamePlaceholder');
+    const mood = createMood.trim() || t('cand.vibePlaceholder');
     const newTeam: Team = {
       id: `t${Date.now()}`,
       title,
@@ -1358,7 +1361,7 @@ function openChat(candidate: any) {
       chat: [
         {
           who: userName,
-          txt: "J'ai créé l'équipe, à vous de me rejoindre ! 🚀",
+          txt: t('cand.teamCreated'),
         },
       ],
     };
@@ -1407,7 +1410,7 @@ function openChat(candidate: any) {
     if (realCandidatures.length === 0) {
       return (
         <div className="text-center py-8 text-muted-foreground">
-          🏠 Aucune candidature pour le moment. Soyez le premier à postuler !
+          🏠 {t('realPanel.empty')}
         </div>
       );
     }
@@ -1416,8 +1419,7 @@ function openChat(candidate: any) {
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h3 className="text-lg font-semibold">
-            👥 {realCandidatures.length} candidat
-            {realCandidatures.length > 1 ? "s" : ""}
+            👥 {realCandidatures.length} {t('realPanel.candidate', { count: realCandidatures.length })}
           </h3>
         </div>
 
@@ -1465,7 +1467,7 @@ function openChat(candidate: any) {
                     {candidat.prenom} {candidat.nom}
                     {isCurrentUser && (
                       <span className="text-xs bg-brand-cyan-light text-brand-cyan-dark px-2 py-0.5 rounded-full">
-                        Vous
+                        {t('realPanel.me')}
                       </span>
                     )}
                   </div>
@@ -1503,10 +1505,10 @@ function openChat(candidate: any) {
                     >
                       {candidat.statut === "acceptee" ||
                       candidat.statut === "signature"
-                        ? "✅ Accepté"
+                        ? "✅ " + t('statuts.accepte')
                         : candidat.statut === "refusee"
-                          ? "❌ Refusé"
-                          : "⏳ En attente"}
+                          ? "❌ " + t('statuts.refuse')
+                          : "⏳ " + t('statuts.enAttente')}
                     </span>
                   </div>
                   {canDiscuss || canManageCandidate ? (
@@ -1520,8 +1522,8 @@ function openChat(candidate: any) {
                         className="rounded-2xl border border-border bg-card px-3 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light disabled:opacity-60"
                       >
                         {candidateActionLoading === candidat.id_candidature
-                          ? "Traitement..."
-                          : "Discuter"}
+                          ? t('common.loading')
+                          : t('realPanel.discuss')}
                       </button>
                       <button
                         type="button"
@@ -1537,7 +1539,7 @@ function openChat(candidate: any) {
                         }
                         className="rounded-2xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
                       >
-                        Accepter
+                        {t('realPanel.accept')}
                       </button>
                       <button
                         type="button"
@@ -1553,7 +1555,7 @@ function openChat(candidate: any) {
                         }
                         className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                       >
-                        Refuser
+                        {t('realPanel.refuse')}
                       </button>
                       {canDeleteCandidate ? (
                         <button
@@ -1565,7 +1567,7 @@ function openChat(candidate: any) {
                             candidateActionLoading === candidat.id_candidature
                           }
                           className="rounded-2xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                          title="Supprimer la candidature"
+                          title={t('realPanel.deleteTitle')}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -1593,6 +1595,7 @@ function openChat(candidate: any) {
             officialNotification={officialNotification}
           />
         </div>
+        
         {!(activeView === "flux" && isAnnonceOwner) && (
           <CandidaturesHeader
             activeView={activeView}
@@ -1602,24 +1605,25 @@ function openChat(candidate: any) {
             officialNotification={officialNotification}
           />
         )}
+        
         {!authLoading && !user ? (
           <div className="mt-8 rounded-3xl border border-border bg-card p-8 text-center">
             <p className="text-lg font-semibold">
-              Connecte-toi pour accéder à ce simulateur amélioré.
+              {t('common.loading')}
             </p>
             <p className="mt-2 text-muted-foreground">
-              La maquette est accessible pour les membres connectés.
+              {t('common.loading')}
             </p>
             <Link
               to="/auth?mode=signin&redirect=/candidatures"
               className="mt-6 inline-flex rounded-2xl bg-brand-cyan px-6 py-3 text-sm font-semibold text-white hover:bg-brand-cyan-dark"
             >
-              Se connecter
+              {t('common.loading')}
             </Link>
           </div>
         ) : authLoading ? (
           <div className="mt-8 rounded-3xl border border-border bg-card p-8 text-center text-muted-foreground">
-            Chargement de votre session...
+            {t('common.loading')}
           </div>
         ) : (
           <div className="mt-8 space-y-6">
@@ -1645,14 +1649,14 @@ function openChat(candidate: any) {
             {activeView === "cand" && (
               <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                 <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
-                  <h2 className="bebas text-2xl">Équipes en formation</h2>
+                  <h2 className="bebas text-2xl">{t('cand.title')}</h2>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowCreateEquipe(!showCreateEquipe)}
                       className="inline-flex items-center gap-2 rounded-2xl bg-brand-cyan px-4 py-2 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors"
                     >
                       <UserPlus className="h-4 w-4" />
-                      Créer une équipe
+                      {t('cand.createTeam')}
                     </button>
                   </div>
                 </div>
@@ -1663,8 +1667,7 @@ function openChat(candidate: any) {
                   </div>
                 ) : equipesReelles.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    🏠 Aucune équipe pour le moment. Soyez le premier à créer
-                    une équipe !
+                    🏠 {t('empty.equipes')}
                   </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
@@ -1693,7 +1696,7 @@ function openChat(candidate: any) {
                             <div>
                               <h3 className="bebas text-xl">{equipe.nom}</h3>
                               <div className="text-sm text-muted-foreground">
-                                {membres.length}/{totalPlaces} membres
+                                {t('cand.membersCount', { count: membres.length, total: totalPlaces })}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1709,16 +1712,16 @@ function openChat(candidate: any) {
                                 }`}
                               >
                                 {equipe.statut === "complete"
-                                  ? "✅ Complète"
+                                  ? t('statuts.complete')
                                   : equipe.statut === "selected"
-                                    ? "🔵 Sélectionnée"
+                                    ? t('statuts.selectionnee')
                                     : equipe.statut === "rejected"
-                                      ? "❌ Rejetée"
-                                      : "⏳ En formation"}
+                                      ? t('statuts.rejetee')
+                                      : t('statuts.enFormation')}
                               </span>
                               {isOwner && (
                                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                                  👑 Créateur
+                                  {t('statuts.createur')}
                                 </span>
                               )}
                             </div>
@@ -1751,7 +1754,7 @@ function openChat(candidate: any) {
                                   {membre.prenom ||
                                     membre.nom ||
                                     membre.email?.split("@")[0] ||
-                                    "Membre"}
+                                    t('cand.member')}
                                   {membre.statut === "owner" && " 👑"}
                                 </span>
                               </div>
@@ -1778,7 +1781,7 @@ function openChat(candidate: any) {
                                   }
                                   className="rounded-2xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark transition-colors"
                                 >
-                                  Rejoindre
+                                  {t('cand.joinTeam')}
                                 </button>
                               )}
                             {isCurrentUserInTeam && !isOwner && (
@@ -1788,25 +1791,21 @@ function openChat(candidate: any) {
                                 }
                                 className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
                               >
-                                Quitter
+                                {t('cand.leaveTeam')}
                               </button>
                             )}
                             {isOwner && (
                               <button
                                 onClick={() => {
                                   if (
-                                    confirm(
-                                      "Voulez-vous vraiment supprimer cette équipe ?",
-                                    )
+                                    confirm(t('cand.deleteTeamConfirm'))
                                   ) {
                                     api
                                       .deleteEquipe(equipe.id_equipe)
                                       .then(() => loadEquipes())
                                       .catch((error) => {
                                         console.error("❌ Erreur:", error);
-                                        alert(
-                                          "Erreur lors de la suppression de l'équipe.",
-                                        );
+                                        alert(t('cand.teamCreationError'));
                                       });
                                   }
                                 }}
@@ -1818,7 +1817,7 @@ function openChat(candidate: any) {
                             {equipe.statut === "complete" && (
                               <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
                                 <Check className="h-4 w-4" />
-                                Équipe complète !
+                                {t('cand.teamCompleteMsg')}
                               </span>
                             )}
                           </div>
@@ -1834,7 +1833,7 @@ function openChat(candidate: any) {
                     <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xl font-semibold">
-                          🏆 Créer une équipe
+                          {t('cand.createModalTitle')}
                         </h3>
                         <button
                           onClick={() => {
@@ -1851,13 +1850,13 @@ function openChat(candidate: any) {
                       <div className="space-y-4">
                         <div>
                           <label className="text-sm font-semibold block mb-1">
-                            Nom de l'équipe *
+                            {t('cand.teamNameLabel')}
                           </label>
                           <input
                             type="text"
                             value={newEquipeNom}
                             onChange={(e) => setNewEquipeNom(e.target.value)}
-                            placeholder="Ex: Les lève-tôt studieux"
+                            placeholder={t('cand.teamNamePlaceholder')}
                             className="w-full rounded-2xl border border-border px-4 py-2.5 text-sm outline-none focus:border-brand-cyan transition-colors"
                             maxLength={255}
                           />
@@ -1865,14 +1864,14 @@ function openChat(candidate: any) {
 
                         <div>
                           <label className="text-sm font-semibold block mb-1">
-                            Ambiance (optionnel)
+                            {t('cand.vibeLabel')}
                           </label>
                           <textarea
                             value={newEquipeAmbiance}
                             onChange={(e) =>
                               setNewEquipeAmbiance(e.target.value)
                             }
-                            placeholder="Décrivez l'esprit de votre équipe..."
+                            placeholder={t('cand.vibePlaceholder')}
                             className="w-full rounded-2xl border border-border px-4 py-2.5 text-sm outline-none focus:border-brand-cyan min-h-[100px] resize-none transition-colors"
                             maxLength={500}
                           />
@@ -1887,14 +1886,14 @@ function openChat(candidate: any) {
                             }}
                             className="flex-1 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors"
                           >
-                            Annuler
+                            {t('common.cancel')}
                           </button>
                           <button
                             onClick={handleCreateEquipe}
                             disabled={!newEquipeNom.trim()}
                             className="flex-1 rounded-2xl bg-brand-cyan px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-cyan-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Créer l'équipe
+                            {t('cand.createSubmit')}
                           </button>
                         </div>
                       </div>
@@ -1915,12 +1914,10 @@ function openChat(candidate: any) {
                 return (
                   <div className="mb-6 rounded-3xl border border-brand-cyan/30 bg-white p-6 shadow-sm">
                     <div className="bebas text-2xl text-brand-cyan-dark">
-                      Contrat & paiements des colocataires
+                      {t('contract.title')}
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Tu ne paies rien. La colocation se lance{" "}
-                      <b>officiellement</b> quand <b>tous les colocataires</b>{" "}
-                      ont réglé leur part.
+                      {t('contract.splitFee')}
                     </p>
                     <div className="mt-4 space-y-2">
                       {myContracts.map((c) => {
@@ -1932,8 +1929,8 @@ function openChat(candidate: any) {
                           >
                             <span>
                               {c.type === "edl"
-                                ? "État des lieux"
-                                : "Contrat de colocation"}{" "}
+                                ? t('contract.edlFlat')
+                                : t('contract.contractFlat')}{" "}
                               · réf {c.reference}
                             </span>
                             <div className="flex items-center gap-3">
@@ -1944,7 +1941,7 @@ function openChat(candidate: any) {
                                     : "text-muted-foreground"
                                 }
                               >
-                                {c.paidCount}/{c.total} payé{done ? " ✓" : ""}
+                                {c.paidCount}/{c.total} {t('contract.paidCount', { paid: c.paidCount, total: c.total })} {done ? "✓" : ""}
                               </span>
                               <button
                                 type="button"
@@ -1953,7 +1950,7 @@ function openChat(candidate: any) {
                                 }
                                 className="rounded-lg border border-brand-cyan px-3 py-1.5 text-xs font-bold text-brand-cyan-dark hover:bg-brand-cyan/10"
                               >
-                                Voir
+                                {t('common.downloadDocument')}
                               </button>
                             </div>
                           </div>
@@ -1967,12 +1964,12 @@ function openChat(candidate: any) {
                       className="mt-4 w-full rounded-3xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                     >
                       {isFinalized
-                        ? "Colocation déjà lancée ✓"
+                        ? t('common.loading')
                         : launchingOfficial
-                          ? "Lancement…"
+                          ? t('common.loading')
                           : allPaid
-                            ? "Lancer officiellement la colocation 🎉"
-                            : "En attente du paiement des colocataires"}
+                            ? t('actions.lancerOfficiellement')
+                            : t('common.loading')}
                     </button>
                     {officialFeedback && (
                       <div className="mt-3 rounded-2xl bg-brand-green-light/50 px-4 py-3 text-sm font-semibold text-brand-green-dark">
@@ -1989,11 +1986,10 @@ function openChat(candidate: any) {
               myContracts.filter((c) => c.peut_payer).length > 0 && (
                 <div className="mb-6 rounded-3xl border border-brand-cyan/40 bg-white p-6 shadow-sm">
                   <div className="bebas text-2xl text-brand-cyan-dark">
-                    Ton contrat de colocation
+                    {t('cand.yourContractTitle')}
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Ta part de l'honoraire Coloc'KOO pour l'établissement du
-                    contrat.
+                    {t('cand.yourContractDesc')}
                   </p>
                   <div className="mt-4 space-y-3">
                     {myContracts
@@ -2006,13 +2002,12 @@ function openChat(candidate: any) {
                           <div>
                             <div className="font-semibold">
                               {c.type === "edl"
-                                ? "Document d'état des lieux"
-                                : "Contrat de colocation"}{" "}
+                                ? t('contract.edlFlat')
+                                : t('contract.contractFlat')}{" "}
                               · réf. {c.reference}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              Ta part : <b>{fmtAr(c.ma_part)} Ar</b> —{" "}
-                              {c.paidCount}/{c.total} colocataire(s) ont réglé.
+                              {t('cand.yourShare', { amount: fmtAr(c.ma_part) })} — {t('cand.roommatesPaidCount', { paidCount: c.paidCount, total: c.total })}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -2022,12 +2017,12 @@ function openChat(candidate: any) {
                               className="rounded-xl border border-brand-cyan px-4 py-2 text-sm font-bold text-brand-cyan-dark hover:bg-brand-cyan/10"
                             >
                               {c.type === "edl"
-                                ? "Lire le document"
-                                : "Lire le contrat"}
+                                ? t('cand.readEdl')
+                                : t('cand.readContract')}
                             </button>
                             {c.deja_paye ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-brand-green-light px-3 py-1.5 text-sm font-semibold text-brand-green-dark">
-                                Part réglée ✓
+                                {t('cand.sharePaid')}
                               </span>
                             ) : (
                               <button
@@ -2035,7 +2030,7 @@ function openChat(candidate: any) {
                                 onClick={() => payMyShare(c)}
                                 className="rounded-xl bg-brand-cyan px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-cyan-dark"
                               >
-                                Payer ma part ({fmtAr(c.ma_part)} Ar)
+                                {t('cand.payShare', { amount: fmtAr(c.ma_part) })}
                               </button>
                             )}
                           </div>
@@ -2051,12 +2046,12 @@ function openChat(candidate: any) {
               const isFinalized = annonceData?.statut === "terminee";
               const launchDisabled = ownerFilled < TARGET || contractExists || isFinalized;
               const launchLabel = isFinalized
-                ? "Colocation déjà lancée ✓"
+                ? t('common.loading')
                 : contractExists
-                  ? "Contrat déjà créé — voir les paiements ci-dessus"
+                  ? t('common.loading')
                   : ownerFilled < TARGET
-                    ? `Lancer la colocation (${ownerFilled}/${TARGET})`
-                    : "Lancer la colocation 🎉";
+                    ? `${t('actions.lancerColocation')} (${ownerFilled}/${TARGET})`
+                    : t('actions.lancerColocation');
               return <OwnerCandidaturesDashboard
                 title={logementTitre}
                 resume={logementResume}
@@ -2316,12 +2311,10 @@ function openChat(candidate: any) {
                   <div className="rounded-3xl bg-brand-green-light/40 p-4 text-brand-green-dark">
                     <div className="flex items-center gap-3 text-lg font-semibold">
                       <Scale className="h-5 w-5" />
-                      Mode : Colocation complète
+                      {t('track.modeTitle')}
                     </div>
                     <p className="mt-3 text-sm text-muted-foreground">
-                      Les candidat·e·s forment des équipes. La première équipe
-                      au complet l'emporte, mais c'est toi qui valides l'équipe
-                      complète ou attends encore un peu.
+                      {t('track.modeDesc')}
                     </p>
                   </div>
 
@@ -2329,7 +2322,7 @@ function openChat(candidate: any) {
                     <div className="rounded-3xl border border-border bg-background p-5">
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-lg font-semibold text-brand-cyan-dark">
-                          Membres de la colocation validés
+                          {t('track.membersValidatedTitle')}
                         </div>
                         <span className="rounded-full bg-brand-cyan-light px-3 py-1 text-xs font-semibold text-brand-cyan-dark">
                           {completedMembers.length}
@@ -2356,7 +2349,7 @@ function openChat(candidate: any) {
                               </div>
                             </div>
                             <span className="rounded-full bg-brand-green-light px-2.5 py-1 text-[11px] font-semibold text-brand-green-dark">
-                              Membre
+                              {t('statuts.membre')}
                             </span>
                           </div>
                         ))}
@@ -2374,23 +2367,23 @@ function openChat(candidate: any) {
                     onClick={toggleAgentView}
                   >
                     <Sparkles className="h-4 w-4" />
-                    Simuler la vue « Agent immobilier » (frais d'agence)
+                    {t('track.simulateAgentView')}
                   </button>
 
                   {agentView && (
                     <div className="rounded-3xl border border-brand-cyan-light bg-brand-cyan-light/40 p-5">
                       <div className="flex items-center justify-between text-sm text-brand-cyan-dark">
-                        <span>Frais d'agence (total)</span>
+                        <span>{t('track.agencyFeesTotal')}</span>
                         <span className="font-semibold">
                           {fmtAr(FEE_TOTAL)} Ar
                         </span>
                       </div>
                       <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Répartis sur</span>
-                        <span>{TARGET} colocataires</span>
+                        <span>{t('track.splitAcross')}</span>
+                        <span>{t('track.nRoommates', { count: TARGET })}</span>
                       </div>
                       <div className="mt-3 border-t border-brand-cyan/20 pt-3 text-sm font-semibold text-brand-cyan-dark">
-                        <span>Part par colocataire</span>
+                        <span>{t('track.sharePerRoommate')}</span>
                         <span className="float-right">
                           {fmtAr(Math.round(FEE_TOTAL / TARGET))} Ar
                         </span>
@@ -2402,11 +2395,10 @@ function openChat(candidate: any) {
                     <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
                       <div className="flex items-center gap-3 text-lg font-semibold text-emerald-700">
                         <Check className="h-5 w-5" />
-                        Colocation attribuée
+                        {t('track.attributedTitle')}
                       </div>
                       <p className="mt-3 text-sm text-muted-foreground">
-                        L'équipe <b>{validatedTeam.title}</b> a été validée. La
-                        colocation peut démarrer.
+                        {t('track.attributedDesc', { team: validatedTeam.title })}
                       </p>
                       <div className="mt-4">
                         {renderAvStack(validatedTeam.members)}
@@ -2416,30 +2408,28 @@ function openChat(candidate: any) {
                     <div className="rounded-3xl border border-border bg-background p-5">
                       <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
                         <Trophy className="h-5 w-5" />
-                        Une équipe est complète !
+                        {t('track.teamCompleteTitle')}
                       </div>
                       <p className="mt-3 text-sm text-muted-foreground">
-                        L'équipe <b>{winnerTeam.title}</b> a réuni {TARGET}{" "}
-                        colocataires.
+                        {t('track.teamCompleteDesc', { team: winnerTeam.title, target: TARGET })}
                       </p>
                       <div className="mt-4">
                         {renderAvStack(winnerTeam.members)}
                       </div>
                       <div className="mt-4 rounded-3xl border border-border bg-card p-4">
                         <div className="flex items-center justify-between text-sm font-semibold">
-                          <span>Échéance dans</span>
+                          <span>{t('track.deadlineIn')}</span>
                           <span>{countdown}</span>
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground">
-                          Max 3 jours. Sans validation de ta part, l'attribution
-                          deviendra automatique.
+                          {t('track.deadlineDesc')}
                         </p>
                       </div>
                       <button
                         className="mt-4 inline-flex w-full items-center justify-center rounded-3xl bg-brand-green px-4 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark"
                         onClick={() => validateTeam(winnerTeam.id)}
                       >
-                        Valider cette équipe
+                        {t('track.validateTeam')}
                       </button>
                     </div>
                   ) : null}
@@ -2464,20 +2454,19 @@ function openChat(candidate: any) {
                             </div>
                             {isWinner ? (
                               <span className="rounded-full bg-brand-green px-3 py-1 text-xs font-semibold text-white">
-                                Équipe validée
+                                {t('track.teamValidatedBadge')}
                               </span>
                             ) : isLocked ? (
                               <span className="text-xs font-semibold text-muted-foreground">
-                                Hors course
+                                {t('track.outOfRace')}
                               </span>
                             ) : team.members.length >= TARGET ? (
                               <span className="rounded-full bg-brand-cyan-light px-3 py-1 text-xs font-semibold text-brand-cyan-dark">
-                                Complète
+                                {t('track.completeBadge')}
                               </span>
                             ) : (
                               <span className="text-xs text-muted-foreground">
-                                {TARGET - team.members.length} place(s)
-                                restante(s)
+                                {t('track.spotsRemaining', { count: TARGET - team.members.length })}
                               </span>
                             )}
                           </div>
@@ -2497,15 +2486,12 @@ function openChat(candidate: any) {
                       className="inline-flex w-full items-center justify-center rounded-3xl bg-brand-cyan px-4 py-3 text-sm font-semibold text-white hover:bg-brand-cyan-dark"
                       onClick={simulateComplete}
                     >
-                      Simuler : une équipe se complète
+                      {t('track.simulateComplete')}
                     </button>
                   )}
 
                   <p className="text-sm text-muted-foreground">
-                    Tu ne choisis pas qui rejoint quelle équipe : les
-                    candidat·e·s s'organisent entre eux. Ton rôle est de valider
-                    l'équipe complète — ou d'attendre jusqu'à l'échéance, après
-                    quoi l'attribution devient automatique.
+                    {t('track.roleDesc')}
                   </p>
                 </div>
               </div>
@@ -2523,42 +2509,41 @@ function openChat(candidate: any) {
                         <Users className="h-4 w-4" />
                         {decision === "validated"
                           ? myTeamData?.members.includes(userName)
-                            ? "Ton équipe a remporté la coloc !"
-                            : "La coloc a été attribuée à une autre équipe"
+                            ? t('cand.teamCreated')
+                            : t('cand.title')
                           : winnerTeam
                             ? winnerTeam.members.includes(userName)
-                              ? "Équipe complète — en attente de validation du propriétaire"
-                              : "Une équipe est complète — validation en cours"
+                              ? t('cand.teamCompleteMsg')
+                              : t('cand.title')
                             : myTeamData
-                              ? "Tu es dans une équipe"
-                              : "Forme ton équipe pour remporter la coloc"}
+                              ? t('cand.title')
+                              : t('cand.title')}
                       </div>
                       <h2 className="bebas mt-4 text-3xl">
-                        {TARGET} places à pourvoir
+                        {TARGET} {t('realPanel.candidate', { count: TARGET })}
                       </h2>
                       <p className="mt-3 text-sm text-muted-foreground max-w-2xl">
-                        Rejoins une équipe qui te ressemble, ou crée la tienne.
-                        La première équipe complète remporte le logement.
+                        {t('cand.title')}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 rounded-3xl bg-brand-cyan-light/50 px-4 py-3 text-sm font-semibold text-brand-cyan-dark">
                       <Sparkles className="h-5 w-5" />
                       {isCourseFinished
-                        ? "Course terminée"
+                        ? t('track.outOfRace')
                         : myTeamData
-                          ? "Tu as déjà une équipe"
-                          : "Choisis ta stratégie"}
+                          ? t('cand.title')
+                          : t('cand.title')}
                     </div>
                   </div>
                 </div>
 
                 {agentView && (
                   <div className="rounded-3xl border border-brand-cyan-light bg-brand-cyan-light/40 p-5 text-sm text-brand-cyan-dark">
-                    <div className="font-semibold">Frais d'agence</div>
+                    <div className="font-semibold">{t('track.agencyFeesTotal')}</div>
                     <div className="mt-3 grid gap-3 sm:grid-cols-3">
                       <div className="rounded-3xl bg-card p-4 text-center">
                         <div className="text-xs uppercase text-muted-foreground">
-                          Total
+                          {t('track.agencyFeesTotal')}
                         </div>
                         <div className="bebas text-2xl mt-2">
                           {fmtAr(FEE_TOTAL)} Ar
@@ -2566,15 +2551,14 @@ function openChat(candidate: any) {
                       </div>
                       <div className="rounded-3xl bg-card p-4 text-center">
                         <div className="text-xs uppercase text-muted-foreground">
-                          Par coloc
+                          {t('track.sharePerRoommate')}
                         </div>
                         <div className="bebas text-2xl mt-2">
                           {fmtAr(Math.round(FEE_TOTAL / TARGET))} Ar
                         </div>
                       </div>
                       <div className="rounded-3xl bg-card p-4 text-center text-muted-foreground">
-                        Chaque candidat voit sa part exacte avant de rejoindre
-                        une équipe.
+                        {t('track.splitAcross')}
                       </div>
                     </div>
                   </div>
@@ -2584,10 +2568,10 @@ function openChat(candidate: any) {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-lg font-semibold">
-                        Équipes en formation
+                        {t('cand.title')}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {teams.length} équipes
+                        {teams.length} {t('cand.title')}
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
@@ -2595,7 +2579,7 @@ function openChat(candidate: any) {
                         (sum, team) => sum + team.members.length,
                         0,
                       )}{" "}
-                      candidats au total
+                      {t('cand.member')}
                     </div>
                   </div>
 
@@ -2614,7 +2598,7 @@ function openChat(candidate: any) {
                                 {team.title}
                                 {mine && (
                                   <span className="rounded-full bg-brand-cyan-light px-2 py-1 text-xs font-semibold text-brand-cyan-dark">
-                                    Mon équipe
+                                    {t('statuts.vous')}
                                   </span>
                                 )}
                               </div>
@@ -2628,35 +2612,35 @@ function openChat(candidate: any) {
                                   className="rounded-2xl border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground hover:border-brand-cyan"
                                   onClick={() => leaveTeam(team.id)}
                                 >
-                                  Quitter
+                                  {t('cand.leaveTeam')}
                                 </button>
                               ) : isCourseFinished ? (
                                 <button
                                   className="rounded-2xl bg-muted px-4 py-2 text-sm font-semibold text-muted-foreground"
                                   disabled
                                 >
-                                  Course terminée
+                                  {t('track.outOfRace')}
                                 </button>
                               ) : full ? (
                                 <button
                                   className="rounded-2xl bg-brand-cyan-light px-4 py-2 text-sm font-semibold text-brand-cyan-dark"
                                   disabled
                                 >
-                                  Complète
+                                  {t('track.completeBadge')}
                                 </button>
                               ) : myTeam ? (
                                 <button
                                   className="rounded-2xl border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground hover:border-brand-cyan"
                                   onClick={() => switchTeam(team.id)}
                                 >
-                                  Rejoindre plutôt
+                                  {t('cand.joinTeam')}
                                 </button>
                               ) : (
                                 <button
                                   className="rounded-2xl bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark"
                                   onClick={() => joinTeam(team.id)}
                                 >
-                                  Rejoindre
+                                  {t('cand.joinTeam')}
                                 </button>
                               )}
                             </div>
@@ -2675,17 +2659,17 @@ function openChat(candidate: any) {
                   {!myTeam && !isCourseFinished && (
                     <div className="mt-6 rounded-3xl border border-border bg-background p-5 text-sm text-muted-foreground">
                       <p className="font-semibold text-brand-cyan-dark">
-                        Crée ta propre équipe
+                        {t('cand.createTeam')}
                       </p>
                       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
                         <button
                           className="rounded-2xl bg-brand-cyan px-4 py-3 text-sm font-semibold text-white hover:bg-brand-cyan-dark"
                           onClick={() => setCreateOpen(true)}
                         >
-                          Créer et rejoindre
+                          {t('cand.createTeam')}
                         </button>
                         <span>
-                          ou choisis une équipe existante parmi la liste.
+                          {t('cand.createTeam')}
                         </span>
                       </div>
                     </div>
@@ -2695,18 +2679,18 @@ function openChat(candidate: any) {
                     <div className="mt-5 rounded-3xl border border-border bg-card p-5">
                       <div className="grid gap-4">
                         <label className="text-sm font-semibold">
-                          Titre de l'équipe
+                          {t('cand.teamNameLabel')}
                           <input
                             type="text"
                             value={createTitle}
                             onChange={(e) => setCreateTitle(e.target.value)}
                             maxLength={40}
-                            placeholder="Ex : Les lève-tôt studieux"
+                            placeholder={t('cand.teamNamePlaceholder')}
                             className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand-cyan"
                           />
                         </label>
                         <label className="text-sm font-semibold">
-                          Ambiance souhaitée{" "}
+                          {t('cand.vibeLabel')}{" "}
                           <span className="text-muted-foreground">
                             (3 lignes max)
                           </span>
@@ -2714,7 +2698,7 @@ function openChat(candidate: any) {
                             value={createMood}
                             onChange={(e) => setCreateMood(e.target.value)}
                             maxLength={180}
-                            placeholder="Décris l'esprit de la coloc : rythme, valeurs, vie commune..."
+                            placeholder={t('cand.vibePlaceholder')}
                             className="mt-2 h-32 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand-cyan"
                           />
                         </label>
@@ -2723,13 +2707,13 @@ function openChat(candidate: any) {
                             className="rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-muted-foreground hover:border-brand-cyan"
                             onClick={() => setCreateOpen(false)}
                           >
-                            Annuler
+                            {t('common.cancel')}
                           </button>
                           <button
                             className="rounded-2xl bg-brand-green px-4 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark"
                             onClick={createTeam}
                           >
-                            Créer et rejoindre
+                            {t('cand.createSubmit')}
                           </button>
                         </div>
                       </div>
@@ -2742,7 +2726,7 @@ function openChat(candidate: any) {
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <div className="text-lg font-semibold">
-                          Conversation de l'équipe
+                          {t('cand.title')}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {myTeamData.title}
@@ -2769,7 +2753,7 @@ function openChat(candidate: any) {
                       <input
                         type="text"
                         className="flex-1 rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand-cyan"
-                        placeholder="Écris un message au groupe..."
+                        placeholder={t('modals.chatPlaceholder')}
                         value={""}
                         onChange={() => undefined}
                         disabled
@@ -2789,7 +2773,7 @@ function openChat(candidate: any) {
               <div className="rounded-3xl border border-brand-green-light bg-card p-6 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-3 text-lg font-semibold text-brand-green-dark">
-                    <Sparkles className="h-5 w-5" /> Notification
+                    <Sparkles className="h-5 w-5" /> {t('notifications.title')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(["indiv", "group"] as NotificationMode[]).map((mode) => (
@@ -2800,8 +2784,8 @@ function openChat(candidate: any) {
                         className={`rounded-2xl px-4 py-2 text-sm font-semibold ${wonMode === mode ? "bg-brand-green text-white" : "border border-border bg-card text-muted-foreground"}`}
                       >
                         {mode === "indiv"
-                          ? "Message individuel"
-                          : "Message au groupe"}
+                          ? t('notifications.individual')
+                          : t('notifications.group')}
                       </button>
                     ))}
                   </div>
@@ -2812,8 +2796,8 @@ function openChat(candidate: any) {
                   </div>
                   <h2 className="bebas text-3xl">
                     {wonMode === "indiv"
-                      ? `Felicitations, ${currentCandidateName} !`
-                      : `Felicitations a ${retainedTeamTitle} !`}
+                      ? t('notifications.congratsName', { name: currentCandidateName })
+                      : t('notifications.congratsTeam', { team: retainedTeamTitle })}
                   </h2>
                   <p className="mt-3 text-sm text-muted-foreground">
                     {wonMode === "indiv"
@@ -2824,20 +2808,19 @@ function openChat(candidate: any) {
                     <div className="flex items-start gap-3">
                       <Calendar className="h-4 w-4 text-brand-cyan-dark" />
                       <div>
-                        <div className="font-semibold">Emmenagement</div>
+                        <div className="font-semibold">{t('notifications.moveIn')}</div>
                         <div>{moveInLabel}</div>
                       </div>
                     </div>
                     <div className="mt-4 flex items-start gap-3">
                       <MessageCircle className="h-4 w-4 text-brand-cyan-dark" />
                       <div>
-                        Ta conversation de groupe reste ouverte pour
-                        t'organiser.
+                        {t('notifications.groupChatOpen')}
                       </div>
                     </div>
                   </div>
                   <button className="mt-6 w-full rounded-3xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark">
-                    Ouvrir la conversation de groupe
+                    {t('notifications.openGroupChat')}
                   </button>
                 </div>
               </div>
@@ -2846,18 +2829,17 @@ function openChat(candidate: any) {
             {activeView === "won" && !officialNotification && (
               <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                 <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
-                  <Sparkles className="h-5 w-5" /> Notification
+                  <Sparkles className="h-5 w-5" /> {t('notifications.title')}
                 </div>
                 <div className="mt-6 rounded-3xl border border-border bg-background p-8 text-center">
                   <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
                     <Sparkles className="h-8 w-8" />
                   </div>
                   <h2 className="bebas text-3xl">
-                    Aucune notification pour le moment
+                    {t('notifications.none')}
                   </h2>
                   <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
-                    La notification de colocataire valide sera disponible
-                    lorsque la colocation sera lancee officiellement.
+                    {t('notifications.noneWon')}
                   </p>
                 </div>
               </div>
@@ -2929,7 +2911,7 @@ function openChat(candidate: any) {
               <div className="rounded-3xl border border-red-200 bg-card p-6 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-3 text-lg font-semibold text-red-700">
-                    <Shield className="h-5 w-5" /> Notification
+                    <Shield className="h-5 w-5" /> {t('notifications.title')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(["indiv", "group"] as NotificationMode[]).map((mode) => (
@@ -2940,8 +2922,8 @@ function openChat(candidate: any) {
                         className={`rounded-2xl px-4 py-2 text-sm font-semibold ${lostMode === mode ? "bg-red-500 text-white" : "border border-border bg-card text-muted-foreground"}`}
                       >
                         {mode === "indiv"
-                          ? "Message individuel"
-                          : "Message au groupe"}
+                          ? t('notifications.individual')
+                          : t('notifications.group')}
                       </button>
                     ))}
                   </div>
@@ -2952,8 +2934,8 @@ function openChat(candidate: any) {
                   </div>
                   <h2 className="bebas text-3xl">
                     {lostMode === "indiv"
-                      ? "Ce ne sera pas cette fois"
-                      : "Merci pour votre candidature"}
+                      ? t('notifications.notThisTime')
+                      : t('notifications.thanksApplication')}
                   </h2>
                   <p className="mt-3 text-sm text-muted-foreground">
                     {lostMode === "indiv"
@@ -2964,15 +2946,13 @@ function openChat(candidate: any) {
                     <div className="flex items-start gap-3">
                       <MapPin className="h-4 w-4 text-brand-cyan-dark" />
                       <div>
-                        Reviens sur la carte pour trouver un logement qui te
-                        correspond encore mieux.
+                        {t('notifications.mapHint')}
                       </div>
                     </div>
                     <div className="mt-4 flex items-start gap-3">
                       <Clock className="h-4 w-4 text-brand-cyan-dark" />
                       <div>
-                        Active une alerte pour etre prevenu des nouvelles
-                        colocations qui matchent avec tes criteres.
+                        {t('notifications.alertHint')}
                       </div>
                     </div>
                   </div>
@@ -2980,7 +2960,7 @@ function openChat(candidate: any) {
                     to="/annonces"
                     className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-red-500 px-5 py-3 text-sm font-semibold text-white hover:bg-red-600"
                   >
-                    Revenir a la carte des colocations
+                    {t('notifications.backToMap')}
                   </Link>
                 </div>
               </div>
@@ -2989,18 +2969,17 @@ function openChat(candidate: any) {
             {activeView === "lost" && !officialNotification && (
               <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                 <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
-                  <Shield className="h-5 w-5" /> Notification
+                  <Shield className="h-5 w-5" /> {t('notifications.title')}
                 </div>
                 <div className="mt-6 rounded-3xl border border-border bg-background p-8 text-center">
                   <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
                     <Shield className="h-8 w-8" />
                   </div>
                   <h2 className="bebas text-3xl">
-                    Aucune notification pour le moment
+                    {t('notifications.none')}
                   </h2>
                   <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
-                    La notification de colocataire non retenu sera disponible
-                    lorsque la colocation sera lancee officiellement.
+                    {t('notifications.noneLost')}
                   </p>
                 </div>
               </div>
