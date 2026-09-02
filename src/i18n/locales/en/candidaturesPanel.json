@@ -1,0 +1,41 @@
+{
+  "dashboard": {
+    "per_month": "/ month · total rent",
+    "mode_title": "Mode: Individual validation.",
+    "mode_desc": "As a roommate, you validate candidates one by one and can chat with each person before accepting. The coliving space launches when all {{target}} spots are filled.",
+    "places_filled": "spots filled",
+    "retained_title": "Accepted roommates",
+    "retained_badge": "Accepted",
+    "retained_empty": "No roommates accepted yet.",
+    "pending_title": "Pending applications",
+    "pending_empty": "No pending applications.",
+    "refused_toggle": "Rejected applicants ({{count}})",
+    "restore": "Restore",
+    "refused_empty": "No rejections yet."
+  },
+  "panel": {
+    "title": "Applications received",
+    "apply_button": "Apply to this listing",
+    "view_my_candidature": "View my application",
+    "not_applied_msg": "You haven't applied to this listing yet.",
+    "not_applied_sub": "Apply by clicking the \"Apply to this listing\" button above.",
+    "already_applied_msg": "You have already applied to this listing.",
+    "already_applied_sub": "Click \"View my application\" to see all applications.",
+    "loading": "Processing...",
+    "empty_candidatures": "No applications yet. Be the first to apply!",
+    "candidates_count": "{{count}} applicant",
+    "candidates_count_plural": "{{count}} applicants",
+    "you_tag": "You",
+    "status": {
+      "accepted": "Accepted",
+      "refused": "Refused",
+      "pending": "Pending"
+    },
+    "actions": {
+      "discuss": "Chat",
+      "accept": "Accept",
+      "refuse": "Refuse",
+      "delete_title": "Delete application"
+    }
+  }
+}

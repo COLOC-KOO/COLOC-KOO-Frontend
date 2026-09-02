@@ -27,6 +27,7 @@ import { ContractWizardModal } from "../components/candidatures/ContractWizardMo
 import { JoinTeamView } from "../components/candidatures/JoinTeamView";
 import { OwnerCandidaturesDashboard, RealCandidaturesPanel } from "../components/candidatures/RealCandidaturesPanel";
 
+
 type OwnerCandidate = {
   id: string;
   initials: string;

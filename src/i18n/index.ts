@@ -26,6 +26,7 @@ import frAlertes from './locales/fr/alertes.json'
 import frPreferences from './locales/fr/preferences.json'
 import frCompteSecurites from './locales/fr/compteSecurite.json'
 import frProfilsRecherche from'./locales/fr/profilsRecherecheLongement.json'
+import frCandidaturesPanel from './locales/fr/candidaturesPanel.json'
 // Importer toutes les traductions (MG)
 import mgCommon from './locales/mg/common.json'
 import mgHome from './locales/mg/home.json'
@@ -48,6 +49,7 @@ import mgAlertes from './locales/mg/alertes.json'
 import mgPreferences from './locales/mg/preferences.json'
 import mgCompteSecurites from './locales/mg/compteSecurite.json'
 import mgProfilsRecherche from './locales/mg/profilsRecherecheLongement.json'
+import mgCandidaturesPanel from './locales/mg/candidaturesPanel.json'
 // Importer toutes les traductions (EN)
 import enCommon from './locales/en/common.json'
 import enHome from './locales/en/home.json'
@@ -70,6 +72,7 @@ import enAlertes from './locales/en/alertes.json'
 import enPreferences from './locales/en/preferences.json'
 import enCompteSecurite from './locales/en/compteSecurite.json'
 import enProfilsRecherche from'./locales/en/profilsRechercheLongement.json'
+import enCandidaturesPanel from './locales/en/candidaturesPanel.json'
 const resources = {
   fr: {
     common: frCommon,
@@ -78,6 +81,7 @@ const resources = {
     annonces: frAnnonces,
     annonceDetail: frAnnonceDetail,
     candidatures: frCandidatures,
+    candidaturesPanel: frCandidaturesPanel,
     compte: frCompte,
     contact: frContact,
     deposer: frDeposer,
@@ -101,6 +105,7 @@ const resources = {
     annonces: mgAnnonces,
     annonceDetail: mgAnnonceDetail,
     candidatures: mgCandidatures,
+    candidaturesPanel: mgCandidaturesPanel,
     compte: mgCompte,
     contact: mgContact,
     deposer: mgDeposer,
@@ -125,6 +130,7 @@ const resources = {
     annonces: enAnnonces,
     annonceDetail: enAnnonceDetail,
     candidatures: enCandidatures,
+    candidaturesPanel: enCandidaturesPanel,
     compte: enCompte,
     contact: enContact,
     deposer: enDeposer,
@@ -174,7 +180,8 @@ i18n
       'alertes',
       'preferences',
       'compteSecurites',
-      'profilsRecherche'
+      'profilsRecherche',
+      'candidaturesPanel',
     ],
     defaultNS: 'common',
     detection: {
