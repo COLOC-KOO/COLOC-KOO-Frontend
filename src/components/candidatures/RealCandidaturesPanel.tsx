@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Check, Eye, MessageCircle, Trash2, UserPlus, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type OwnerCandidate = {
   id: string;
@@ -32,6 +33,7 @@ export function OwnerCandidaturesDashboard({
   launchDisabled, launchLabel, onAccept, onDiscuss, onRefuse, onRestore,
   onLaunch, onToggleRefused,
 }: OwnerDashboardProps) {
+  const { t } = useTranslation('candidaturesPanel');
   const filled = retained.length;
   const avatarClass = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-xs font-bold text-white";
 
@@ -41,18 +43,18 @@ export function OwnerCandidaturesDashboard({
         <div className="h-14 w-14 shrink-0 rounded-xl bg-brand-cyan-light" />
         <div className="min-w-0">
           <p className="bebas truncate text-lg leading-none text-brand-dark">{title} · {resume}</p>
-          <p className="mt-1 text-sm font-bold text-brand-dark">{monthlyRent} <span className="text-xs font-normal text-muted-foreground">/ mois · loyer global</span></p>
+          <p className="mt-1 text-sm font-bold text-brand-dark">{monthlyRent} <span className="text-xs font-normal text-muted-foreground">{t('dashboard.per_month')}</span></p>
         </div>
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4">
         <div className="rounded-xl bg-brand-cyan-light p-3 text-xs leading-relaxed text-brand-cyan-dark">
-          <b>Mode : Validation individuelle.</b> En tant que membre de la colocation, tu valides les colocataires un par un et peux échanger avec chacun·e avant d'accepter. La coloc se lance quand les {target} places sont pourvues.
+          <b>{t('dashboard.mode_title')}</b> {t('dashboard.mode_desc', { target })}
         </div>
 
         <div className="mt-3 flex items-end justify-between">
           <span className="bebas text-2xl text-brand-green-dark">{filled} / {target}</span>
-          <span className="text-[10px] text-muted-foreground">places pourvues</span>
+          <span className="text-[10px] text-muted-foreground">{t('dashboard.places_filled')}</span>
         </div>
         <div className="mt-1 grid grid-cols-3 gap-1">
           {Array.from({ length: target }).map((_, index) => (
@@ -62,21 +64,21 @@ export function OwnerCandidaturesDashboard({
 
         <div className="mt-4">
           <div className="flex items-center gap-2">
-            <h2 className="bebas text-base text-brand-green-dark">Colocataires retenus</h2>
+            <h2 className="bebas text-base text-brand-green-dark">{t('dashboard.retained_title')}</h2>
             <span className="rounded-full bg-brand-green px-2 py-0.5 text-[10px] font-bold text-white">{retained.length}</span>
           </div>
           <div className="mt-2 space-y-2">
             {retained.length ? retained.map((candidate) => (
               <div key={candidate.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
                 <div className="flex min-w-0 items-center gap-2"><span className={avatarClass}>{candidate.initials}</span><div className="min-w-0"><p className="truncate text-sm font-bold">{candidate.name}</p><p className="truncate text-[11px] text-muted-foreground">{candidate.subtitle}</p></div></div>
-                <span className="rounded-full bg-brand-green-light px-2 py-0.5 text-[10px] font-semibold text-brand-green-dark">Retenu</span>
+                <span className="rounded-full bg-brand-green-light px-2 py-0.5 text-[10px] font-semibold text-brand-green-dark">{t('dashboard.retained_badge')}</span>
               </div>
-            )) : <p className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">Aucun colocataire retenu pour l'instant.</p>}
+            )) : <p className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">{t('dashboard.retained_empty')}</p>}
           </div>
         </div>
 
         <div className="mt-4">
-          <div className="flex items-center gap-2"><h2 className="bebas text-base text-brand-dark">Candidatures en attente</h2><span className="rounded-full bg-brand-dark px-2 py-0.5 text-[10px] font-bold text-white">{pending.length}</span></div>
+          <div className="flex items-center gap-2"><h2 className="bebas text-base text-brand-dark">{t('dashboard.pending_title')}</h2><span className="rounded-full bg-brand-dark px-2 py-0.5 text-[10px] font-bold text-white">{pending.length}</span></div>
           <div className="mt-2 space-y-2">
             {pending.length ? pending.map((candidate) => (
               <div key={candidate.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
@@ -87,12 +89,12 @@ export function OwnerCandidaturesDashboard({
                   <button type="button" aria-label={`Refuser ${candidate.name}`} onClick={() => onRefuse(candidate.id)} className="rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 hover:bg-red-500 hover:text-white"><X className="h-4 w-4" /></button>
                 </div>
               </div>
-            )) : <p className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">Aucune candidature en attente.</p>}
+            )) : <p className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">{t('dashboard.pending_empty')}</p>}
           </div>
         </div>
 
-        <button type="button" onClick={onToggleRefused} className="mt-3 flex w-full items-center justify-between border-t border-border pt-3 text-xs font-semibold text-muted-foreground">Personnes refusées ({refused.length}) <span>{refusedOpen ? "▴" : "▾"}</span></button>
-        {refusedOpen && <div className="mt-2 space-y-2">{refused.length ? refused.map((candidate) => <div key={candidate.id} className="flex items-center justify-between rounded-xl border border-border p-2.5 text-sm"><span>{candidate.name}</span><button type="button" onClick={() => onRestore(candidate.id)} className="text-xs font-semibold text-brand-cyan-dark">Rétablir</button></div>) : <p className="text-xs text-muted-foreground">Aucun refus pour l'instant.</p>}</div>}
+        <button type="button" onClick={onToggleRefused} className="mt-3 flex w-full items-center justify-between border-t border-border pt-3 text-xs font-semibold text-muted-foreground">{t('dashboard.refused_toggle', { count: refused.length })} <span>{refusedOpen ? "▴" : "▾"}</span></button>
+        {refusedOpen && <div className="mt-2 space-y-2">{refused.length ? refused.map((candidate) => <div key={candidate.id} className="flex items-center justify-between rounded-xl border border-border p-2.5 text-sm"><span>{candidate.name}</span><button type="button" onClick={() => onRestore(candidate.id)} className="text-xs font-semibold text-brand-cyan-dark">{t('dashboard.restore')}</button></div>) : <p className="text-xs text-muted-foreground">{t('dashboard.refused_empty')}</p>}</div>}
 
         <button type="button" disabled={launchDisabled} onClick={onLaunch} className="mt-4 w-full rounded-xl bg-brand-green px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground">{launchLabel}</button>
       </section>
@@ -133,17 +135,19 @@ export function RealCandidaturesPanel({
   onPostuler,
   onViewMyCandidature,
 }: Props) {
+  const { t } = useTranslation('candidaturesPanel');
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="bebas text-2xl">Candidatures reçues</h2>
+        <h2 className="bebas text-2xl">{t('panel.title')}</h2>
         {!hasApplied && user && annonceId && (
           <button
             onClick={onPostuler}
             className="inline-flex items-center gap-2 rounded-xl bg-brand-cyan px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-cyan-dark"
           >
             <UserPlus className="h-4 w-4" />
-            Postuler à cette coloc
+            {t('panel.apply_button')}
           </button>
         )}
         {hasApplied && user && (
@@ -152,7 +156,7 @@ export function RealCandidaturesPanel({
             className="inline-flex items-center gap-2 rounded-xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark transition-colors hover:bg-brand-cyan-light"
           >
             <Eye className="h-4 w-4" />
-            Voir ma candidature
+            {t('panel.view_my_candidature')}
           </Link>
         )}
       </div>
@@ -163,15 +167,15 @@ export function RealCandidaturesPanel({
           className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark transition-colors hover:bg-brand-cyan-light sm:w-auto"
         >
           <Eye className="h-4 w-4" />
-          Voir ma candidature
+          {t('panel.view_my_candidature')}
         </button>
 
         {showNotAppliedMessage && (
           <div className="mt-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-            Vous n'avez pas encore postulé à cette annonce.
+            {t('panel.not_applied_msg')}
             <br />
             <span className="text-xs text-yellow-600">
-              Postulez en cliquant sur le bouton "Postuler à cette coloc" ci-dessus.
+              {t('panel.not_applied_sub')}
             </span>
           </div>
         )}
@@ -179,9 +183,9 @@ export function RealCandidaturesPanel({
         {hasApplied && (
           <div className="mt-3 flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 p-3 text-sm text-green-800">
             <Check className="h-4 w-4 text-green-600" />
-            Vous avez déjà postulé à cette annonce.
+            {t('panel.already_applied_msg')}
             <span className="ml-2 text-xs text-green-600">
-              Cliquez sur "Voir ma candidature" pour voir toutes les candidatures.
+              {t('panel.already_applied_sub')}
             </span>
           </div>
         )}
@@ -217,6 +221,8 @@ function RealCandidaturesList({
   onDeleteCandidature,
   onOpenChat,
 }: Omit<Props, "annonceId" | "hasApplied" | "showNotAppliedMessage" | "onPostuler" | "onViewMyCandidature">) {
+  const { t, i18n } = useTranslation('candidaturesPanel');
+
   if (loadingCandidatures) {
     return (
       <div className="flex justify-center py-8">
@@ -228,7 +234,7 @@ function RealCandidaturesList({
   if (realCandidatures.length === 0) {
     return (
       <div className="py-8 text-center text-muted-foreground">
-        Aucune candidature pour le moment. Soyez le premier à postuler !
+        {t('panel.empty_candidatures')}
       </div>
     );
   }
@@ -237,7 +243,9 @@ function RealCandidaturesList({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold">
-          {realCandidatures.length} candidat{realCandidatures.length > 1 ? "s" : ""}
+          {realCandidatures.length > 1 
+            ? t('panel.candidates_count_plural', { count: realCandidatures.length }) 
+            : t('panel.candidates_count', { count: realCandidatures.length })}
         </h3>
       </div>
 
@@ -284,7 +292,7 @@ function RealCandidaturesList({
                   {candidat.prenom} {candidat.nom}
                   {isCurrentUser && (
                     <span className="rounded-full bg-brand-cyan-light px-2 py-0.5 text-xs text-brand-cyan-dark">
-                      Vous
+                      {t('panel.you_tag')}
                     </span>
                   )}
                 </div>
@@ -296,7 +304,7 @@ function RealCandidaturesList({
                 )}
                 <div className="mt-1 flex flex-wrap items-center gap-4">
                   <span className="text-xs text-muted-foreground">
-                    {new Date(candidat.date_creation).toLocaleDateString("fr-FR", {
+                    {new Date(candidat.date_creation).toLocaleDateString(i18n.language, {
                       day: "2-digit",
                       month: "long",
                       year: "numeric",
@@ -314,10 +322,10 @@ function RealCandidaturesList({
                     }`}
                   >
                     {candidat.statut === "acceptee" || candidat.statut === "signature"
-                      ? "Accepté"
+                      ? t('panel.status.accepted')
                       : candidat.statut === "refusee"
-                        ? "Refusé"
-                        : "En attente"}
+                        ? t('panel.status.refused')
+                        : t('panel.status.pending')}
                   </span>
                 </div>
                 {canDiscuss || canManageCandidate ? (
@@ -328,7 +336,7 @@ function RealCandidaturesList({
                       disabled={candidateActionLoading === candidat.id_candidature}
                       className="rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-brand-cyan-dark hover:bg-brand-cyan-light disabled:opacity-60"
                     >
-                      {candidateActionLoading === candidat.id_candidature ? "Traitement..." : "Discuter"}
+                      {candidateActionLoading === candidat.id_candidature ? t('panel.loading') : t('panel.actions.discuss')}
                     </button>
                     <button
                       type="button"
@@ -336,7 +344,7 @@ function RealCandidaturesList({
                       disabled={!canManageCandidate || candidateActionLoading === candidat.id_candidature}
                       className="rounded-xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
                     >
-                      Accepter
+                      {t('panel.actions.accept')}
                     </button>
                     <button
                       type="button"
@@ -344,7 +352,7 @@ function RealCandidaturesList({
                       disabled={!canManageCandidate || candidateActionLoading === candidat.id_candidature}
                       className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
                     >
-                      Refuser
+                      {t('panel.actions.refuse')}
                     </button>
                     {canDeleteCandidate ? (
                       <button
@@ -352,7 +360,7 @@ function RealCandidaturesList({
                         onClick={() => onDeleteCandidature(candidat.id_candidature)}
                         disabled={candidateActionLoading === candidat.id_candidature}
                         className="rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                        title="Supprimer la candidature"
+                        title={t('panel.actions.delete_title')}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

@@ -1,0 +1,41 @@
+{
+  "dashboard": {
+    "per_month": "/ mois · loyer global",
+    "mode_title": "Mode : Validation individuelle.",
+    "mode_desc": "En tant que membre de la colocation, tu valides les colocataires un par un et peux échanger avec chacun·e avant d'accepter. La coloc se lance quand les {{target}} places sont pourvues.",
+    "places_filled": "places pourvues",
+    "retained_title": "Colocataires retenus",
+    "retained_badge": "Retenu",
+    "retained_empty": "Aucun colocataire retenu pour l'instant.",
+    "pending_title": "Candidatures en attente",
+    "pending_empty": "Aucune candidature en attente.",
+    "refused_toggle": "Personnes refusées ({{count}})",
+    "restore": "Rétablir",
+    "refused_empty": "Aucun refus pour l'instant."
+  },
+  "panel": {
+    "title": "Candidatures reçues",
+    "apply_button": "Postuler à cette coloc",
+    "view_my_candidature": "Voir ma candidature",
+    "not_applied_msg": "Vous n'avez pas encore postulé à cette annonce.",
+    "not_applied_sub": "Postulez en cliquant sur le bouton \"Postuler à cette coloc\" ci-dessus.",
+    "already_applied_msg": "Vous avez déjà postulé à cette annonce.",
+    "already_applied_sub": "Cliquez sur \"Voir ma candidature\" pour voir toutes les candidatures.",
+    "loading": "Traitement...",
+    "empty_candidatures": "Aucune candidature pour le moment. Soyez le premier à postuler !",
+    "candidates_count": "{{count}} candidat",
+    "candidates_count_plural": "{{count}} candidats",
+    "you_tag": "Vous",
+    "status": {
+      "accepted": "Accepté",
+      "refused": "Refusé",
+      "pending": "En attente"
+    },
+    "actions": {
+      "discuss": "Discuter",
+      "accept": "Accepter",
+      "refuse": "Refuser",
+      "delete_title": "Supprimer la candidature"
+    }
+  }
+}

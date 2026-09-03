@@ -1,0 +1,41 @@
+{
+  "dashboard": {
+    "per_month": "/ mois · hofa manontolo",
+    "mode_title": "Fomba: Fanekena isam-batan'olona.",
+    "mode_desc": "Amin'ny maha-mpikambana amin'ny mpiara-monina anao, manaiky ireo mpiara-monina tsirairay ianao ary afaka mifanakalo hevitra amin'ny tsirairay alohan'ny hanapehana. Manomboka ny fiaraha-monina rehefa feno ny toerana {{target}}.",
+    "places_filled": "toerana feno",
+    "retained_title": "Mpiara-monina voalaza",
+    "retained_badge": "Voazona",
+    "retained_empty": "Mbola tsy misy mpiara-monina voazona aloha.",
+    "pending_title": "Fangatahana miandry",
+    "pending_empty": "Tsy misy fangatahana miandry.",
+    "refused_toggle": "Olona nolavina ({{count}})",
+    "restore": "Averina",
+    "refused_empty": "Tsy misy nolavina aloha."
+  },
+  "panel": {
+    "title": "Fangatahana voaray",
+    "apply_button": "Poblika amin'ity fiaraha-monina ity",
+    "view_my_candidature": "Jereo ny fangatahako",
+    "not_applied_msg": "Mbola tsy nangataka amin'ity fampandrenesana ity ianao.",
+    "not_applied_sub": "Ataovy ny fangatahana amin'ny fipihana ny bokotra \"Poblika amin'ity fiaraha-monina ity\" etsy ambony.",
+    "already_applied_msg": "Efa nangataka amin'ity fampandrenesana ity ianao.",
+    "already_applied_sub": "Kitiho ny \"Jereo ny fangatahako\" hahitana ny fangatahana rehetra.",
+    "loading": "Am-pikarakarana...",
+    "empty_candidatures": "Mbola tsy misy fangatahana aloha. Aza misalasala ho voalohany mangataka!",
+    "candidates_count": "Mpangataka {{count}}",
+    "candidates_count_plural": "Mpangataka {{count}}",
+    "you_tag": "Ianao",
+    "status": {
+      "accepted": "Aboaka / Priana",
+      "refused": "Nolavina",
+      "pending": "Miandry"
+    },
+    "actions": {
+      "discuss": "Hifampiresaka",
+      "accept": "Hanaiky",
+      "refuse": "Handa",
+      "delete_title": "Fafao ny fangatahana"
+    }
+  }
+}
