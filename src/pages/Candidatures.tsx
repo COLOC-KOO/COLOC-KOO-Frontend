@@ -2046,9 +2046,9 @@ function openChat(candidate: any) {
               const isFinalized = annonceData?.statut === "terminee";
               const launchDisabled = ownerFilled < TARGET || contractExists || isFinalized;
               const launchLabel = isFinalized
-                ? t('common.loading')
+                ? t('actions.colocationLancee')
                 : contractExists
-                  ? t('common.loading')
+                  ? t('actions.contratsCrees')
                   : ownerFilled < TARGET
                     ? `${t('actions.lancerColocation')} (${ownerFilled}/${TARGET})`
                     : t('actions.lancerColocation');
