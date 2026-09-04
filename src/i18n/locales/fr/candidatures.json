@@ -13,7 +13,7 @@
     }
   },
   "common": {
-    "cancel": "Annuler",
+    "cancel": "Annuler",  
     "finish": "Terminer",
     "continue": "Continuer",
     "loading": "Traitement...",
