@@ -32,9 +32,9 @@ export function FlagIcon({ code, className, size = 'md' }: FlagIconProps) {
       <svg viewBox="0 0 640 480" className={cn(sizeClass, className)}>
         <g fillRule="evenodd" strokeWidth="1pt">
           <path fill="#fff" d="M0 0h640v480H0z"/>
-          <path fill="#fc3d32" d="M0 0h213.3v480H0z"/>
+          <path fill="#fc3d32" d="M213.3 0H640v240H213.3z"/>
           <path fill="#007e3a" d="M213.3 240h426.7v240H213.3z"/>
-          <path fill="#fff" d="M213.3 0h426.7v240H213.3z"/>
+          <path fill="#fff" d="M0 0h213.3v480H0z"/>
         </g>
       </svg>
     ),

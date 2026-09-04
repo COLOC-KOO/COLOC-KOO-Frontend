@@ -157,8 +157,8 @@ export default function Auth() {
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             {mode === "signin"
-              ? "Accède à ton espace et retrouve tes annonces en un instant."
-              : "Crée ton compte pour publier, contacter et gérer tes colocations."}
+              ? t("signinDescription")
+              : t("signupDescription")}
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -272,7 +272,7 @@ export default function Auth() {
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 transition hover:text-slate-700"
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  aria-label={showPassword ? t("hidePassword") : t("showPassword")}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
