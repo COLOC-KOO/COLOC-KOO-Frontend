@@ -20,7 +20,7 @@ export function CandidaturesViewButtons({
   officialNotification = null,
 }: Props) {
   return (
-    <div className="flex flex-nowrap justify-start gap-1 overflow-x-auto pb-1 lg:justify-end">
+    <div className="flex flex-nowrap justify-center gap-0 overflow-hidden pb-1">
       {viewButtons.map((button) => {
         const isWonNotification = button === "won";
         const isLostNotification = button === "lost";
@@ -53,7 +53,7 @@ export function CandidaturesViewButtons({
             }}
             disabled={disabled}
             aria-disabled={disabled}
-            className={`shrink-0 whitespace-nowrap rounded-lg border px-2 py-1 text-[10px] font-semibold transition ${notificationClass}`}
+            className={`shrink-0 whitespace-nowrap rounded-md border px-1 py-0.5 text-[8px] font-medium leading-4 transition sm:px-1.5 ${notificationClass}`}
           >
             <CandidaturesViewButtonLabel button={button} />
           </button>
