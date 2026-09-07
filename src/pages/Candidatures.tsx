@@ -205,12 +205,28 @@ function priceFromTiers(tiers: ContractTier[], loyer: number) {
 }
 // Rend un gabarit DB : remplace {names}/{address}/{date}/{email} (valeurs en gras) et \n en <br/>.
 function renderTemplate(tpl: string, vars: Record<string, string>) {
-  return tpl.split(/(\{[a-z]+\}|\n)/g).map((part, i) => {
+  return repairUtf8Text(tpl).split(/(\{[a-z]+\}|\n)/g).map((part, i) => {
     if (part === "\n") return <br key={i} />;
     const m = part.match(/^\{([a-z]+)\}$/);
-    if (m) return <b key={i}>{vars[m[1]] ?? part}</b>;
+    if (m) return <b key={i}>{repairUtf8Text(vars[m[1]] ?? part)}</b>;
     return <React.Fragment key={i}>{part}</React.Fragment>;
   });
+}
+
+function repairUtf8Text(value: string) {
+  if (!/[ÃÂâ€™œžŸ]/.test(value)) return value;
+  const cp1252: Record<string, number> = {
+    "€": 0x80, "‚": 0x82, "ƒ": 0x83, "„": 0x84, "…": 0x85, "†": 0x86, "‡": 0x87,
+    "ˆ": 0x88, "‰": 0x89, "Š": 0x8a, "‹": 0x8b, "Œ": 0x8c, "Ž": 0x8e, "‘": 0x91,
+    "’": 0x92, "“": 0x93, "”": 0x94, "•": 0x95, "–": 0x96, "—": 0x97, "˜": 0x98,
+    "™": 0x99, "š": 0x9a, "›": 0x9b, "œ": 0x9c, "ž": 0x9e, "Ÿ": 0x9f,
+  };
+  try {
+    const bytes = Uint8Array.from([...value].map((char) => cp1252[char] ?? char.charCodeAt(0)));
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return value;
+  }
 }
 
 function formatCountdown(ms: number) {
@@ -1092,29 +1108,18 @@ export default function Candidatures() {
   }
 
   // Etape 0 : choix de l'offre (contrat / EDL / les deux).
-  // Le type de bail + la solidarite sont HERITES de l'annonce (cahier des charges) :
-  // on ne les redemande plus, on les reprend tels quels.
   function chooseOffer(mode: "contrat" | "edl" | "both") {
     setContractMode(mode);
     setContractError(null);
     setWantEdl(mode === "both");
-    setBailType(
-      (annonceData?.type_bail as "individuel" | "collectif") || "collectif",
-    );
-    setSolidarite(
-      (annonceData?.clause_solidarite as "avec" | "sans") || "sans",
-    );
-    setContractStep("contenu");
+    setBailType(null);
+    setSolidarite("avec");
+    setContractStep(mode === "edl" ? "contenu" : "bail");
   }
 
-  // Etape 2 -> recap : NE SAUVEGARDE PAS. L'enregistrement se fait au clic sur "Terminer".
-  function goPaiement() {
-    setContractError(null);
-    setPayContractId(null);
-    setMyShare(null);
-    setPaymentInfo(null);
-    setCreatedContracts([]);
-    setContractStep("done");
+  function toggleEdl() {
+    setContractMode((current) => (current === "both" ? "contrat" : "both"));
+    setWantEdl((current) => !current);
   }
 
   // "Terminer" (deposant) : enregistre reellement le contrat, puis affiche la synthese.
@@ -1152,18 +1157,20 @@ export default function Candidatures() {
   }
 
   // Etape 3 : enregistre le paiement Mobile Money manuel
-  async function confirmPayment() {
-    if (!moyenPaiement) {
+  async function confirmPayment(paymentMethod = moyenPaiement, paymentReference = payRef) {
+    if (!paymentMethod) {
       setContractError(t('contract.paymentMethod'));
       return;
     }
-    if (payRef.trim().length < 4) {
+    if (paymentReference.trim().length < 4) {
       setContractError(t('contract.paymentRef'));
       return;
     }
     const contractId = payContractId ?? createdContracts[0]?.id_contrat;
     if (!contractId) {
-      setContractError(t('common.emptyDash'));
+      // Le déposant valide une commande avant la création des contrats.
+      // Dans ce cas, la validation doit lancer la création puis la célébration.
+      await finalizeContract();
       return;
     }
     const total = createdContracts.reduce(
@@ -1175,8 +1182,8 @@ export default function Candidatures() {
     try {
       // Le backend recalcule la part cote serveur (pas besoin d'envoyer le montant).
       const res = await api.submitContractPayment(contractId, {
-        moyen_paiement: moyenPaiement as "MVOLA" | "Orange Money",
-        reference_operateur: payRef.trim(),
+        moyen_paiement: paymentMethod as "MVOLA" | "Orange Money",
+        reference_operateur: paymentReference.trim(),
       });
       setPaymentInfo({
         reference: res.reference,
@@ -1185,8 +1192,8 @@ export default function Candidatures() {
         total: res.total,
         allPaid: res.allPaid,
       });
-      setContractStep("done");
       refreshMyContracts();
+      showPaymentCelebration();
     } catch (error: any) {
       setContractError(
         error?.message || t('common.loading'),
@@ -1194,6 +1201,19 @@ export default function Candidatures() {
     } finally {
       setContractSubmitting(false);
     }
+  }
+
+  function scanQrAndPay(operator: string) {
+    const reference = `QR-${Date.now()}`;
+    setMoyenPaiement(operator);
+    setPayRef(reference);
+    void confirmPayment(operator, reference);
+  }
+
+  function showPaymentCelebration() {
+    setContractModalOpen(false);
+    setCelebrateOpen(false);
+    requestAnimationFrame(() => setCelebrateOpen(true));
   }
 
   // Ignorer l'offre : ferme l'assistant et affiche la synthese
@@ -3079,6 +3099,7 @@ function openChat(candidate: any) {
         <ContractWizardModal
           activeBail={activeBail}
           activeBody={activeBody}
+          activeClauses={activeClauses}
           activeContratOffers={activeContratOffers}
           activeEdlOffers={activeEdlOffers}
           activeMailNote={activeMailNote}
@@ -3110,9 +3131,13 @@ function openChat(candidate: any) {
           onIgnoreOffer={ignoreOffer}
           onOpenContractDocument={openContractDocument}
           onPayRefChange={setPayRef}
+          onQrScan={scanQrAndPay}
           onSetContractStep={(step) =>
-            step === "done" ? goPaiement() : setContractStep(step)
+            setContractStep(step)
           }
+          onSetBailType={setBailType}
+          onSetSolidarite={setSolidarite}
+          onToggleEdl={toggleEdl}
           onSetMoyenPaiement={setMoyenPaiement}
           onShowCelebrateAfterPayment={() => {
             setContractModalOpen(false);
