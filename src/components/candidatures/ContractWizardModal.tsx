@@ -1,6 +1,47 @@
-import React from "react";
-import { Check, ChevronLeft, Info, Mail, Sparkles, X } from "lucide-react";
-import { LogoMark } from "../Logo";
+import React, { useState } from "react";
+import { Check, ChevronLeft, Info, Mail, Sparkles, X, Eye, Copy, Smartphone } from "lucide-react";
+
+export function LogoMark({ className = "h-12 w-12" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="50" cy="50" r="46" fill="#008FA6" fillOpacity="0.1" />
+      <path
+        d="M26 48L50 28L74 48"
+        stroke="#008FA6"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M32 46V70C32 72.2 33.8 74 36 74H64C66.2 74 68 72.2 68 70V46"
+        stroke="#008FA6"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="43" cy="54" r="4.5" fill="#B83280" />
+      <path
+        d="M36 67C36 63 39 61 43 61C47 61 50 63 50 67"
+        stroke="#B83280"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+      <circle cx="57" cy="52" r="4" fill="#10B981" />
+      <path
+        d="M51 65C51 61.5 53.5 59.5 57 59.5C60.5 59.5 63 61.5 63 65"
+        stroke="#10B981"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 type Props = {
   activeBail: any[];
@@ -106,9 +147,11 @@ export function ContractWizardModal({
   onShowCelebrateAfterPayment,
 }: Props) {
   const orderTotal = createdContracts.reduce((sum, contract) => sum + Number(contract.montant_total || 0), 0);
-  const previewTotal = previewAmount(contractMode);
+  const fallbackPrice = contractMode === "edl" ? 10000 : contractMode === "both" ? 37000 : 27000;
+  const previewTotal = (typeof previewAmount === "function" ? previewAmount(contractMode) : null) || fallbackPrice;
   const isEdlOnly = contractMode === "edl";
   const priceLabel = isEdlOnly ? "Document d'état des lieux (forfait)" : "Création du contrat (forfait)";
+  const displayedAmount = myShare != null && myShare > 0 ? myShare : (orderTotal > 0 ? orderTotal : previewTotal);
   const coName = repairUtf8Text(ownerRetained.map((candidate) => candidate.name).join(", ")) || "—";
   const coAddr = repairUtf8Text([annonceData?.adresse_exacte, annonceData?.quartier, annonceData?.ville, annonceData?.region].filter(Boolean).join(", ")) || "—";
   const announcementDetails = [
@@ -151,14 +194,14 @@ export function ContractWizardModal({
           />
         ))}
       </div>
-      <div className="celebration-modal relative z-20 my-auto max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-[18px] bg-white p-5 shadow-2xl sm:p-7">
+      <div className="celebration-modal relative z-20 my-auto max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-[20px] bg-white p-6 shadow-2xl sm:p-7">
         {isWizardStep && (
-          <div className="relative text-center">
+          <div className="relative pb-2 text-center">
             <button type="button" aria-label="Fermer" className="absolute right-0 top-0 rounded-full bg-muted p-2 text-muted-foreground transition hover:bg-muted/80" onClick={onClose}>
               <X className="h-5 w-5" />
             </button>
-            <h2 id="contract-wizard-title" className="bebas text-3xl text-brand-magenta">Ton contrat de colocation</h2>
-            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            <h2 id="contract-wizard-title" className="bebas text-3xl tracking-wide text-brand-magenta">Ton contrat de colocation</h2>
+            <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-muted-foreground">
               Ton contrat comprend tous les éléments nécessaires pour établir un contrat légal entre les colocataires et le propriétaire.
             </p>
           </div>
@@ -259,27 +302,38 @@ export function ContractWizardModal({
                 </span>
               </label>
             )}
-            <div className={`flex items-center justify-between px-1 pt-3 text-sm ${isEdlOnly ? "border-t-2 border-brand-dark" : "rounded-2xl bg-muted/40"}`}>
-              <span className="font-bold text-brand-dark">
+            <div className={`flex items-center justify-between rounded-xl px-4 py-3.5 ${isEdlOnly ? "border-2 border-brand-dark bg-muted/20" : "bg-gradient-to-r from-muted/60 to-muted/30 border border-border"}`}>
+              <span className="text-sm font-bold text-brand-dark">
                 {isEdlOnly ? "État des lieux (forfait)" : contractMode === "both" ? "Total (contrat + état des lieux)" : "Création du contrat (forfait)"}
               </span>
-              <span className={`bebas text-2xl ${isEdlOnly ? "text-brand-magenta" : "text-brand-cyan-dark"}`}>{fmtAr(previewTotal)} Ar</span>
+              <span className={`bebas text-2xl font-bold tracking-wide ${isEdlOnly ? "text-brand-magenta" : "text-brand-cyan-dark"}`}>
+                {fmtAr(previewTotal)} Ar
+              </span>
             </div>
-            <p className="flex gap-2 rounded-xl border border-brand-cyan/30 bg-brand-cyan-light/40 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />
-              {renderTemplate(isEdlOnly ? activeMailNote.edl : activeMailNote.contrat, { email: userEmail })}
-            </p>
-            {!isEdlOnly && <p className="flex gap-2 text-center text-xs text-muted-foreground"><Info className="mx-auto mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />
-              Le forfait sera <b>réparti entre les colocataires</b> — chacun règlera sa part. Toi (déposant), tu ne paies rien.
-            </p>}
-            <button type="button" onClick={() => onSetContractStep("paiement")} className="w-full rounded-xl bg-brand-magenta px-5 py-3.5 text-sm font-bold text-white hover:brightness-95">
+            <div className="rounded-xl border border-brand-cyan/25 bg-brand-cyan-light/50 p-3.5 text-xs leading-relaxed text-foreground/85">
+              <div className="flex items-start gap-2.5">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />
+                <div className="flex-1 space-y-1">
+                  <div>{renderTemplate(isEdlOnly ? activeMailNote.edl : activeMailNote.contrat, { email: userEmail })}</div>
+                </div>
+              </div>
+            </div>
+            {!isEdlOnly && (
+              <div className="flex items-center justify-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-center text-xs text-muted-foreground">
+                <Info className="h-4 w-4 shrink-0 text-brand-cyan" />
+                <span>
+                  Le forfait sera <b>réparti entre les colocataires</b> — chacun règlera sa part. Toi (déposant), tu ne paies rien.
+                </span>
+              </div>
+            )}
+            <button type="button" onClick={() => onSetContractStep("paiement")} className="w-full rounded-xl bg-brand-magenta px-5 py-3.5 text-sm font-bold text-white shadow-md transition hover:brightness-95 active:scale-[0.99]">
               Continuer
             </button>
-            <div className="flex items-center justify-between text-xs">
-              <button type="button" onClick={() => onSetContractStep(isEdlOnly ? "offer" : "bail")} className="text-muted-foreground hover:text-foreground">
+            <div className="flex items-center justify-between pt-1 text-xs">
+              <button type="button" onClick={() => onSetContractStep(isEdlOnly ? "offer" : "bail")} className="text-muted-foreground transition hover:text-foreground">
                 ‹ Étape précédente
               </button>
-              <button type="button" onClick={onIgnoreOffer} className="text-muted-foreground hover:text-foreground">
+              <button type="button" onClick={onIgnoreOffer} className="text-muted-foreground transition hover:text-foreground">
                 Ignorer l'offre
               </button>
             </div>
@@ -300,7 +354,13 @@ export function ContractWizardModal({
                   className={`rounded-xl border px-3 py-3 text-left transition ${moyenPaiement === option.nom ? "border-brand-cyan bg-brand-cyan-light shadow-sm" : "border-border bg-card hover:border-brand-cyan"}`}
                 >
                   <div className="flex items-start gap-3">
-                    <QrPreview onScan={() => onQrScan(option.nom)} />
+                    <QrPreview
+                      onScan={() => onQrScan(option.nom)}
+                      operator={option.nom}
+                      numero={option.numero}
+                      couleur={option.couleur}
+                      hint={option.hint}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold" style={{ color: option.couleur }}>{repairUtf8Text(option.nom)}</span>
@@ -315,22 +375,25 @@ export function ContractWizardModal({
             </div>
             <div>
               <label className="mb-1 block text-center text-xs font-bold uppercase tracking-[0.08em] text-brand-dark">Référence de paiement Mobile money *</label>
-              <div className="mb-2 text-center text-xs text-brand-magenta">Les frais de l'opérateur sont à la charge de l'acheteur.</div>
-              <input className="input text-center font-mono" value={payRef} onChange={(event) => onPayRefChange(event.target.value)} placeholder="Ex : MP240607.1234.A56789" autoComplete="off" />
+              <div className="mb-2 text-center text-[11px] font-medium text-brand-magenta">Les frais de l'opérateur sont à la charge de l'acheteur.</div>
+              <input className="input text-center font-mono font-bold tracking-wider" value={payRef} onChange={(event) => onPayRefChange(event.target.value)} placeholder="Ex : MP240607.1234.A56789" autoComplete="off" />
             </div>
-            <div className="flex items-center justify-between border-t-2 border-brand-dark px-1 pt-3 text-sm">
-              <span className="font-bold text-brand-dark">{myShare != null ? "Ta part à régler" : priceLabel}</span>
-              <span className="bebas text-2xl text-brand-magenta">{fmtAr(myShare ?? (orderTotal || previewTotal))} Ar</span>
+            <div className="flex items-center justify-between rounded-xl border border-border bg-gradient-to-r from-muted/50 to-muted/20 px-4 py-3.5">
+              <span className="text-sm font-bold text-brand-dark">{myShare != null && myShare > 0 ? "Ta part à régler" : priceLabel}</span>
+              <span className="bebas text-2xl font-bold tracking-wide text-brand-magenta">{fmtAr(displayedAmount)} Ar</span>
             </div>
-            <p className="flex gap-2 rounded-xl border border-brand-cyan/30 bg-brand-cyan-light/50 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground"><Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />Après validation, le paiement sera vérifié par notre équipe et la commande sera traitée.</p>
-            <button type="button" onClick={onConfirmPayment} disabled={contractSubmitting} className="w-full rounded-xl bg-brand-magenta px-5 py-3.5 text-sm font-bold text-white hover:brightness-95 disabled:opacity-60">
-              {contractSubmitting ? "Enregistrement..." : "Valider ma commande"}
+            <p className="flex items-start gap-2 rounded-xl border border-brand-cyan/25 bg-brand-cyan-light/40 px-3.5 py-2.5 text-xs leading-relaxed text-muted-foreground">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />
+              <span>Après validation, le paiement sera vérifié par notre équipe et la commande sera traitée.</span>
+            </p>
+            <button type="button" onClick={onConfirmPayment} disabled={contractSubmitting} className="w-full rounded-xl bg-brand-magenta px-5 py-3.5 text-sm font-bold text-white shadow-md transition hover:brightness-95 active:scale-[0.99] disabled:opacity-60">
+              {contractSubmitting ? "Enregistrement..." : "Régler ma commande"}
             </button>
-            <div className="flex items-center justify-between text-xs">
-              <button type="button" onClick={() => onSetContractStep("contenu")} className="text-muted-foreground hover:text-foreground">
+            <div className="flex items-center justify-between pt-1 text-xs">
+              <button type="button" onClick={() => onSetContractStep("contenu")} className="text-muted-foreground transition hover:text-foreground">
                 ‹ Étape précédente
               </button>
-              <button type="button" onClick={onIgnoreOffer} className="text-muted-foreground hover:text-foreground">
+              <button type="button" onClick={onIgnoreOffer} className="text-muted-foreground transition hover:text-foreground">
                 Ignorer l'offre
               </button>
             </div>
@@ -381,22 +444,241 @@ export function ContractWizardModal({
   );
 }
 
-function QrPreview({ onScan }: { onScan: () => void }) {
-  const cells = Array.from({ length: 81 }, (_, index) => {
-    const x = index % 9;
-    const y = Math.floor(index / 9);
-    const finder = (originX: number, originY: number) => {
-      const dx = x - originX;
-      const dy = y - originY;
-      return dx >= 0 && dx < 3 && dy >= 0 && dy < 3 && (dx === 0 || dx === 2 || dy === 0 || dy === 2 || (dx === 1 && dy === 1));
-    };
-    return finder(0, 0) || finder(6, 0) || finder(0, 6) || ((x * 7 + y * 11 + x * y) % 5 === 0);
-  });
+// --------------------------------------------------------------------------
+// FONCTIONS DE GÉNÉRATION ET RENDU DU QR CODE AMÉLIORÉ
+// --------------------------------------------------------------------------
+function generateQrMatrix(seed: string): boolean[][] {
+  const size = 25;
+  const matrix: boolean[][] = Array.from({ length: size }, () => Array(size).fill(false));
 
-  return <span role="button" tabIndex={0} onClick={(event) => { event.stopPropagation(); onScan(); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); onScan(); } }} className="shrink-0 cursor-pointer rounded-lg border border-border bg-white p-1.5" aria-label="Scanner le QR code"><span className="grid h-16 w-16 grid-cols-9 gap-px" aria-hidden="true">{cells.map((filled, index) => <span key={index} className={filled ? "rounded-[1px] bg-[#2c2c2c]" : "bg-white"} />)}</span><span className="mt-1 block text-center text-[8px] uppercase tracking-[0.08em] text-muted-foreground">Scanner</span></span>;
+  const addFinder = (top: number, left: number) => {
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 7; c++) {
+        if (
+          r === 0 || r === 6 || c === 0 || c === 6 ||
+          (r >= 2 && r <= 4 && c >= 2 && c <= 4)
+        ) {
+          matrix[top + r][left + c] = true;
+        }
+      }
+    }
+  };
+
+  addFinder(0, 0);
+  addFinder(0, size - 7);
+  addFinder(size - 7, 0);
+
+  for (let i = 8; i < size - 8; i++) {
+    matrix[6][i] = i % 2 === 0;
+    matrix[i][6] = i % 2 === 0;
+  }
+
+  const alignR = 18;
+  const alignC = 18;
+  for (let r = -2; r <= 2; r++) {
+    for (let c = -2; c <= 2; c++) {
+      if (Math.abs(r) === 2 || Math.abs(c) === 2 || (r === 0 && c === 0)) {
+        matrix[alignR + r][alignC + c] = true;
+      }
+    }
+  }
+
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) & 0xffffffff;
+  }
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const inTopLeft = r < 8 && c < 8;
+      const inTopRight = r < 8 && c >= size - 8;
+      const inBottomLeft = r >= size - 8 && c < 8;
+      const inAlign = r >= alignR - 2 && r <= alignR + 2 && c >= alignC - 2 && c <= alignC + 2;
+      const inTiming = r === 6 || c === 6;
+
+      if (!inTopLeft && !inTopRight && !inBottomLeft && !inAlign && !inTiming) {
+        const val = Math.abs(Math.sin((r * 37 + c * 53 + hash) * 0.1));
+        matrix[r][c] = val > 0.48;
+      }
+    }
+  }
+
+  return matrix;
 }
 
-function OfferLine({ offer, fmtAr, edl = false }: { offer: any; fmtAr: (value: number) => string; edl?: boolean }) {
+function QrPreview({
+  onScan,
+  operator = "Mobile Money",
+  numero = "0320000000",
+  couleur = "#2c2c2c",
+  hint,
+}: {
+  onScan: () => void;
+  operator?: string;
+  numero?: string;
+  couleur?: string;
+  hint?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const cleanNumber = (numero || "0320000000").replace(/\s+/g, "");
+  const qrPayload = `tel:${cleanNumber}`;
+  const matrix = React.useMemo(() => generateQrMatrix(qrPayload), [qrPayload]);
+
+  const handleOpen = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    setIsOpen(true);
+    onScan();
+  };
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(cleanNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const renderQrSvg = () => {
+    const matrixSize = matrix.length;
+    return (
+      <svg viewBox={`0 0 ${matrixSize} ${matrixSize}`} className="h-full w-full shape-rendering-crispEdges">
+        <rect width={matrixSize} height={matrixSize} fill="#ffffff" />
+        {matrix.map((row, r) =>
+          row.map((filled, c) => (
+            filled ? <rect key={`${r}-${c}`} x={c} y={r} width={1} height={1} fill="#1a1a1a" /> : null
+          ))
+        )}
+      </svg>
+    );
+  };
+
+  return (
+    <>
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={handleOpen}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleOpen(e);
+          }
+        }}
+        className="group relative shrink-0 cursor-pointer rounded-xl border border-border bg-white p-1 shadow-sm transition hover:border-brand-cyan hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
+        aria-label="Scanner le QR code"
+        title="Cliquer pour agrandir et scanner"
+      >
+        <span className="relative block h-16 w-16 overflow-hidden rounded-lg bg-white p-0.5">
+          {renderQrSvg()}
+          <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 backdrop-blur-[0.5px] transition-opacity group-hover:opacity-100 rounded-lg">
+            <Eye className="h-5 w-5 text-white drop-shadow-sm" />
+          </span>
+        </span>
+        <span className="mt-0.5 block text-center text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground group-hover:text-brand-dark transition-colors">
+          Scanner
+        </span>
+      </span>
+
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(false);
+          }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="absolute right-3.5 top-3.5 rounded-full bg-muted p-2 text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              aria-label="Fermer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <span
+              className="inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider"
+              style={{ backgroundColor: `${couleur}15`, color: couleur }}
+            >
+              {operator}
+            </span>
+
+            <h4 className="bebas mt-1 text-2xl text-brand-dark">Paiement Mobile Money</h4>
+            <p className="text-xs text-muted-foreground">
+              Scanne ce QR Code avec l'appli <b>{operator}</b> ou l'appareil photo de ton téléphone.
+            </p>
+
+            <div className="my-5 flex justify-center">
+              <div className="relative rounded-2xl border-2 border-border bg-white p-4 shadow-md">
+                <div className="h-48 w-48">
+                  {renderQrSvg()}
+                </div>
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-white bg-white shadow-sm"
+                    style={{ borderColor: couleur }}
+                  >
+                    <Smartphone className="h-4 w-4" style={{ color: couleur }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-muted/40 p-3 text-left">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Numéro destinataire
+                  </div>
+                  <div className="font-mono text-base font-extrabold text-brand-dark">
+                    {numero}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-brand-green" />
+                      <span className="text-brand-green">Copié !</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>Copier</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              {hint && <p className="mt-1.5 text-[11px] text-muted-foreground border-t border-border/60 pt-1.5">{hint}</p>}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="mt-4 w-full rounded-xl bg-brand-dark py-2.5 text-xs font-bold text-white hover:bg-black transition"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function OfferLine({ offer, fmtAr, edl = false }: { key?: React.Key; offer: any; fmtAr: (value: number) => string; edl?: boolean }) {
   return (
     <div className={`flex items-start justify-between gap-3 px-1 py-3 ${edl ? "border-b border-border" : "rounded-xl border border-border bg-card"}`}>
       <span className="flex items-start gap-3">

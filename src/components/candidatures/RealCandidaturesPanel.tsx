@@ -39,14 +39,6 @@ export function OwnerCandidaturesDashboard({
 
   return (
     <div className="mx-auto max-w-2xl space-y-3">
-      <section className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4">
-        <div className="h-14 w-14 shrink-0 rounded-xl bg-brand-cyan-light" />
-        <div className="min-w-0">
-          <p className="bebas truncate text-lg leading-none text-brand-dark">{title} · {resume}</p>
-          <p className="mt-1 text-sm font-bold text-brand-dark">{monthlyRent} <span className="text-xs font-normal text-muted-foreground">{t('dashboard.per_month')}</span></p>
-        </div>
-      </section>
-
       <section className="rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4">
         <div className="rounded-xl bg-brand-cyan-light p-3 text-xs leading-relaxed text-brand-cyan-dark">
           <b>{t('dashboard.mode_title')}</b> {t('dashboard.mode_desc', { target })}
