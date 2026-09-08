@@ -1164,7 +1164,9 @@ export const api = {
     getCandidaturesByAnnonce(annonceId: string | number) {
         return requestWithFallback<ApiCandidature[]>(`/candidatures/depot-annonce/${annonceId}`, `/candidatures/annonce/${annonceId}`)
     },
-
+    getMyCandidatures() {
+    return request<ApiCandidature[]>('/candidatures')
+},
     checkUserApplied(annonceId: string | number, userId: string | number) {
         const token = getToken();
         const headers: HeadersInit = {

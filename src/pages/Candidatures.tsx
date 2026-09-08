@@ -4146,6 +4146,7 @@ export default function Candidatures() {
   }, [isCurrentUserRetained, annonceId]);
 
   // ===== EFFET POUR LE BANNER DE BIENVENUE =====
+  /*
   useEffect(() => {
     // Vérifier si l'utilisateur est retenu ET que le contrat est créé
     const isRetainedAndContractValid = isCurrentUserRetained && myContracts.length > 0;
@@ -4162,7 +4163,16 @@ export default function Candidatures() {
     if (!isCurrentUserRetained || myContracts.length === 0) {
       setHasShownWelcome(false);
     }
-  }, [isCurrentUserRetained, myContracts, hasShownWelcome]);
+  }, [isCurrentUserRetained, myContracts, hasShownWelcome]);*/
+  // ===== EFFET POUR LE BANNER DE BIENVENUE (notification immédiate à l'acceptation) =====
+useEffect(() => {
+  if (isCurrentUserRetained && !hasShownWelcome) {
+    setHasShownWelcome(true);
+  }
+  if (!isCurrentUserRetained) {
+    setHasShownWelcome(false);
+  }
+}, [isCurrentUserRetained, hasShownWelcome]);
 
   // ===== FONCTIONS UI =====
   const ownerModeClass = "rounded-2xl border border-border bg-card";
@@ -4295,25 +4305,19 @@ export default function Candidatures() {
   }, []);
 
   // ===== CONTRATS VISIBLES PAR LE COLOCATAIRE =====
-  const refreshMyContracts = async () => {
-    if (!user || !annonceId) {
-      setMyContracts([]);
-      return;
-    }
-    try {
-      const contracts = await api.myContractsForAnnonce(annonceId);
-      setMyContracts(contracts);
-      
-      // Vérifier si tous les contrats sont payés
-      const allPaid = contracts.length > 0 && contracts.every(isContractPaid);
-      if (isCurrentUserRetained && allPaid && contracts.length > 0) {
-        setHasShownWelcome(true);
-      }
-    } catch (error) {
-      console.error("❌ Erreur chargement contrats:", error);
-      setMyContracts([]);
-    }
-  };
+ const refreshMyContracts = async () => {
+  if (!user || !annonceId) {
+    setMyContracts([]);
+    return;
+  }
+  try {
+    const contracts = await api.myContractsForAnnonce(annonceId);
+    setMyContracts(contracts);
+  } catch (error) {
+    console.error("❌ Erreur chargement contrats:", error);
+    setMyContracts([]);
+  }
+};
 
   useEffect(() => {
     refreshMyContracts();
@@ -4389,7 +4393,17 @@ export default function Candidatures() {
   function closeContractModal() {
     setContractModalOpen(false);
   }
-
+console.log("🔍 DEBUG REAL CANDIDATURES:", {
+  annonceId,
+  realCandidaturesLength: realCandidatures.length,
+  realCandidatures: realCandidatures.map(c => ({
+    id_candidature: c.id_candidature,
+    id_utilisateur: c.id_utilisateur,
+    id_utilisateur_type: typeof c.id_utilisateur,
+    statut: c.statut,
+  })),
+  myCandidature,
+});
   function chooseOffer(mode: "contrat" | "edl" | "both") {
     setContractMode(mode);
     setContractError(null);
@@ -5867,74 +5881,98 @@ export default function Candidatures() {
             )}
 
             {activeView === "join" && renderJoinTeam()}
+            {/* ===== 1) Confirmation officielle — colocation lancée + tous les paiements faits ===== */}
+{activeView === "won" && officialNotification === "won" && (
+  <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
+    <div className="flex justify-center gap-2">
+      {(["indiv", "group"] as NotificationMode[]).map((mode) => (
+        <button
+          key={mode}
+          type="button"
+          onClick={() => setWonMode(mode)}
+          className={`rounded-full px-6 py-3 text-sm font-semibold ${wonMode === mode ? "bg-brand-cyan text-white" : "border border-border bg-card text-muted-foreground"}`}
+        >
+          {mode === "indiv"
+            ? t('notifications.individual')
+            : t('notifications.group')}
+        </button>
+      ))}
+    </div>
+    <div className="mt-14 text-center">
+      <div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-brand-green to-brand-cyan">
+        <Sparkles className="h-10 w-10 text-white" />
+      </div>
+      <h2 className="bebas text-3xl sm:text-4xl">
+        {wonMode === "indiv"
+          ? `Félicitations, ${colocataireNom} !`
+          : "Félicitations à toute l'équipe !"}
+      </h2>
+      <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+        {wonMode === "indiv"
+          ? `Ta candidature est retenue : tu fais partie de la colocation ${logementTitre}. Bienvenue ! Emménagement prévu le ${moveInLabel}.`
+          : `Votre équipe « ${retainedTeamTitle} » remporte la colocation ${logementTitre} ! Vous allez vivre ensemble dès le ${moveInLabel}.`}
+      </p>
+      <div className="mt-12 rounded-2xl border border-border bg-brand-sand p-6 text-left text-base text-muted-foreground">
+        <div className="font-semibold text-brand-dark">
+          <Calendar className="mr-2 inline h-4 w-4 text-brand-cyan-dark" />
+          {t('notifications.moveIn')} <span className="font-normal">— {moveInLabel}</span>
+        </div>
+        <div className="mt-4 flex items-start gap-3">
+          <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan-dark" />
+          <div>
+            {t('notifications.groupChatOpen')}
+          </div>
+        </div>
+      </div>
+      <button className="mt-5 w-full rounded-2xl bg-brand-green px-5 py-4 text-base font-semibold text-white hover:bg-brand-green-dark">
+        {t('notifications.openGroupChat')}
+      </button>
+    </div>
+  </div>
+)}
 
-            {activeView === "won" && officialNotification === "won" && myContracts.length > 0 && (
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-                <div className="flex justify-center gap-2">
-                    {(["indiv", "group"] as NotificationMode[]).map((mode) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => setWonMode(mode)}
-                        className={`rounded-full px-6 py-3 text-sm font-semibold ${wonMode === mode ? "bg-brand-cyan text-white" : "border border-border bg-card text-muted-foreground"}`}
-                      >
-                        {mode === "indiv"
-                          ? t('notifications.individual')
-                          : t('notifications.group')}
-                      </button>
-                    ))}
-                  </div>
-                <div className="mt-14 text-center">
-                  <div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-brand-green to-brand-cyan">
-                    <Sparkles className="h-10 w-10 text-white" />
-                  </div>
-                  <h2 className="bebas text-3xl sm:text-4xl">
-                    {wonMode === "indiv"
-                      ? `Félicitations, ${colocataireNom} !`
-                      : "Félicitations à toute l'équipe !"}
-                  </h2>
-                  <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                    {wonMode === "indiv"
-                      ? `Ta candidature est retenue : tu fais partie de la colocation ${logementTitre}. Bienvenue ! Emménagement prévu le ${moveInLabel}.`
-                      : `Votre équipe « ${retainedTeamTitle} » remporte la colocation ${logementTitre} ! Vous allez vivre ensemble dès le ${moveInLabel}.`}
-                  </p>
-                  <div className="mt-12 rounded-2xl border border-border bg-brand-sand p-6 text-left text-base text-muted-foreground">
-                    <div className="font-semibold text-brand-dark">
-                      <Calendar className="mr-2 inline h-4 w-4 text-brand-cyan-dark" />
-                      {t('notifications.moveIn')} <span className="font-normal">— {moveInLabel}</span>
-                    </div>
-                    <div className="mt-4 flex items-start gap-3">
-                      <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan-dark" />
-                      <div>
-                        {t('notifications.groupChatOpen')}
-                      </div>
-                    </div>
-                  </div>
-                  <button className="mt-5 w-full rounded-2xl bg-brand-green px-5 py-4 text-base font-semibold text-white hover:bg-brand-green-dark">
-                    {t('notifications.openGroupChat')}
-                  </button>
-                </div>
-              </div>
-            )}
+{/* ===== 2) Notification immédiate — candidature acceptée, colocation pas encore lancée officiellement ===== */}
+{activeView === "won" && officialNotification !== "won" && isCurrentUserRetained && (
+  <div className="rounded-3xl border border-brand-green/30 bg-card p-6 shadow-sm sm:p-8">
+    <div className="mt-4 text-center">
+      <div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-brand-green to-brand-cyan">
+        <Sparkles className="h-10 w-10 text-white" />
+      </div>
+      <h2 className="bebas text-3xl sm:text-4xl">
+        Félicitations, {colocataireNom} !
+      </h2>
+      <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+        Ta candidature pour {logementTitre} a été acceptée. La colocation sera confirmée officiellement dès que tous les colocataires auront réglé leur part.
+      </p>
+      <div className="mt-12 rounded-2xl border border-border bg-brand-sand p-6 text-left text-base text-muted-foreground">
+        <div className="font-semibold text-brand-dark">
+          <Calendar className="mr-2 inline h-4 w-4 text-brand-cyan-dark" />
+          {t('notifications.moveIn')} <span className="font-normal">— {moveInLabel}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
-            {activeView === "won" && (!officialNotification || myContracts.length === 0) && (
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
-                  <Sparkles className="h-5 w-5" /> {t('notifications.title')}
-                </div>
-                <div className="mt-6 rounded-3xl border border-border bg-background p-8 text-center">
-                  <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                    <Sparkles className="h-8 w-8" />
-                  </div>
-                  <h2 className="bebas text-3xl">
-                    {t('notifications.none')}
-                  </h2>
-                  <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
-                    {t('notifications.noneWon')}
-                  </p>
-                </div>
-              </div>
-            )}
+{/* ===== 3) Aucune notification — pas encore de décision ===== */}
+{activeView === "won" && officialNotification !== "won" && !isCurrentUserRetained && (
+  <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+    <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
+      <Sparkles className="h-5 w-5" /> {t('notifications.title')}
+    </div>
+    <div className="mt-6 rounded-3xl border border-border bg-background p-8 text-center">
+      <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <Sparkles className="h-8 w-8" />
+      </div>
+      <h2 className="bebas text-3xl">
+        {t('notifications.none')}
+      </h2>
+      <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
+        {t('notifications.noneWon')}
+      </p>
+    </div>
+  </div>
+)}
 
             {activeView === "lost" && officialNotification === "lost" && (
               <div className="rounded-3xl border border-red-200 bg-card p-6 shadow-sm">
