@@ -31,6 +31,9 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
     navigate(`/annonces/${l.id}`)
   }
 
+  // Nombre réel de colocataires (utilise l.rooms comme dans AnnonceDetail, repli sur l.bedrooms puis 1)
+  const colocCount = Number(l.rooms ?? l.bedrooms ?? 1)
+
   return (
     <article
       onClick={handleCardClick}
@@ -102,14 +105,14 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
         {compact && (
           <p className="flex items-center gap-2 text-[10px] text-gray-500 mb-0.5">
             <span className="flex items-center gap-1"><BedDouble className="w-3 h-3 text-cyan-600" /> {l.surface ?? '-'} m²</span>
-            <span className="flex items-center gap-1"><Users className="w-3 h-3 text-cyan-600" /> {l.bedrooms ?? 1} coloc.</span>
+            <span className="flex items-center gap-1"><Users className="w-3 h-3 text-cyan-600" /> {colocCount} {colocCount > 1 ? 'colocs.' : 'coloc.'}</span>
           </p>
         )}
 
         {!compact && (
           <div className="flex gap-2 text-[12px] text-gray-600 flex-wrap mb-1">
             <span className="flex items-center gap-1"><BedDouble className="w-4 h-4" /> {l.surface ?? '-'} m²</span>
-            <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {l.bedrooms ?? 1} coloc.</span>
+            <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {colocCount} {colocCount > 1 ? 'colocs.' : 'coloc.'}</span>
             {l.chambreSurface && <span className="flex items-center gap-1"><Camera className="w-4 h-4" /> {l.chambreSurface} m²/ch.</span>}
           </div>
         )}
