@@ -1380,7 +1380,6 @@ export default function AnnonceDetail() {
                 />
                 {contactError ? <p className="text-sm text-red-600">{contactError}</p> : null}
                 {contactSuccess ? <p className="text-sm text-green-600">{contactSuccess}</p> : null}
-
                 <Button
                   type="button"
                   className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white h-11"
