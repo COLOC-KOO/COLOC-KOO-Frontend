@@ -1,38 +1,291 @@
 {
-  "title": "Conditions générales d'utilisation de Sarintany'COLOC",
-  "subtitle": "Ce document regroupe les CGU, la politique de confidentialité et la gestion des données personnelles.",
-  "intro": "En utilisant ce site, vous acceptez ces conditions telles qu'elles sont décrites ici.",
-  "section1.title": "1. Objet",
-  "section1.line1": "Les présentes conditions définissent les modalités d'utilisation du site et des services Sarintany'COLOC.",
-  "section1.line2": "Elles s'appliquent à tous les utilisateurs du site.",
-  "section2.title": "2. Champ d'application",
-  "section2.line1": "Ces conditions s'appliquent à la recherche de logement, à la publication d'annonces et à la prise de contact avec des partenaires.",
-  "section2.line2": "Elles incluent également les règles relatives à la collecte des données personnelles.",
-  "section3.title": "3. Accès et disponibilité",
-  "section3.line1": "Nous nous efforçons de garantir un accès continu, mais des interruptions peuvent survenir pour maintenance ou incidents techniques.",
-  "section3.line2": "Le service peut être temporairement indisponible sans préavis.",
-  "section4.title": "4. Inscription et utilisation",
-  "section4.line1": "Certains services nécessitent un compte. Vous êtes responsable des informations fournies.",
-  "section4.line2": "Il est interdit d'utiliser le service à des fins illégales ou abusives.",
-  "section5.title": "5. Propriété intellectuelle",
-  "section5.line1": "Le contenu du site est protégé par le droit d'auteur et appartient à Sarintany'COLOC ou à ses partenaires.",
-  "section5.line2": "Toute reproduction non autorisée est interdite.",
-  "section6.title": "6. Données personnelles",
-  "section6.line1": "Les données collectées sont utilisées pour gérer les comptes et améliorer le service.",
-  "section6.line2": "Vous disposez d'un droit d'accès, de rectification et de suppression de vos données.",
-  "section7.title": "7. Sécurité",
-  "section7.line1": "Nous mettons en place des mesures techniques pour protéger vos données.",
-  "section7.line2": "Aucune solution ne garantit une sécurité absolue.",
-  "section8.title": "8. Limitation de responsabilité",
-  "section8.line1": "Sarintany'COLOC n'est pas responsable des dommages résultant de l'utilisation du service.",
-  "section8.line2": "Cela inclut les erreurs dans les annonces ou le comportement des tiers.",
-  "section9.title": "9. Liens externes",
-  "section9.line1": "Le site peut contenir des liens vers des sites tiers sur lesquels nous n'exerçons aucun contrôle.",
-  "section9.line2": "Nous déclinons toute responsabilité pour leur contenu.",
-  "section10.title": "10. Modification des CGU",
-  "section10.line1": "Nous pouvons mettre à jour ces conditions à tout moment et sans préavis.",
-  "section10.line2": "Les modifications sont effectives dès leur publication.",
-  "section11.title": "11. Contact",
-  "section11.line1": "Pour toute question, contactez-nous via la page contact ou à hello@sarintany-coloc.mg.",
-  "linkContact": "page contact"
+  "pageTitle": "Mentions légales, CGU, CGV & confidentialité",
+  "pageSubtitle": "Sarintany'COLOC — service proposé par Coloc'KOO SARL",
+
+  "mentionsLegales": {
+    "title": "Mentions légales",
+    "paragraphs": [
+      "Éditeur : Coloc'KOO SARL, société à responsabilité limitée régie par la loi n° 2003-036 du 30 janvier 2004, au capital de [montant] Ariary, siège social à Immeuble ARO Ampefiloha, Étg.1 Esc.B, Porte B104, 101 Antananarivo, Madagascar — RCS Antananarivo n° 2024B00604, NIF 5018558073, STAT 6810111202401065 (ci-après « Coloc'KOO » ou « nous »).",
+      "Service : Sarintany'COLOC, plateforme de mise en relation pour la colocation à Madagascar, accessible à [URL].",
+      "Responsable de la publication : le gérant de Coloc'KOO SARL (voir documents administratifs de la société).",
+      "Hébergeur : [dénomination, adresse, contact].",
+      "Contact : [e-mail] — [adresse postale]."
+    ]
+  },
+
+  "cgu": {
+    "badge": "1",
+    "title": "Conditions Générales d'Utilisation (CGU)",
+    "sections": [
+      {
+        "title": "1.1 Objet",
+        "paragraphs": [
+          "Ces Conditions Générales d'Utilisation (« CGU ») fixent les règles d'accès et d'usage de Sarintany'COLOC. En accédant à la plateforme ou en l'utilisant, que tu sois simple visiteur ou membre inscrit, tu reconnais avoir lu les CGU et tu t'engages à les respecter.",
+          "Sarintany'COLOC est un service gratuit de mise en relation entre personnes qui cherchent ou proposent une colocation à Madagascar. Coloc'KOO n'est pas partie aux accords (bail, sous-location, partage de logement) conclus entre membres."
+        ]
+      },
+      {
+        "title": "1.2 Définitions",
+        "paragraphs": [
+          "Plateforme : le service Sarintany'COLOC, ses pages, fonctionnalités et contenus.",
+          "Membre : toute personne disposant d'un compte.",
+          "Annonce : informations (texte, photos, conditions) publiées pour proposer ou rechercher une colocation.",
+          "Déposant : membre qui publie une annonce (colocataire en place, propriétaire ou agent immobilier).",
+          "Candidat : membre qui répond à une annonce pour intégrer une colocation.",
+          "Groupe : équipe de candidats constituée pour postuler ensemble à une colocation à créer.",
+          "Partenaire solidaire : entreprise qui soutient financièrement la plateforme (voir article 1.11)."
+        ]
+      },
+      {
+        "title": "1.3 Accès et inscription",
+        "paragraphs": [
+          "Consulter les annonces est libre et gratuit. Publier une annonce, contacter un membre ou rejoindre un groupe nécessite un compte.",
+          "À l'inscription, tu t'engages à donner des informations exactes et à jour, et à garder tes identifiants confidentiels. Tu es responsable de l'activité réalisée depuis ton compte. Tu t'interdis d'usurper l'identité d'un tiers, de créer des comptes multiples à des fins frauduleuses, ou de faciliter l'accès d'un tiers non autorisé.",
+          "Si tu suspectes un usage non autorisé de ton compte, préviens-nous sans délai à [e-mail]."
+        ]
+      },
+      {
+        "title": "1.4 Fonctionnement du service",
+        "paragraphs": [
+          "Sarintany'COLOC te permet de publier et consulter des annonces, d'échanger avec d'autres membres et de candidater à une colocation.",
+          "Constitution des colocations — protection des colocataires. Dans une démarche socialement responsable, Sarintany'COLOC limite les sélections fondées sur des critères arbitraires. Pour une colocation à créer, le déposant ne choisit pas directement les candidats : les candidats se regroupent librement en équipes nommées, et le premier groupe complet est présenté en priorité au gérant du bien. Ce fonctionnement protège les colocataires en favorisant l'égalité de traitement et l'auto-organisation. Coloc'KOO ne garantit ni la formation d'un groupe, ni l'aboutissement d'une candidature.",
+          "Rôle de Coloc'KOO. Coloc'KOO met à disposition un outil de mise en relation. Coloc'KOO n'est ni agence immobilière, ni mandataire, ni partie aux contrats entre membres, et ne perçoit aucune commission sur les loyers. La mise en relation est et reste gratuite."
+        ]
+      },
+      {
+        "title": "1.5 Tes obligations et ta conduite",
+        "paragraphs": [
+          "Tu utilises la plateforme de bonne foi et dans le respect de la loi. Sont notamment interdits : les informations fausses ou trompeuses (logement inexistant, conditions mensongères) ; tout propos ou comportement discriminatoire, haineux, harcelant, diffamatoire ou portant atteinte à la dignité d'autrui ; les contenus illicites, violents, à caractère sexuel, ou portant atteinte aux droits de tiers ; les sollicitations commerciales non autorisées, escroqueries, demandes de paiement frauduleuses ou tentatives de détournement des membres hors de la plateforme à des fins abusives ; la collecte ou la réutilisation non autorisée des données d'autres membres.",
+          "Tu es seul responsable du contenu que tu publies et de tes échanges avec les autres membres."
+        ]
+      },
+      {
+        "title": "1.6 Tes contenus",
+        "paragraphs": [
+          "Tu restes titulaire de tes contenus. Tu accordes à Coloc'KOO une licence non exclusive et gratuite pour héberger, afficher et diffuser ces contenus sur la plateforme et ses canaux de communication, le temps de leur mise en ligne, pour le seul fonctionnement et la promotion du service.",
+          "Tu garantis détenir les droits nécessaires sur ce que tu publies (notamment les photos) et que ces contenus ne portent pas atteinte aux droits de tiers. Coloc'KOO peut retirer ou modifier un contenu manifestement contraire aux CGU ou à la loi."
+        ]
+      },
+      {
+        "title": "1.7 Modération, signalement et suspension",
+        "paragraphs": [
+          "Tu peux signaler une annonce, un message ou un comportement abusif via les outils prévus.",
+          "Coloc'KOO peut, dans le respect de la loi, refuser, modifier, suspendre ou retirer une annonce, et suspendre ou clôturer un compte, en cas de manquement aux CGU, d'usage frauduleux ou de risque pour les autres membres. Lorsque c'est possible, le membre concerné est informé."
+        ]
+      },
+      {
+        "title": "1.8 Données personnelles",
+        "paragraphs": [
+          "Le traitement de tes données est décrit dans la Politique de confidentialité (partie 2), qui fait partie intégrante des CGU."
+        ]
+      },
+      {
+        "title": "1.9 Propriété intellectuelle",
+        "paragraphs": [
+          "La plateforme, sa charte graphique, ses textes, son architecture, ses bases de données et ses signes distinctifs sont protégés. Toute reproduction, extraction ou réutilisation non autorisée est interdite. Ton accès à la plateforme ne te transfère aucun droit de propriété intellectuelle."
+        ]
+      },
+      {
+        "title": "1.10 Responsabilité",
+        "paragraphs": [
+          "Coloc'KOO fournit un service de mise en relation et est tenu à une obligation de moyens, pas de résultat. Coloc'KOO ne garantit ni la conclusion d'une colocation, ni la solvabilité, l'identité réelle, le comportement ou la fiabilité des membres. Il t'appartient de vérifier la pertinence et les conditions de toute colocation, de tout colocataire et de tout logement avant de t'engager.",
+          "Coloc'KOO n'est pas responsable des litiges entre membres ni des dommages indirects liés à l'usage de la plateforme. Rien ici ne limite la responsabilité de Coloc'KOO dans les cas où la loi l'interdit."
+        ]
+      },
+      {
+        "title": "1.11 Partenaires solidaires",
+        "paragraphs": [
+          "Le service est gratuit pour les membres. Son équilibre économique repose sur le soutien d'entreprises partenaires (« partenaires solidaires ») qui contribuent financièrement via des offres de soutien et bénéficient, en contrepartie, d'une visibilité (encarts, bannières, mises en avant) proportionnée à leur engagement et, selon leur niveau de soutien, d'un accès à des analyses de marché anonymisées.",
+          "Ce soutien n'emporte aucune approbation par Coloc'KOO des produits ou services du partenaire, et ne crée aucune relation contraignante entre toi et ce partenaire. Aucune donnée personnelle te concernant n'est transmise aux partenaires. En revanche, des analyses de marché anonymisées — qui ne permettent pas de t'identifier — peuvent être mises à la disposition de certains partenaires solidaires en fonction de leur niveau de soutien."
+        ]
+      },
+      {
+        "title": "1.12 Absence de relation professionnelle",
+        "paragraphs": [
+          "Ton utilisation de Sarintany'COLOC ne crée entre toi et Coloc'KOO aucun partenariat, mandat, ni relation d'employeur, de client, fiduciaire ou professionnelle, de quelque nature que ce soit. Coloc'KOO reste un intermédiaire technique de mise en relation. Cela vaut en particulier pour les membres colocataires, qui agissent pour leur propre compte."
+        ]
+      },
+      {
+        "title": "1.13 Sécurité",
+        "paragraphs": [
+          "Tu t'interdis de perturber le fonctionnement de la plateforme, d'en compromettre la sécurité, d'y accéder sans autorisation ou d'en extraire massivement les données. Tout manquement peut entraîner blocage et poursuites."
+        ]
+      },
+      {
+        "title": "1.14 Durée, résiliation et suppression du compte",
+        "paragraphs": [
+          "Les CGU s'appliquent pendant toute la durée d'utilisation. Tu peux à tout moment cesser d'utiliser le service et supprimer ton compte depuis ton espace personnel, ce qui entraîne l'effacement de tes données dans les conditions de la Politique de confidentialité, sous réserve des obligations légales de conservation.",
+          "Coloc'KOO peut résilier l'accès d'un membre en cas de manquement grave ou répété aux CGU."
+        ]
+      },
+      {
+        "title": "1.15 Force majeure",
+        "paragraphs": [
+          "Nous ne pourrons être tenus responsables d'une défaillance ou d'un retard dans l'exécution de nos obligations lorsqu'il résulte d'un événement échappant à notre contrôle raisonnable — par exemple cyclone, inondation, séisme ou autre catastrophe naturelle, coupure d'électricité ou de réseau, panne d'un prestataire technique, troubles ou décision administrative."
+        ]
+      },
+      {
+        "title": "1.16 Modification des CGU",
+        "paragraphs": [
+          "Coloc'KOO peut modifier les CGU pour suivre l'évolution du service ou de la loi. Les CGU applicables sont celles en vigueur au moment où tu utilises la plateforme. En cas de changement important, tu seras informé par un moyen approprié."
+        ]
+      },
+      {
+        "title": "1.17 Droit applicable et juridiction",
+        "paragraphs": [
+          "Les CGU sont régies par le droit malgache. À défaut de résolution amiable, tout litige relève des tribunaux compétents d'Antananarivo, sous réserve des règles d'ordre public."
+        ]
+      },
+      {
+        "title": "1.18 Contact",
+        "paragraphs": [
+          "Pour toute question : [e-mail] — Coloc'KOO SARL, Immeuble ARO Ampefiloha, Étg.1 Esc.B, Porte B104, 101 Antananarivo, Madagascar."
+        ]
+      }
+    ]
+  },
+
+  "confidentialite": {
+    "badge": "2",
+    "title": "Politique de confidentialité (données personnelles)",
+    "intro": "Cadre : loi n° 2014-038 du 9 janvier 2015 sur la protection des données à caractère personnel (Madagascar) et attributions de la Commission Malgache de l'Informatique et des Libertés (CMIL). Choix retenu : appliquer un niveau de protection équivalent au RGPD à tous les membres, quelle que soit leur localisation — par cohérence avec la démarche RSE de la plateforme et pour éviter d'avoir à distinguer les utilisateurs résidant dans l'Union européenne. (Références d'articles et autorité de contrôle à confirmer par le conseil juridique.)",
+    "sections": [
+      {
+        "title": "2.1 Responsable de traitement",
+        "paragraphs": [
+          "Coloc'KOO SARL, représentée par son gérant, Immeuble ARO Ampefiloha, Étg.1 Esc.B, Porte B104, 101 Antananarivo, Madagascar. Référent données / contact : [e-mail]."
+        ]
+      },
+      {
+        "title": "2.2 Données traitées",
+        "paragraphs": [
+          "Données que tu fournis : nom, prénom, âge ou date de naissance, sexe (le cas échéant), situation (étudiant, travailleur…), e-mail, téléphone (facultatif), photo et présentation, contenu de tes annonces et de tes messages, préférences.",
+          "Données de localisation : géolocalisation du logement de l'annonce, ville d'origine.",
+          "Données de connexion et techniques : adresse IP, type d'appareil et de navigateur, journaux de connexion, parcours de navigation, identifiants techniques.",
+          "Données de vérification d'identité : le cas échéant, éléments fournis pour confirmer ton identité, dans les limites strictement nécessaires.",
+          "Aucune donnée de carte bancaire n'est conservée par Coloc'KOO ; les paiements éventuels du service contrat sont opérés via Orange Money / MVOLA (voir CGV)."
+        ]
+      },
+      {
+        "title": "2.3 Finalités et bases légales",
+        "paragraphs": [
+          "Tes données servent à : permettre la mise en relation et le fonctionnement de ton compte ; assurer la sécurité et la modération ; améliorer le service ; t'adresser les informations nécessaires ; produire des analyses de marché anonymisées sur la colocation à Madagascar ; respecter nos obligations légales. Les bases légales sont, selon le cas, l'exécution du service, ton consentement, notre intérêt légitime et le respect d'obligations légales."
+        ]
+      },
+      {
+        "title": "2.4 Minimisation et sécurité",
+        "paragraphs": [
+          "Nous appliquons les principes de minimisation (ne collecter que le nécessaire), de pseudonymisation dans les interfaces de reporting, de chiffrement des données sensibles (en transit et au repos), de contrôle des accès (droits limités au strict besoin) et de journalisation des actions sensibles (export de données, suppression de comptes…). Aucun système n'étant infaillible, nous nous engageons à un processus d'amélioration continue et à réagir promptement à tout incident."
+        ]
+      },
+      {
+        "title": "2.5 Destinataires et transferts",
+        "paragraphs": [
+          "Tes données sont accessibles aux équipes habilitées de Coloc'KOO et à ses sous-traitants techniques (hébergement, paiement), tenus à la confidentialité. Tes données personnelles ne sont jamais vendues, ni transmises à un partenaire. Seules des analyses de marché anonymisées (ne permettant pas de t'identifier) peuvent être mises à la disposition de certains partenaires solidaires selon leur niveau de soutien (voir art. 1.11).",
+          "Tout transfert hors de Madagascar est encadré conformément à la loi applicable."
+        ]
+      },
+      {
+        "title": "2.6 Durées de conservation",
+        "paragraphs": [
+          "Annonces et données textuelles : conservées 5 ans (annonce « active » visible, puis « archivée » invisible et réservée à l'analyse interne).",
+          "Photographies : supprimées 1 an après archivage de l'annonce.",
+          "Annonce active : durée de vie de 2 mois ; sans renouvellement sous deux semaines après l'échéance, elle est retirée de l'affichage public.",
+          "Données de compte : conservées tant que le compte est actif, puis supprimées après clôture, sous réserve des obligations légales de conservation."
+        ]
+      },
+      {
+        "title": "2.7 Tes droits",
+        "paragraphs": [
+          "Tu disposes des droits d'accès, de rectification, d'effacement, d'opposition, de limitation et, le cas échéant, de portabilité. Tu les exerces depuis ton compte ou en écrivant à [e-mail] (une vérification d'identité peut être demandée). Tu peux aussi saisir l'autorité de contrôle compétente (CMIL)."
+        ]
+      },
+      {
+        "title": "2.8 Traceurs (cookies) et stockage local",
+        "paragraphs": [
+          "La plateforme utilise des traceurs et un stockage local strictement nécessaires à son fonctionnement (statut de connexion, langue, mode d'affichage, préférences). Les traceurs de mesure d'audience ou tiers ne sont déposés qu'avec ton consentement, retirable à tout moment. Tu peux configurer ton navigateur pour les limiter, au risque de dégrader l'expérience."
+        ]
+      }
+    ]
+  },
+
+  "cgv": {
+    "badge": "3",
+    "title": "Conditions Générales de Vente (CGV) — Service d'accompagnement Coloc'KOO",
+    "intro": "Ces CGV concernent uniquement les prestations payantes d'accompagnement de Coloc'KOO (aide à la rédaction du contrat de colocation, aide à l'état des lieux). La mise en relation sur Sarintany'COLOC reste gratuite et hors champ des CGV.",
+    "sections": [
+      {
+        "title": "3.1 Définitions",
+        "paragraphs": [
+          "Prestation : service payant d'accompagnement (aide au contrat, aide à l'état des lieux, ou les deux).",
+          "Client : membre majeur qui souscrit une Prestation depuis son compte.",
+          "Prestataire : Coloc'KOO SARL, représentée par son gérant."
+        ]
+      },
+      {
+        "title": "3.2 Objet et acceptation",
+        "paragraphs": [
+          "Les CGV régissent la souscription des Prestations payantes via la plateforme. Toute souscription vaut acceptation pleine et entière des CGV en vigueur à la date de la commande."
+        ]
+      },
+      {
+        "title": "3.3 Prestations et tarifs",
+        "paragraphs": [
+          "Les Prestations et leurs tarifs te sont présentés avant la souscription. Le tarif de l'aide au contrat est déterminé par paliers, selon les éléments précisés à la souscription. La grille tarifaire (en Ariary) est éditable par Coloc'KOO et affichée avant tout paiement.",
+          "[Grille de paliers à insérer une fois validée.]"
+        ]
+      },
+      {
+        "title": "3.4 Commande et paiement",
+        "paragraphs": [
+          "La souscription se fait depuis ton compte. Le paiement est exigible à la souscription, via Orange Money ou MVOLA. Un message électronique récapitule la Prestation et le montant. Coloc'KOO ne conserve aucune donnée de paiement au-delà du nécessaire à la facturation et aux obligations légales."
+        ]
+      },
+      {
+        "title": "3.5 Exécution de la Prestation",
+        "paragraphs": [
+          "La Prestation est un accompagnement (mise à disposition d'outils et d'aide à la rédaction). Elle ne constitue pas un conseil juridique personnalisé ni une garantie de validité juridique du contrat ou de l'état des lieux établi. Tu restes responsable des documents que tu signes."
+        ]
+      },
+      {
+        "title": "3.6 Rétractation et remboursement",
+        "paragraphs": [
+          "[À arbitrer avec le conseil juridique au regard du droit malgache de la consommation.] Lorsque tu demandes l'exécution immédiate de la Prestation et qu'elle est pleinement exécutée, le droit de rétractation peut ne plus s'appliquer. Les cas de remboursement éventuel (par exemple non-exécution du fait de Coloc'KOO) seront précisés ici."
+        ]
+      },
+      {
+        "title": "3.7 Responsabilité",
+        "paragraphs": [
+          "La responsabilité de Coloc'KOO au titre des Prestations est limitée, dans la mesure permise par la loi, au montant effectivement payé pour la Prestation concernée. Coloc'KOO n'est pas responsable des dommages indirects."
+        ]
+      },
+      {
+        "title": "3.8 Réclamations",
+        "paragraphs": [
+          "Toute réclamation relative à une Prestation s'adresse à [e-mail] dans un délai raisonnable après son exécution."
+        ]
+      },
+      {
+        "title": "3.9 Force majeure",
+        "paragraphs": [
+          "Aucune des parties ne pourra être tenue responsable d'un manquement résultant d'un événement échappant à son contrôle raisonnable, tel que défini par le droit malgache."
+        ]
+      },
+      {
+        "title": "3.10 Droit applicable et juridiction",
+        "paragraphs": [
+          "Les CGV sont régies par le droit malgache. À défaut d'accord amiable, tout litige relève des tribunaux compétents d'Antananarivo, sous réserve des règles d'ordre public."
+        ]
+      },
+      {
+        "title": "3.11 Dispositions diverses",
+        "paragraphs": [
+          "Si une clause était jugée invalide, les autres demeurent applicables. Le traitement des données personnelles dans le cadre des Prestations est régi par la Politique de confidentialité (partie 2)."
+        ]
+      }
+    ]
+  },
+
+  "linkContact": "page contact",
+  "lastUpdate": "Dernière mise à jour du texte juridique : [à compléter]."
 }

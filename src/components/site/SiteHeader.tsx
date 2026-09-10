@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell } from 'lucide-react'
-import { Logo, LogoMark } from '../Logo'
+import { Logo, LogoMark, LogoName } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
 import { useAuth } from '../../lib/auth'
@@ -23,8 +23,8 @@ const navItems = [
 ]
 
 const languageOptions = [
-  { code: 'FR' as const, label: 'Français', nativeName: 'Français', flagCode: 'fr' },
   { code: 'MG' as const, label: 'Malagasy', nativeName: 'Malagasy', flagCode: 'mg' },
+  { code: 'FR' as const, label: 'Français', nativeName: 'Français', flagCode: 'fr' },
   { code: 'EN' as const, label: 'English', nativeName: 'English', flagCode: 'us' }
 ]
 
@@ -217,11 +217,9 @@ export function SiteHeader() {
     <header className="fixed top-0 left-0 z-50 w-full bg-white border-b border-border">
       <div className="w-full px-3 sm:px-5 h-14 flex items-center justify-between gap-1.5 sm:gap-2.5">
         <div className="flex-shrink-0">
-          <Link to="/" className="sm:hidden flex items-center gap-1" aria-label="Accueil">
-            <LogoMark className="h-8 w-8" />
-            <span className="bebas flex flex-col whitespace-nowrap text-[13px] leading-[0.85]">
-              <span className="text-[--brand-cyan-dark]">SARITANY'COLOC</span>
-            </span>
+          <Link to="/" className="sm:hidden flex items-center gap-1.5" aria-label="Accueil">
+            <LogoMark className="h-8 w-auto" />
+            <LogoName className="bebas text-lg leading-none" />
           </Link>
           <div className="hidden sm:block">
           <Logo small />

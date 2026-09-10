@@ -420,21 +420,30 @@ export default function Annonces() {
       params.regles = selectedEquipments.join(",");
     }
 
+    // Villes/services alimentent les filtres et l'autocomplete : on ne veut pas
+    // qu'un échec du chargement des annonces les fasse disparaître aussi
+    // (c'était le cas avant — un Promise.all unique faisait tout échouer d'un coup).
     Promise.all([
-      api.annonces(params),
       api.villes().catch(() => []),
       api.services().catch(() => []),
-    ])
-      .then(([annonces, villesList, servicesList]) => {
+    ]).then(([villesList, servicesList]) => {
+      setVilles(villesList);
+      setServices(
+        Array.isArray(servicesList) ? servicesList.filter((s) => String(s.cle_service || "").startsWith("service_")) : []
+      );
+    });
+
+    api
+      .annonces(params)
+      .then((annonces) => {
         setListings(
           annonces.map(annonceToListing).sort((a, b) => Number(Boolean(b.isBoosted)) - Number(Boolean(a.isBoosted)))
         );
-        setVilles(villesList);
-        setServices(
-          Array.isArray(servicesList) ? servicesList.filter((s) => String(s.cle_service || "").startsWith("service_")) : []
-        );
       })
-      .catch((err) => setError(err instanceof Error ? err.message : t("common:common.error")))
+      .catch(() => {
+        setListings([]);
+        setError("Impossible de charger les annonces pour le moment. Réessaie dans quelques instants.");
+      })
       .finally(() => setLoading(false));
   }, [city, district, type, selectedServiceIds, selectedEquipments, minPrice, maxPrice, query, colocFilter, t]);
 
@@ -916,9 +925,12 @@ export default function Annonces() {
             </button>
           </div>
 
-          <button className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 border border-sc-bd rounded-xl text-xs text-sc-dark hover:bg-sc-cy-lt hover:border-sc-cy transition-colors cursor-pointer bg-white">
+          <button
+            className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer"
+            style={{ backgroundColor: "#46BDD6" }}
+          >
             <i className="ti ti-bell-plus text-xs" />
-            Créer une alerte · <strong>{city || query || "Madagascar"}</strong>
+            Créer une alerte{(city || query) ? <> · <strong>{city || query}</strong></> : null}
           </button>
         </div>
 

@@ -7,6 +7,22 @@ import { Button } from "../components/ui/Button";
 import { Poste } from "../lib/api";
 import { roleLevel, useAuth } from "../lib/auth";
 
+const MIN_SIGNUP_AGE = 17;
+
+function maxBirthDate(): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - MIN_SIGNUP_AGE);
+  return d.toISOString().slice(0, 10);
+}
+
+function isOldEnough(birthDate: string): boolean {
+  if (!birthDate) return false;
+  const birth = new Date(birthDate);
+  const limit = new Date();
+  limit.setFullYear(limit.getFullYear() - MIN_SIGNUP_AGE);
+  return birth <= limit;
+}
+
 const postes: { value: Poste; label: string }[] = [
   { value: "colocataire", label: "colocataire" },
   { value: "proprietaire", label: "proprietaire" },
@@ -33,6 +49,9 @@ export default function Auth() {
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // "Quitter" doit ramener là où l'utilisateur venait (ex: son brouillon
+  // d'annonce en cours) plutôt que toujours à l'accueil.
+  const backTo = params.get("redirect") || "/";
   const [showPassword, setShowPassword] = useState(false);
   const { login, register, user } = useAuth();
   const navigate = useNavigate();
@@ -48,6 +67,10 @@ export default function Auth() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (mode === "signup" && !isOldEnough(form.date_naissance)) {
+      setError(`Tu dois avoir au moins ${MIN_SIGNUP_AGE} ans pour créer un compte.`);
+      return;
+    }
     setSubmitting(true);
     try {
       const connected =
@@ -92,7 +115,7 @@ export default function Auth() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_35%),linear-gradient(135deg,_#f8fcff_0%,_#eef7f4_100%)] grid md:grid-cols-[1.05fr_0.95fr] relative overflow-hidden">
       {/* Bouton retour - Version desktop */}
       <Link
-        to="/"
+        to={backTo}
         className="hidden md:flex absolute top-6 left-6 z-10 items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/20 hover:bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -116,7 +139,7 @@ export default function Auth() {
       <div className="flex items-center justify-center p-4 sm:p-8 relative">
         {/* Bouton retour - Version mobile */}
         <Link
-          to="/"
+          to={backTo}
           className="md:hidden absolute top-4 left-4 z-10 flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium bg-white/80 hover:bg-white backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-gray-200/50"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -199,6 +222,7 @@ export default function Auth() {
                   <input
                     required
                     type="date"
+                    max={maxBirthDate()}
                     className="input"
                     value={form.date_naissance}
                     onChange={(e) =>
@@ -230,6 +254,7 @@ export default function Auth() {
                     {t("phone")}
                   </label>
                   <input
+                    required
                     type="tel"
                     className="input"
                     placeholder="+261 34 00 000 00"
@@ -311,7 +336,7 @@ export default function Auth() {
 
             {/* Bouton retour vers le site - Version texte en bas */}
             <Link
-              to="/"
+              to={backTo}
               className="inline-flex items-center gap-1.5 text-muted-foreground/70 hover:text-brand-cyan-dark transition-colors"
             >
               <Home className="w-3.5 h-3.5" />
