@@ -1,8 +1,8 @@
 {
   "hero": {
     "badge": "Colocation nouvelle génération",
-    "title": "Trouve ta coloc, partout à Madagascar",
-    "subtitle": "Chambres, appartements et maisons vérifiés dossiers en ligne, signature simplifiée.",
+    "title": "Trouves ta colocation, partout à Madagascar",
+    "subtitle": "Payer moins pour vivre mieux · Service 100% gratuit",
     "search": "Je cherche un logement",
     "propose": "Je propose un logement",
     "placeholder": "Ville, quartier...",
@@ -17,7 +17,7 @@
   "featured": {
     "title": "Dernières annonces",
     "subtitle": "Sélection de la semaine, vérifiée par notre équipe",
-    "viewAll": "Voir toutes",
+    "viewAll": "Voir tout",
     "list": "Liste",
     "map": "Carte",
     "verified": "Vérifiée",

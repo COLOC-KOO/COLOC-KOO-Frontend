@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import emailjs from '@emailjs/browser'
 import { useTranslation } from 'react-i18next'
-import { Mail, MapPin, MessageCircle, Phone, Send, CheckCircle2, Sparkles, Clock, Award, Building2, Users, Heart, ArrowRight, Facebook, Twitter, Linkedin, Instagram, Search } from 'lucide-react'
+import { MapPin, Send, CheckCircle2, Clock, Users, Facebook, Linkedin } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
@@ -32,15 +32,7 @@ const Hero: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <motion.div 
-            className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-semibold mb-4 border border-white/20 shadow-lg"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 400 }}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-            {t('contact:hero.badge')}
-          </motion.div>
-          <motion.h1 
+          <motion.h1
             className="bebas text-5xl md:text-7xl drop-shadow-2xl"
             animate={{ 
               textShadow: ['0 0 20px rgba(255,255,255,0.2)', '0 0 40px rgba(255,255,255,0.1)', '0 0 20px rgba(255,255,255,0.2)'],
@@ -49,7 +41,7 @@ const Hero: React.FC = () => {
           >
             <span className="text-white">{t('contact:hero.title')}</span>
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+            <span style={{ color: '#46BDD6' }}>
               {t('contact:hero.highlight')}
             </span>
           </motion.h1>
@@ -78,40 +70,19 @@ export default function Contact() {
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
-  // Infos de contact traduites
+  // Infos de contact traduites — uniquement le bureau (email/téléphone retirés à la demande du client)
   const infos = [
-    { 
-      icon: Mail, 
-      title: t('contact:infos.email.title'), 
-      value: 'hello@sarintany-coloc.mg', 
-      desc: t('contact:infos.email.desc') 
-    },
-    { 
-      icon: Phone, 
-      title: t('contact:infos.phone.title'), 
-      value: '+261 34 12 345 67', 
-      desc: t('contact:infos.phone.desc') 
-    },
-    { 
-      icon: MapPin, 
-      title: t('contact:infos.address.title'), 
-      value: t('contact:infos.address.value'), 
-      desc: t('contact:infos.address.desc') 
+    {
+      icon: MapPin,
+      title: t('contact:infos.address.title'),
+      value: t('contact:infos.address.value'),
+      desc: t('contact:infos.address.desc')
     }
-  ]
-
-  const stats = [
-    { label: t('contact:stats.colocataires'), value: '1 400+', icon: Users },
-    { label: t('contact:stats.annonces'), value: '120+', icon: Building2 },
-    { label: t('contact:stats.satisfaction'), value: '4.8/5', icon: Heart },
-    { label: t('contact:stats.partenaires'), value: '25+', icon: Award },
   ]
 
   const socialLinks = [
     { icon: Facebook, href: '#', label: 'Facebook' },
-    { icon: Twitter, href: '#', label: 'Twitter' },
     { icon: Linkedin, href: '#', label: 'LinkedIn' },
-    { icon: Instagram, href: '#', label: 'Instagram' },
   ]
 
   useEffect(() => {
@@ -209,29 +180,9 @@ export default function Contact() {
         <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-brand-green/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative max-w-6xl mx-auto px-6 py-16">
-          {/* Stats */}
-          <motion.div 
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-          >
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                variants={fadeInUp}
-                className="bg-white border border-border/60 rounded-2xl p-5 text-center shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-              >
-                <stat.icon className="w-6 h-6 text-brand-cyan mx-auto mb-2" />
-                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                <div className="text-xs text-muted-foreground">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-
           {/* Contact Cards */}
-          <motion.div 
-            className="grid md:grid-cols-3 gap-4 mb-12"
+          <motion.div
+            className="grid max-w-sm mx-auto gap-4 mb-12"
             variants={staggerContainer}
             initial="initial"
             animate="animate"

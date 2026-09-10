@@ -472,6 +472,7 @@ export interface CreateDepotAnnoncePayload {
   type_annonce: string
   logement: string
   nombre_pieces: string
+  total_colocataires?: number | string | null
   surface?: number | string | null
   internet?: string
   parking_voitures?: number

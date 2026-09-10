@@ -5,6 +5,14 @@
 @tailwind utilities;
 
 
+/* Police d'affichage de la marque (titres, logo) — voir tailwind.config.js `fontFamily.display`.
+   Les classes `bebas` / `font-bebas` sont utilisées dans tout le code mais n'étaient reliées à
+   aucune règle CSS : Bebas Neue ne s'appliquait donc jamais malgré son chargement ci-dessus. */
+.bebas,
+.font-bebas {
+  font-family: 'Bebas Neue', 'Inter', sans-serif;
+}
+
 :root {
   --radius: 0.875rem;
 

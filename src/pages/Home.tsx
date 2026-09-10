@@ -60,7 +60,7 @@ export default function Home() {
     setError("");
 
     Promise.all([
-      api.annonces({ statut: "active" }),
+      api.annonces({ statut: "active" }).catch(() => []),
       api.villes().catch(() => []),
       api.partenairesCampagnes().catch(() => []),
     ])

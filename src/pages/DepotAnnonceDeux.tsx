@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   AlertCircle,
   ArrowLeft,
@@ -393,6 +393,7 @@ function ErrBox({ children }: { children: React.ReactNode }) {
  * ====================================================================*/
 export default function DepotAnnonceDeux() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { lang, setLang, t } = useLang()
 
@@ -479,6 +480,11 @@ export default function DepotAnnonceDeux() {
   /* ---- Étape 3 : logement ---- */
   const [typeLogement, setTypeLogement] = useState('')
   const [nbColoc, setNbColoc] = useState('')
+  // Nombre total de colocataires que compte le logement (distinct de
+  // `nbColoc`, qui reste le nombre de coloc *recherché·e·s* côté "membre").
+  const [nbColocTotal, setNbColocTotal] = useState('')
+  // Nombre de pièces du logement (remplace l'ancien champ "surface totale").
+  const [nbPieces, setNbPieces] = useState('')
   const [surfaceTotale, setSurfaceTotale] = useState('')
   const [locAddr, setLocAddr] = useState('')
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null)
@@ -625,6 +631,7 @@ export default function DepotAnnonceDeux() {
   /* ---------------------------------------------------------------- */
   const [pendingAutoPublish, setPendingAutoPublish] = useState(false)
   const autoPublishTriggered = useRef(false)
+  const draftRestored = useRef(false)
 
   function restoreDraft(draft: any) {
     if (draft.role !== undefined) setRole(draft.role)
@@ -634,6 +641,8 @@ export default function DepotAnnonceDeux() {
     if (draft.presentation !== undefined) setPresentation(draft.presentation)
     if (draft.typeLogement !== undefined) setTypeLogement(draft.typeLogement)
     if (draft.nbColoc !== undefined) setNbColoc(draft.nbColoc)
+    if (draft.nbColocTotal !== undefined) setNbColocTotal(draft.nbColocTotal)
+    if (draft.nbPieces !== undefined) setNbPieces(draft.nbPieces)
     if (draft.surfaceTotale !== undefined) setSurfaceTotale(draft.surfaceTotale)
     if (draft.locAddr !== undefined) setLocAddr(draft.locAddr)
     if (draft.pin !== undefined) setPin(draft.pin)
@@ -696,7 +705,9 @@ export default function DepotAnnonceDeux() {
       presentation: a.description ?? a.message ?? '',
       typeLogement:
         a.type_propriete === 'maison' ? 'Maison' : a.type_propriete === 'appartement' ? 'Appartement' : 'Autre',
-      nbColoc: String(a.total_colocataires ?? a.nombre_pieces ?? ''),
+      nbColoc: String(a.extra?.nombre_colocataires_recherches ?? ''),
+      nbColocTotal: String(a.total_colocataires ?? ''),
+      nbPieces: String(a.nombre_pieces ?? ''),
       surfaceTotale: String(a.surface_totale ?? a.surface ?? ''),
       locAddr: a.adresse_exacte ?? a.adresse ?? a.quartier ?? '',
       pin: a.latitude && a.longitude ? { x: Number(a.latitude), y: Number(a.longitude) } : null,
@@ -747,14 +758,16 @@ export default function DepotAnnonceDeux() {
     }
   }, [isRenewal, annonceId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Dès qu'on a un utilisateur connecté, on regarde si un brouillon en
-  // attente existe (déposé juste avant un envoi vers /auth). Si oui, on
-  // restaure tout le formulaire et on relance automatiquement la publication.
+  // Un brouillon en attente (déposé juste avant un envoi vers /auth) est
+  // restauré dès l'arrivée sur la page, qu'on soit déjà connecté ou pas —
+  // par ex. si la personne clique sur "quitter" depuis l'écran de connexion
+  // au lieu d'aller au bout du login, elle doit quand même retrouver son
+  // annonce à l'étape où elle l'avait laissée, pas un formulaire vide.
   useEffect(() => {
-    if (!user || autoPublishTriggered.current) return
+    if (draftRestored.current) return
     const raw = sessionStorage.getItem(DEPOT_DRAFT_KEY)
     if (!raw) return
-    autoPublishTriggered.current = true
+    draftRestored.current = true
     try {
       const draft = JSON.parse(raw)
       if (!draft || Date.now() - (draft.savedAt || 0) > DEPOT_DRAFT_MAX_AGE_MS) {
@@ -762,19 +775,26 @@ export default function DepotAnnonceDeux() {
         return
       }
       restoreDraft(draft)
-      setToastMessage('Bon retour ! On finalise la publication de ton annonce…')
+      setToastMessage(
+        user
+          ? 'Bon retour ! On finalise la publication de ton annonce…'
+          : 'Bon retour ! Ton brouillon a été restauré — connecte-toi pour publier.',
+      )
       setPendingAutoPublish(true)
     } catch {
       sessionStorage.removeItem(DEPOT_DRAFT_KEY)
     }
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // La publication automatique n'a lieu qu'une fois le brouillon restauré
+  // ET la personne réellement connectée (peut arriver bien après la restauration).
   useEffect(() => {
-    if (!pendingAutoPublish || !user) return
+    if (!pendingAutoPublish || !user || autoPublishTriggered.current) return
+    autoPublishTriggered.current = true
     setPendingAutoPublish(false)
     sessionStorage.removeItem(DEPOT_DRAFT_KEY)
     handlePublish()
-  }, [pendingAutoPublish]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pendingAutoPublish, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ---------------------------------------------------------------- */
   /*  Validation par étape                                             */
@@ -792,13 +812,18 @@ export default function DepotAnnonceDeux() {
         return false
       }
     }
+    if (key === 'esprit' && role === 'membre') {
+      if (nbColocTotal === '' || nbColoc === '') {
+        setStepErr('Merci d\'indiquer le nombre de colocataires.')
+        return false
+      }
+    }
     if (key === 'logement') {
       const locOk = pin !== null
       const ok =
-        (role === 'membre' || typeAnnonce !== '') &&
+        (role === 'membre' || (typeAnnonce !== '' && nbColocTotal !== '')) &&
         typeLogement !== '' &&
-        nbColoc !== '' &&
-        surfaceTotale.trim() !== '' &&
+        nbPieces.trim() !== '' &&
         locOk
       if (!ok) {
         setStepErr(
@@ -833,6 +858,10 @@ export default function DepotAnnonceDeux() {
       const n = cur + 1
       setCur(n)
       setMaxStep((m) => Math.max(m, n))
+      // Pousse une entrée d'historique par étape franchie : le bouton
+      // "précédent" du navigateur revient alors à l'étape précédente du
+      // formulaire au lieu de quitter carrément la page.
+      navigate({ pathname: location.pathname, search: `?etape=${n}` })
     }
   }
   function prevStep() {
@@ -841,6 +870,16 @@ export default function DepotAnnonceDeux() {
   function goStep(i: number) {
     if (i <= maxStep) setCur(i)
   }
+
+  // Reflète dans `cur` toute navigation arrière/avant du navigateur sur
+  // l'étape (voir le navigate() de nextStep ci-dessus qui alimente l'URL).
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const raw = params.get('etape')
+    const parsed = raw !== null ? Number(raw) : 0
+    const target = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 0), steps.length - 1) : 0
+    setCur((current) => (current === target ? current : target))
+  }, [location.search]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function toggleMeublee(option: string) {
     setMeublee((prev) => (prev.includes(option) ? prev.filter((x) => x !== option) : [...prev, option]))
@@ -856,7 +895,7 @@ export default function DepotAnnonceDeux() {
     const draft = {
       savedAt: Date.now(),
       role, typeAnnonce, ambianceAge, ambiance, presentation,
-      typeLogement, nbColoc, surfaceTotale, locAddr, pin,
+      typeLogement, nbColoc, nbColocTotal, nbPieces, surfaceTotale, locAddr, pin,
       equipements, internet, parkingCars, parkingCarsCouvert, parkingMoto, parkingMotoCouvert,
       servicesPersonnel, servAutre, servAutreOn,
       sim, ckooIntegrated, ckooTotal, ckooChosenNames,
@@ -928,7 +967,8 @@ export default function DepotAnnonceDeux() {
         longitude,
         type_annonce: typeAnnonce || (role === 'membre' ? 'existante' : 'creation'),
         logement: typeLogement,
-        nombre_pieces: nbColoc,
+        nombre_pieces: nbPieces,
+        total_colocataires: nbColocTotal,
         surface: surfaceTotale,
         commodites: equipements,
         regles,
@@ -1089,7 +1129,7 @@ export default function DepotAnnonceDeux() {
                   <OptCard
                     icon={Users}
                     title="Membre de la colocation"
-                    desc="Tu vis (ou vas vivre) dans le logement et cherches un·e coloc. 1 seule annonce active possible par compte."
+                    desc="Tu vis dans le logement et cherches un·e (des) coloc(s)."
                     on={role === 'membre'}
                     onClick={() => setRole('membre')}
                   />
@@ -1194,6 +1234,17 @@ export default function DepotAnnonceDeux() {
 
               {role === 'membre' && (
                 <div className="grp">
+                  <label className="lbl">Nombre total de colocataires<span className="req">*</span></label>
+                  <div className="pills">
+                    {['2', '3', '4', '5', '6+'].map((n) => (
+                      <Pill key={n} label={n} on={nbColocTotal === n} onClick={() => setNbColocTotal(n)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {role === 'membre' && (
+                <div className="grp">
                   <label className="lbl">Nombre de colocataires recherchés<span className="req">*</span></label>
                   <div className="pills">
                     {['1', '2', '3', '4+'].map((n) => (
@@ -1271,28 +1322,30 @@ export default function DepotAnnonceDeux() {
                 </div>
               </div>
 
-              <div className="grp">
-                <label className="lbl">Nombre de colocataires en tout<span className="req">*</span></label>
-                <div className="pills">
-                  {['2', '3', '4', '5', '6+'].map((v) => (
-                    <Pill key={v} label={v} on={nbColoc === v} onClick={() => setNbColoc(v)} />
-                  ))}
+              {role !== 'membre' && (
+                <div className="grp">
+                  <label className="lbl">Nombre total de colocataires<span className="req">*</span></label>
+                  <div className="pills">
+                    {['2', '3', '4', '5', '6+'].map((v) => (
+                      <Pill key={v} label={v} on={nbColocTotal === v} onClick={() => setNbColocTotal(v)} />
+                    ))}
+                  </div>
+                  <div className="hint"><Info size={11} /> Une colocation compte au moins 2 colocataires.</div>
                 </div>
-                <div className="hint"><Info size={11} /> Une colocation compte au moins 2 colocataires.</div>
-              </div>
+              )}
 
               <div className="grp">
-                <label className="lbl">Surface totale<span className="req">*</span></label>
+                <label className="lbl">Nombre de pièces total <span className="opt">(hors cuisine et salle d'eau)</span><span className="req">*</span></label>
                 <div className="inp-suffix" style={{ maxWidth: 200 }}>
                   <input
                     className="inp"
                     type="number"
                     min={0}
-                    placeholder="ex : 120"
-                    value={surfaceTotale}
-                    onChange={(e) => setSurfaceTotale(e.target.value)}
+                    placeholder="ex : 4"
+                    value={nbPieces}
+                    onChange={(e) => setNbPieces(e.target.value)}
                   />
-                  <span className="suf">m²</span>
+                  <span className="suf">pièce(s)</span>
                 </div>
               </div>
 
@@ -1626,7 +1679,6 @@ export default function DepotAnnonceDeux() {
           {stepKey === 'publier' && (
             <section className="step on">
               <div className="s-title bb"><Send size={22} /> Étape finale — Publie ton annonce</div>
-              <div className="s-sub">Vérifie le récapitulatif ci-dessous avant de publier.</div>
 
               {isRenewal && (
                 <div className="note" style={{ marginBottom: 14 }}>
@@ -1669,11 +1721,6 @@ export default function DepotAnnonceDeux() {
                 <div className="recap-row"><Clock size={14} /> Ton annonce sera visible pendant <b style={{ color: 'var(--dark)' }}>&nbsp;{recapDuration}</b>.</div>
                 <div className="recap-row"><Bell size={14} /> Tu recevras une relance 7 jours avant l'échéance pour renouveler ou retirer ton annonce.</div>
                 <div className="recap-row"><ShieldCheck size={14} /> Chaque annonce est vérifiée (modération) avant sa mise en ligne.</div>
-                {loyer && (
-                  <div className="recap-row">
-                    <Receipt size={14} /> Charges actuelles : <b style={{ color: 'var(--dark)' }}>{charges ? `${charges} Ar` : 'non communiquées'}</b>
-                  </div>
-                )}
                 {!isPaidRole && (
                   <div className="recap-row"><HeartHandshake size={14} /> Publication 100% gratuite — aucune commission.</div>
                 )}
@@ -1723,8 +1770,16 @@ export default function DepotAnnonceDeux() {
               )}
 
               <div className="note" style={{ marginTop: 14 }}>
-                <Info size={13} /> Tu es connecté·e en tant que <b>{user?.email || user?.telephone || 'utilisateur'}</b>. La
-                publication utilise ce compte.
+                {user ? (
+                  <>
+                    <Info size={13} /> Tu es connecté·e en tant que <b>{user.email || user.telephone || 'utilisateur'}</b>. La
+                    publication utilise ce compte.
+                  </>
+                ) : (
+                  <>
+                    <Info size={13} /> Pour publier ton annonce, tu devras te connecter depuis ton compte.
+                  </>
+                )}
               </div>
             </section>
           )}

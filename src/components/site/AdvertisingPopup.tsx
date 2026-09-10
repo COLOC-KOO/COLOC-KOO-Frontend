@@ -3,6 +3,20 @@ import { Link, useLocation } from 'react-router-dom'
 import { Megaphone, X } from 'lucide-react'
 
 const DISPLAY_INTERVAL_MS = 3 * 60 * 1000
+const DISMISS_STORAGE_KEY = 'colockoo_ads_dismissed_until'
+
+// Une fois fermée (X ou "Plus tard"), la pub ne doit pas réapparaître avant le lendemain.
+function isDismissedForToday(): boolean {
+  const storedUntil = Number(localStorage.getItem(DISMISS_STORAGE_KEY) || 0)
+  return Date.now() < storedUntil
+}
+
+function suppressUntilTomorrow() {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  tomorrow.setHours(0, 0, 0, 0)
+  localStorage.setItem(DISMISS_STORAGE_KEY, String(tomorrow.getTime()))
+}
 
 const ADVERTISEMENTS = [
   {
@@ -42,6 +56,7 @@ export default function AdvertisingPopup() {
     }
 
     const interval = window.setInterval(() => {
+      if (isDismissedForToday()) return
       setAdvertisementIndex((current) => (current + 1) % ADVERTISEMENTS.length)
       setIsOpen(true)
     }, DISPLAY_INTERVAL_MS)
@@ -51,6 +66,7 @@ export default function AdvertisingPopup() {
 
   const close = () => {
     setIsOpen(false)
+    suppressUntilTomorrow()
   }
 
   if (!isOpen) return null
@@ -58,7 +74,7 @@ export default function AdvertisingPopup() {
   const advertisement = ADVERTISEMENTS[advertisementIndex]
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/45 p-4 sm:items-center" role="presentation">
+    <div className="fixed inset-0 z-[2000] flex items-end justify-center bg-slate-950/45 p-4 sm:items-center" role="presentation">
       <section role="dialog" aria-modal="true" aria-labelledby="advertising-popup-title" className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="bg-gradient-to-r from-brand-cyan to-brand-green px-6 pb-12 pt-6 text-white">
           <Megaphone className="h-7 w-7" aria-hidden="true" />

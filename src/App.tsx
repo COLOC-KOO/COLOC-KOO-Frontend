@@ -1,5 +1,5 @@
-import React from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Annonces from './pages/Annonces'
 import AnnonceDetail from './pages/AnnonceDetail'
@@ -41,6 +41,15 @@ import { useAuth } from './lib/auth'
 import { ConfigProvider } from './lib/config'
 import AdvertisingPopup from './components/site/AdvertisingPopup'
 
+// Remet la page en haut à chaque changement de route (React Router ne le fait pas nativement).
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { loading, isAdmin } = useAuth()
   if (loading) return <div className="min-h-screen grid place-items-center">Chargement...</div>
@@ -51,6 +60,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ConfigProvider>
+      <ScrollToTop />
       <AdvertisingPopup />
       <Routes>
         {/* Site public */}
