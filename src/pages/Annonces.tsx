@@ -926,6 +926,13 @@ export default function Annonces() {
           </div>
 
           <button
+            onClick={() => {
+              if (user) {
+                navigate("/compte?tab=alertes&create=1");
+                return;
+              }
+              navigate(`/auth?mode=signin&redirect=${encodeURIComponent("/compte?tab=alertes&create=1")}`);
+            }}
             className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer"
             style={{ backgroundColor: "#46BDD6" }}
           >

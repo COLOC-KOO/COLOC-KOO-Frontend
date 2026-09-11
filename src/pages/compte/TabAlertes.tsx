@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Bell, BellPlus, Check, Trash, X, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
 const API = BASE.endsWith('/api') ? BASE.slice(0, -4) : BASE
@@ -71,6 +72,7 @@ function Checkbox({ label, checked, onChange }: { label: string; checked: boolea
 
 export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number }) {
   const { t } = useTranslation('alertes')
+  const location = useLocation()
   const [alertes, setAlertes] = useState<Alerte[]>([])
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<AlerteForm>(EMPTY_FORM)
@@ -109,6 +111,11 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
   }
 
   useEffect(() => { charger() }, [idUtilisateur])
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('create') === '1') setShowModal(true)
+  }, [location.search])
 
   const removeAlerte = async (id: number) => {
     await fetch(`${API}/api/alertes/${id}`, { method: 'DELETE' })
