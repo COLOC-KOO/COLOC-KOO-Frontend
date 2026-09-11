@@ -70,10 +70,6 @@ const LAUNCH_FREE = true // offre partenaire offerte pendant le lancement (cf. P
 /* ---------------------------------------------------------------------- */
 /*  Brouillon "publier après connexion"                                    */
 /* ---------------------------------------------------------------------- */
-// Quand un visiteur non connecté clique sur « Publier », on enregistre tout
-// son formulaire ici avant de l'envoyer se connecter. Une fois connecté et
-// redirigé vers cette page, le formulaire est restauré et la publication se
-// termine automatiquement, sans que la personne ait à tout ressaisir.
 const DEPOT_DRAFT_KEY = 'colockoo_depot_annonce_draft_v1'
 const DEPOT_DRAFT_MAX_AGE_MS = 2 * 60 * 60 * 1000 // 2h
 
@@ -149,7 +145,7 @@ const CKOO_SERVICES: CkooService[] = [
   { id: 'ramonage', type: 'annual', price: 84000, name: 'Ramonage annuel' },
   { id: 'bois', type: 'stere', price: 14000, name: 'Livraison annuelle de bois de chauffe' },
 ]
-const HOUR_DAY_OPTIONS = [0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+const HOUR_DAY_OPTIONS = [0.5, 1, 2, 3, 4, 5, 6, 7] // demi-journée, 1 jour, 2 jours, etc.
 const MGMT_FEE_TABLE: Record<number, number> = { 0.5: 4400, 1: 8800, 2: 17600, 3: 26300, 4: 35100, 5: 43900, 6: 43900, 7: 43900 }
 function mgmtFee(days: number) {
   if (days <= 0) return 0
@@ -178,9 +174,6 @@ function deriveQuartierFromAddress(addr: string): string {
   return firstSegment || trimmed
 }
 
-// La ville affichée sur l'annonce doit venir de l'adresse saisie ici, dans le
-// formulaire de dépôt (ex : "Mahazoarivo, Antsirabe" → ville = "Antsirabe"),
-// et non de la ville choisie sur la page d'accueil avant de commencer le dépôt.
 function deriveVilleFromAddress(addr: string): string {
   const trimmed = addr.trim()
   if (!trimmed) return ''
@@ -189,12 +182,9 @@ function deriveVilleFromAddress(addr: string): string {
     .map((p) => p.trim())
     .filter(Boolean)
   if (parts.length === 0) return ''
-  // Le dernier segment de l'adresse est la ville (ex: "Quartier, Ville").
   return parts[parts.length - 1]
 }
 
-// Géocodage de secours via OpenStreetMap (couvre Madagascar, contrairement
-// à certaines API qui ne couvrent que la France).
 async function geocodeMadagascar(query: string): Promise<[number, number] | null> {
   try {
     const base = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1'
@@ -230,7 +220,6 @@ const markerIcon = new LeafletIcon({
 
 const DEFAULT_CENTER: [number, number] = [-18.8792, 47.5079]
 
-// Recentre la carte en douceur vers le lieu trouvé (sans recharger la carte).
 function MapController({ target }: { target: [number, number] | null }) {
   const map = useMap()
   const key = target ? target.join(',') : ''
@@ -242,11 +231,11 @@ function MapController({ target }: { target: [number, number] | null }) {
   return null
 }
 
-// Place le repère quand on clique sur la carte.
-function MapClickCatcher({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+// Place le repère quand on clique sur la carte (geste UTILISATEUR).
+function MapClickCatcher({ onUserPick }: { onUserPick: (lat: number, lng: number) => void }) {
   useMapEvents({
     click(e) {
-      onPick(e.latlng.lat, e.latlng.lng)
+      onUserPick(e.latlng.lat, e.latlng.lng)
     },
   })
   return null
@@ -255,11 +244,15 @@ function MapClickCatcher({ onPick }: { onPick: (lat: number, lng: number) => voi
 function InteractiveMap({
   pin,
   onPlacePin,
+  onUserMovePin,
   focus,
+  pinOpacity = 1,
 }: {
   pin: { x: number; y: number } | null
   onPlacePin: (pin: { x: number; y: number }) => void
+  onUserMovePin: (pin: { x: number; y: number }) => void
   focus: [number, number] | null
+  pinOpacity?: number
 }) {
   return (
     <div className="realmap">
@@ -276,16 +269,19 @@ function InteractiveMap({
         />
         <ZoomControl position="bottomright" />
         <MapController target={focus} />
-        <MapClickCatcher onPick={(lat, lng) => onPlacePin({ x: lat, y: lng })} />
+        {/* Clic sur la carte = geste utilisateur → onUserMovePin */}
+        <MapClickCatcher onUserPick={(lat, lng) => onUserMovePin({ x: lat, y: lng })} />
         {pin && (
           <Marker
             position={[pin.x, pin.y]}
             icon={markerIcon}
             draggable
+            opacity={pinOpacity}
             eventHandlers={{
+              // Drag du repère = geste utilisateur → onUserMovePin
               dragend(e) {
                 const next = (e.target as any).getLatLng()
-                onPlacePin({ x: next.lat, y: next.lng })
+                onUserMovePin({ x: next.lat, y: next.lng })
               },
             }}
           />
@@ -397,13 +393,6 @@ export default function DepotAnnonceDeux() {
   const { user } = useAuth()
   const { lang, setLang, t } = useLang()
 
-  /* ---- Mode renouvellement -------------------------------------------
-     Si la page est montée sur /annonces/:id/renouveler (lien envoyé par
-     l'email et la notification push dans cronExpired.js), `id` est défini.
-     On réutilise alors tout le formulaire, préchargé avec les données de
-     l'annonce, en affichant directement la dernière étape avec un bouton
-     "Renouveler" à la place du bouton "Publier". Pas de stockage de
-     données côté client : on relit l'annonce existante via l'API. ---- */
   const { id: annonceId } = useParams<{ id?: string }>()
   const isRenewal = !!annonceId
 
@@ -451,7 +440,6 @@ export default function DepotAnnonceDeux() {
       }
       setCheckingExistingListing(true)
       try {
-        // TODO API : adapter à votre client API réel.
         const result = await (api as any).checkAnnonceExistante?.(role)
         if (!cancelled) {
           setBlockedExistingListing(Boolean(result?.hasActiveListing))
@@ -480,20 +468,24 @@ export default function DepotAnnonceDeux() {
   /* ---- Étape 3 : logement ---- */
   const [typeLogement, setTypeLogement] = useState('')
   const [nbColoc, setNbColoc] = useState('')
-  // Nombre total de colocataires que compte le logement (distinct de
-  // `nbColoc`, qui reste le nombre de coloc *recherché·e·s* côté "membre").
   const [nbColocTotal, setNbColocTotal] = useState('')
-  // Nombre de pièces du logement (remplace l'ancien champ "surface totale").
   const [nbPieces, setNbPieces] = useState('')
   const [surfaceTotale, setSurfaceTotale] = useState('')
   const [locAddr, setLocAddr] = useState('')
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null)
   const [focus, setFocus] = useState<[number, number] | null>(null)
+
+  // Distingue le positionnement AUTOMATIQUE (géocodage) du geste UTILISATEUR.
+  // Le pin devient opaque seulement quand :
+  //   - une adresse/quartier est saisie
+  //   - ET l'utilisateur a déplacé le pointeur lui-même sur la carte
+  const [userMovedPin, setUserMovedPin] = useState(false)
+  const pinOpaque = userMovedPin && locAddr.trim().length > 0
+
   const ckooEligible = /antananarivo|tananarive|\btana\b/i.test(locAddr)
 
   /* AMÉLIORATION CARTE : quand on tape un lieu, la carte se recentre dessus
-     et le repère y est placé automatiquement (délai anti-spam de 700 ms).
-     Essaie d'abord geocodeAddress, puis le géocodeur OSM en secours. */
+     et le repère y est placé automatiquement (délai anti-spam de 700 ms). */
   useEffect(() => {
     const query = locAddr.trim()
     if (!query) return
@@ -511,6 +503,7 @@ export default function DepotAnnonceDeux() {
         if (!coords) coords = await geocodeMadagascar(query)
         if (coords) {
           setFocus(coords)
+          // positionnement AUTO : on place le pin SANS activer userMovedPin
           setPin({ x: coords[0], y: coords[1] })
         }
       })()
@@ -544,22 +537,24 @@ export default function DepotAnnonceDeux() {
   const simTotals = useMemo(() => {
     let monthly = 0
     let maxDays = 0
-    CKOO_SERVICES.forEach((s) => {
-      const sel = sim[s.id]
-      if (!sel?.checked) return
-      if (s.type === 'hour') {
-        const d = sel.days ?? 1
-        const hrs = d === 0.5 ? 4 : 8 * d
-        monthly += s.price * hrs
-        if (d > maxDays) maxDays = d
-      } else if (s.type === 'forfait') {
-        monthly += s.price
-      } else if (s.type === 'annual') {
-        monthly += s.price / 12
-      } else if (s.type === 'stere') {
-        monthly += (s.price * (sel.qty ?? 0)) / 12
-      }
-    })
+  CKOO_SERVICES.forEach((s) => {
+  const sel = sim[s.id]
+  if (!sel?.checked) return
+  if (s.type === 'hour') {
+    const daysPerWeek = sel.days ?? 1
+    const hoursPerDay = daysPerWeek === 0.5 ? 4 : 8
+    const WEEKS_PER_MONTH = 4.33
+    const hoursPerMonth = daysPerWeek * hoursPerDay * WEEKS_PER_MONTH
+    monthly += s.price * hoursPerMonth
+    if (daysPerWeek > maxDays) maxDays = daysPerWeek
+  } else if (s.type === 'forfait') {
+    monthly += s.price
+  } else if (s.type === 'annual') {
+    monthly += s.price / 12
+  } else if (s.type === 'stere') {
+    monthly += (s.price * (sel.qty ?? 0)) / 12
+  }
+})
     const mgmt = mgmtFee(maxDays)
     return { monthly: Math.round((monthly + mgmt) / 100) * 100, mgmt, maxDays }
   }, [sim])
@@ -632,6 +627,9 @@ export default function DepotAnnonceDeux() {
   const [pendingAutoPublish, setPendingAutoPublish] = useState(false)
   const autoPublishTriggered = useRef(false)
   const draftRestored = useRef(false)
+  // Empêche l'effet de synchro URL d'écraser `cur` juste après une
+  // restauration de brouillon (l'URL de retour n'a pas de ?etape=N).
+  const skipNextUrlSync = useRef(false)
 
   function restoreDraft(draft: any) {
     if (draft.role !== undefined) setRole(draft.role)
@@ -683,21 +681,19 @@ export default function DepotAnnonceDeux() {
     const restoredSteps = stepsForRole(draft.role ?? null)
     setCur(restoredSteps.length - 1)
     setMaxStep(restoredSteps.length - 1)
+
+    // On empêche la synchro URL de remettre `cur` à 0 au prochain passage.
+    skipNextUrlSync.current = true
   }
 
   /* ---------------------------------------------------------------- */
   /*  Mode renouvellement : chargement d'une annonce existante          */
   /* ---------------------------------------------------------------- */
-  // Traduit la réponse API (ApiAnnonce) vers la forme attendue par
-  // restoreDraft(). Ne stocke rien : on relit simplement l'annonce en base
-  // à chaque ouverture de la page de renouvellement.
   function mapAnnonceToDraft(a: ApiAnnonce & Record<string, any>) {
     const chambre = a.chambre ?? a.chambres?.[0] ?? a.rooms?.[0] ?? null
     const meubleeRaw = String(chambre?.est_meuble ?? chambre?.meublee ?? '').trim()
 
     return {
-      // ⚠️ À confirmer côté backend : le champ réel qui porte le rôle
-      // (membre / proprio / pro) pour cette annonce.
       role: (a.type_bailleur as any) ?? a.extra?.role ?? null,
       typeAnnonce: a.type_annonce === 'existante' ? 'existante' : 'creation',
       ambianceAge: a.extra?.ambiance_age ?? '',
@@ -730,9 +726,6 @@ export default function DepotAnnonceDeux() {
     }
   }
 
-  // Si la page est montée sur /annonces/:id/renouveler, on charge l'annonce
-  // (statut 'expired') et on préremplit tout le formulaire, directement à
-  // la dernière étape (récap + bouton Renouveler).
   useEffect(() => {
     if (!isRenewal || !annonceId) return
     let cancelled = false
@@ -759,10 +752,7 @@ export default function DepotAnnonceDeux() {
   }, [isRenewal, annonceId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Un brouillon en attente (déposé juste avant un envoi vers /auth) est
-  // restauré dès l'arrivée sur la page, qu'on soit déjà connecté ou pas —
-  // par ex. si la personne clique sur "quitter" depuis l'écran de connexion
-  // au lieu d'aller au bout du login, elle doit quand même retrouver son
-  // annonce à l'étape où elle l'avait laissée, pas un formulaire vide.
+  // restauré dès l'arrivée sur la page, qu'on soit déjà connecté ou pas.
   useEffect(() => {
     if (draftRestored.current) return
     const raw = sessionStorage.getItem(DEPOT_DRAFT_KEY)
@@ -781,13 +771,22 @@ export default function DepotAnnonceDeux() {
           : 'Bon retour ! Ton brouillon a été restauré — connecte-toi pour publier.',
       )
       setPendingAutoPublish(true)
+
+      // Met l'URL à jour pour refléter la dernière étape, afin qu'un
+      // rafraîchissement (F5) ne ramène pas à l'étape 1.
+      const restoredSteps = stepsForRole(draft.role ?? null)
+      const lastStep = restoredSteps.length - 1
+      navigate(
+        { pathname: location.pathname, search: `?etape=${lastStep}` },
+        { replace: true },
+      )
     } catch {
       sessionStorage.removeItem(DEPOT_DRAFT_KEY)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // La publication automatique n'a lieu qu'une fois le brouillon restauré
-  // ET la personne réellement connectée (peut arriver bien après la restauration).
+  // ET la personne réellement connectée.
   useEffect(() => {
     if (!pendingAutoPublish || !user || autoPublishTriggered.current) return
     autoPublishTriggered.current = true
@@ -858,9 +857,6 @@ export default function DepotAnnonceDeux() {
       const n = cur + 1
       setCur(n)
       setMaxStep((m) => Math.max(m, n))
-      // Pousse une entrée d'historique par étape franchie : le bouton
-      // "précédent" du navigateur revient alors à l'étape précédente du
-      // formulaire au lieu de quitter carrément la page.
       navigate({ pathname: location.pathname, search: `?etape=${n}` })
     }
   }
@@ -871,9 +867,14 @@ export default function DepotAnnonceDeux() {
     if (i <= maxStep) setCur(i)
   }
 
-  // Reflète dans `cur` toute navigation arrière/avant du navigateur sur
-  // l'étape (voir le navigate() de nextStep ci-dessus qui alimente l'URL).
+  // Reflète dans `cur` toute navigation arrière/avant du navigateur sur l'étape.
   useEffect(() => {
+    // Après restauration d'un brouillon, on NE touche PAS à `cur` :
+    // il a déjà été positionné sur la dernière étape par restoreDraft().
+    if (skipNextUrlSync.current) {
+      skipNextUrlSync.current = false
+      return
+    }
     const params = new URLSearchParams(location.search)
     const raw = params.get('etape')
     const parsed = raw !== null ? Number(raw) : 0
@@ -908,8 +909,7 @@ export default function DepotAnnonceDeux() {
     try {
       sessionStorage.setItem(DEPOT_DRAFT_KEY, JSON.stringify(draft))
     } catch {
-      // Stockage indisponible ou plein : la personne devra ressaisir son
-      // formulaire après connexion, mais la redirection reste correcte.
+      // Stockage indisponible ou plein
     }
     navigate('/auth?mode=signin&redirect=/depot_annonce')
   }
@@ -936,7 +936,6 @@ export default function DepotAnnonceDeux() {
       let longitude = 47.5079
       let quartier = deriveQuartierFromAddress(locAddr)
       let ville = deriveVilleFromAddress(locAddr)
-      // Le repère placé sur la vraie carte est prioritaire s'il existe.
       if (pin) {
         latitude = pin.x
         longitude = pin.y
@@ -1350,7 +1349,20 @@ export default function DepotAnnonceDeux() {
               </div>
 
               <div className="grp">
-                <label className="lbl">Localisation du bien<span className="req">*</span></label>
+                <label className="lbl">
+                  Localisation du bien<span className="req">*</span>
+                </label>
+
+                {/* Sous-titre avec astérisque */}
+                <p className="subtitle">
+                  Affiner son emplacement<span className="req">*</span>
+                </p>
+
+                {/* Sous-titre bleu bien visible */}
+                <p className="subtitle-blue">
+                  En fonction de son emplacement, ton logement peut gagner en intérêt. Alors sois précis.
+                </p>
+
                 <input
                   className="inp"
                   type="text"
@@ -1359,7 +1371,18 @@ export default function DepotAnnonceDeux() {
                   value={locAddr}
                   onChange={(e) => setLocAddr(e.target.value)}
                 />
-                <InteractiveMap pin={pin} onPlacePin={setPin} focus={focus} />
+
+                <InteractiveMap
+                  pin={pin}
+                  onPlacePin={setPin}
+                  onUserMovePin={(p) => {
+                    setPin(p)
+                    setUserMovedPin(true) // ← geste utilisateur = pin 100 % opaque
+                  }}
+                  focus={focus}
+                  pinOpacity={pinOpaque ? 1 : 0}
+                />
+
                 <div className="note">
                   <Lock size={13} /> Pour des raisons de confidentialité, si tu renseignes ton adresse
                   exacte, celle-ci n'apparaîtra jamais sur ton annonce — seul le quartier sera visible.
@@ -1535,13 +1558,13 @@ export default function DepotAnnonceDeux() {
                   <label className="lbl">Disponible à partir du<span className="req">*</span></label>
                   <input className="inp" type="date" value={dispoDate} onChange={(e) => setDispoDate(e.target.value)} />
                 </div>
-                <div className="grp">
-                  <label className="lbl">Surface de la chambre</label>
+               {/*  <div className="grp"></div>*/} 
+                 {/* <label className="lbl">Surface de la chambre</label>
                   <div className="inp-suffix">
                     <input className="inp" type="number" min={0} placeholder="ex : 14" value={chambreSurface} onChange={(e) => setChambreSurface(e.target.value)} />
                     <span className="suf">m²</span>
-                  </div>
-                </div>
+                  </div> */}
+                
               </div>
 
               <div className="row2">
@@ -1811,93 +1834,110 @@ export default function DepotAnnonceDeux() {
       </div>
 
       {/* MODALE SIMULATION SERVICES COLOC'KOO */}
-      {simOpen && (
-        <div className="modal-overlay open" onClick={() => setSimOpen(false)}>
-          <div className="modal modal-doc" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSimOpen(false)}><X size={16} /></button>
-            <div className="modal-h bb" style={{ textAlign: 'center' }}>Simule tes services mutualisés</div>
-            <div className="modal-p" style={{ textAlign: 'center', marginBottom: 6, fontSize: 11 }}>
-              Les montants sont indicatifs. Notre équipe te contactera pour confirmer ta demande.
-            </div>
-            <div className="modal-doc-body" style={{ paddingTop: 4 }}>
-              <div className="sim-scroll">
-                {CKOO_SERVICES.map((s) => {
-                  const sel = sim[s.id] ?? { checked: false, days: 1, qty: 1 }
-                  return (
-                    <div key={s.id} className="sim-svc-block">
-                      <label className="sim-svc">
-                        <input
-                          type="checkbox"
-                          checked={sel.checked}
-                          onChange={(e) => setSim((prev) => ({ ...prev, [s.id]: { ...sel, checked: e.target.checked } }))}
-                        />
-                        <span className="sim-svc-name">{s.name}{s.star ? <span className="req">*</span> : ''}</span>
-                        <span className="sim-svc-price">
-                          {s.type === 'hour' && `${groupThousands(s.price)} Ar / heure`}
-                          {s.type === 'forfait' && `Forfait : ${groupThousands(s.price)} Ar`}
-                          {s.type === 'annual' && `${groupThousands(s.price)} Ar / an`}
-                          {s.type === 'stere' && `${groupThousands(s.price)} Ar / stère`}
-                        </span>
-                      </label>
-                      {sel.checked && s.type === 'hour' && (
-                        <div className="sim-ctrl">
-                          <select
-                            className="sim-days"
-                            value={sel.days}
-                            onChange={(e) => setSim((prev) => ({ ...prev, [s.id]: { ...sel, days: parseFloat(e.target.value) } }))}
-                          >
-                            {HOUR_DAY_OPTIONS.map((d) => (
-                              <option key={d} value={d}>{d === 0.5 ? '½ journée' : `${d} jour${d > 1 ? 's' : ''}`}</option>
-                            ))}
-                          </select>{' '}
-                          <span className="sim-week">/ mois</span>
-                        </div>
-                      )}
-                      {sel.checked && s.type === 'stere' && (
-                        <div className="sim-ctrl">
-                          <input
-                            type="number"
-                            min={1}
-                            className="sim-qty"
-                            value={sel.qty}
-                            onChange={(e) => setSim((prev) => ({ ...prev, [s.id]: { ...sel, qty: parseFloat(e.target.value) || 0 } }))}
-                            style={{ width: 70 }}
-                          />
-                        </div>
-                      )}
-                      {sel.checked && s.note && (
-                        <div className="sim-note-legend"><Info size={12} /> {s.note}</div>
-                      )}
+{simOpen && (
+  <div className="modal-overlay open" onClick={() => setSimOpen(false)}>
+    <div className="modal modal-doc" onClick={(e) => e.stopPropagation()}>
+      <button className="modal-close" onClick={() => setSimOpen(false)}><X size={16} /></button>
+      <div className="modal-h bb" style={{ textAlign: 'center' }}>Simule tes services mutualisés</div>
+      <div className="modal-p" style={{ textAlign: 'center', marginBottom: 6, fontSize: 11 }}>
+        Les montants sont indicatifs. Notre équipe te contactera pour confirmer ta demande.
+      </div>
+      <div className="modal-doc-body" style={{ paddingTop: 4 }}>
+        <div className="sim-scroll">
+          {CKOO_SERVICES.map((s) => {
+            const sel = sim[s.id] ?? { checked: false, days: 1, qty: 1 }
+            // Calcul du détail pour les services horaires
+            const daysPerWeek = sel.days ?? 1
+            const hoursPerDay = daysPerWeek === 0.5 ? 4 : 8
+            const hoursPerMonth = daysPerWeek * hoursPerDay * 4.33
+            const costPerMonth = Math.round(hoursPerMonth * s.price)
+            return (
+              <div key={s.id} className="sim-svc-block">
+                <label className="sim-svc">
+                  <input
+                    type="checkbox"
+                    checked={sel.checked}
+                    onChange={(e) => setSim((prev) => ({ ...prev, [s.id]: { ...sel, checked: e.target.checked } }))}
+                  />
+                  <span className="sim-svc-name">{s.name}{s.star ? <span className="req">*</span> : ''}</span>
+                  <span className="sim-svc-price">
+                    {s.type === 'hour' && `${groupThousands(s.price)} Ar / heure`}
+                    {s.type === 'forfait' && `Forfait : ${groupThousands(s.price)} Ar`}
+                    {s.type === 'annual' && `${groupThousands(s.price)} Ar / an`}
+                    {s.type === 'stere' && `${groupThousands(s.price)} Ar / stère`}
+                  </span>
+                </label>
+
+                {sel.checked && s.type === 'hour' && (
+                  <div className="sim-ctrl">
+                    <select
+                      className="sim-days"
+                      value={sel.days}
+                      onChange={(e) => setSim((prev) => ({ ...prev, [s.id]: { ...sel, days: parseFloat(e.target.value) } }))}
+                    >
+                      {HOUR_DAY_OPTIONS.map((d) => (
+                        <option key={d} value={d}>
+                          {d === 0.5 ? '½ journée' : `${d} jour${d > 1 ? 's' : ''}`} / semaine
+                        </option>
+                      ))}
+                    </select>{' '}
+                    <span className="sim-week">≈ {hoursPerMonth.toFixed(1)} h / mois</span>
+
+                    {/* Détail transparent du calcul */}
+                    <div style={{ fontSize: 11, color: '#666', marginTop: 6, lineHeight: 1.5 }}>
+                      <b>{hoursPerMonth.toFixed(1)} h / mois</b> × {groupThousands(s.price)} Ar/h ={' '}
+                      <b style={{ color: 'var(--g2)' }}>{groupThousands(costPerMonth)} Ar / mois</b>
                     </div>
-                  )
-                })}
+                  </div>
+                )}
+
+                {sel.checked && s.type === 'stere' && (
+                  <div className="sim-ctrl">
+                    <input
+                      type="number"
+                      min={1}
+                      className="sim-qty"
+                      value={sel.qty}
+                      onChange={(e) => setSim((prev) => ({ ...prev, [s.id]: { ...sel, qty: parseFloat(e.target.value) || 0 } }))}
+                      style={{ width: 70 }}
+                    />{' '}
+                    <span className="sim-week">stère(s) / an</span>
+                  </div>
+                )}
+
+                {sel.checked && s.note && (
+                  <div className="sim-note-legend"><Info size={12} /> {s.note}</div>
+                )}
               </div>
-            </div>
-            {simTotals.maxDays > 0 && (
-              <div className="sim-sub">
-                <span>Frais de gestion (CNAPS / OSTIE / Mobile Money / Comptabilité)</span>
-                <span>{fmtAr(simTotals.mgmt)} Ar</span>
-              </div>
-            )}
-            <div className="sim-total">
-              <span className="sim-total-l">Total mensuel cumulé</span>
-              <span className="sim-total-v">{fmtAr(simTotals.monthly)} Ar</span>
-            </div>
-            <div className="sim-legal">
-              <ShieldCheck size={14} />
-              <div>Inscription systématique à la <b>CNAPS</b> et à l'<b>OSTIE</b>, congés payés inclus.</div>
-            </div>
-            <button className="modal-btn" onClick={integrateSim}><Plus size={16} /> Intégrer aux charges des colocs</button>
-            <button
-              type="button"
-              onClick={deleteSim}
-              style={{ display: 'block', width: '100%', marginTop: 8, background: 'none', border: 'none', color: 'var(--gr2)', fontSize: 12, textDecoration: 'underline', cursor: 'pointer' }}
-            >
-              <Trash2 size={13} /> Supprimer
-            </button>
-          </div>
+            )
+          })}
+        </div>
+      </div>
+      {simTotals.maxDays > 0 && (
+        <div className="sim-sub">
+          <span>Frais de gestion (CNAPS / OSTIE / Mobile Money / Comptabilité)</span>
+          <span>{fmtAr(simTotals.mgmt)} Ar</span>
         </div>
       )}
+      <div className="sim-total">
+        <span className="sim-total-l">Total mensuel cumulé</span>
+        <span className="sim-total-v">{fmtAr(simTotals.monthly)} Ar</span>
+      </div>
+      <div className="sim-legal">
+        <ShieldCheck size={14} />
+        <div>Inscription systématique à la <b>CNAPS</b> et à l'<b>OSTIE</b>, congés payés inclus.</div>
+      </div>
+      <button className="modal-btn" onClick={integrateSim}><Plus size={16} /> Intégrer aux charges des colocs</button>
+      <button
+        type="button"
+        onClick={deleteSim}
+        style={{ display: 'block', width: '100%', marginTop: 8, background: 'none', border: 'none', color: 'var(--gr2)', fontSize: 12, textDecoration: 'underline', cursor: 'pointer' }}
+      >
+        <Trash2 size={13} /> Supprimer
+      </button>
+    </div>
+  </div>
+)}
     </SiteLayout>
   )
 }
@@ -1981,17 +2021,12 @@ const depotAnnonceDeuxCss = `
 .err.show{display:flex;}
 .realmap{position:relative;height:260px;border-radius:11px;overflow:hidden;border:1px solid var(--bd);background:#dce8d0;}
 .realmap .leaflet-container{height:100%;width:100%;}
-.dmap{position:relative;height:210px;border-radius:11px;overflow:hidden;border:1px solid var(--bd);background:#dce8d0;cursor:grab;touch-action:none;}
-.dmap-canvas{position:absolute;top:0;left:0;width:1000px;height:800px;transform-origin:0 0;will-change:transform;background:repeating-linear-gradient(0deg,#e6efdd,#e6efdd 38px,#dde9d0 38px,#dde9d0 40px),repeating-linear-gradient(90deg,#e6efdd,#e6efdd 38px,#dde9d0 38px,#dde9d0 40px);}
-.droad{position:absolute;background:#cdd9c0;border-radius:2px;}
-.dwater{position:absolute;background:#bfe0e8;opacity:.65;}
-.dmap-pin{color:var(--cy);z-index:5;}
-.dmap-zoom{position:absolute;bottom:12px;right:10px;display:flex;flex-direction:column;gap:4px;z-index:10;}
-.dmap-zoom button{width:30px;height:30px;border-radius:7px;border:1px solid var(--bd);background:#fff;font-size:18px;font-weight:700;color:var(--dark);cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;}
-.dmap-zoom button:hover{background:#f3f3f3;}
-.dmap-credit{position:absolute;bottom:9px;left:10px;font-size:9px;color:var(--gr1);background:rgba(255,255,255,.82);padding:2px 6px;border-radius:4px;z-index:10;}
 .dmap-hint{position:absolute;top:8px;left:10px;right:50px;font-size:10px;color:var(--gr1);background:rgba(255,255,255,.9);padding:5px 8px;border-radius:6px;display:flex;align-items:center;gap:5px;z-index:10;line-height:1.3;}
-.tgl{position:relative;width:42px;height:24px;flex-shrink:0;}
+
+/* --- Sous-titres Localisation --- */
+.subtitle{margin:4px 0 6px;font-size:13px;font-weight:700;color:var(--dark);}
+.subtitle-blue{margin:0 0 10px;font-size:12.5px;font-weight:500;color:#1d4ed8;background:#eff6ff;border-left:3px solid #1d4ed8;padding:7px 10px;border-radius:4px;line-height:1.45;}
+
 .photos-info{display:flex;gap:9px;background:var(--cy-lt);border:1px solid rgba(70,189,214,.25);border-radius:10px;padding:11px;margin-bottom:14px;font-size:12px;color:var(--gr1);line-height:1.5;}
 .photos-info svg{color:var(--cy);flex-shrink:0;margin-top:1px;}
 .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
