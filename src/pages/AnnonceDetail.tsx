@@ -277,7 +277,10 @@ export default function AnnonceDetail() {
     const loadAnnonce = async () => {
       try {
         const annonce = await api.annonce(id)
-        if (!['active', 'valide', 'validee', 'publiée', 'publiee'].includes(String(annonce.statut))) {
+        const publicStatuses = ['active', 'valide', 'validee', 'publiée', 'publiee']
+        const currentUserId = user ? user.id : null
+        const isOwner = Boolean(currentUserId) && Number(annonce.id_utilisateur) === Number(currentUserId)
+        if (!publicStatuses.includes(String(annonce.statut)) && !isOwner) {
           setNotFound(true)
           return
         }
