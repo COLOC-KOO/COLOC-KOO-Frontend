@@ -9,7 +9,7 @@ export default function Footer() {
     <footer className="bg-[#2c2c2c] py-6 px-6 text-center mt-9">
       <div className="flex items-center justify-center gap-2.5 mb-2">
         <LogoSVG height={28} />
-        <LogoName />
+        <LogoName subtitleClassName="text-[10px] text-white/40" />
       </div>
       <p className="text-[10px] text-white/35 mb-3 leading-7">
         Un service gratuit proposé par{' '}

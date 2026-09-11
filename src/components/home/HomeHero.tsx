@@ -3,8 +3,9 @@ import { Home, MapPin, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { LazyImage } from '../ui/LazyImage'
 import { useLiteMode } from '../../lib/useLiteMode'
+import heroPixelImg from '../../assets/hero-pixel.png'
 
-const HERO_BG = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80'
+const HERO_BG = heroPixelImg
 
 type HomeHeroProps = { mode: 'chercher' | 'proposer'; onModeChange: (mode: 'chercher' | 'proposer') => void; searchTerm: string; onSearchTermChange: (value: string) => void; suggestions: string[]; onSearch: () => void }
 
