@@ -1,47 +1,6 @@
 import React, { useState } from "react";
 import { Check, ChevronLeft, Info, Mail, Sparkles, X, Eye, Copy, Smartphone } from "lucide-react";
-
-export function LogoMark({ className = "h-12 w-12" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="50" cy="50" r="46" fill="#008FA6" fillOpacity="0.1" />
-      <path
-        d="M26 48L50 28L74 48"
-        stroke="#008FA6"
-        strokeWidth="6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M32 46V70C32 72.2 33.8 74 36 74H64C66.2 74 68 72.2 68 70V46"
-        stroke="#008FA6"
-        strokeWidth="5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="43" cy="54" r="4.5" fill="#B83280" />
-      <path
-        d="M36 67C36 63 39 61 43 61C47 61 50 63 50 67"
-        stroke="#B83280"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-      />
-      <circle cx="57" cy="52" r="4" fill="#10B981" />
-      <path
-        d="M51 65C51 61.5 53.5 59.5 57 59.5C60.5 59.5 63 61.5 63 65"
-        stroke="#10B981"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
+import { LogoMark } from "../Logo";
 
 type Props = {
   activeBail: any[];
@@ -273,9 +232,11 @@ export function ContractWizardModal({
                 </React.Fragment>;
               })}
             </div>
-            <div className="grid gap-2">
-              {activeSolidarite.map((option) => <label key={option.cle} className="flex cursor-pointer items-start gap-3 rounded-lg p-1 text-left hover:bg-muted/30"><input type="radio" name="solidarite" checked={solidarite === option.cle} onChange={() => onSetSolidarite(option.cle)} className="mt-1 h-5 w-5 shrink-0 accent-brand-cyan" /><span><span className="block text-sm font-bold text-brand-dark">{repairUtf8Text(option.titre)}</span><span className="block text-xs leading-relaxed text-muted-foreground">{repairUtf8Text(option.description || option.texte || "Responsabilités entre colocataires.")}</span></span></label>)}
-            </div>
+            {contractMode !== "both" && (
+              <div className="grid gap-2">
+                {activeSolidarite.map((option) => <label key={option.cle} className="flex cursor-pointer items-start gap-3 rounded-lg p-1 text-left hover:bg-muted/30"><input type="radio" name="solidarite" checked={solidarite === option.cle} onChange={() => onSetSolidarite(option.cle)} className="mt-1 h-5 w-5 shrink-0 accent-brand-cyan" /><span><span className="block text-sm font-bold text-brand-dark">{repairUtf8Text(option.titre)}</span><span className="block text-xs leading-relaxed text-muted-foreground">{repairUtf8Text(option.description || option.texte || "Responsabilités entre colocataires.")}</span></span></label>)}
+              </div>
+            )}
             <button type="button" disabled={!bailType} onClick={() => onSetContractStep("contenu")} className="w-full rounded-xl bg-brand-magenta px-5 py-3.5 text-sm font-bold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50">Prochaine étape</button>
             <div className="flex items-center justify-between text-xs"><button type="button" onClick={() => onSetContractStep("offer")} className="text-muted-foreground hover:text-foreground"><ChevronLeft className="mr-1 inline h-4 w-4" />Étape précédente</button><button type="button" onClick={onIgnoreOffer} className="text-muted-foreground hover:text-foreground">Ignorer l'offre</button></div>
           </div>
@@ -416,7 +377,7 @@ export function ContractWizardModal({
               ) : (
                 <>
                   {isEdlOnly ? "Document d'état des lieux" : "Contrat de colocation"}
-                  {!isEdlOnly && <> — {bailType === "collectif" ? "bail collectif" : "bail individuel"} {solidarite === "avec" ? "avec" : "sans"} clause de solidarité</>}. Forfait <b>{fmtAr(previewTotal)} Ar</b>, réparti entre les colocataires.
+                  {!isEdlOnly && <> — {bailType === "collectif" ? "bail collectif" : "bail individuel"}{contractMode !== "both" && <> {solidarite === "avec" ? "avec" : "sans"} clause de solidarité</>}</>}. Forfait <b>{fmtAr(previewTotal)} Ar</b>, réparti entre les colocataires.
                   <br />
                   <br />
                   En cliquant sur <b>Terminer</b>, le contrat sera <b>enregistré</b>. Chaque colocataire règlera ensuite <b>sa part</b> ; toi, tu ne paies rien.

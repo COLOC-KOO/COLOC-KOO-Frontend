@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Edit, Trash, Image as ImageIcon, Eye, Archive } from 'lucide-react'
 import { api, ApiAnnonce } from '../../lib/api'
+import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
 
-const FALLBACK_IMG = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80'
+const FALLBACK_IMG = LOGO_PLACEHOLDER
 
 function normalizePhotos(value: unknown): string[] {
   if (Array.isArray(value)) {
@@ -225,7 +226,11 @@ export default function TabMesAnnonces() {
                     <img
                       src={img}
                       alt={annonce.titre}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      className={
+                        isLogoPlaceholder(img)
+                          ? 'w-full h-full object-contain bg-[--brand-cyan-light] p-6'
+                          : 'w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+                      }
                     />
                   </Link>
                   <div className="flex-1 p-5">
@@ -342,7 +347,7 @@ export default function TabMesAnnonces() {
                       <button type="button" onClick={() => removePhoto(index)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white" aria-label="Supprimer cette photo">×</button>
                     </div>
                   ))}
-                  {editablePhotos.length === 0 && <img src={FALLBACK_IMG} alt="Aucune photo" className="h-16 w-24 rounded-2xl object-cover border border-border" />}
+                  {editablePhotos.length === 0 && <img src={FALLBACK_IMG} alt="Aucune photo" className="h-16 w-24 rounded-2xl object-contain bg-[--brand-cyan-light] p-2 border border-border" />}
                   <label className="flex h-16 w-24 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-brand-cyan text-center text-xs font-semibold text-brand-cyan hover:bg-brand-cyan/5">
                     {uploadingPhotos ? 'Ajout...' : '+ Ajouter'}
                     <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" disabled={uploadingPhotos} />

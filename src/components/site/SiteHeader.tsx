@@ -219,7 +219,7 @@ export function SiteHeader() {
         <div className="flex-shrink-0">
           <Link to="/" className="sm:hidden flex items-center gap-1.5" aria-label="Accueil">
             <LogoMark className="h-8 w-auto" />
-            <LogoName className="bebas text-lg leading-none" />
+            <LogoName className="bebas text-lg leading-none" showSubtitle={false} />
           </Link>
           <div className="hidden sm:block">
           <Logo small />

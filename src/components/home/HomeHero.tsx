@@ -5,7 +5,6 @@ import { LazyImage } from '../ui/LazyImage'
 import { useLiteMode } from '../../lib/useLiteMode'
 import HeroImg from '../../assets/WhatsApp Image 2026-09-11 at 15.55.47.jpeg'
 
-
 type HomeHeroProps = { mode: 'chercher' | 'proposer'; onModeChange: (mode: 'chercher' | 'proposer') => void; searchTerm: string; onSearchTermChange: (value: string) => void; suggestions: string[]; onSearch: () => void }
 
 export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, suggestions, onSearch }: HomeHeroProps) {

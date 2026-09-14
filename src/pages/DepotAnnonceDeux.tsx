@@ -1383,11 +1383,11 @@ export default function DepotAnnonceDeux() {
                   pinOpacity={pinOpaque ? 1 : 0}
                 />
 
-                <div className="note">
+                <div className="note" style={{ justifyContent: 'center', textAlign: 'center' }}>
                   <Lock size={13} /> Pour des raisons de confidentialité, si tu renseignes ton adresse
                   exacte, celle-ci n'apparaîtra jamais sur ton annonce — seul le quartier sera visible.
                 </div>
-                <div className="hint">
+                <div className="hint" style={{ justifyContent: 'center', textAlign: 'center' }}>
                   <Info size={11} /> Le placement sur la carte est obligatoire, même si tu as saisi une adresse.
                 </div>
               </div>

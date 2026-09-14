@@ -1,6 +1,7 @@
 
 // src/lib/api.ts
 import {Listing} from '../types'
+import {LOGO_PLACEHOLDER} from './placeholders'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 const API_BASE_URL = API_URL.replace(/\/api\/?$/, '')
@@ -321,6 +322,18 @@ export interface Ville {
     nom_ville: string
     id_region: number
     nom_region: string
+}
+
+export interface CreateAlertePayload {
+    id_utilisateur: number
+    id_ville: number
+    quartier?: string | null
+    prix_max?: number | null
+    types_bien?: string[]
+    types_annonce?: string[]
+    regles?: string[]
+    notif_push?: boolean
+    notif_email?: boolean
 }
 
 export interface BackofficeDashboard {
@@ -958,6 +971,12 @@ export const api = {
     },
     villes() {
         return request<Ville[]>('/meta/villes')
+    },
+    createAlerte(payload: CreateAlertePayload) {
+        return request<{ ok: boolean; id: number }>('/alertes', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
     },
     langues() {
         return request<Langue[]>('/meta/langues')
@@ -1702,7 +1721,7 @@ export const api = {
     // ================================================================
 }
 
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+const FALLBACK_IMAGE = LOGO_PLACEHOLDER
 
 function normalizePhotos(value: unknown): string[] {
     if (Array.isArray(value)) {
