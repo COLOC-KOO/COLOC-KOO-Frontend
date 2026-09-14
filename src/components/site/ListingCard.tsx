@@ -4,8 +4,9 @@ import { BedDouble, Camera, MapPin, Users, Heart, ChevronLeft, ChevronRight } fr
 import { Listing } from '../../types'
 import { formatAr } from '../../lib/utils'
 import { LazyImage } from '../ui/LazyImage'
+import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
 
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+const FALLBACK_IMAGE = LOGO_PLACEHOLDER
 
 interface ListingCardProps {
   l: Listing
@@ -47,7 +48,16 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
       <div className={`relative overflow-hidden bg-gray-100 ${compact ? 'w-[120px] min-w-[120px] h-28 flex-shrink-0 rounded-l-xl' : 'h-44'}`}>
         <div className="flex h-full transition-transform duration-300" style={{ transform: `translateX(-${imgIdx * 100}%)` }}>
           {imgs.map((src, i) => (
-            <LazyImage key={i} src={src} alt={l.title} className="min-w-full h-full object-cover flex-shrink-0" />
+            <LazyImage
+              key={i}
+              src={src}
+              alt={l.title}
+              className={
+                isLogoPlaceholder(src)
+                  ? 'min-w-full h-full object-contain flex-shrink-0 bg-[--brand-cyan-light] p-8'
+                  : 'min-w-full h-full object-cover flex-shrink-0'
+              }
+            />
           ))}
         </div>
 

@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Heart, Trash, Image as ImageIcon } from 'lucide-react'
 import { api, ApiAnnonce } from '../../lib/api'
+import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
 
-const FALLBACK_IMG = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80'
+const FALLBACK_IMG = LOGO_PLACEHOLDER
 
 function normalizePhotos(value: unknown): string[] {
   if (Array.isArray(value)) {
@@ -98,7 +99,11 @@ export default function TabMesFavoris() {
                     <img
                       src={img}
                       alt={annonce.titre}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      className={
+                        isLogoPlaceholder(img)
+                          ? 'w-full h-full object-contain bg-[--brand-cyan-light] p-6'
+                          : 'w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+                      }
                     />
                   </Link>
                   <div className="flex-1 p-5 pr-16">

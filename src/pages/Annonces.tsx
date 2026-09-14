@@ -335,6 +335,11 @@ export default function Annonces() {
   const [error, setError] = useState("");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [alertStage, setAlertStage] = useState<"closed" | "auth" | "confirm">("closed");
+  const [alertVilleId, setAlertVilleId] = useState("");
+  const [alertSubmitting, setAlertSubmitting] = useState(false);
+  const [alertError, setAlertError] = useState("");
+  const [alertDone, setAlertDone] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteMessage, setFavoriteMessage] = useState("");
   const [openDrop, setOpenDrop] = useState<string | null>(null);
@@ -479,6 +484,51 @@ export default function Annonces() {
     const fromListings = listings.map((l) => l.city);
     return [...new Set([...fromDb, ...fromListings, ...externalCities])].sort((a, b) => a.localeCompare(b, "fr"));
   }, [listings, villes, externalCities]);
+
+  // La ville filtrée correspond-elle à une vraie ville en base ? Sinon on la
+  // demande dans la pop-up (l'alerte a besoin d'un id_ville valide côté API).
+  const matchedAlertVille = useMemo(
+    () => villes.find((v) => v.nom_ville.toLowerCase() === city.trim().toLowerCase()) || null,
+    [villes, city]
+  );
+
+  const openAlertModal = () => {
+    if (!user) {
+      setAlertStage("auth");
+      return;
+    }
+    setAlertVilleId(matchedAlertVille ? String(matchedAlertVille.id_ville) : "");
+    setAlertError("");
+    setAlertDone(false);
+    setAlertStage("confirm");
+  };
+
+  const confirmCreateAlerte = async () => {
+    if (!user) return;
+    const idVille = Number(alertVilleId);
+    if (!alertVilleId || Number.isNaN(idVille)) {
+      setAlertError("Choisis une ville pour ton alerte.");
+      return;
+    }
+    setAlertSubmitting(true);
+    setAlertError("");
+    try {
+      await api.createAlerte({
+        id_utilisateur: Number(user.id),
+        id_ville: idVille,
+        quartier: district || null,
+        prix_max: maxPrice || null,
+        types_bien: type ? [type] : [],
+        notif_push: true,
+        notif_email: true,
+      });
+      setAlertDone(true);
+    } catch (err) {
+      setAlertError(err instanceof Error ? err.message : "Impossible de créer l'alerte pour le moment.");
+    } finally {
+      setAlertSubmitting(false);
+    }
+  };
 
   const visibleListings = useMemo(() => {
     return listings.filter((listing) => {
@@ -926,6 +976,8 @@ export default function Annonces() {
           </div>
 
           <button
+            type="button"
+            onClick={openAlertModal}
             className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer"
             style={{ backgroundColor: "#46BDD6" }}
           >
@@ -933,6 +985,123 @@ export default function Annonces() {
             Créer une alerte{(city || query) ? <> · <strong>{city || query}</strong></> : null}
           </button>
         </div>
+
+        {alertStage !== "closed" && (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-950/50 p-4" role="presentation">
+            <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+              <button
+                type="button"
+                onClick={() => setAlertStage("closed")}
+                aria-label="Fermer"
+                className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              {alertStage === "auth" ? (
+                <>
+                  <h3 className="bebas text-xl text-slate-900 mb-2">Connecte-toi pour créer une alerte</h3>
+                  <p className="text-sm text-slate-500 mb-5">
+                    Crée un compte ou connecte-toi pour être prévenu·e dès qu'une annonce correspond à ta recherche.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/auth?mode=signin&redirect=/annonces")}
+                    className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: "#46BDD6" }}
+                  >
+                    Se connecter / S'inscrire
+                  </button>
+                </>
+              ) : alertDone ? (
+                <>
+                  <h3 className="bebas text-xl text-slate-900 mb-2">Alerte créée !</h3>
+                  <p className="text-sm text-slate-500 mb-5">
+                    Tu retrouveras toutes tes alertes dans la section ton compte.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setAlertStage("closed")}
+                    className="w-full rounded-xl border border-sc-bd px-4 py-2.5 text-sm font-semibold text-sc-dark hover:bg-muted"
+                  >
+                    Fermer
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3 className="bebas text-xl text-slate-900 mb-1">Créer une alerte</h3>
+                  <p className="text-sm text-slate-500 mb-4">
+                    On te préviendra dès qu'une annonce correspond à ces critères.
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {type && (
+                      <span className="text-[11px] font-semibold bg-muted text-foreground/70 rounded-md px-2.5 py-1">{type}</span>
+                    )}
+                    {district && (
+                      <span className="text-[11px] font-semibold bg-muted text-foreground/70 rounded-md px-2.5 py-1">{district}</span>
+                    )}
+                    {maxPrice > 0 && (
+                      <span className="text-[11px] font-semibold bg-muted text-foreground/70 rounded-md px-2.5 py-1">
+                        Jusqu'à {formatAr(maxPrice)}
+                      </span>
+                    )}
+                    {!type && !district && !maxPrice && (
+                      <span className="text-[11px] text-slate-400">Aucun filtre particulier — toutes les annonces de la ville.</span>
+                    )}
+                  </div>
+
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Ville<span className="text-red-500"> *</span>
+                  </label>
+                  {matchedAlertVille ? (
+                    <div className="mb-4 rounded-xl border border-sc-bd bg-muted/40 px-3 py-2 text-sm font-semibold text-sc-dark">
+                      {matchedAlertVille.nom_ville}
+                    </div>
+                  ) : (
+                    <select
+                      value={alertVilleId}
+                      onChange={(e) => setAlertVilleId(e.target.value)}
+                      className="mb-4 w-full rounded-xl border border-sc-bd px-3 py-2 text-sm outline-none focus:border-sc-cy"
+                    >
+                      <option value="">Choisis une ville</option>
+                      {villes.map((v) => (
+                        <option key={v.id_ville} value={v.id_ville}>
+                          {v.nom_ville}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {alertError && <div className="mb-3 text-xs text-red-600">{alertError}</div>}
+
+                  <p className="text-xs text-slate-400 mb-4">
+                    Tu retrouveras toutes tes alertes dans la section ton compte.
+                  </p>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setAlertStage("closed")}
+                      className="flex-1 rounded-xl border border-sc-bd px-4 py-2.5 text-sm font-semibold text-sc-dark hover:bg-muted"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      disabled={alertSubmitting}
+                      onClick={confirmCreateAlerte}
+                      className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                      style={{ backgroundColor: "#46BDD6" }}
+                    >
+                      {alertSubmitting ? "Création…" : "Confirmer"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="bg-white px-4 py-4">
           <Link

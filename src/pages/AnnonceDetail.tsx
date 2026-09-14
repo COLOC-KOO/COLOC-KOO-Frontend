@@ -15,6 +15,7 @@ import { annonceToListing, api } from '../lib/api'
 import { roleLevel, useAuth } from '../lib/auth'
 import { Listing } from '../types'
 import { formatAr } from '../lib/utils'
+import { isLogoPlaceholder } from '../lib/placeholders'
 import NotFound from './NotFound'
 
 type Candidate = {
@@ -277,7 +278,10 @@ export default function AnnonceDetail() {
     const loadAnnonce = async () => {
       try {
         const annonce = await api.annonce(id)
-        if (!['active', 'valide', 'validee', 'publiée', 'publiee'].includes(String(annonce.statut))) {
+        const publicStatuses = ['active', 'valide', 'validee', 'publiée', 'publiee']
+        const currentUserId = user ? user.id : null
+        const isOwner = Boolean(currentUserId) && Number(annonce.id_utilisateur) === Number(currentUserId)
+        if (!publicStatuses.includes(String(annonce.statut)) && !isOwner) {
           setNotFound(true)
           return
         }
@@ -562,7 +566,15 @@ export default function AnnonceDetail() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid gap-6 lg:grid-cols-[1.45fr_0.78fr_380px]">
           <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted shadow-sm">
-            <img src={listing.gallery[0]} alt={listing.title} className="h-full w-full object-cover" />
+            <img
+              src={listing.gallery[0]}
+              alt={listing.title}
+              className={
+                isLogoPlaceholder(listing.gallery[0])
+                  ? 'h-full w-full object-contain bg-[--brand-cyan-light] p-12'
+                  : 'h-full w-full object-cover'
+              }
+            />
             <div className="absolute bottom-5 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg">
               <Eye className="h-4 w-4" /> {listing.gallery.length} Photos
             </div>

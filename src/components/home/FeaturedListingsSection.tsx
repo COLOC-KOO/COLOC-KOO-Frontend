@@ -33,7 +33,7 @@ export function FeaturedListingsSection({
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 xl:px-12">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
           <div className="max-w-2xl">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400 mb-3">{t("home:featured.subtitle")}</p>
+            <p className="hidden md:block text-xs uppercase tracking-[0.35em] text-slate-400 mb-3">{t("home:featured.subtitle")}</p>
             <h2 className="bebas text-4xl font-semibold tracking-tight text-slate-900">
               {t("home:featured.title")}
             </h2>
