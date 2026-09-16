@@ -641,7 +641,8 @@ export default function AnnonceDetail() {
           <div className="mt-3 flex flex-wrap items-baseline gap-3">
             <span className="text-3xl font-bold text-[var(--brand-cyan-dark)]">{formatAr(listing.price)}</span>
             {listing.surface ? (
-              <span className="text-lg text-slate-500">{Math.round(listing.price / Math.max(listing.surface, 1)).toLocaleString('fr-FR')} Ar / m2</span>
+              <span className="text-lg text-slate-500">{Math.round(listing.price / Math.max(listing.surface, 1)).toLocaleString('fr-FR')} Ar / m2
+              </span>
             ) : null}
           </div>
         </div>
@@ -756,7 +757,7 @@ export default function AnnonceDetail() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 border-y border-border py-6">
-            <StatItem icon={<BedDouble />} value={`${listing.surface || '-'} m2`} label={t('annonceDetail:stats.surface')} />
+            {/*<StatItem icon={<BedDouble />} value={`${listing.surface || '-'} m2`} label={t('annonceDetail:stats.surface')} />*/}
             <StatItem icon={<Users />} value={`${listing.rooms}`} label={t('annonceDetail:stats.housemates')} />
             <StatItem icon={<Shield />} value={
               listing.candidatureCount && listing.candidatureCount > 0
@@ -820,12 +821,12 @@ export default function AnnonceDetail() {
                 ) : null}
 
                 {/* Surface totale */}
-                {listing.surface > 0 ? (
+                {/*{listing.surface > 0 ? (
                   <div className="flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-brand-cyan-dark" />
                     <span className="text-foreground">Surface totale : {listing.surface} m²</span>
                   </div>
-                ) : null}
+                ) : null}*/}
 
                 {/* Chambres */}
                 {listing.bedrooms > 0 ? (

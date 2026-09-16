@@ -4,25 +4,39 @@ import { useNavigate } from 'react-router-dom'
 import { MessageSquare, Bell, Users, Home, Heart, Trash } from 'lucide-react'
 import { api } from '../../lib/api'
 import { Button } from '../../components/ui/Button'
+import { useRealtime } from '../../lib/realtime'   // ⬅️ AJOUT
 
 export default function TabNotif() {
   const { t } = useTranslation('compte')
   const navigate = useNavigate()
+  const { subscribe } = useRealtime()   // ⬅️ AJOUT
   const [notifications, setNotifications] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-
+   console.log('[TabNotif] RENDU, subscribe dispo ?', typeof subscribe) 
+  // 1) Fetch initial
   useEffect(() => {
-    const refreshNotifications = () => {
-      api.notifications()
-        .then((data) => setNotifications(data))
-        .catch(() => setNotifications([]))
-        .finally(() => setLoading(false))
-    }
-    refreshNotifications()
-    window.addEventListener('colockoo:counters-refresh', refreshNotifications)
-    return () => window.removeEventListener('colockoo:counters-refresh', refreshNotifications)
+    api.notifications()
+      .then((data) => setNotifications(data))
+      .catch(() => setNotifications([]))
+      .finally(() => setLoading(false))
   }, [])
+
+  // 2) ⬅️ Écoute WS via le provider global (remplace l'ancien window.addEventListener)
+  useEffect(() => {
+      console.log('[TabNotif] useEffect subscribe → abonnement') 
+    return subscribe((payload) => {
+      console.log('[TabNotif] payload reçu :', payload)
+      if (payload.type === 'notification' && payload.notification) {
+        const notif = payload.notification
+        setNotifications((prev) =>
+          prev.some((n) => n.id_notification === notif.id_notification)
+            ? prev
+            : [notif, ...prev]
+        )
+      }
+    })
+  }, [subscribe])
 
   const handleNotificationClick = async (notification: any) => {
     try {
@@ -100,8 +114,8 @@ export default function TabNotif() {
               key={item.id_notification}
               onClick={() => handleNotificationClick(item)}
               className={`w-full text-left rounded-xl border p-4 transition-all cursor-pointer ${
-                item.est_lue 
-                  ? 'border-border bg-white hover:border-brand-cyan/30 hover:shadow-sm' 
+                item.est_lue
+                  ? 'border-border bg-white hover:border-brand-cyan/30 hover:shadow-sm'
                   : 'border-brand-cyan/20 bg-brand-cyan-light/10 hover:border-brand-cyan/40 hover:shadow-md'
               }`}
             >
@@ -123,7 +137,7 @@ export default function TabNotif() {
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="rounded-full bg-muted px-2.5 py-1 font-medium">
-                      {item.type_notification === 'message' ? t('messageContact') : 
+                      {item.type_notification === 'message' ? t('messageContact') :
                        item.type_notification === 'candidature' ? 'Candidature' :
                        item.type_notification === 'annonce' ? 'Annonce' :
                        item.type_notification === 'favori' ? 'Favori' : t('notification')}

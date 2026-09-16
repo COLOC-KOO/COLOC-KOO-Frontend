@@ -29,7 +29,8 @@ import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerp
 import TabAlertes from './compte/TabAlertes'
 import TabCompteDonnees from './compte/TabCompteDonnees'
 import TabMesFavoris from './compte/TabMesFavoris'
-
+import TabNotif from './compte/TabNotif'         
+import { useRealtime } from '../lib/realtime'  
 /* ------------------------------------------------------------------ */
 /*  Switch style maquette (pilule verte), utilisé pour 2FA + RGPD      */
 /* ------------------------------------------------------------------ */
@@ -482,6 +483,7 @@ export default function Compte() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, loading, logout, updateProfile, isAdmin } = useAuth()
+  const { subscribe } = useRealtime() 
   const [counters, setCounters] = useState({ favoris: 0, notifications: 0, messages: 0 })
   const [alertCount, setAlertCount] = useState(0)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -491,38 +493,43 @@ export default function Compte() {
   const isColocataire = user?.poste === 'colocataire'
 
   // Utilisation des clés de traduction pour tous les onglets
-  const tabs = [
-    {
-      id: 'profil',
-      label: t('profile'),
-      icon: User
-    },
-    {
-      id: isColocataire ? 'favoris' : 'dossier',
-      label: isColocataire ? t('myFavoritesTab') : t('myListings'),
-      icon: isColocataire ? Heart : Home
-    },
-    {
-      id: 'alertes',
-      label: t('myAlerts'),
-      icon: Bell
-    },
-    {
-      id: 'conversations',
-      label: t('conversations'),
-      icon: MessageSquare
-    },
-    {
-      id: 'notif',
-      label: t('preferences'),
-      icon: Settings
-    },
-    {
-      id: 'secu',
-      label: t('accountAndData'),
-      icon: ShieldCheck
-    }
-  ]
+ const tabs = [
+  {
+    id: 'profil',
+    label: t('profile'),
+    icon: User
+  },
+  {
+    id: isColocataire ? 'favoris' : 'dossier',
+    label: isColocataire ? t('myFavoritesTab') : t('myListings'),
+    icon: isColocataire ? Heart : Home
+  },
+  {
+    id: 'alertes',
+    label: t('myAlerts'),
+    icon: Bell
+  },
+  {
+    id: 'conversations',
+    label: t('conversations'),
+    icon: MessageSquare
+  },
+  {
+    id: 'notifications',                  
+    label: 'Notifications',            
+    icon: Bell                          
+  },
+  {
+    id: 'preferences',                   
+    label: t('preferences'),
+    icon: Settings
+  },
+  {
+    id: 'secu',
+    label: t('accountAndData'),
+    icon: ShieldCheck
+  }
+]
 
   const getInitialTab = () => {
     const params = new URLSearchParams(location.search)
@@ -554,9 +561,13 @@ export default function Compte() {
       return 'notif'
     }
 
-    if (requestedTab === 'secu') {
-      return 'secu'
-    }
+  if (requestedTab === 'notif' || requestedTab === 'notifications') {
+  return 'notifications'
+}
+
+if (requestedTab === 'preferences') {
+  return 'preferences'
+}
 
     if (requestedTab === 'profil') {
       return 'profil'
@@ -618,6 +629,29 @@ export default function Compte() {
       )
     }
   }, [user])
+  // 🎯 Rafraîchit les compteurs (badges) en temps réel via WebSocket
+useEffect(() => {
+  if (!user) return
+
+  let timer: number | null = null
+  const refreshSoon = () => {
+    if (timer) window.clearTimeout(timer)
+    timer = window.setTimeout(() => {
+      api.counters().then(setCounters).catch(() => {})
+    }, 300)
+  }
+
+  return subscribe((payload) => {
+    console.log('[Compte] WS event:', payload.type)
+    if (
+      payload.type === 'direct_message' ||
+      payload.type === 'group_message' ||
+      payload.type === 'notification'
+    ) {
+      refreshSoon()
+    }
+  })
+}, [subscribe, user])
 
   useEffect(() => {
     const userId =
@@ -671,13 +705,13 @@ export default function Compte() {
       )
     : 'mars 2026'
 
-  const badgeCountFor = (id: string) => {
-    if (id === 'favoris') return counters.favoris
-    if (id === 'notif') return counters.notifications
-    if (id === 'paiements') return counters.messages
-    if (id === 'alertes') return alertCount
-    return 0
-  }
+ const badgeCountFor = (id: string) => {
+  if (id === 'favoris') return counters.favoris
+  if (id === 'notifications') return counters.notifications   
+  if (id === 'paiements') return counters.messages
+  if (id === 'alertes') return alertCount
+  return 0
+}
 
   const handleProfileImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -945,7 +979,10 @@ export default function Compte() {
             {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
-            {tab === 'notif' && <TabPreference idUtilisateur={currentUserId ?? 0} />}
+           {/*{tab === 'notifications' && <TabPreference idUtilisateur={currentUserId ?? 0} />}
+*/ } 
+            {tab === 'notifications' && <TabNotif />}
+            {tab === 'preferences' && <TabPreference idUtilisateur={currentUserId ?? 0} />} 
             {tab === 'paiements' && <TabMessagesV2 />}
             {tab === 'secu' && <TabCompteDonnees onAccountDeleted={handleAccountDeleted} />}
           </div>
@@ -968,7 +1005,7 @@ export default function Compte() {
             'profil',
             'conversations',
             'alertes',
-            'notif',
+           'notifications',
             'secu'
           ].map((id) => {
 
