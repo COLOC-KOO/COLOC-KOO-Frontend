@@ -6,6 +6,12 @@ import { api, AuthUser, getWebSocketUrl } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { useRealtime } from '../../lib/realtime'
 
+// Messages directs (table messages) et de groupe (table groupe_messages) peuvent
+// avoir le même id_message : on les distingue par leur source.
+const messageKey = (m: any) => `${m.id_groupe != null ? 'group' : 'direct'}:${m.id_message}`
+
+const messageTime = (m: any) => new Date(m.date_envoi || m.created_at || 0).getTime()
+
 export default function TabMessagesV2() {
   const { t } = useTranslation('messages')
   const { user } = useAuth()
@@ -80,12 +86,15 @@ export default function TabMessagesV2() {
   }, [active?.key])
 
   const appendMessage = (message: any) => {
-    setAllMessages((prev) => prev.some((item) => item.id_message === message.id_message) ? prev : [...prev, message])
+    const key = messageKey(message)
+    setAllMessages((prev) => prev.some((item) => messageKey(item) === key) ? prev : [...prev, message])
     const el = containerRef.current
     const atBottom = el ? (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) : true
-    if (atBottom) {
-      setMessages((prev) => prev.some((item) => item.id_message === message.id_message) ? prev : [...prev, message])
-      setDisplayCount((c) => Math.min(c + 1, allMessages.length + 1))
+    // Le nouveau message est toujours affiché en bas, quel que soit l'expéditeur,
+    // même si l'utilisateur a remonté l'historique.
+    setMessages((prev) => prev.some((item) => messageKey(item) === key) ? prev : [...prev, message])
+    setDisplayCount((c) => c + 1)
+    if (atBottom || Number(message.id_expediteur) === Number(user?.id)) {
       setTimeout(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, 50)
     }
   }
@@ -407,16 +416,20 @@ export default function TabMessagesV2() {
     }
     setMsgLoading(true)
 
-    const loader = active.type === 'group' ? api.groupMessages(active.id) : api.messagesThread(active.id)
+    // Une conversation regroupée par annonce peut contenir plusieurs fils
+    // (messages directs + groupe de colocation) : on charge tous les fils.
+    const threads: any[] = active.threads?.length ? active.threads : [active]
+    const loader = Promise.all(threads.map((thread) =>
+      (thread.type === 'group' ? api.groupMessages(thread.id) : api.messagesThread(thread.id)).catch(() => [])
+    ))
 
-    loader.then((data) => {
+    loader.then((results) => {
       if (!mounted) return
-      let items = (data as any[]) || []
-
-      // Filtre : ne conserve que les messages associés à la déposition sélectionnée
-      if (active.annonce?.id) {
-        items = items.filter((m: any) => String(m.id_annonce) === String(active.annonce.id))
-      }
+      // Aucun filtre : tous les messages sont conservés, du plus ancien au plus récent
+      // (groupe_messages n'a pas de colonne id_annonce, le filtre les masquait tous).
+      const items = results
+        .flatMap((data) => (data as any[]) || [])
+        .sort((a: any, b: any) => messageTime(a) - messageTime(b))
 
       setAllMessages(items)
       setDisplayCount(Math.min(30, items.length))
@@ -464,13 +477,13 @@ useEffect(() => {
   const unsubscribe = subscribe((payload) => {
     const currentActive = activeRef.current
 
+    // Fils de la conversation ouverte (plusieurs si elle est regroupée par annonce)
+    const activeThreads: any[] = currentActive?.threads?.length ? currentActive.threads : currentActive ? [currentActive] : []
+
     if (payload.type === 'direct_message' && payload.message) {
       const otherId = payload.message.id_expediteur === user.id ? payload.message.id_destinataire : payload.message.id_expediteur
-      const sameAnnonce = currentActive?.annonce?.id
-        ? String(payload.message.id_annonce) === String(currentActive.annonce.id)
-        : true
 
-      if (currentActive?.type === 'direct' && currentActive.id === otherId && sameAnnonce) {
+      if (activeThreads.some((thread) => thread.type === 'direct' && Number(thread.id) === Number(otherId))) {
         appendMessage(payload.message)
         setTypingUsers((prev) => prev.filter((id) => id !== Number(otherId)))
       }
@@ -478,11 +491,7 @@ useEffect(() => {
     }
 
     if (payload.type === 'group_message' && payload.message) {
-      const sameAnnonce = currentActive?.annonce?.id
-        ? String(payload.message.id_annonce) === String(currentActive.annonce.id)
-        : true
-
-      if (currentActive?.type === 'group' && currentActive.id === Number(payload.groupId) && sameAnnonce) {
+      if (activeThreads.some((thread) => thread.type === 'group' && Number(thread.id) === Number(payload.groupId))) {
         appendMessage(payload.message)
         setTypingUsers((prev) => prev.filter((id) => id !== Number(payload.message.id_expediteur)))
       }
@@ -584,8 +593,8 @@ const emitTyping = (isTyping: boolean) => {
     setReportingMessageId(m.id_message)
     const raison = window.prompt(t('report_prompt')) || ''
     try {
-      if (active?.type === 'group') {
-        await api.reportGroupMessage(active.id, m.id_message, { raison })
+      if (m.id_groupe != null) {
+        await api.reportGroupMessage(m.id_groupe, m.id_message, { raison })
       } else {
         await api.reportMessage(m.id_message, { raison })
       }
@@ -994,9 +1003,9 @@ const emitTyping = (isTyping: boolean) => {
                 const senderName = m.expediteur_prenom || m.expediteur_nom ? `${m.expediteur_prenom || ''} ${m.expediteur_nom || ''}`.trim() : 'Utilisateur'
 
                 return (
-                  <div key={m.id_message} className={`group flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                  <div key={messageKey(m)} className={`group flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-end gap-2 max-w-[85%] sm:max-w-[75%]">
-                      {!isMe && active?.type === 'group' && (
+                      {!isMe && (active?.type === 'group' || (active?.threads?.length ?? 0) > 1) && (
                         <div className="mb-1 text-[11px] text-muted-foreground font-medium">{senderName}</div>
                       )}
                       <div className={`relative rounded-2xl px-4 py-2.5 text-sm ${isMe ? 'bg-brand-cyan text-white rounded-br-none' : 'bg-white text-foreground border border-border/80 rounded-bl-none shadow-sm'}`}>

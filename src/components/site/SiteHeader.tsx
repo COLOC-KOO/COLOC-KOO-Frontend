@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell } from 'lucide-react'
+import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell, Heart } from 'lucide-react'
 import { Logo, LogoMark, LogoName } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
@@ -408,12 +408,26 @@ export function SiteHeader() {
                         <UserCircle className="w-4 h-4 text-muted-foreground" />
                         <span>{t('myProfile', { ns: 'header' })}</span>
                       </Link>
+                      {isColocataire && (
+                        <Link
+                          to="/compte?tab=dossier"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
+                        >
+                          <Home className="w-4 h-4 text-muted-foreground" />
+                          <span>{t('myAnnouncements', { ns: 'header' })}</span>
+                        </Link>
+                      )}
                       <Link
                         to={getAccountMenuTarget()}
                         onClick={() => setUserMenuOpen(false)}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
                       >
-                        <Home className="w-4 h-4 text-muted-foreground" />
+                        {isColocataire ? (
+                          <Heart className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <Home className="w-4 h-4 text-muted-foreground" />
+                        )}
                         <span>{getAccountMenuLabel()}</span>
                       </Link>
                       <button

@@ -262,7 +262,7 @@ export default function TabMesAnnonces() {
                       </div>
                     )}
 
-                    {/* Actions : Voir / Modifier / Archiver / Supprimer */}
+                    {/* Actions : Voir / Modifier / Supprimer */}
                     <div className="mt-4 flex flex-wrap gap-2">
                       <Link
                         to={`/annonces/${annonce.id}`}
@@ -275,13 +275,6 @@ export default function TabMesAnnonces() {
                         className="inline-flex items-center gap-1.5 text-sm font-semibold border border-border rounded-lg px-3 py-1.5 text-foreground/80 hover:bg-muted transition-colors"
                       >
                         <Edit className="w-4 h-4" /> Modifier
-                      </button>
-                      <button
-                        onClick={() => handleArchiveAnnonce(annonce)}
-                        disabled={archivingId === annonce.id}
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold border border-border rounded-lg px-3 py-1.5 text-foreground/80 hover:bg-muted transition-colors disabled:opacity-50"
-                      >
-                        <Archive className="w-4 h-4" /> {isArchived ? 'Désarchiver' : 'Archiver'}
                       </button>
                       <button
                         onClick={() => handleDeleteAnnonce(annonce)}

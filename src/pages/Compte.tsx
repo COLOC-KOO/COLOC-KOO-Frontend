@@ -501,11 +501,21 @@ export default function Compte() {
       label: t('profile'),
       icon: User
     },
+    // Mes annonces : visible pour tous les comptes (Agent, Colocataire, Admin...)
     {
-      id: isColocataire ? 'favoris' : 'dossier',
-      label: isColocataire ? t('myFavoritesTab') : t('myListings'),
-      icon: isColocataire ? Heart : Home
+      id: 'dossier',
+      label: t('myListings'),
+      icon: Home
     },
+    ...(isColocataire
+      ? [
+          {
+            id: 'favoris',
+            label: t('myFavoritesTab'),
+            icon: Heart
+          }
+        ]
+      : []),
     {
       id: 'alertes',
       label: t('myAlerts'),
@@ -557,7 +567,7 @@ export default function Compte() {
     }
 
     if (requestedTab === 'dossier') {
-      return isColocataire ? 'favoris' : 'dossier'
+      return 'dossier'
     }
 
     // ⏸️ Notifications désactivées — on redirige vers Préférences
