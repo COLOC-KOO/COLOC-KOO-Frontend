@@ -4,10 +4,12 @@ import { MessageSquare, ChevronLeft, Send, UserPlus, X, Plus, Flag, Search, Hous
 import { useTranslation } from 'react-i18next'
 import { api, AuthUser, getWebSocketUrl } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
+import { useRealtime } from '../../lib/realtime'
 
 export default function TabMessagesV2() {
   const { t } = useTranslation('messages')
   const { user } = useAuth()
+  const { subscribe, send } = useRealtime()
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true)
   const [conversations, setConversations] = useState<any[]>([])
   const [active, setActive] = useState<any | null>(null)
@@ -25,9 +27,9 @@ export default function TabMessagesV2() {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([])
   const [typingUsers, setTypingUsers] = useState<number[]>([])
   const [pinnedMessage, setPinnedMessage] = useState<any | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
+  //const wsRef = useRef<WebSocket | null>(null)
   const typingTimerRef = useRef<number | null>(null)
-  const reconnectTimerRef = useRef<number | null>(null)
+ // const reconnectTimerRef = useRef<number | null>(null)
   const remoteTypingTimersRef = useRef<Map<number, number>>(new Map())
   const activeRef = useRef<any | null>(null)
   const isTypingRef = useRef(false)
@@ -456,101 +458,85 @@ export default function TabMessagesV2() {
   }
 
   // 3. WebSocket avec vérification de l'annonce active
-  useEffect(() => {
-    if (!user) return
-    let disposed = false
+useEffect(() => {
+  if (!user) return
 
-    const connect = () => {
-      const ws = new WebSocket(getWebSocketUrl())
-      wsRef.current = ws
-      ws.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(event.data)
-          const currentActive = activeRef.current
+  const unsubscribe = subscribe((payload) => {
+    const currentActive = activeRef.current
 
-          if (payload.type === 'direct_message' && payload.message) {
-            const otherId = payload.message.id_expediteur === user.id ? payload.message.id_destinataire : payload.message.id_expediteur
-            const sameAnnonce = currentActive?.annonce?.id
-              ? String(payload.message.id_annonce) === String(currentActive.annonce.id)
-              : true
+    if (payload.type === 'direct_message' && payload.message) {
+      const otherId = payload.message.id_expediteur === user.id ? payload.message.id_destinataire : payload.message.id_expediteur
+      const sameAnnonce = currentActive?.annonce?.id
+        ? String(payload.message.id_annonce) === String(currentActive.annonce.id)
+        : true
 
-            if (currentActive?.type === 'direct' && currentActive.id === otherId && sameAnnonce) {
-              appendMessage(payload.message)
-              setTypingUsers((prev) => prev.filter((id) => id !== Number(otherId)))
-            }
-            void loadConversations()
-          }
+      if (currentActive?.type === 'direct' && currentActive.id === otherId && sameAnnonce) {
+        appendMessage(payload.message)
+        setTypingUsers((prev) => prev.filter((id) => id !== Number(otherId)))
+      }
+      void loadConversations()
+    }
 
-          if (payload.type === 'group_message' && payload.message) {
-            const sameAnnonce = currentActive?.annonce?.id
-              ? String(payload.message.id_annonce) === String(currentActive.annonce.id)
-              : true
+    if (payload.type === 'group_message' && payload.message) {
+      const sameAnnonce = currentActive?.annonce?.id
+        ? String(payload.message.id_annonce) === String(currentActive.annonce.id)
+        : true
 
-            if (currentActive?.type === 'group' && currentActive.id === Number(payload.groupId) && sameAnnonce) {
-              appendMessage(payload.message)
-              setTypingUsers((prev) => prev.filter((id) => id !== Number(payload.message.id_expediteur)))
-            }
-            void loadConversations()
-          }
+      if (currentActive?.type === 'group' && currentActive.id === Number(payload.groupId) && sameAnnonce) {
+        appendMessage(payload.message)
+        setTypingUsers((prev) => prev.filter((id) => id !== Number(payload.message.id_expediteur)))
+      }
+      void loadConversations()
+    }
 
-          if (payload.type === 'group_created') {
-            void loadConversations()
-            window.dispatchEvent(new Event('colockoo:counters-refresh'))
-          }
+    if (payload.type === 'group_created') {
+      void loadConversations()
+      window.dispatchEvent(new Event('colockoo:counters-refresh'))
+    }
 
-          if (payload.type === 'typing') {
-            const sameDirect = currentActive?.type === 'direct' && currentActive.id === Number(payload.fromUserId)
-            const sameGroup = currentActive?.type === 'group' && currentActive.id === Number(payload.targetId)
-            if (sameDirect || sameGroup) {
-              const typingUserId = Number(payload.fromUserId)
-              const previousTimer = remoteTypingTimersRef.current.get(typingUserId)
-              if (previousTimer) window.clearTimeout(previousTimer)
-              if (payload.isTyping) {
-                setTypingUsers((prev) => [...new Set([...prev, typingUserId])])
-                remoteTypingTimersRef.current.set(typingUserId, window.setTimeout(() => {
-                  setTypingUsers((prev) => prev.filter((id) => id !== typingUserId))
-                  remoteTypingTimersRef.current.delete(typingUserId)
-                }, 2500))
-              } else {
-                setTypingUsers((prev) => prev.filter((id) => id !== typingUserId))
-                remoteTypingTimersRef.current.delete(typingUserId)
-              }
-            }
-          }
-
-          if (payload.type === 'notification') {
-            void loadConversations()
-            window.dispatchEvent(new Event('colockoo:counters-refresh'))
-          }
-        } catch {
-          // Payload ignore
+    if (payload.type === 'typing') {
+      const sameDirect = currentActive?.type === 'direct' && currentActive.id === Number(payload.fromUserId)
+      const sameGroup = currentActive?.type === 'group' && currentActive.id === Number(payload.targetId)
+      if (sameDirect || sameGroup) {
+        const typingUserId = Number(payload.fromUserId)
+        const previousTimer = remoteTypingTimersRef.current.get(typingUserId)
+        if (previousTimer) window.clearTimeout(previousTimer)
+        if (payload.isTyping) {
+          setTypingUsers((prev) => [...new Set([...prev, typingUserId])])
+          remoteTypingTimersRef.current.set(typingUserId, window.setTimeout(() => {
+            setTypingUsers((prev) => prev.filter((id) => id !== typingUserId))
+            remoteTypingTimersRef.current.delete(typingUserId)
+          }, 2500))
+        } else {
+          setTypingUsers((prev) => prev.filter((id) => id !== typingUserId))
+          remoteTypingTimersRef.current.delete(typingUserId)
         }
       }
-      ws.onclose = () => {
-        if (!disposed) reconnectTimerRef.current = window.setTimeout(connect, 1500)
-      }
     }
 
-    connect()
-    return () => {
-      disposed = true
-      if (reconnectTimerRef.current) window.clearTimeout(reconnectTimerRef.current)
-      if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current)
-      remoteTypingTimersRef.current.forEach((timer) => window.clearTimeout(timer))
-      remoteTypingTimersRef.current.clear()
-      wsRef.current?.close()
+    if (payload.type === 'notification') {
+      void loadConversations()
+      window.dispatchEvent(new Event('colockoo:counters-refresh'))
     }
-  }, [user?.id])
+  })
 
-  const emitTyping = (isTyping: boolean) => {
-    if (!active || wsRef.current?.readyState !== WebSocket.OPEN) return
-    wsRef.current.send(JSON.stringify({
-      type: 'typing',
-      conversationType: active.type === 'group' ? 'group' : 'direct',
-      targetId: active.id,
-      isTyping,
-    }))
+  return () => {
+    unsubscribe()
+    if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current)
+    remoteTypingTimersRef.current.forEach((timer) => window.clearTimeout(timer))
+    remoteTypingTimersRef.current.clear()
   }
+}, [user?.id])
+
+const emitTyping = (isTyping: boolean) => {
+  if (!active) return
+  send({
+    type: 'typing',
+    conversationType: active.type === 'group' ? 'group' : 'direct',
+    targetId: active.id,
+    isTyping,
+  })
+}
 
   const handleReplyChange = (value: string) => {
     setReply(value)
