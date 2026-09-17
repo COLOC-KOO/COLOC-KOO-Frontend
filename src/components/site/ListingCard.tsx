@@ -114,16 +114,33 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
         {/* Métadonnées en mode compact (amélioration) */}
         {compact && (
           <p className="flex items-center gap-2 text-[10px] text-gray-500 mb-0.5">
-            <span className="flex items-center gap-1"><BedDouble className="w-3 h-3 text-cyan-600" /> {l.surface ?? '-'} m²</span>
+            {/*
+              ==========================================================
+              📐 AFFICHAGE DE LA SURFACE (COMPACT) — DÉSACTIVÉ
+              ==========================================================
+              Raison : affichage jugé inutile dans la carte.
+              Le code est conservé au cas où on voudrait le réactiver.
+
+              <span className="flex items-center gap-1">
+                <BedDouble className="w-3 h-3 text-cyan-600" /> {l.surface ?? '-'} m²
+              </span>
+            */}
             <span className="flex items-center gap-1"><Users className="w-3 h-3 text-cyan-600" /> {colocCount} {colocCount > 1 ? 'colocs.' : 'coloc.'}</span>
           </p>
         )}
 
         {!compact && (
           <div className="flex gap-2 text-[12px] text-gray-600 flex-wrap mb-1">
-            <span className="flex items-center gap-1"><BedDouble className="w-4 h-4" /> {l.surface ?? '-'} m²</span>
+      
             <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {colocCount} {colocCount > 1 ? 'colocs.' : 'coloc.'}</span>
-            {l.chambreSurface && <span className="flex items-center gap-1"><Camera className="w-4 h-4" /> {l.chambreSurface} m²/ch.</span>}
+            {/*
+  
+              {l.chambreSurface && (
+                <span className="flex items-center gap-1">
+                  <Camera className="w-4 h-4" /> {l.chambreSurface} m²/ch.
+                </span>
+              )}
+            */}
           </div>
         )}
 

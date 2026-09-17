@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -29,6 +28,9 @@ import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerp
 import TabAlertes from './compte/TabAlertes'
 import TabCompteDonnees from './compte/TabCompteDonnees'
 import TabMesFavoris from './compte/TabMesFavoris'
+// ⏸️ Notifications désactivées — le client ne recommande plus cet onglet
+// import TabNotif from './compte/TabNotif'
+import { useRealtime } from '../lib/realtime'
 
 /* ------------------------------------------------------------------ */
 /*  Switch style maquette (pilule verte), utilisé pour 2FA + RGPD      */
@@ -482,6 +484,7 @@ export default function Compte() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, loading, logout, updateProfile, isAdmin } = useAuth()
+  const { subscribe } = useRealtime()
   const [counters, setCounters] = useState({ favoris: 0, notifications: 0, messages: 0 })
   const [alertCount, setAlertCount] = useState(0)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -491,6 +494,7 @@ export default function Compte() {
   const isColocataire = user?.poste === 'colocataire'
 
   // Utilisation des clés de traduction pour tous les onglets
+  // ⏸️ Notifications désactivées — le client ne recommande plus cet onglet
   const tabs = [
     {
       id: 'profil',
@@ -512,6 +516,12 @@ export default function Compte() {
       label: t('conversations'),
       icon: MessageSquare
     },
+    // ⏸️ Notifications désactivées — le client ne recommande plus cet onglet
+    // {
+    //   id: 'notifications',
+    //   label: 'Notifications',
+    //   icon: Bell
+    // },
     {
       id: 'notif',
       label: t('preferences'),
@@ -550,7 +560,8 @@ export default function Compte() {
       return isColocataire ? 'favoris' : 'dossier'
     }
 
-    if (requestedTab === 'notif') {
+    // ⏸️ Notifications désactivées — on redirige vers Préférences
+    if (requestedTab === 'notif' || requestedTab === 'notifications') {
       return 'notif'
     }
 
@@ -619,6 +630,30 @@ export default function Compte() {
     }
   }, [user])
 
+  // 🎯 Rafraîchit les compteurs (badges) en temps réel via WebSocket
+  useEffect(() => {
+    if (!user) return
+
+    let timer: number | null = null
+    const refreshSoon = () => {
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        api.counters().then(setCounters).catch(() => {})
+      }, 300)
+    }
+
+    return subscribe((payload) => {
+      console.log('[Compte] WS event:', payload.type)
+      if (
+        payload.type === 'direct_message' ||
+        payload.type === 'group_message' ||
+        payload.type === 'notification'
+      ) {
+        refreshSoon()
+      }
+    })
+  }, [subscribe, user])
+
   useEffect(() => {
     const userId =
       (user as any)?.id_utilisateur ??
@@ -673,6 +708,8 @@ export default function Compte() {
 
   const badgeCountFor = (id: string) => {
     if (id === 'favoris') return counters.favoris
+    // ⏸️ Notifications désactivées
+    // if (id === 'notifications') return counters.notifications
     if (id === 'notif') return counters.notifications
     if (id === 'paiements') return counters.messages
     if (id === 'alertes') return alertCount
@@ -945,6 +982,8 @@ export default function Compte() {
             {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
+            {/* ⏸️ Notifications désactivées — le client ne recommande plus cet onglet */}
+            {/* {tab === 'notifications' && <TabNotif />} */}
             {tab === 'notif' && <TabPreference idUtilisateur={currentUserId ?? 0} />}
             {tab === 'paiements' && <TabMessagesV2 />}
             {tab === 'secu' && <TabCompteDonnees onAccountDeleted={handleAccountDeleted} />}
@@ -968,7 +1007,7 @@ export default function Compte() {
             'profil',
             'conversations',
             'alertes',
-            'notif',
+            'notif',       // ⏸️ Notifications désactivées
             'secu'
           ].map((id) => {
 
