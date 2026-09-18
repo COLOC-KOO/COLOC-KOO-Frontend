@@ -851,6 +851,14 @@ export default function DepotAnnonceDeux() {
     return true
   }
 
+  // Repositionne la vue tout en haut du formulaire une fois l'étape suivante affichée.
+  function scrollToFormTop() {
+    if (typeof window === 'undefined') return
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
+
   function nextStep() {
     if (!validateCurrentStep()) return
     if (cur < steps.length - 1) {
@@ -858,6 +866,7 @@ export default function DepotAnnonceDeux() {
       setCur(n)
       setMaxStep((m) => Math.max(m, n))
       navigate({ pathname: location.pathname, search: `?etape=${n}` })
+      scrollToFormTop()
     }
   }
   function prevStep() {
