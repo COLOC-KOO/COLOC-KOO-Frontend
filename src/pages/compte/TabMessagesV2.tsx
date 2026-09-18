@@ -12,6 +12,20 @@ const messageKey = (m: any) => `${m.id_groupe != null ? 'group' : 'direct'}:${m.
 
 const messageTime = (m: any) => new Date(m.date_envoi || m.created_at || 0).getTime()
 
+// Ne garde qu'une date réellement valide. Avant, le champ `date` retombait sur
+// le TEXTE du dernier message : `new Date('KKKK')` donne Invalid Date, dont le
+// getTime() vaut NaN, ce qui rendait le tri de la liste incohérent et empêchait
+// la conversation la plus récente de remonter en haut.
+const safeDate = (value: any): string | null => {
+  if (!value) return null
+  return Number.isNaN(new Date(value).getTime()) ? null : value
+}
+
+const conversationTime = (c: any) => {
+  const time = new Date(c?.date || 0).getTime()
+  return Number.isNaN(time) ? 0 : time
+}
+
 export default function TabMessagesV2() {
   const { t } = useTranslation('messages')
   const { user } = useAuth()
@@ -215,7 +229,7 @@ export default function TabMessagesV2() {
               lastMessage: thread.dernier_message || t('no_message'),
               total: Number(thread.total_messages || 0),
               unread: Number(thread.non_lus || 0),
-              date: thread.date_dernier_message || thread.dernier_message || null,
+              date: safeDate(thread.date_dernier_message),
               annonce: thread.id_annonce ? {
                 id: thread.id_annonce,
                 title: thread.annonce_titre,
@@ -244,7 +258,7 @@ export default function TabMessagesV2() {
           lastMessage: thread.dernier_message || t('no_message'),
           total: Number(thread.total_messages || 0),
           unread: Number(thread.non_lus || 0),
-          date: thread.date_dernier_message || thread.dernier_message || null,
+          date: safeDate(thread.date_dernier_message),
           annonce: thread.id_annonce ? {
             id: thread.id_annonce,
             title: thread.annonce_titre,
@@ -264,7 +278,7 @@ export default function TabMessagesV2() {
       lastMessage: group.dernier_message || t('no_message'),
       total: Number(group.total_messages || 0),
       unread: Number(group.non_lus || 0),
-      date: group.date_dernier_message || group.date_creation || null,
+      date: safeDate(group.date_dernier_message) || safeDate(group.date_creation),
       annonce: group.id_annonce ? {
         id: group.id_annonce,
         title: group.annonce_titre,
@@ -275,37 +289,13 @@ export default function TabMessagesV2() {
       } : null,
     }))
 
-    const rawList = [...direct, ...groupItems]
-
-    const groupedMap = new Map<string | number, any>()
-    const withoutAnnonce: any[] = []
-
-    rawList.forEach((item) => {
-      if (item.annonce?.id) {
-        const annonceId = item.annonce.id
-        if (!groupedMap.has(annonceId)) {
-          groupedMap.set(annonceId, {
-            ...item,
-            threads: [item],
-          })
-        } else {
-          const existing = groupedMap.get(annonceId)
-          existing.threads.push(item)
-          existing.unread += item.unread
-          existing.total += item.total
-
-          if (new Date(item.date || 0) > new Date(existing.date || 0)) {
-            existing.lastMessage = item.lastMessage
-            existing.date = item.date
-          }
-        }
-      } else {
-        withoutAnnonce.push(item)
-      }
-    })
-
-    const merged = [...Array.from(groupedMap.values()), ...withoutAnnonce].sort(
-      (a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
+    // Messages privés et messages de groupe sont deux fils totalement distincts.
+    // On ne les fusionne plus par annonce : une conversation = un interlocuteur
+    // (`direct:<id>`) OU un groupe (`group:<id>`). Sans quoi un message privé
+    // envoyé au sujet d'une annonce se retrouvait affiché dans la discussion de
+    // groupe liée à cette même annonce (et inversement).
+    const merged = [...direct, ...groupItems].sort(
+      (a, b) => conversationTime(b) - conversationTime(a)
     )
 
     setConversations(merged)
@@ -316,7 +306,20 @@ export default function TabMessagesV2() {
     setLoading(true)
     loadConversations(true)
       .then((items) => {
-        setActive(items[0] || null)
+        // Ouverture directe d'une conversation depuis un lien
+        // (`?tab=messages&group=12` ou `&user=34`) : carte « Mes conversations »,
+        // notification, e-mail... À défaut, on ouvre la plus récente.
+        const params = typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search)
+          : new URLSearchParams()
+        const groupId = params.get('group')
+        const userId = params.get('user')
+        const cible =
+          (groupId && items.find((item) => item.key === `group:${groupId}`)) ||
+          (userId && items.find((item) => item.key === `direct:${userId}`)) ||
+          null
+
+        setActive(cible || items[0] || null)
         if (typeof window !== 'undefined') setIsSidebarOpen(window.innerWidth >= 1024)
       })
       .finally(() => setLoading(false))
@@ -416,19 +419,17 @@ export default function TabMessagesV2() {
     }
     setMsgLoading(true)
 
-    // Une conversation regroupée par annonce peut contenir plusieurs fils
-    // (messages directs + groupe de colocation) : on charge tous les fils.
-    const threads: any[] = active.threads?.length ? active.threads : [active]
-    const loader = Promise.all(threads.map((thread) =>
-      (thread.type === 'group' ? api.groupMessages(thread.id) : api.messagesThread(thread.id)).catch(() => [])
-    ))
+    // Une conversation correspond à UN seul fil : soit un groupe, soit un
+    // échange privé. On ne charge donc que celui-ci, ce qui garantit qu'aucun
+    // message privé ne fuite dans une discussion de groupe et inversement.
+    const loader = (
+      active.type === 'group' ? api.groupMessages(active.id) : api.messagesThread(active.id)
+    ).catch(() => [])
 
-    loader.then((results) => {
+    loader.then((data) => {
       if (!mounted) return
-      // Aucun filtre : tous les messages sont conservés, du plus ancien au plus récent
-      // (groupe_messages n'a pas de colonne id_annonce, le filtre les masquait tous).
-      const items = results
-        .flatMap((data) => (data as any[]) || [])
+      const items = ((data as any[]) || [])
+        .slice()
         .sort((a: any, b: any) => messageTime(a) - messageTime(b))
 
       setAllMessages(items)
@@ -442,7 +443,7 @@ export default function TabMessagesV2() {
     }).finally(() => { if (mounted) setMsgLoading(false) })
 
     return () => { mounted = false }
-  }, [active?.key, active?.annonce?.id])
+  }, [active?.key])
 
   useEffect(() => {
     const el = containerRef.current
@@ -477,13 +478,11 @@ useEffect(() => {
   const unsubscribe = subscribe((payload) => {
     const currentActive = activeRef.current
 
-    // Fils de la conversation ouverte (plusieurs si elle est regroupée par annonce)
-    const activeThreads: any[] = currentActive?.threads?.length ? currentActive.threads : currentActive ? [currentActive] : []
-
+    // La conversation ouverte est un fil unique : privé OU groupe.
     if (payload.type === 'direct_message' && payload.message) {
       const otherId = payload.message.id_expediteur === user.id ? payload.message.id_destinataire : payload.message.id_expediteur
 
-      if (activeThreads.some((thread) => thread.type === 'direct' && Number(thread.id) === Number(otherId))) {
+      if (currentActive?.type === 'direct' && Number(currentActive.id) === Number(otherId)) {
         appendMessage(payload.message)
         setTypingUsers((prev) => prev.filter((id) => id !== Number(otherId)))
       }
@@ -491,7 +490,7 @@ useEffect(() => {
     }
 
     if (payload.type === 'group_message' && payload.message) {
-      if (activeThreads.some((thread) => thread.type === 'group' && Number(thread.id) === Number(payload.groupId))) {
+      if (currentActive?.type === 'group' && Number(currentActive.id) === Number(payload.groupId)) {
         appendMessage(payload.message)
         setTypingUsers((prev) => prev.filter((id) => id !== Number(payload.message.id_expediteur)))
       }
@@ -839,7 +838,11 @@ const emitTyping = (isTyping: boolean) => {
             <div className="space-y-1">
               {filteredConversations.map((c) => (
                 <button key={c.key} onClick={() => handleConversationClick(c)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-muted/70 ${active?.key === c.key ? 'bg-brand-cyan-light/25' : ''}`}>
-                  {c.annonce?.photo ? (
+                  {/* Un groupe garde toujours sa pastille verte : privé et groupe
+                      liés à une même annonce restent ainsi identifiables. */}
+                  {c.type === 'group' ? (
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-green/15 text-sm font-bold text-brand-green">{c.initials}</div>
+                  ) : c.annonce?.photo ? (
                     <img src={c.annonce.photo} alt="Déposition associée" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
                   ) : c.annonce ? (
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-brand-cyan-light/20 text-brand-cyan"><House className="h-5 w-5" /></div>
@@ -1005,7 +1008,7 @@ const emitTyping = (isTyping: boolean) => {
                 return (
                   <div key={messageKey(m)} className={`group flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-end gap-2 max-w-[85%] sm:max-w-[75%]">
-                      {!isMe && (active?.type === 'group' || (active?.threads?.length ?? 0) > 1) && (
+                      {!isMe && active?.type === 'group' && (
                         <div className="mb-1 text-[11px] text-muted-foreground font-medium">{senderName}</div>
                       )}
                       <div className={`relative rounded-2xl px-4 py-2.5 text-sm ${isMe ? 'bg-brand-cyan text-white rounded-br-none' : 'bg-white text-foreground border border-border/80 rounded-bl-none shadow-sm'}`}>

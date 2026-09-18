@@ -8,6 +8,7 @@ import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
 import { useAuth } from '../../lib/auth'
 import { useConfig } from '../../lib/config'
+import { useRealtime } from '../../lib/realtime'
 import { api } from '../../lib/api'
 import { cn } from '../../lib/utils'
 
@@ -53,6 +54,7 @@ export function SiteHeader() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { config } = useConfig()
+  const { subscribe } = useRealtime()
   const userMenuRef = useRef<HTMLDivElement>(null)
   const languageMenuRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
@@ -116,6 +118,23 @@ export function SiteHeader() {
       })
       .catch(() => setNotifications([]))
   }, [user])
+
+  // Cloche en temps réel : toute notification poussée par le serveur (message
+  // direct, message de groupe, acceptation de candidature/ajout au groupe...)
+  // s'affiche immédiatement, sans recharger la page.
+  useEffect(() => {
+    if (!user) return
+
+    return subscribe((payload) => {
+      if (payload?.type !== 'notification' || !payload.notification) return
+      const notif = payload.notification as AppNotification
+      setNotifications((prev) =>
+        prev.some((item) => item.id_notification === notif.id_notification)
+          ? prev
+          : [notif, ...prev]
+      )
+    })
+  }, [subscribe, user])
 
   useEffect(() => {
     setUnreadCount(notifications.filter((item) => item.est_lue === 0).length)

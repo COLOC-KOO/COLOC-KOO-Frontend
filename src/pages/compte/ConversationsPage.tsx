@@ -6,17 +6,24 @@ import { api } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 
 type GroupedAnnonce = {
-  id_annonce: number | string
+  id_groupe: number
+  id_annonce: number | string | null
   annonce_titre: string
   annonce_photo: string | null
   annonce_prix: number | null
   annonce_lieu?: string
   total_non_lus: number
-  primary_user_id: number
   proprietaire_nom: string
   dernier_message?: string
   est_dernier_message_mien?: boolean
   date_raw?: string | Date | number
+}
+
+// Horodatage sûr : une valeur absente ou invalide ne doit pas produire NaN,
+// sinon le tri de la liste devient incohérent.
+function timeOf(value?: string | Date | number | null): number {
+  const time = new Date(value || 0).getTime()
+  return Number.isNaN(time) ? 0 : time
 }
 
 // Calcule dynamiquement le temps écoulé (ex: "il y a 2 h", "hier", "3 j")
@@ -54,84 +61,46 @@ export default function ConversationsPage() {
 
   const [groups, setGroups] = useState<GroupedAnnonce[]>([])
   const [loading, setLoading] = useState(true)
+  // Photos dont l'URL est cassée : on retombe alors sur l'illustration par défaut.
+  const [brokenPhotos, setBrokenPhotos] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
     let mounted = true
     setLoading(true)
 
-    Promise.all([api.messagesThreads(), api.groupThreads().catch(() => [])])
-      .then(([data, groupThreads]) => {
+    // Cette section ne montre QUE les discussions de groupe : un logement =
+    // son groupe de colocation, avec la photo de l'annonce et le dernier
+    // message échangé dans ce groupe. Les échanges privés restent dans la
+    // messagerie et ne remontent pas ici.
+    api
+      .groupThreads()
+      .then((groupThreads) => {
         if (!mounted) return
 
-        const groupedMap = new Map<number | string, GroupedAnnonce>()
+        const items: GroupedAnnonce[] = (groupThreads || [])
+          .map((g: any) => ({
+            id_groupe: Number(g.id_groupe),
+            id_annonce: g.id_annonce ?? null,
+            annonce_titre: g.annonce_titre || g.nom || '',
+            annonce_photo: g.annonce_photo || null,
+            annonce_prix: g.annonce_prix != null ? Number(g.annonce_prix) : null,
+            annonce_lieu: g.annonce_quartier || g.annonce_ville || '',
+            total_non_lus: Number(g.non_lus || 0),
+            proprietaire_nom: g.proprietaire_nom || g.nom || 'Propriétaire',
+            dernier_message: g.dernier_message || '',
+            est_dernier_message_mien:
+              g.dernier_expediteur_id != null &&
+              Number(g.dernier_expediteur_id) === Number(user?.id),
+            date_raw: g.date_dernier_message || g.date_creation,
+          }))
+          .sort((a, b) => timeOf(b.date_raw) - timeOf(a.date_raw))
 
-        data.forEach((d: any) => {
-          if (!d.id_annonce && !d.annonce_titre) return
-
-          const key = d.id_annonce || d.annonce_titre
-          const nonLus = d.non_lus || 0
-
-          // Récupération du propriétaire (depot_annonce -> id_utilisateur / email)
-          const proprietaireNom = 
-            d.proprietaire_nom || 
-            d.nom_utilisateur || 
-            d.email || 
-            'Propriétaire'
-
-          const dernierMessage = 
-            d.dernier_message || 
-            d.last_message || 
-            d.message || 
-            ''
-
-          const dateRaw = 
-            d.date_creation || 
-            d.date_dernier_message || 
-            d.created_at || 
-            d.updated_at
-
-          if (!groupedMap.has(key)) {
-            groupedMap.set(key, {
-              id_annonce: key,
-              annonce_titre: d.annonce_titre,
-              annonce_photo: d.annonce_photo || null,
-              annonce_prix: d.annonce_prix || null,
-              annonce_lieu: d.quartier || d.adresse || '',
-              total_non_lus: nonLus,
-              primary_user_id: d.id_utilisateur || d.interlocuteur_id,
-              proprietaire_nom: proprietaireNom,
-              dernier_message: dernierMessage,
-              est_dernier_message_mien: Boolean(d.est_dernier_message_mien || d.is_mine),
-              date_raw: dateRaw,
-            })
-          } else {
-            const existingGroup = groupedMap.get(key)!
-            existingGroup.total_non_lus += nonLus
-          }
-        })
-
-        // Groupe de colocation lié à l'annonce : son dernier message compte aussi,
-        // quel que soit l'expéditeur.
-        groupThreads.forEach((g: any) => {
-          const existingGroup = g.id_annonce ? groupedMap.get(g.id_annonce) : undefined
-          if (!existingGroup) return
-
-          existingGroup.total_non_lus += Number(g.non_lus || 0)
-
-          if (
-            g.dernier_message &&
-            new Date(g.date_dernier_message || 0).getTime() > new Date(existingGroup.date_raw || 0).getTime()
-          ) {
-            existingGroup.dernier_message = g.dernier_message
-            existingGroup.est_dernier_message_mien = Number(g.dernier_expediteur_id) === Number(user?.id)
-            existingGroup.date_raw = g.date_dernier_message
-          }
-        })
-
-        setGroups(Array.from(groupedMap.values()))
+        setGroups(items)
       })
       .catch(() => setGroups([]))
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
 
     return () => {
       mounted = false
@@ -139,7 +108,7 @@ export default function ConversationsPage() {
   }, [user?.id])
 
   const openConversation = (group: GroupedAnnonce) => {
-    navigate(`/compte?tab=messages&user=${group.primary_user_id}`)
+    navigate(`/compte?tab=messages&group=${group.id_groupe}`)
   }
 
   const lang = i18n.language.toLowerCase()
@@ -182,15 +151,19 @@ export default function ConversationsPage() {
 
             return (
               <div
-                key={group.id_annonce}
+                key={group.id_groupe}
                 onClick={() => openConversation(group)}
                 className="flex items-start gap-4 p-4 bg-white border border-border/70 rounded-2xl hover:border-brand-cyan/40 hover:shadow-sm transition-all cursor-pointer relative"
               >
-                {/* Photo de l'annonce */}
-                {group.annonce_photo ? (
+                {/* Photo du logement telle qu'ajoutée par l'utilisateur ;
+                    illustration par défaut si aucune photo ou URL cassée. */}
+                {group.annonce_photo && !brokenPhotos[group.id_groupe] ? (
                   <img
                     src={group.annonce_photo}
                     alt={group.annonce_titre}
+                    onError={() =>
+                      setBrokenPhotos((prev) => ({ ...prev, [group.id_groupe]: true }))
+                    }
                     className="w-20 h-20 sm:w-24 sm:h-20 rounded-xl object-cover shrink-0 bg-muted"
                   />
                 ) : (
