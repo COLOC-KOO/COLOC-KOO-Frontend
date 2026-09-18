@@ -916,6 +916,8 @@ export const api = {
             annonce_ville: string | null
             annonce_prix: number | null
             annonce_photo: string | null
+            dernier_expediteur_id: number | null
+            proprietaire_nom: string | null
         }>>('/groupes')
     },
     createGroup(payload: { nom: string; membres: number[]; id_annonce?: number | string | null }) {
@@ -1136,7 +1138,7 @@ export const api = {
         })
     },
     deleteAnnonce(id: string | number) {
-        return requestWithFallback<{ message: string }>(`/depot-annonce/${id}`, `/annonces/${id}`, {method: 'DELETE'})
+        return request<{ message: string }>(`/annonces/${id}`, {method: 'DELETE'})
     },
 
     // ===== ARCHIVAGE D'ANNONCE =====

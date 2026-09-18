@@ -127,8 +127,13 @@ export default function AdminAnnonces() {
 
   async function confirmDelete() {
     if (!selectedAnnonce) return
-    await api.deleteAnnonce(selectedAnnonce.id)
-    setAnnonces((current) => current.filter((item) => item.id !== selectedAnnonce.id))
+    setError('')
+    try {
+      await api.deleteAnnonce(selectedAnnonce.id)
+      setAnnonces((current) => current.filter((item) => item.id !== selectedAnnonce.id))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Suppression impossible')
+    }
     setShowDeleteModal(false)
     setSelectedAnnonce(null)
   }
