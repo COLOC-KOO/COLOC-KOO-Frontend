@@ -3,6 +3,7 @@ import { Home, MessageSquare } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../../lib/api'
+import { useAuth } from '../../lib/auth'
 
 type GroupedAnnonce = {
   id_annonce: number | string
@@ -49,6 +50,7 @@ function formatTimeAgo(dateInput?: string | Date | number): string {
 export default function ConversationsPage() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation('conversations')
+  const { user } = useAuth()
 
   const [groups, setGroups] = useState<GroupedAnnonce[]>([])
   const [loading, setLoading] = useState(true)
@@ -57,8 +59,8 @@ export default function ConversationsPage() {
     let mounted = true
     setLoading(true)
 
-    api.messagesThreads()
-      .then((data) => {
+    Promise.all([api.messagesThreads(), api.groupThreads().catch(() => [])])
+      .then(([data, groupThreads]) => {
         if (!mounted) return
 
         const groupedMap = new Map<number | string, GroupedAnnonce>()
@@ -108,6 +110,24 @@ export default function ConversationsPage() {
           }
         })
 
+        // Groupe de colocation lié à l'annonce : son dernier message compte aussi,
+        // quel que soit l'expéditeur.
+        groupThreads.forEach((g: any) => {
+          const existingGroup = g.id_annonce ? groupedMap.get(g.id_annonce) : undefined
+          if (!existingGroup) return
+
+          existingGroup.total_non_lus += Number(g.non_lus || 0)
+
+          if (
+            g.dernier_message &&
+            new Date(g.date_dernier_message || 0).getTime() > new Date(existingGroup.date_raw || 0).getTime()
+          ) {
+            existingGroup.dernier_message = g.dernier_message
+            existingGroup.est_dernier_message_mien = Number(g.dernier_expediteur_id) === Number(user?.id)
+            existingGroup.date_raw = g.date_dernier_message
+          }
+        })
+
         setGroups(Array.from(groupedMap.values()))
       })
       .catch(() => setGroups([]))
@@ -116,7 +136,7 @@ export default function ConversationsPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [user?.id])
 
   const openConversation = (group: GroupedAnnonce) => {
     navigate(`/compte?tab=messages&user=${group.primary_user_id}`)
