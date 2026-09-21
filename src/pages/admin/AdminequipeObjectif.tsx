@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { api, BackofficeMember } from '../../lib/api'
+import { useDialog } from '../../components/ui/Dialog'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import {
   UserPlus,
@@ -417,6 +418,7 @@ const MembreModal = ({
 
 // Composant principal
 export default function AdminEquipeObjectifs() {
+  const dialog = useDialog()
   const [membres, setMembres] = useState(MOCK_MEMBRES)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterRole, setFilterRole] = useState<string>('tous')
@@ -469,10 +471,24 @@ export default function AdminEquipeObjectifs() {
   }
 
   const handleAddObjectif = async () => {
-    const libelle = prompt('Libellé de l’objectif')
+    const libelle = await dialog.prompt({
+      title: 'Nouvel objectif',
+      label: 'Libellé de l’objectif',
+      placeholder: 'Ex : Annonces validées cette semaine',
+      required: true,
+      confirmLabel: 'Continuer',
+    })
     if (!libelle) return
 
-    const objectifValue = parseInt(prompt('Valeur cible (nombre)') || '', 10)
+    const saisieObjectif = await dialog.prompt({
+      title: 'Valeur cible',
+      label: 'Objectif à atteindre (nombre)',
+      placeholder: 'Ex : 25',
+      inputMode: 'numeric',
+      required: true,
+      confirmLabel: 'Enregistrer',
+    })
+    const objectifValue = parseInt(saisieObjectif || '', 10)
     if (Number.isNaN(objectifValue)) return
 
     try {
@@ -486,10 +502,24 @@ export default function AdminEquipeObjectifs() {
   }
 
   const handleEditObjectif = async (objectif: BackofficeObjectif) => {
-    const libelle = prompt('Libellé', objectif.libelle)
+    const libelle = await dialog.prompt({
+      title: 'Modifier l’objectif',
+      label: 'Libellé',
+      defaultValue: objectif.libelle,
+      required: true,
+      confirmLabel: 'Continuer',
+    })
     if (!libelle) return
 
-    const objectifValue = parseInt(prompt('Objectif', String(objectif.objectif)) || '', 10)
+    const saisieObjectif = await dialog.prompt({
+      title: 'Valeur cible',
+      label: 'Objectif à atteindre (nombre)',
+      defaultValue: String(objectif.objectif),
+      inputMode: 'numeric',
+      required: true,
+      confirmLabel: 'Enregistrer',
+    })
+    const objectifValue = parseInt(saisieObjectif || '', 10)
     if (Number.isNaN(objectifValue)) return
 
     try {
@@ -688,7 +718,13 @@ export default function AdminEquipeObjectifs() {
 
   // Supprimer un membre
   const handleDeleteMembre = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) return
+    const confirmed = await dialog.confirm({
+      tone: 'danger',
+      title: 'Supprimer ce membre ?',
+      message: 'Le membre sera retiré de l’équipe du back-office.',
+      confirmLabel: 'Supprimer',
+    })
+    if (!confirmed) return
     setLoading(true)
     setBackendError(null)
 
@@ -1020,8 +1056,15 @@ export default function AdminEquipeObjectifs() {
                             <div className="flex items-center justify-center gap-2">
                               <span className="font-medium">{m.objectifJournalier}</span>
                               <button
-                                onClick={() => {
-                                  const newVal = prompt('Nouvel objectif journalier:', String(m.objectifJournalier))
+                                onClick={async () => {
+                                  const newVal = await dialog.prompt({
+                                    title: 'Objectif journalier',
+                                    label: `Nouvel objectif pour ${m.nom}`,
+                                    defaultValue: String(m.objectifJournalier),
+                                    inputMode: 'numeric',
+                                    required: true,
+                                    confirmLabel: 'Enregistrer',
+                                  })
                                   if (newVal && !isNaN(parseInt(newVal))) {
                                     handleUpdateObjectif(m.id, 'objectifJournalier', parseInt(newVal))
                                   }

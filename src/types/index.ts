@@ -35,6 +35,14 @@ export interface Listing {
   available: string
   type: ListingType
   annonceType?: string
+  // Profil du déposant : 'membre' (colocataire), 'proprio' ou 'pro'
+  ownerRole?: string
+  // Nombre de pièces du logement, hors cuisine et salle d'eau
+  totalPieces?: number | null
+  // Nombre total de colocataires du logement
+  totalColocataires?: number | null
+  // Nombre de colocataires recherchés
+  seekingCount?: number | null
   typeBail?: 'individuel' | 'collectif' | null
   clauseSolidarite?: 'avec' | 'sans' | null
   candidatureCount?: number

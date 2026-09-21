@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api, ApiJournalEntry } from '../../lib/api'
+import { useDialog } from '../../components/ui/Dialog'
 import {
   Search,
   Clock,
@@ -112,6 +113,7 @@ function normalizeJournalRow(row: ApiJournalEntry): LogEntry {
 
 // Composant principal
 export default function AdminJournalActions() {
+  const dialog = useDialog()
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -203,7 +205,13 @@ export default function AdminJournalActions() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Supprimer cette entrée du journal ?')) return
+    const confirmed = await dialog.confirm({
+      tone: 'danger',
+      title: 'Supprimer cette entrée ?',
+      message: "L'entrée sera retirée du journal des actions.",
+      confirmLabel: 'Supprimer',
+    })
+    if (!confirmed) return
 
     setDeletingId(id)
     try {

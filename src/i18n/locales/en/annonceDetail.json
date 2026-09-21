@@ -7,11 +7,13 @@
   "stats": {
     "surface": "Surface",
     "housemates": "Housemates",
-    "colocs": "Housemates",
+    "colocs": "Flatshare",
     "existing": "Existing",
-    "toCreate": "To create",
+    "toCreate": "To be created",
     "none": "None",
-    "applications": "Applications"
+    "applications": "Applications",
+    "seeking": "Flatmate(s) wanted",
+    "totalHousemates": "Total flatmates"
   },
   "sections": {
     "description": "Description",
@@ -46,7 +48,9 @@
     "address": "Address",
     "announcementType": "Listing type",
     "announcementTypeExisting": "Existing housemates",
-    "announcementTypeCreate": "Housemates to create"
+    "announcementTypeCreate": "Housemates to create",
+    "totalRooms": "Total number of rooms: {{count}}",
+    "totalRoomsHint": "(excluding kitchen and bathroom)"
   },
   "features": {
     "internet": "{{Intern}}",
@@ -121,7 +125,10 @@
     "verified": "Listing verified by moderation",
     "self": "You are the landlord of this listing.",
     "unavailable": "The landlord is not available at the moment.",
-    "viewProfile": "View owner profile"
+    "viewProfile": "View owner profile",
+    "roleMember": "Flatmate",
+    "roleOwner": "Owner",
+    "rolePro": "Real estate professional"
   },
   "profile": {
     "profession": "Profession",

@@ -26,9 +26,11 @@ function computeAge(value: unknown) {
 }
 
 function isValidPhoneNumber(phone: string): boolean {
-  const cleanPhone = phone.replace(/[\s\-]/g, '')
-  const phoneRegex = /^(\+261|0)(32|33|34|38|39)[0-9]{7}$/
-  return phoneRegex.test(cleanPhone)
+  const cleanPhone = phone.replace(/[\s\-.]/g, '')
+  // Madagascar (+261 / 03x) ou France (+33 / 06-07), comme proposé par le sélecteur d'indicatif.
+  const malagasy = /^(\+261|0)(32|33|34|38|39)[0-9]{7}$/
+  const french = /^(\+33|0)[67][0-9]{8}$/
+  return malagasy.test(cleanPhone) || french.test(cleanPhone)
 }
 
 function isValidCin(cin: string): boolean {
@@ -52,7 +54,8 @@ export default function TabProfil({
     cin: user?.cin || '',
     dateNaissance: normalizeDateInputValue(user?.dateNaissance),
     profession: user?.profession || '',
-    villeOrigine: user?.ville_origine || '',
+    // Le profil renvoie `villeOrigine` (nom ou id) ; `ville_origine` gardé en repli.
+    villeOrigine: user?.villeOrigine ?? user?.ville_origine ?? '',
     bio: user?.bio || '',
     languePreferee: user?.languePreferee || '',
     profilePicture: user?.profilePicture || '',
@@ -62,9 +65,40 @@ export default function TabProfil({
   const [villeNom, setVilleNom] = useState<string>('')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [selectedProfileFile, setSelectedProfileFile] = useState<File | null>(null)
+  const [photoMessage, setPhotoMessage] = useState('')
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [uploadingProfile, setUploadingProfile] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => () => {
+    if (photoPreview) URL.revokeObjectURL(photoPreview)
+  }, [photoPreview])
+
+  // La photo est envoyée dès qu'elle est choisie (comme depuis l'en-tête du
+  // compte) : elle ne dépend plus de la validation des autres champs, qui
+  // pouvait bloquer l'enregistrement sans que la photo ne soit mise à jour.
+  const handleProfilePictureChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setPhotoPreview(URL.createObjectURL(file))
+    setUploadingProfile(true)
+    setPhotoMessage(t('updatingPhoto'))
+    try {
+      const formData = new FormData()
+      formData.append('photo', file)
+      const uploaded = await api.uploadProfilePicture(formData)
+      const profilePicture = uploaded.profilePicture || ''
+      setForm((prev) => ({ ...prev, profilePicture }))
+      await onSave({ profile_picture: profilePicture || null })
+      setPhotoMessage(t('photoUpdated'))
+    } catch {
+      setPhotoMessage(t('photoUpdateError'))
+    } finally {
+      setPhotoPreview(null)
+      setUploadingProfile(false)
+    }
+  }
   
   const [phoneError, setPhoneError] = useState('')
   const [cinError, setCinError] = useState('')
@@ -79,6 +113,8 @@ export default function TabProfil({
     console.log('user.languePreferee:', user?.languePreferee)
   }, [user])
 
+  // Réinitialise le formulaire au changement de compte uniquement : une mise à
+  // jour du profil (ex. envoi de la photo) ne doit pas effacer une saisie en cours.
   useEffect(() => {
     setForm({
       prenom: user?.prenom || '',
@@ -88,7 +124,7 @@ export default function TabProfil({
       cin: user?.cin || '',
       dateNaissance: normalizeDateInputValue(user?.dateNaissance),
       profession: user?.profession || '',
-      villeOrigine: user?.ville_origine || '',
+      villeOrigine: user?.villeOrigine ?? user?.ville_origine ?? '',
       bio: user?.bio || '',
       languePreferee: user?.languePreferee || '',
       profilePicture: user?.profilePicture || '',
@@ -96,7 +132,12 @@ export default function TabProfil({
     setPhoneError('')
     setCinError('')
     setCinLocked(!!user?.cin)
-  }, [user])
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // La photo peut aussi être changée depuis l'en-tête du compte.
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, profilePicture: user?.profilePicture || '' }))
+  }, [user?.profilePicture])
 
   useEffect(() => {
     api.langues()
@@ -128,8 +169,9 @@ export default function TabProfil({
       .then((villesList) => {
         setVilles(villesList)
         
-        if (user?.ville_origine) {
-          const valeur = user.ville_origine
+        const villeUtilisateur = user?.villeOrigine ?? user?.ville_origine
+        if (villeUtilisateur) {
+          const valeur = villeUtilisateur
           const estUnId = !isNaN(Number(valeur)) && String(valeur).trim() !== ''
           
           let found
@@ -179,7 +221,7 @@ export default function TabProfil({
   }, [form.villeOrigine, villes])
   const handleSave = async () => {
   if (form.telephone && !isValidPhoneNumber(form.telephone)) {
-    setPhoneError('Numéro invalide. Utilisez 032, 033, 034, 038 ou 039 (ex: 0341234567)')
+    setPhoneError('Numéro invalide. Utilisez 032, 033, 034, 038 ou 039 (ex : 0341234567) ou un mobile français +33 6 / 7.')
     return
   } else {
     setPhoneError('')
@@ -195,15 +237,8 @@ export default function TabProfil({
   setSaving(true)
   setMessage('')
   try {
-    let profilePicture = form.profilePicture || null
-    if (selectedProfileFile) {
-      setUploadingProfile(true)
-      const formData = new FormData()
-      formData.append('photo', selectedProfileFile)
-      const uploaded = await api.uploadProfilePicture(formData)
-      profilePicture = uploaded.profilePicture || null
-      setForm((prev) => ({ ...prev, profilePicture: profilePicture || '' }))
-    }
+    const profilePicture = form.profilePicture || null
+    const villeOrigineId = Number(form.villeOrigine)
 
     const birthDate = form.dateNaissance || null
     
@@ -220,11 +255,11 @@ export default function TabProfil({
       bio: form.bio || null,
       date_naissance: birthDate,  
       profession: form.profession || null,
-      ville_origine: form.villeOrigine ? Number(form.villeOrigine) : null,
+      // Ville non reconnue (nom hors liste) : on ne l'écrase pas avec null.
+      ville_origine: !form.villeOrigine ? null : Number.isFinite(villeOrigineId) ? villeOrigineId : undefined,
       langue_preferee: form.languePreferee ? Number(form.languePreferee) : null,
       profile_picture: profilePicture,
     })
-    setSelectedProfileFile(null)
     setMessage(t('profileUpdated'))
     if (form.cin) {
       setCinLocked(true)
@@ -233,7 +268,6 @@ export default function TabProfil({
     setMessage(t('updateError'))
   } finally {
     setSaving(false)
-    setUploadingProfile(false)
   }
 }
   const initials = `${(form.prenom || user?.prenom || '').charAt(0)}${(form.nom || user?.nom || '').charAt(0)}`.toUpperCase() || 'U'
@@ -343,7 +377,7 @@ export default function TabProfil({
               value={form.villeOrigine || ''}
               onChange={(e) => setForm((prev) => ({ ...prev, villeOrigine: e.target.value }))}
             >
-              <option value="">{t('selectCity') || 'Sélectionner une ville'}</option>
+              <option value="">{t('selectCity')}</option>
               {villes.map((ville) => (
                 <option key={ville.id_ville} value={String(ville.id_ville)}>
                   {ville.nom_ville}
@@ -354,7 +388,7 @@ export default function TabProfil({
             {villeNom && (
               <p className="mt-2 flex items-center gap-1 text-sm text-brand-cyan">
                 <Check className="h-4 w-4" />
-                {t('selectedCity') || 'Ville sélectionnée :'} {villeNom}
+                {t('selectedCity')} {villeNom}
               </p>
             )}
           </div>
@@ -422,10 +456,18 @@ export default function TabProfil({
             <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-[#d8d8d8] bg-[#fafaf8] p-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand-cyan to-brand-green text-lg font-semibold text-white">
-                  {form.profilePicture ? <img src={form.profilePicture} alt={t('profilePicture')} className="h-full w-full object-cover" /> : <span>{initials}</span>}
+                  {photoPreview || form.profilePicture ? (
+                    <img
+                      src={photoPreview || form.profilePicture}
+                      alt={t('profilePicture')}
+                      className={`h-full w-full object-cover ${uploadingProfile ? 'opacity-60' : ''}`}
+                    />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
                 </div>
                 <div className="text-sm text-[#777]">
-                  {selectedProfileFile ? `${t('fileReady')} ${selectedProfileFile.name}` : t('chooseImage')}
+                  {photoMessage || t('chooseImage')}
                 </div>
               </div>
               <div>
@@ -434,9 +476,14 @@ export default function TabProfil({
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => setSelectedProfileFile(e.target.files?.[0] || null)}
+                  onChange={handleProfilePictureChange}
                 />
-                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={uploadingProfile}
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <Upload className="mr-2 h-4 w-4" /> {t('chooseImageBtn')}
                 </Button>
               </div>
@@ -450,10 +497,10 @@ export default function TabProfil({
               type="button"
               onClick={handleSave}
               disabled={saving || uploadingProfile}
-              className="inline-flex items-center gap-2 rounded-xl bg-lime-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-lime-600 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#cccc33] px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#b8b82e] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Check className="h-4 w-4" />
-              {saving || uploadingProfile ? t('saving') : t('saveChanges')}
+              {saving ? t('saving') : t('saveChanges')}
             </button>
           </div>
         </div>

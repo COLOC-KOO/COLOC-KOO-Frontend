@@ -1842,6 +1842,20 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         },
         tags: row.statut === 'active' ? (isBoosted ? ['verifie', 'boost'] : ['verifie']) : (isBoosted ? ['boost'] : []),
         annonceType: row.type_annonce || 'existante',
+        ownerRole: row.type_bailleur || undefined,
+        totalPieces: Number(row.nombre_pieces) > 0 ? Number(row.nombre_pieces) : null,
+        totalColocataires: Number(row.total_colocataires) > 0 ? Number(row.total_colocataires) : null,
+        // Un membre indique le nombre de colocataires recherchés ; à défaut, une
+        // chambre proposée = un colocataire recherché. Un propriétaire / pro
+        // cherche toute la colocation.
+        seekingCount:
+            Number(row.nombre_recherches) > 0
+                ? Number(row.nombre_recherches)
+                : row.type_bailleur && row.type_bailleur !== 'membre' && Number(row.total_colocataires) > 0
+                    ? Number(row.total_colocataires)
+                    : Number(row.bedrooms_count) > 0
+                        ? Number(row.bedrooms_count)
+                        : null,
         typeBail: row.type_bail ?? null,
         clauseSolidarite: row.clause_solidarite ?? null,
         candidatureCount: row.candidature_count != null ? Number(row.candidature_count) : undefined,

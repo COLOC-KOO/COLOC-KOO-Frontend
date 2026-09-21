@@ -26,7 +26,9 @@
     "previousStep": "‹ Dingana teo aloha",
     "ignoreOffer": "Aoka ity tolotra ity",
     "ignoreOfferContinue": "Aoka ity tolotra ity ary manohy ›",
-    "downloadDocument": "Jereo / alaivo ny antontan-taratasy"
+    "downloadDocument": "Jereo / alaivo ny antontan-taratasy",
+    "close": "Hikatona",
+    "confirm": "Hamafiso"
   },
   "realPanel": {
     "title": "Fangatahana noraisina",
@@ -57,7 +59,8 @@
     "complete": "Feno",
     "join": "Midira amin'ity ekipa ity",
     "teamComplete": "Feno ny ekipa",
-    "viewAll": "Jereo ny ekipa rehetra"
+    "viewAll": "Jereo ny ekipa rehetra",
+    "alreadyMember": "Efa mpikambana amin'ity ekipa ity ianao"
   },
   "modals": {
     "applyTitle": "Mangataka amin'ny fiarahamonina",
@@ -109,7 +112,8 @@
     "bailIndividual": "fifanekena tsirairay",
     "with": "misy",
     "without": "tsy misy",
-    "solidarityClause": "fepetra fifamatorana"
+    "solidarityClause": "fepetra fifamatorana",
+    "parties": "Ireo mpifanaraka"
   },
   "notifications": {
     "title": "Fampandrenesana",
@@ -127,7 +131,10 @@
     "thanksApplication": "Misaotra tamin'ny fangatahanareo",
     "backToMap": "Miverena amin'ny sarintany fiarahamonina",
     "mapHint": "Miverena amin'ny sarintany hitadiavana toerana mifanaraka kokoa aminao.",
-    "alertHint": "Alefaso ny fampitandremana mba hahafantaranao ny fiarahamonina vaovao mifanaraka amin'ny fepetra ilainao."
+    "alertHint": "Alefaso ny fampitandremana mba hahafantaranao ny fiarahamonina vaovao mifanaraka amin'ny fepetra ilainao.",
+    "wonAccepted": "Nekena ny fangatahanao ho an'ny {{logement}}. Hamafisina ofisialy ny fiarahamonina rehefa voaloan'ny mpiray trano rehetra ny anjarany.",
+    "wonOfficial": "Voaray ny fangatahanao : anisan'ny mpiray trano ao amin'ny {{logement}} ianao. Tongasoa !",
+    "lostMessage": "Tsy voaray ny fangatahanao ho an'ny {{logement}}. Mbola misy fiarahamonina hafa miandry anao !"
   },
   "actions": {
     "postuler": "Mangataka",
@@ -145,7 +152,9 @@
     "voirDocument": "Jereo ny antontan-taratasy",
     "payerMaPart": "Aloavy ny anjarako ({{montant}} Ar)",
     "lancerColocation": "Manomboka ny fiarahamonina",
-    "lancerOfficiellement": "Manomboka ofisialy ny fiarahamonina"
+    "lancerOfficiellement": "Manomboka ofisialy ny fiarahamonina",
+    "colocationLancee": "Natomboka ny fiarahamonina",
+    "contratsCrees": "Voaforona ny fifanarahana"
   },
   "statuts": {
     "enAttente": "Miandry",
@@ -218,6 +227,21 @@
     "readContract": "Vakio ny fifanekena",
     "readEdl": "Vakio ny antontan-taratasy",
     "sharePaid": "Voaloa ny anjara ✓",
-    "payShare": "Aloavy ny anjarako ({{amount}} Ar)"
+    "payShare": "Aloavy ny anjarako ({{amount}} Ar)",
+    "teamNameRequired": "Ampidiro ny anaran'ny ekipa.",
+    "teamCreated": "Voaforona ny ekipa !",
+    "teamCreationError": "Tsy afaka mamorona ekipa aloha izao.",
+    "loginToJoin": "Midira aloha vao afaka miditra amin'ny ekipa.",
+    "joinedTeam": "Tafiditra ao amin'ny ekipa ianao !",
+    "joinError": "Tsy afaka miditra amin'ity ekipa ity.",
+    "leftTeam": "Niala tamin'ny ekipa ianao.",
+    "leaveError": "Tsy afaka miala amin'ity ekipa ity.",
+    "alreadyMember": "Efa mpikambana amin'ity ekipa ity ianao."
+  },
+  "notices": {
+    "loginRequired": "Midira aloha vao manohy.",
+    "genericError": "Nisy olana. Andramo indray.",
+    "applied": "Lasa ny fangatahanao !",
+    "deleteCandidatureConfirm": "Hofafana tanteraka ve ity fangatahana ity ?"
   }
 }

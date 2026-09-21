@@ -25,7 +25,36 @@ import { api, ApiProfilRechercheLogement } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { LazyImage } from '../components/ui/LazyImage'
 
-const FALLBACK_AVATAR = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80'
+// Aucune photo de stock : un profil sans photo affiche ses initiales sur le
+// dégradé de la charte (la même photo revenait sur toutes les cartes).
+function ProfileVisual({
+  src,
+  name,
+  className = '',
+}: {
+  src?: string | null
+  name: string
+  className?: string
+}) {
+  if (src) {
+    return <LazyImage src={src} alt={name} className={className} />
+  }
+  const initials = name
+    .split(' ')
+    .map((part) => part.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+  return (
+    <div
+      role="img"
+      aria-label={name}
+      className={`flex items-center justify-center bg-gradient-to-br from-brand-cyan to-brand-green font-bebas text-5xl tracking-wide text-white ${className}`}
+    >
+      {initials || <UserRound className="h-12 w-12" />}
+    </div>
+  )
+}
 
 function uniqueProfiles(profiles: ApiProfilRechercheLogement[]) {
   return Array.from(new Map(profiles.map((profile) => [Number(profile.id_utilisateur), profile])).values())
@@ -329,9 +358,9 @@ export default function ProfilsRechercheLogement() {
                 className="group text-left bg-brand-cyan-light/30 border-2 border-brand-cyan/40 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
               >
                 <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-                  <LazyImage
-                    src={currentUserProfile.profile_picture || FALLBACK_AVATAR}
-                    alt={profileName(currentUserProfile)}
+                  <ProfileVisual
+                    src={currentUserProfile.profile_picture}
+                    name={profileName(currentUserProfile)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <span className="absolute top-3 left-3 bg-brand-cyan text-white text-xs font-semibold px-2 py-1 inline-flex items-center gap-1">
@@ -365,9 +394,9 @@ export default function ProfilsRechercheLogement() {
                 className="group text-left bg-card border border-border overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all w-full"
               >
                 <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-                  <LazyImage
-                    src={profile.profile_picture || FALLBACK_AVATAR}
-                    alt={profileName(profile)}
+                  <ProfileVisual
+                    src={profile.profile_picture}
+                    name={profileName(profile)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   {profile.est_verifie && (
@@ -417,9 +446,9 @@ export default function ProfilsRechercheLogement() {
         <div className="fixed inset-0 z-[70] bg-black/60 p-4 grid place-items-center" onClick={() => setSelectedProfile(null)}>
           <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-hidden grid lg:grid-cols-[0.9fr_1.1fr] shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
             <div className="bg-black">
-              <LazyImage
-                src={selectedProfile.profile_picture || FALLBACK_AVATAR}
-                alt={profileName(selectedProfile)}
+              <ProfileVisual
+                src={selectedProfile.profile_picture}
+                name={profileName(selectedProfile)}
                 className="w-full h-full min-h-[360px] object-cover"
               />
             </div>

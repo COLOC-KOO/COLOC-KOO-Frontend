@@ -3,13 +3,23 @@
     "title": "Affichage & réseau",
     "subtitle": "Sarintany'COLOC est conçu pour fonctionner même avec une connexion lente ou instable, partout à Madagascar.",
     "lightMode": "Mode allégé (économie de données)",
-    "lightModeDesc": "Charge des images plus légères et limite les animations. {{boldActivated}} sur réseau 3G+/4G ou hors-ligne ; tu peux aussi le forcer ici.",
+    "lightModeDesc": "Charge des images plus légères et limite les animations. <b>{{boldActivated}}</b> sur réseau 3G+/4G ou hors-ligne ; tu peux aussi le forcer ici.",
     "activatedAutomatically": "Activé automatiquement",
     "offlineAvailability": "Disponibilité hors-ligne",
     "offlineAvailabilityDesc": "Conserve les annonces et conversations consultées récemment pour les retrouver sans connexion.",
     "installApp": "Installer l'application",
     "installAppDesc": "Ajoute Sarintany'COLOC à ton écran d'accueil, sans passer par un store d'applications.",
-    "installButton": "Installer"
+    "installButton": "Installer",
+    "installModal": {
+      "intro": "Ajoute Sarintany'COLOC à l'écran d'accueil de ton téléphone ou de ton ordinateur pour l'ouvrir comme une application.",
+      "installNow": "Installer maintenant",
+      "android": "Android (Chrome) : menu ⋮ puis « Ajouter à l'écran d'accueil » ou « Installer l'application ».",
+      "ios": "iPhone (Safari) : bouton Partager puis « Sur l'écran d'accueil ».",
+      "desktop": "Ordinateur (Chrome / Edge) : icône d'installation à droite de la barre d'adresse.",
+      "alreadyInstalled": "L'application est déjà installée sur cet appareil.",
+      "dismissed": "Installation annulée. Tu peux la relancer à tout moment.",
+      "close": "Fermer"
+    }
   },
   "notifications": {
     "title": "Préférences de notification",

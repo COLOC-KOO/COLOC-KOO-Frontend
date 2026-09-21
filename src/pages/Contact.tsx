@@ -7,23 +7,31 @@ import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { LazyImage } from '../components/ui/LazyImage'
 
-// Image hero identique à celle de Home.tsx
-const heroImage = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80"
+// Visuel fourni par le client (charte graphique Sarintany'COLOC)
+import heroImage from '../assets/contact-hero.jpg'
+import { LITE_HERO_GRADIENT } from '../components/ui/LazyBackgroundImage'
+import { useLiteMode } from '../lib/useLiteMode'
 
 // =============================================
 // COMPOSANT HERO
 // =============================================
 const Hero: React.FC = () => {
   const { t } = useTranslation(['contact', 'common'])
+  const liteMode = useLiteMode()
 
   return (
     <section className="relative">
       <div className="absolute inset-0">
-        <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/20 to-brand-green/20 mix-blend-overlay" />
+        {liteMode ? (
+          <div className="absolute inset-0" style={{ background: LITE_HERO_GRADIENT }} />
+        ) : (
+          <>
+            {/* object-position haute : on garde le visage visible sur un bandeau large */}
+            <img src={heroImage} alt="" className="w-full h-full object-cover object-[center_25%]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/70" />
+          </>
+        )}
       </div>
       <div className="relative max-w-6xl mx-auto px-6 py-16 text-white">
         <motion.div 

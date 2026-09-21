@@ -14,7 +14,9 @@
     "title": "Services disponibles",
     "subtitle": "Cochez une ou plusieurs prestations, puis envoyez votre demande.",
     "defaultDesc": "Prestation à la demande.",
-    "empty": "Aucun service disponible pour le moment."
+    "empty": "Aucun service disponible pour le moment.",
+    "onlyAntananarivo": "Les services Coloc'KOO sont disponibles uniquement à Antananarivo pour le moment.",
+    "availability": "Offre disponible à Antananarivo (quartiers compris) pour le moment."
   },
   "cart": {
     "title": "Ma demande",

@@ -34,7 +34,8 @@
     "previous": "Previous",
     "next": "Next",
     "submit": "Submit",
-    "success": "Operation successful"
+    "success": "Operation successful",
+    "login": "Sign in"
   },
   "footer": {
     "title": "SARINTANY'COLOC",
@@ -60,5 +61,9 @@
     "fr": "Français",
     "mg": "Malagasy",
     "en": "English"
-  }
+  },
+  "user": "User",
+  "cgu": "Terms",
+  "contact": "Contact",
+  "partenaires": "Partners"
 }

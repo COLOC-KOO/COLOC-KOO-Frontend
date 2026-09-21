@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Home, MapPin, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { LazyImage } from '../ui/LazyImage'
+import { LITE_HERO_GRADIENT } from '../ui/LazyBackgroundImage'
 import { useLiteMode } from '../../lib/useLiteMode'
 import HeroImg from '../../assets/WhatsApp Image 2026-09-11 at 15.55.47.jpeg'
 
@@ -57,24 +58,19 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
   return (
     <section className="relative min-h-[300px] overflow-visible bg-gray-900">
       {/* Image : object-cover + object-center par défaut, mais on évite le zoom excessif
-          en fixant object-position et en n'utilisant pas de scale sur mobile */}
-      <LazyImage
-        src={HeroImg}
-        alt={t('home:hero.title')}
-        className="absolute inset-0 h-full w-full object-cover object-center"
-      />
+          en fixant object-position et en n'utilisant pas de scale sur mobile.
+          En mode Lite, aucune image : uniquement le dégradé noir > vert gris. */}
+      {!liteMode && (
+        <LazyImage
+          src={HeroImg}
+          alt={t('home:hero.title')}
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+      )}
       {/* Overlay dégradé : on garde un fond sombre à droite pour éviter la zone floue/décolorée */}
       <div
-        className={
-          liteMode
-            ? 'absolute inset-0'
-            : 'absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/30'
-        }
-        style={
-          liteMode
-            ? { background: 'linear-gradient(to right, rgba(0,0,0,.9), rgba(0,0,0,.6) 50%, rgba(0,0,0,.35))' }
-            : undefined
-        }
+        className={liteMode ? 'absolute inset-0' : 'absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/30'}
+        style={liteMode ? { background: LITE_HERO_GRADIENT } : undefined}
       />
       <div className="relative z-10 flex flex-col items-center px-4 py-8 pb-7 text-center">
         <h1 className="bebas mb-1.5 px-4 text-[40px] leading-tight tracking-wide text-white">

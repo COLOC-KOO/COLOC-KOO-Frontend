@@ -7,11 +7,13 @@
   "stats": {
     "surface": "Velarambony",
     "housemates": "Mpiara-monina",
-    "colocs": "Mpiara-monina",
+    "colocs": "Fiarahamonina",
     "existing": "Efa misy",
     "toCreate": "Hoforonina",
     "none": "Tsy misy",
-    "applications": "Fangatahana"
+    "applications": "Fangatahana",
+    "seeking": "Mpiray trano tadiavina",
+    "totalHousemates": "Isan'ny mpiray trano rehetra"
   },
   "sections": {
     "description": "Famaritana",
@@ -46,7 +48,9 @@
     "address": "Adiresy",
     "announcementType": "Karazana fanambarana",
     "announcementTypeExisting": "Mpiara-monina efa misy",
-    "announcementTypeCreate": "Mpiara-monina hoforonina"
+    "announcementTypeCreate": "Mpiara-monina hoforonina",
+    "totalRooms": "Isan'ny efitra rehetra : {{count}}",
+    "totalRoomsHint": "(tsy tafiditra ny lakozia sy ny efitra fidiovana)"
   },
   "features": {
     "internet": "{{Internet}}",
@@ -121,7 +125,10 @@
     "verified": "Fanambarana nohamarinin'ny fanaraha-maso",
     "self": "Ianao no tompon-tranon'ity fanambarana ity.",
     "unavailable": "Tsy misy ny tompon-trano amin'izao fotoana izao.",
-    "viewProfile": "Hijery ny mombamomban'ny tompon-trano"
+    "viewProfile": "Hijery ny mombamomban'ny tompon-trano",
+    "roleMember": "Mpiray trano",
+    "roleOwner": "Tompon-trano",
+    "rolePro": "Matihanina amin'ny trano"
   },
   "profile": {
     "profession": "Asa",

@@ -3,13 +3,23 @@
     "title": "Display & Network",
     "subtitle": "Sarintany'COLOC is designed to work even on slow or unstable connections, anywhere in Madagascar.",
     "lightMode": "Data Saver Mode",
-    "lightModeDesc": "Loads lighter images and limits animations. {{boldActivated}} on 3G+/4G network or offline; you can also force it here.",
+    "lightModeDesc": "Loads lighter images and limits animations. <b>{{boldActivated}}</b> on 3G+/4G networks or offline; you can also force it here.",
     "activatedAutomatically": "Activated automatically",
     "offlineAvailability": "Offline Availability",
     "offlineAvailabilityDesc": "Saves recently viewed listings and conversations so you can access them without connection.",
     "installApp": "Install Application",
     "installAppDesc": "Add Sarintany'COLOC to your home screen without going through an app store.",
-    "installButton": "Install"
+    "installButton": "Install",
+    "installModal": {
+      "intro": "Add Sarintany'COLOC to the home screen of your phone or computer to open it like an app.",
+      "installNow": "Install now",
+      "android": "Android (Chrome): ⋮ menu, then “Add to Home screen” or “Install app”.",
+      "ios": "iPhone (Safari): Share button, then “Add to Home Screen”.",
+      "desktop": "Computer (Chrome / Edge): install icon on the right of the address bar.",
+      "alreadyInstalled": "The app is already installed on this device.",
+      "dismissed": "Installation cancelled. You can start it again at any time.",
+      "close": "Close"
+    }
   },
   "notifications": {
     "title": "Notification Preferences",

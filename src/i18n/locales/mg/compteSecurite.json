@@ -1,7 +1,7 @@
 {
   "security": {
     "title": "Ankino ny kaontinao",
-    "subtitle": "Voalprotected amin'ny encryption (HTTPS) sy amin'ny fitehirizana ny datsinao. Mifidiana teny miafina matanjaka mba hiarovana ny kaontinao.",
+    "subtitle": "Voaaro amin'ny fanafenana (HTTPS) ny angon-drakitrao. Mifidiana teny miafina matanjaka mba hiarovana ny kaontinao.",
     "currentPassword": "Teny miafina ampiasaina izao",
     "changePasswordBtn": "Hanojo ny teny miafina",
     "modal": {
@@ -17,7 +17,7 @@
     "twoFA": {
       "title": "Fanamarinana indroakely (2FA)",
       "badge": "toroana hevitra",
-      "description": "Mahazo kaody rehefa miditra mba hiarovana ny kaontinao. {{boldObligatory}} izany ho an'ny kaonty mpitantana (admin).",
+      "description": "Mahazo kaody rehefa miditra mba hiarovana ny kaontinao. <b>{{boldObligatory}}</b> izany ho an'ny kaonty mpitantana (admin).",
       "obligatory": "tsy maintsy atao"
     },
     "devices": {
@@ -26,12 +26,14 @@
       "disconnectOthers": "Hanesotra ireo aparey hafa",
       "disconnecting": "Manesotra...",
       "daysAgo": "{{count}} andro lasa"
-    }
+    },
+    "showPassword": "Asehoy ny teny miafina",
+    "hidePassword": "Afeno ny teny miafina"
   },
   "identity": {
     "title": "Fanamarinana ny mombamomba anao",
     "badge": "ho avy · v2.0",
-    "description": "Azo atao na tsy atao. Rehefa voaamarina, misy famantarana {{boldBadge}} mampitoky ireo mpiray trano aminao amin'ny hoavy. Ny fanamarinana dia atao amin'ny alalan'ny mpamatsy rezo findainao (USSD: Telma / Orange / Airtel), tsy misy sarany SMS.",
+    "description": "Azo atao na tsy atao. Rehefa voaamarina, misy famantarana <b>{{boldBadge}}</b> mampitoky ireo mpiray trano aminao amin'ny hoavy. Ny fanamarinana dia atao amin'ny alalan'ny mpamatsy rezo findainao (USSD: Telma / Orange / Airtel), tsy misy sarany SMS.",
     "badgeLabel": "« Mombamomba voaamarina »",
     "notConfirmed": "Mombamomba tsy mbola voaamarina",
     "comingSoon": "Ho avy tsy ho ela"

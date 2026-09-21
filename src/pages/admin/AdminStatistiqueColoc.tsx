@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api } from '../../lib/api'
+import { useDialog } from '../../components/ui/Dialog'
 import {
   BarChart3,
   PieChart,
@@ -225,6 +226,7 @@ const VerticalBars = ({
 
 // Composant principal
 export default function AdminStatistiquesColocation() {
+  const dialog = useDialog()
   const [data, setData] = useState<Annonce[]>([])
   const [period, setPeriod] = useState<number>(12)
   const [month, setMonth] = useState<number>(6)
@@ -411,7 +413,11 @@ export default function AdminStatistiquesColocation() {
       `${d.date} - ${d.quartier} - ${d.type} - ${d.nbColocs} colocs - ${d.loyer.toLocaleString()} Ar`
     ).join('\n')
     
-    alert(`🔍 Détail - ${field}: ${value}\n\n${filtered.length} annonces trouvées\n\n${details.slice(0, 500)}${details.length > 500 ? '\n...' : ''}`)
+    void dialog.alert({
+      title: `${field} : ${value}`,
+      message: `${filtered.length} annonce(s) trouvée(s)\n\n${details.slice(0, 500)}${details.length > 500 ? '\n…' : ''}`,
+      confirmLabel: 'Fermer',
+    })
   }
 
   const loadData = async () => {

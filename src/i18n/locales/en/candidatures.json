@@ -26,7 +26,9 @@
     "previousStep": "‹ Previous step",
     "ignoreOffer": "Skip this offer",
     "ignoreOfferContinue": "Skip this offer and continue ›",
-    "downloadDocument": "View / download the document"
+    "downloadDocument": "View / download the document",
+    "close": "Close",
+    "confirm": "Confirm"
   },
   "realPanel": {
     "title": "Applications received",
@@ -57,7 +59,8 @@
     "complete": "Complete",
     "join": "Join this team",
     "teamComplete": "Team complete",
-    "viewAll": "View all teams"
+    "viewAll": "View all teams",
+    "alreadyMember": "You are already in this team"
   },
   "modals": {
     "applyTitle": "Apply for the roommate group",
@@ -109,7 +112,8 @@
     "bailIndividual": "individual lease",
     "with": "with",
     "without": "without",
-    "solidarityClause": "solidarity clause"
+    "solidarityClause": "solidarity clause",
+    "parties": "Parties"
   },
   "notifications": {
     "title": "Notification",
@@ -127,7 +131,10 @@
     "thanksApplication": "Thanks for applying",
     "backToMap": "Back to the roommate group map",
     "mapHint": "Come back to the map to find a place that fits you even better.",
-    "alertHint": "Turn on an alert to be notified of new roommate groups matching your criteria."
+    "alertHint": "Turn on an alert to be notified of new roommate groups matching your criteria.",
+    "wonAccepted": "Your application for {{logement}} has been accepted. The flatshare will be officially confirmed once every flatmate has paid their share.",
+    "wonOfficial": "Your application has been selected: you are part of the {{logement}} flatshare. Welcome!",
+    "lostMessage": "Your application for {{logement}} was not selected. Other flatshares are waiting for you!"
   },
   "actions": {
     "postuler": "Apply",
@@ -145,7 +152,9 @@
     "voirDocument": "View document",
     "payerMaPart": "Pay my share ({{montant}} Ar)",
     "lancerColocation": "Start the roommate group",
-    "lancerOfficiellement": "Officially launch the roommate group"
+    "lancerOfficiellement": "Officially launch the roommate group",
+    "colocationLancee": "Flatshare launched",
+    "contratsCrees": "Contracts created"
   },
   "statuts": {
     "enAttente": "Pending",
@@ -218,6 +227,21 @@
     "readContract": "Read the contract",
     "readEdl": "Read the document",
     "sharePaid": "Share paid ✓",
-    "payShare": "Pay my share ({{amount}} Ar)"
+    "payShare": "Pay my share ({{amount}} Ar)",
+    "teamNameRequired": "Please enter a team name.",
+    "teamCreated": "Team created!",
+    "teamCreationError": "Unable to create the team right now.",
+    "loginToJoin": "Sign in to join a team.",
+    "joinedTeam": "You joined the team!",
+    "joinError": "Unable to join this team.",
+    "leftTeam": "You left the team.",
+    "leaveError": "Unable to leave this team.",
+    "alreadyMember": "You are already a member of this team."
+  },
+  "notices": {
+    "loginRequired": "Please sign in to continue.",
+    "genericError": "Something went wrong. Please try again.",
+    "applied": "Your application has been sent!",
+    "deleteCandidatureConfirm": "Permanently delete this application?"
   }
 }

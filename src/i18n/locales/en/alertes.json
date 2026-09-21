@@ -32,5 +32,10 @@
     "existingColoc": "Existing flatshare",
     "colocCreation": "Flatshare creation",
     "potentialProperty": "Potential property"
-  }
+  },
+  "stepLocalisation": "Location",
+  "stepCriteria": "Criteria",
+  "stepNotifications": "Notifications",
+  "previous": "Previous",
+  "next": "Next"
 }

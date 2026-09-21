@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { api } from "../../lib/api";
+import { useDialog } from "../../components/ui/Dialog";
 import {
   FileText,
   Search,
@@ -389,6 +390,7 @@ const DocumentDetailsModal = ({
   onUpdate: (id: string, updates: Partial<DocumentDemande>) => Promise<void>;
   onRefresh: () => Promise<void>;
 }) => {
+  const dialog = useDialog();
   const [note, setNote] = useState(document.note || "");
   const [updating, setUpdating] = useState(false);
   const [versementsLoading, setVersementsLoading] = useState(false);
@@ -450,14 +452,21 @@ const DocumentDetailsModal = ({
     const emails = document.parties.filter(p => p.email && p.email.trim() !== "").map(p => p.email);
 
     if (emails.length === 0) {
-      alert('❌ Aucun email disponible pour les parties du document.');
+      void dialog.alert({
+        tone: "warning",
+        title: "Envoi impossible",
+        message: "Aucune adresse e-mail n'est renseignée pour les parties de ce document.",
+      });
       return;
     }
 
     // Confirmation avant envoi
-    if (!confirm(`📧 Envoyer le document ${document.id} à ${emails.length} destinataire(s) ?`)) {
-      return;
-    }
+    const confirmerEnvoi = await dialog.confirm({
+      title: "Envoyer le document",
+      message: `Le document ${document.id} va être envoyé à ${emails.length} destinataire(s).`,
+      confirmLabel: "Envoyer",
+    });
+    if (!confirmerEnvoi) return;
 
     setSendingEmail(true);
     setEmailStatus(null);
@@ -476,8 +485,7 @@ const DocumentDetailsModal = ({
         destinataires: response.destinataires,
       });
 
-      // Afficher un message de succès
-      alert(`✅ Email envoyé à ${response.count || emails.length} destinataire(s)`);
+      dialog.toast(`E-mail envoyé à ${response.count || emails.length} destinataire(s)`);
 
     } catch (error) {
       console.error('Erreur envoi email:', error);
@@ -486,7 +494,11 @@ const DocumentDetailsModal = ({
         count: 0,
         message: error instanceof Error ? error.message : 'Erreur lors de l\'envoi',
       });
-      alert('❌ Erreur lors de l\'envoi de l\'email. Veuillez réessayer.');
+      void dialog.alert({
+        tone: "danger",
+        title: "Envoi impossible",
+        message: "L'e-mail n'a pas pu être envoyé. Merci de réessayer dans quelques instants.",
+      });
     } finally {
       setSendingEmail(false);
     }
@@ -498,7 +510,11 @@ const DocumentDetailsModal = ({
       await api.updatePaiementStatus(versementId, { statut: newStatut });
       await onRefresh();
     } catch (err) {
-      alert("Erreur lors de la mise à jour du versement");
+      void dialog.alert({
+        tone: "danger",
+        title: "Mise à jour impossible",
+        message: "Le statut du versement n'a pas pu être enregistré. Merci de réessayer.",
+      });
     } finally {
       setVersementsLoading(false);
     }
@@ -902,6 +918,7 @@ const DocumentDetailsModal = ({
 
 // ===== COMPOSANT PRINCIPAL =====
 export default function AdminContratsEDL() {
+  const dialog = useDialog();
   const [activeTab, setActiveTab] = useState<"demandes" | "offres">("demandes");
   const [documents, setDocuments] = useState<DocumentDemande[]>([]);
   const [offres, setOffres] = useState<OffreCommerciale[]>([]);
@@ -1212,13 +1229,21 @@ export default function AdminContratsEDL() {
   // Gérer l'ajout d'une offre
   const handleAddOffre = async () => {
     if (!newOffreNom.trim() || !newOffrePrix) {
-      alert("Veuillez remplir tous les champs obligatoires.");
+      void dialog.alert({
+        tone: "warning",
+        title: "Champs manquants",
+        message: "Merci de renseigner le nom de l'offre et son prix.",
+      });
       return;
     }
 
     const prix = parseInt(newOffrePrix);
     if (isNaN(prix) || prix <= 0) {
-      alert("Le prix doit être un nombre valide.");
+      void dialog.alert({
+        tone: "warning",
+        title: "Prix invalide",
+        message: "Le prix doit être un nombre supérieur à 0.",
+      });
       return;
     }
 
@@ -1261,7 +1286,13 @@ export default function AdminContratsEDL() {
 
   // Supprimer une offre
   const handleDeleteOffre = async (id: string) => {
-    if (!confirm("Voulez-vous vraiment supprimer cette offre ?")) return;
+    const confirmerSuppression = await dialog.confirm({
+      tone: "danger",
+      title: "Supprimer cette offre ?",
+      message: "Cette offre commerciale sera définitivement supprimée.",
+      confirmLabel: "Supprimer",
+    });
+    if (!confirmerSuppression) return;
 
     try {
       await api.deleteServiceCkoo(id);

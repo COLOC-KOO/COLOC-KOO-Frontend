@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { Check, Eye, MessageCircle, Trash2, UserPlus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -142,26 +141,20 @@ export function RealCandidaturesPanel({
             {t('panel.apply_button')}
           </button>
         )}
+        {/* Un seul bouton « Voir ma candidature » (il apparaissait deux fois). */}
         {hasApplied && user && (
-          <Link
-            to={`/candidatures?annonceId=${annonceId}`}
+          <button
+            type="button"
+            onClick={onViewMyCandidature}
             className="inline-flex items-center gap-2 rounded-xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark transition-colors hover:bg-brand-cyan-light"
           >
             <Eye className="h-4 w-4" />
             {t('panel.view_my_candidature')}
-          </Link>
+          </button>
         )}
       </div>
 
       <div className="mt-4 border-t border-border pt-4">
-        <button
-          onClick={onViewMyCandidature}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark transition-colors hover:bg-brand-cyan-light sm:w-auto"
-        >
-          <Eye className="h-4 w-4" />
-          {t('panel.view_my_candidature')}
-        </button>
-
         {showNotAppliedMessage && (
           <div className="mt-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
             {t('panel.not_applied_msg')}
@@ -173,12 +166,9 @@ export function RealCandidaturesPanel({
         )}
 
         {hasApplied && (
-          <div className="mt-3 flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-            <Check className="h-4 w-4 text-green-600" />
+          <div className="flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+            <Check className="h-4 w-4 shrink-0 text-green-600" />
             {t('panel.already_applied_msg')}
-            <span className="ml-2 text-xs text-green-600">
-              {t('panel.already_applied_sub')}
-            </span>
           </div>
         )}
       </div>
@@ -248,7 +238,7 @@ function RealCandidaturesList({
       ) : null}
 
       {realCandidatures.map((candidat) => {
-        const isCurrentUser = candidat.id_utilisateur === user?.id;
+        const isCurrentUser = Number(candidat.id_utilisateur) === Number(user?.id);
         const canManageCandidate = Boolean(
           user &&
             !isCurrentUser &&
@@ -271,7 +261,8 @@ function RealCandidaturesList({
         return (
           <div
             key={candidat.id_candidature}
-            className={`rounded-2xl border p-4 transition-shadow hover:shadow-md ${
+            id={isCurrentUser ? "my-candidature" : undefined}
+            className={`scroll-mt-40 rounded-2xl border p-4 transition-shadow hover:shadow-md ${
               isCurrentUser ? "border-brand-cyan bg-brand-cyan-light/10" : "border-border bg-card"
             }`}
           >
@@ -330,22 +321,28 @@ function RealCandidaturesList({
                     >
                       {candidateActionLoading === candidat.id_candidature ? t('panel.loading') : t('panel.actions.discuss')}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => onCandidateDecision(candidat.id_candidature, "accept")}
-                      disabled={!canManageCandidate || candidateActionLoading === candidat.id_candidature}
-                      className="rounded-xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
-                    >
-                      {t('panel.actions.accept')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onCandidateDecision(candidat.id_candidature, "refuse")}
-                      disabled={!canManageCandidate || candidateActionLoading === candidat.id_candidature}
-                      className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
-                    >
-                      {t('panel.actions.refuse')}
-                    </button>
+                    {/* Accepter / Refuser : réservés au déposant de l'annonce ; un
+                        colocataire qui postule ne voit que « Discuter ». */}
+                    {canManageCandidate && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => onCandidateDecision(candidat.id_candidature, "accept")}
+                          disabled={candidateActionLoading === candidat.id_candidature}
+                          className="rounded-xl bg-brand-green px-3 py-2 text-sm font-semibold text-white hover:bg-brand-green-dark disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+                        >
+                          {t('panel.actions.accept')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onCandidateDecision(candidat.id_candidature, "refuse")}
+                          disabled={candidateActionLoading === candidat.id_candidature}
+                          className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                        >
+                          {t('panel.actions.refuse')}
+                        </button>
+                      </>
+                    )}
                     {canDeleteCandidate ? (
                       <button
                         type="button"

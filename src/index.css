@@ -13,6 +13,54 @@
   font-family: 'Bebas Neue', 'Inter', sans-serif;
 }
 
+/* Bebas Neue n'existe qu'en graisse normale : un font-weight gras (règle h1–h4,
+   classes font-bold…) produisait un faux gras « baveux ». Les titres Bebas
+   restent donc toujours en graisse normale. */
+.bebas,
+.font-bebas,
+.font-display,
+.bb {
+  font-weight: 400 !important;
+  font-synthesis: none;
+}
+
+/* Leaflet donne des z-index de 400 à 1000 à ses calques : sans contexte
+   d'empilement propre, la carte passait au-dessus du header fixe au scroll. */
+.leaflet-container {
+  isolation: isolate;
+  z-index: 0;
+}
+
+/* Dialogues de l'application (voir components/ui/Dialog.tsx) */
+@keyframes ck-dialog-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes ck-dialog-card-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ck-toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ck-dialog-backdrop {
+  animation: ck-dialog-backdrop-in 160ms ease-out both;
+}
+.ck-dialog-card {
+  animation: ck-dialog-card-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.ck-toast {
+  animation: ck-toast-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ck-dialog-backdrop,
+  .ck-dialog-card,
+  .ck-toast {
+    animation: none;
+  }
+}
+
 :root {
   --radius: 0.875rem;
 

@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api } from '../../lib/api'
+import { useDialog } from '../../components/ui/Dialog'
 import {
   Search,
   Plus,
@@ -65,6 +66,7 @@ const BoosterModal = ({
   loading: boolean
   sectionLabel: string
 }) => {
+  const dialog = useDialog()
   const [nom, setNom] = useState('')
   const [description, setDescription] = useState('')
   const [duree, setDuree] = useState(1)
@@ -93,15 +95,15 @@ const BoosterModal = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!nom.trim()) {
-      alert('Veuillez saisir un nom pour l\'offre')
+      void dialog.alert({ tone: 'warning', title: 'Nom manquant', message: "Merci de saisir un nom pour l'offre." })
       return
     }
     if (prix <= 0) {
-      alert('Le prix doit être supérieur à 0')
+      void dialog.alert({ tone: 'warning', title: 'Prix invalide', message: 'Le prix doit être supérieur à 0.' })
       return
     }
     if (duree <= 0) {
-      alert('La duree doit etre superieure a 0')
+      void dialog.alert({ tone: 'warning', title: 'Durée invalide', message: 'La durée doit être supérieure à 0.' })
       return
     }
     onSave({
@@ -578,6 +580,7 @@ function BoosterSection({
 // ============================================================================
 
 export default function AdminBooster() {
+  const dialog = useDialog()
   // On charge UNE fois tous les services (services_ckoo) puis on les
   // répartit entre les 2 sections par préfixe de cle_service.
   const [allServices, setAllServices] = useState<ServiceBooster[]>([])
@@ -680,7 +683,13 @@ export default function AdminBooster() {
   }
 
   const handleDelete = async (id: number, nom: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'offre "${nom}" ?`)) return
+    const confirmed = await dialog.confirm({
+      tone: 'danger',
+      title: 'Supprimer cette offre ?',
+      message: `L'offre « ${nom} » sera définitivement supprimée.`,
+      confirmLabel: 'Supprimer',
+    })
+    if (!confirmed) return
     setLoading(true)
     setError(null)
     try {

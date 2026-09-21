@@ -11,22 +11,26 @@
       "all": "Tous types",
       "room": "Chambre",
       "apartment": "Appartement",
-      "house": "Maison"
+      "house": "Maison",
+      "title": "Type de bien"
     },
     "coloc": {
       "all": "Tous",
       "existing": "Colocataires existantes",
-      "create": "Colocataires à créer"
+      "create": "Colocataires à créer",
+      "title": "Type de coloc"
     },
     "budget": "Budget",
     "services": "Services",
     "noServices": "Aucun service actif",
     "city": {
-      "all": "Toutes les villes"
+      "all": "Toutes les villes",
+      "title": "Ville"
     },
     "district": {
       "title": "Quartier",
       "placeholder": "Ex : Antaninarenina"
-    }
+    },
+    "title": "Filtres"
   }
 }

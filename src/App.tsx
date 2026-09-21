@@ -51,8 +51,11 @@ function ScrollToTop() {
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { loading, isAdmin } = useAuth()
+  const { loading, isAdmin, user } = useAuth()
   if (loading) return <div className="min-h-screen grid place-items-center">Chargement...</div>
+  // Connecté mais sans droit staff : on renvoie vers son espace (renvoyer vers
+  // /auth?redirect=/admin créait une boucle de redirection = page blanche).
+  if (user && !isAdmin) return <Navigate to="/compte" replace />
   if (!isAdmin) return <Navigate to="/auth?mode=signin&redirect=/admin" replace />
   return <>{children}</>
 }

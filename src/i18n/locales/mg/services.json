@@ -14,7 +14,9 @@
     "title": "Tolotra misy",
     "subtitle": "Safidio iray na maromaro, ary alefaso ny fangatahanao.",
     "defaultDesc": "Tolotra araka ny fangatahana.",
-    "empty": "Tsy misy tolotra misy amin'izao fotoana izao."
+    "empty": "Tsy misy tolotra misy amin'izao fotoana izao.",
+    "onlyAntananarivo": "Ny tolotra Coloc'KOO dia azo atao ao Antananarivo ihany aloha hatreto.",
+    "availability": "Tolotra misy ao Antananarivo (anisan'izany ny fokontany) aloha hatreto."
   },
   "cart": {
     "title": "Ny fangatahako",

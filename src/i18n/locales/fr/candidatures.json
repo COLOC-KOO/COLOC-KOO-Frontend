@@ -13,7 +13,7 @@
     }
   },
   "common": {
-    "cancel": "Annuler",  
+    "cancel": "Annuler",
     "finish": "Terminer",
     "continue": "Continuer",
     "loading": "Traitement...",
@@ -26,7 +26,9 @@
     "previousStep": "‹ Étape précédente",
     "ignoreOffer": "Ignorer l'offre",
     "ignoreOfferContinue": "Ignorer l'offre et continuer ›",
-    "downloadDocument": "Voir / télécharger le document"
+    "downloadDocument": "Voir / télécharger le document",
+    "close": "Fermer",
+    "confirm": "Confirmer"
   },
   "realPanel": {
     "title": "Candidatures reçues",
@@ -57,7 +59,8 @@
     "complete": "Complète",
     "join": "Rejoindre cette équipe",
     "teamComplete": "Équipe complète",
-    "viewAll": "Voir toutes les équipes"
+    "viewAll": "Voir toutes les équipes",
+    "alreadyMember": "Tu fais déjà partie de cette équipe"
   },
   "modals": {
     "applyTitle": "Postuler à la colocation",
@@ -109,7 +112,8 @@
     "bailIndividual": "bail individuel",
     "with": "avec",
     "without": "sans",
-    "solidarityClause": "clause de solidarité"
+    "solidarityClause": "clause de solidarité",
+    "parties": "Parties"
   },
   "notifications": {
     "title": "Notification",
@@ -127,7 +131,10 @@
     "thanksApplication": "Merci pour votre candidature",
     "backToMap": "Revenir à la carte des colocations",
     "mapHint": "Reviens sur la carte pour trouver un logement qui te correspond encore mieux.",
-    "alertHint": "Active une alerte pour être prévenu des nouvelles colocations qui matchent avec tes critères."
+    "alertHint": "Active une alerte pour être prévenu des nouvelles colocations qui matchent avec tes critères.",
+    "wonAccepted": "Ta candidature pour {{logement}} a été acceptée. La colocation sera confirmée officiellement dès que tous les colocataires auront réglé leur part.",
+    "wonOfficial": "Ta candidature est retenue : tu fais partie de la colocation {{logement}}. Bienvenue !",
+    "lostMessage": "Ta candidature pour {{logement}} n'a pas été retenue. D'autres colocations t'attendent !"
   },
   "actions": {
     "postuler": "Postuler",
@@ -145,7 +152,9 @@
     "voirDocument": "Voir le document",
     "payerMaPart": "Payer ma part ({{montant}} Ar)",
     "lancerColocation": "Lancer la colocation",
-    "lancerOfficiellement": "Lancer officiellement la colocation"
+    "lancerOfficiellement": "Lancer officiellement la colocation",
+    "colocationLancee": "Colocation lancée",
+    "contratsCrees": "Contrats créés"
   },
   "statuts": {
     "enAttente": "En attente",
@@ -218,6 +227,21 @@
     "readContract": "Lire le contrat",
     "readEdl": "Lire le document",
     "sharePaid": "Part réglée ✓",
-    "payShare": "Payer ma part ({{amount}} Ar)"
+    "payShare": "Payer ma part ({{amount}} Ar)",
+    "teamNameRequired": "Merci d'indiquer un nom d'équipe.",
+    "teamCreated": "Équipe créée !",
+    "teamCreationError": "Impossible de créer l'équipe pour le moment.",
+    "loginToJoin": "Connecte-toi pour rejoindre une équipe.",
+    "joinedTeam": "Tu as rejoint l'équipe !",
+    "joinError": "Impossible de rejoindre cette équipe.",
+    "leftTeam": "Tu as quitté l'équipe.",
+    "leaveError": "Impossible de quitter cette équipe.",
+    "alreadyMember": "Tu fais déjà partie de cette équipe."
+  },
+  "notices": {
+    "loginRequired": "Connecte-toi pour continuer.",
+    "genericError": "Une erreur est survenue. Réessaie.",
+    "applied": "Ta candidature a bien été envoyée !",
+    "deleteCandidatureConfirm": "Supprimer définitivement cette candidature ?"
   }
 }

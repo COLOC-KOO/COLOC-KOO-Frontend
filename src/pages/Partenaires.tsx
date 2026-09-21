@@ -16,13 +16,16 @@ import { Button } from '../components/ui/Button'
 import { api } from '../lib/api'
 import { useConfig } from '../lib/config'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LazyImage } from '../components/ui/LazyImage'
 
-// Image hero
-const heroImage = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1600&q=80"
+// Visuel fourni par le client (charte graphique Sarintany'COLOC)
+import heroImage from '../assets/partenaires-hero.jpg'
+import { LITE_HERO_GRADIENT } from '../components/ui/LazyBackgroundImage'
+import { useLiteMode } from '../lib/useLiteMode'
 
-// Police unifiée du site
-const HEADING_FONT = "font-['Oswald']"
+// Typographies de la charte : titres en Bebas Neue, textes en Arial.
+// (« font-['Oswald'] » n'était pas chargée : les titres retombaient en serif.)
+const HEADING_FONT = "bebas tracking-wide"
+const BODY_FONT = "font-[Arial,Helvetica,sans-serif]"
 
 // Types
 interface PartnerTier {
@@ -63,13 +66,19 @@ const Hero: React.FC<{ onContactClick: () => void; onStatutsClick: () => void }>
   onContactClick, onStatutsClick
 }) => {
   const { t } = useTranslation(['partenaires', 'common'])
+  const liteMode = useLiteMode()
 
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0">
-        <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-black/45" />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan-dark/70 via-brand-cyan/45 to-brand-green/45 mix-blend-overlay" />
+        {liteMode ? (
+          <div className="absolute inset-0" style={{ background: LITE_HERO_GRADIENT }} />
+        ) : (
+          <>
+            <img src={heroImage} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/45" />
+          </>
+        )}
       </div>
       <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24 text-white">
         <div className="max-w-2xl mx-auto text-center">
@@ -229,7 +238,7 @@ const TierCard: React.FC<{ tier: PartnerTier; index: number }> = ({ tier, index 
 
   return (
     <motion.div
-      className="relative bg-white rounded-2xl p-5 flex flex-col h-full border transition-shadow duration-300 hover:shadow-lg"
+      className={`relative bg-white rounded-2xl p-5 flex flex-col h-full border transition-shadow duration-300 hover:shadow-lg ${BODY_FONT}`}
       style={{ borderColor: '#E4ECEA' }}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
@@ -335,7 +344,7 @@ const PartnerSectionComponent: React.FC<{ section: PartnerSection }> = ({ sectio
 
   return (
     <motion.div
-      className="bg-white border rounded-2xl p-6"
+      className={`bg-white border rounded-2xl p-6 ${BODY_FONT}`}
       style={{ borderColor: '#E4ECEA' }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -1087,7 +1096,7 @@ export default function Partenaires() {
         <section className="py-6 px-4 md:px-6 lg:px-8" id="statuts">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">
+              <h2 className={`${HEADING_FONT} text-3xl md:text-4xl text-foreground`}>
                 {t('partenaires:statuts.title')}
               </h2>
               <p className="text-sm text-muted-foreground max-w-2xl mx-auto mt-1">

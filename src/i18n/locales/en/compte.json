@@ -155,5 +155,10 @@
   "surfacePlaceholder": "45",
   "neighborhoodPlaceholder": "Analakely, Isoraka...",
   "addressPlaceholder": "12 Rue de la Liberté",
-  "colocatairesPlaceholder": "3"
+  "colocatairesPlaceholder": "3",
+  "selectCity": "Select a city",
+  "selectedCity": "Selected city:",
+  "updatingPhoto": "Uploading photo…",
+  "photoUpdated": "Profile picture updated",
+  "photoUpdateError": "Unable to update the picture. Please try again."
 }

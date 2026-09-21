@@ -12,7 +12,6 @@ import { Button } from '../components/ui/Button'
 import { useAuth } from '../lib/auth'
 import { api, ServiceCatalogueItem, DemandeServiceGroup, ApiBooster } from '../lib/api'
 import { cn } from '../lib/utils'
-import { LazyImage } from '../components/ui/LazyImage'
 
 // Choisit une icône adaptée selon le nom du service (fallback : cloche).
 function getServiceIcon(nom: string): React.ElementType {
@@ -28,8 +27,21 @@ function getServiceIcon(nom: string): React.ElementType {
   return ConciergeBell
 }
 
-const heroImage =
-  'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1600&q=80'
+// Visuel fourni par le client (charte graphique Sarintany'COLOC)
+import heroImage from '../assets/partenaires-hero.jpg'
+import { LITE_HERO_GRADIENT } from '../components/ui/LazyBackgroundImage'
+import { useLiteMode } from '../lib/useLiteMode'
+
+// Villes où l'offre de services Coloc'KOO est disponible.
+const VILLES_SERVICES_CKOO = ['antananarivo', 'tananarive', 'tana']
+
+function normaliseVille(value: unknown) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim()
+}
 
 const UNITE_LABEL: Record<string, string> = {
   heure: '/ heure',
@@ -59,18 +71,23 @@ const BOOST_SECTIONS: Array<{
   title: string
   recommended: boolean
   description: string
+  details: string
 }> = [
   {
     key: 'boost',
     title: 'Remontez votre annonce',
     recommended: true,
     description: 'Remontez automatiquement votre annonce dans les resultats de recherche de votre categorie.',
+    details:
+      "Pendant toute la durée choisie, ton annonce est replacée en tête des résultats de recherche de ta ville, à chaque nouvelle consultation. Tu gardes la main : l'annonce reste modifiable et le boost s'arrête automatiquement à l'échéance.",
   },
   {
     key: 'boosturgent',
     title: 'Annonce urgente',
     recommended: false,
     description: 'Ressortez dans les resultats et profitez du filtre pour etre trouve facilement.',
+    details:
+      "Ton annonce reçoit le badge « urgent » et apparaît dans le filtre dédié : idéal quand la chambre doit être occupée rapidement. Le badge disparaît de lui-même à la fin de la période choisie.",
   },
 ]
 
@@ -80,6 +97,12 @@ export default function Services() {
   const [heroTitleLead, ...heroTitleRest] = heroTitle.split(',')
   const { user } = useAuth()
   const navigate = useNavigate()
+  const liteMode = useLiteMode()
+
+  // L'offre de services Coloc'KOO n'est proposée qu'à Antananarivo : si la ville
+  // du profil est renseignée et se trouve ailleurs, on l'indique clairement.
+  const villeProfil = normaliseVille(user?.villeActuelle || user?.ville || user?.villeOrigine)
+  const horsZoneServices = Boolean(villeProfil) && !VILLES_SERVICES_CKOO.includes(villeProfil)
 
   const [catalogue, setCatalogue] = useState<ServiceCatalogueItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -92,6 +115,9 @@ export default function Services() {
   // Sélection de l'option de boost cochée (une seule à la fois, tous préfixes
   // confondus : cocher une offre décoche automatiquement les autres).
   const [selectedBoost, setSelectedBoost] = useState<number | null>(null)
+
+  // Détail d'une offre de boost affiché via « En savoir plus ».
+  const [openBoostDetails, setOpenBoostDetails] = useState<'boost' | 'boosturgent' | null>(null)
 
   // Sélection multiple (sans quantité) : ensemble d'id_service cochés.
   const [selected, setSelected] = useState<Set<number>>(new Set())
@@ -185,6 +211,8 @@ export default function Services() {
     })
   }, [boostServices])
 
+  const hasBoostOffers = boostOffers.some((offer) => offer.items.length > 0)
+
   async function handleSubmit() {
     if (!user) {
       navigate('/auth?mode=signin&redirect=/services')
@@ -221,9 +249,14 @@ export default function Services() {
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <LazyImage src={heroImage} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/45" />
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan-dark/70 via-brand-cyan/45 to-brand-green/45 mix-blend-overlay" />
+          {liteMode ? (
+            <div className="absolute inset-0" style={{ background: LITE_HERO_GRADIENT }} />
+          ) : (
+            <>
+              <img src={heroImage} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/45" />
+            </>
+          )}
         </div>
         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24 text-white">
           <motion.div {...fadeInUp} className="max-w-2xl">
@@ -285,7 +318,10 @@ export default function Services() {
           )}
         </motion.div>
 
-        {/* ===== BOOSTER UNE ANNONCE (données réelles services_ckoo) ===== */}
+        {/* ===== BOOSTER UNE ANNONCE (données réelles services_ckoo) =====
+            Le bloc n'apparaît que si des offres de boost sont réellement
+            configurées : sinon il n'affichait que « Aucune offre disponible ». */}
+        {(boostLoading || hasBoostOffers) && (
         <motion.section {...fadeInUp} className="mb-12 border border-border bg-white overflow-hidden">
           <div className="bg-purple-50 px-4 py-7 text-center">
             <h2 className="text-2xl font-extrabold text-foreground">Boostez votre annonce !</h2>
@@ -320,9 +356,19 @@ export default function Services() {
                   </div>
                   <h3 className="text-center text-lg font-bold text-foreground mt-3">{offer.title}</h3>
                   <p className="text-center text-sm text-muted-foreground mt-3 min-h-[48px]">{offer.description}</p>
-                  <button type="button" className="mx-auto mt-2 block text-sm font-semibold underline text-foreground">
-                    En savoir plus
+                  <button
+                    type="button"
+                    aria-expanded={openBoostDetails === offer.key}
+                    onClick={() => setOpenBoostDetails((current) => (current === offer.key ? null : offer.key))}
+                    className="mx-auto mt-2 block text-sm font-semibold underline text-foreground"
+                  >
+                    {openBoostDetails === offer.key ? 'Masquer le détail' : 'En savoir plus'}
                   </button>
+                  {openBoostDetails === offer.key && (
+                    <p className="mt-3 rounded-lg bg-muted/60 p-3 text-sm leading-relaxed text-muted-foreground">
+                      {offer.details}
+                    </p>
+                  )}
                   <div className="mt-6 space-y-3">
                     {offer.items.length === 0 ? (
                       <p className="text-center text-sm text-muted-foreground py-4">
@@ -368,13 +414,15 @@ export default function Services() {
 
           <div className="border-t border-border px-4 py-4 flex justify-end">
             <Button
-              onClick={() => navigate(selectedBoost ? `/depot_annoncedeux?boost=${selectedBoost}` : '/depot_annoncedeux')}
+              // La route du dépôt est /depot_annonce (l'ancien lien menait à une page 404).
+              onClick={() => navigate(selectedBoost ? `/depot_annonce?boost=${selectedBoost}` : '/depot_annonce')}
               className="rounded-lg bg-orange-500 hover:bg-orange-600 text-white"
             >
               {selectedBoost ? 'Deposer avec ce booster' : 'Deposer sans booster mon annonce'}
             </Button>
           </div>
         </motion.section>
+        )}
 
         {/* ===== CATALOGUE + PANIER ===== */}
         <div className="grid lg:grid-cols-3 gap-8 items-start">
@@ -393,6 +441,9 @@ export default function Services() {
               <p className="text-sm text-muted-foreground mt-1">
                 {t('services:catalogue.subtitle')}
               </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('services:catalogue.availability')}
+              </p>
             </div>
 
             {loading ? (
@@ -403,6 +454,10 @@ export default function Services() {
               </div>
             ) : error && !catalogue.length ? (
               <p className="text-red-600">{error}</p>
+            ) : horsZoneServices ? (
+              <div className="rounded-2xl border border-border/60 bg-white p-8 text-center text-muted-foreground">
+                {t('services:catalogue.onlyAntananarivo')}
+              </div>
             ) : catalogue.length === 0 ? (
               <div className="rounded-2xl border border-border/60 bg-white p-8 text-center text-muted-foreground">
                 {t('services:catalogue.empty')}
