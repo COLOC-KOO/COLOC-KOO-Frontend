@@ -312,7 +312,7 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
       )}
 
       {/* AFFICHAGE & RÉSEAU */}
-      <div className="bg-white border border-border rounded-2xl p-5 sm:p-6">
+      <div className="bg-white border border-border rounded-2xl p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-1">
           <Smartphone className="w-5 h-5 text-brand-cyan shrink-0" />
           <h2 className="bebas text-xl sm:text-2xl">{t('displayNetwork.title')}</h2>
@@ -321,7 +321,7 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
           {t('displayNetwork.subtitle')}
         </p>
 
-        <div className="flex items-start justify-between gap-4 py-4 border-b border-border/60">
+        <div className="flex items-start justify-between gap-3 sm:gap-4 py-4 border-b border-border/60">
           <div className="min-w-0">
             <div className="text-sm font-bold text-foreground">
               {t('displayNetwork.lightMode')}
@@ -344,7 +344,7 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
           />
         </div>
 
-        <div className="flex items-start justify-between gap-4 py-4 border-b border-border/60">
+        <div className="flex items-start justify-between gap-3 sm:gap-4 py-4 border-b border-border/60">
           <div className="min-w-0">
             <div className="text-sm font-bold text-foreground">
               {t('displayNetwork.offlineAvailability')}
@@ -361,7 +361,9 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
             }}
           />
         </div>
-        <div className="flex items-center justify-between gap-4 py-4">
+        {/* Le bouton passe sous le texte en dessous de sm : côte à côte, le
+            libellé « Installer l'application » se retrouvait écrasé sur mobile. */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 py-4">
           <div className="min-w-0">
             <div className="text-sm font-bold text-foreground">
               {t('displayNetwork.installApp')}
@@ -373,7 +375,7 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
           <button
             type="button"
             onClick={handleInstallClick}
-            className="shrink-0 inline-flex items-center gap-2 bg-brand-cyan text-white text-sm font-semibold rounded-lg px-4 py-2 hover:bg-brand-cyan-dark transition-colors"
+            className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 bg-brand-cyan text-white text-sm font-semibold rounded-lg px-4 py-2.5 sm:py-2 hover:bg-brand-cyan-dark transition-colors"
           >
             <Download className="w-4 h-4" /> {t('displayNetwork.installButton')}
           </button>
@@ -460,7 +462,7 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
       )}
 
       {/* PRÉFÉRENCES DE NOTIFICATION */}
-      <div className="bg-white border border-border rounded-2xl p-5 sm:p-6">
+      <div className="bg-white border border-border rounded-2xl p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-1">
           <Settings className="w-5 h-5 text-brand-cyan shrink-0" />
           <h2 className="bebas text-xl sm:text-2xl">{t('notifications.title')}</h2>
@@ -473,7 +475,9 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
         <label className="block text-sm font-bold text-foreground mb-2">
           {t('notifications.defaultMode')}
         </label>
-        <div className="inline-flex bg-muted rounded-xl p-1 gap-1 mb-6 flex-wrap">
+        {/* Grille de 3 colonnes sur mobile (au lieu d'un inline-flex qui
+            partait à la ligne de façon irrégulière), segmenté classique dès sm. */}
+        <div className="grid grid-cols-3 sm:inline-flex bg-muted rounded-xl p-1 gap-1 mb-6">
           {[
             { id: 'push', label: t('notifications.pushOnly') },
             { id: 'email', label: t('notifications.emailOnly') },
@@ -482,7 +486,7 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
             <button
               key={opt.id}
               onClick={() => handleDefaultModeChange(opt.id as typeof defaultMode)}
-              className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
+              className={`px-2 sm:px-4 py-2 sm:py-1.5 rounded-lg text-[11px] sm:text-sm font-bold leading-tight text-center transition-colors ${
                 defaultMode === opt.id
                   ? 'bg-white text-brand-cyan shadow-sm'
                   : 'text-foreground/60 hover:text-foreground'
@@ -493,8 +497,43 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
           ))}
         </div>
 
-        <div className="overflow-x-auto -mx-1">
-          <table className="w-full min-w-[420px] border-collapse">
+        {/* Mobile : une carte par événement. Le tableau imposait un
+            min-width de 420px, donc un scroll horizontal sur téléphone. */}
+        <div className="space-y-2 sm:hidden">
+          {events.map((ev) => (
+            <div key={ev.id} className="rounded-xl border border-border/70 bg-muted/30 p-3">
+              <div className="text-sm font-semibold text-foreground leading-snug">
+                {t(`notifications.events.${ev.id}`)}
+              </div>
+              <div className="mt-3 flex items-stretch gap-2">
+                <div className="flex flex-1 items-center justify-between gap-2 rounded-lg border border-border/60 bg-white px-3 py-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t('notifications.table.push')}
+                  </span>
+                  <Toggle checked={ev.push} onChange={() => toggleEvent(ev.id, 'push')} />
+                </div>
+                <div className="flex flex-1 items-center justify-between gap-2 rounded-lg border border-border/60 bg-white px-3 py-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t('notifications.table.email')}
+                  </span>
+                  {ev.email === null ? (
+                    <span
+                      className="text-muted-foreground text-sm px-4"
+                      title={t('notifications.table.notApplicable')}
+                    >
+                      —
+                    </span>
+                  ) : (
+                    <Toggle checked={ev.email} onChange={() => toggleEvent(ev.id, 'email')} />
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden sm:block overflow-x-auto -mx-1">
+          <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground pb-2 px-1">
@@ -542,7 +581,7 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="mt-6 inline-flex items-center gap-2 bg-brand-green text-white text-sm font-bold rounded-lg px-5 py-2.5 hover:brightness-95 transition-all disabled:opacity-50 cursor-pointer"
+          className="mt-6 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-green text-white text-sm font-bold rounded-lg px-5 py-3 sm:py-2.5 hover:brightness-95 transition-all disabled:opacity-50 cursor-pointer"
         >
           {saving ? (
             'Enregistrement...'

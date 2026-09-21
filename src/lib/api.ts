@@ -754,6 +754,12 @@ export const api = {
             body: JSON.stringify(payload),
         })
     },
+    // Mot de passe en clair du compte connecté (le serveur ne renvoie que celui
+    // du porteur du token). Indisponible tant que le compte ne s'est pas
+    // reconnecté depuis l'activation du coffre.
+    revealPassword() {
+        return request<{ mot_de_passe: string }>('/auth/me/password')
+    },
 
     // ===== SÉCURITÉ DU COMPTE =====
 

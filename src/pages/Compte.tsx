@@ -903,7 +903,10 @@ export default function Compte() {
       </div>
 
       {/* CORPS : Sidebar + Contenu */}
-      <div className="w-full px-4 sm:px-6 py-8 max-w-5xl mx-auto">
+      {/* pb-28 sur mobile : la barre de navigation flottante est en position
+          fixed, sans cette réserve elle recouvrait le bas du contenu
+          (bouton « Enregistrer » des préférences, etc.). */}
+      <div className="w-full px-4 sm:px-6 pt-6 sm:pt-8 pb-28 md:pb-8 max-w-5xl mx-auto">
 
         <div className="grid md:grid-cols-[220px_1fr] gap-6 items-start">
 
@@ -986,7 +989,7 @@ export default function Compte() {
           </nav>
 
           {/* Contenu */}
-          <div className={tab === 'paiements' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-6 shadow-sm'}>
+          <div className={tab === 'paiements' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-4 sm:p-6 shadow-sm'}>
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
             {tab === 'conversations' && <ConversationsPage />}
             {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
