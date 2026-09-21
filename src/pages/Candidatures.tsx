@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import {
+  AlertTriangle,
   Calendar,
   Check,
   Clock,
   Eye,
+  Info,
   MapPin,
   MessageCircle,
   Scale,
@@ -27,6 +29,7 @@ import { CandidaturesViewButtons } from "../components/candidatures/Candidatures
 import { ContractWizardModal } from "../components/candidatures/ContractWizardModal";
 import { JoinTeamView } from "../components/candidatures/JoinTeamView";
 import { OwnerCandidaturesDashboard, RealCandidaturesPanel } from "../components/candidatures/RealCandidaturesPanel";
+import { useDialog } from "../components/ui/Dialog";
 
 type OwnerCandidate = {
   id: string;
@@ -47,11 +50,23 @@ type Team = {
   title: string;
   mood: string;
   members: string[];
+  // Identifiants des membres : l'appartenance se vérifie par id (et non par
+  // prénom), sinon on pouvait rejoindre plusieurs fois la même équipe.
+  memberIds: number[];
   chat: { who: string; txt: string }[];
   statut: "forming" | "selected" | "rejected" | "complete";
 };
 
-type NotificationMode = "indiv" | "group";
+type ViewId = "flux" | "track" | "cand" | "join" | "won" | "lost";
+
+// Onglets selon le profil : le déposant gère ses candidatures, le candidat
+// postule ou rejoint une équipe. Les notifications (validé / non retenu)
+// s'affichent en pop-up et ne sont plus des onglets.
+const OWNER_VIEWS: ViewId[] = ["flux", "track"];
+const CANDIDATE_VIEWS: ViewId[] = ["flux", "cand", "join"];
+
+// Mémorise la pop-up de résultat déjà vue (par annonce et par statut).
+const RESULT_POPUP_KEY = "colockoo_candidature_result_seen";
 
 // ===== NOUVEAU TYPE POUR LES ÉQUIPES RÉELLES =====
 type EquipeReelle = {
@@ -349,18 +364,34 @@ export default function Candidatures() {
   const [newEquipeAmbiance, setNewEquipeAmbiance] = useState("");
 
   // États UI existants
-  const [activeView, setActiveView] = useState<
-    "flux" | "track" | "cand" | "join" | "won" | "lost"
-  >("flux");
+  const [activeView, setActiveView] = useState<ViewId>("flux");
   const [agentView, setAgentView] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const [refusedOpen, setRefusedOpen] = useState(false);
-  const [myTeam, setMyTeam] = useState<string | null>(null);
+  const currentUserId = Number(user?.id);
+  // Équipe de l'utilisateur, déduite des membres enregistrés en base.
+  const myTeam = useMemo(
+    () => teams.find((team) => team.memberIds.includes(currentUserId))?.id ?? null,
+    [teams, currentUserId],
+  );
+
+  // Pop-ups de l'application (voir components/ui/Dialog.tsx)
+  const dialog = useDialog();
+  const [resultPopup, setResultPopup] = useState<"won" | "lost" | null>(null);
+  const notify = (text: string, tone: "success" | "error" | "info" = "success") => {
+    if (tone === "error") void dialog.alert({ tone: "danger", message: text });
+    else dialog.toast(text, tone === "info" ? "info" : "success");
+  };
+  const askConfirm = (text: string, onConfirm: () => void) => {
+    void dialog
+      .confirm({ title: text, confirmLabel: t("common.confirm"), cancelLabel: t("common.cancel") })
+      .then((confirmed) => {
+        if (confirmed) onConfirm();
+      });
+  };
   const [joinTarget, setJoinTarget] = useState<string>(JOIN_DEFAULT);
   const [waitDeadline, setWaitDeadline] = useState<number | null>(null);
   const [countdown, setCountdown] = useState("03h 00m 00s");
-  const [wonMode, setWonMode] = useState<NotificationMode>("indiv");
-  const [lostMode, setLostMode] = useState<NotificationMode>("indiv");
   const [createTitle, setCreateTitle] = useState("");
   const [createMood, setCreateMood] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -414,18 +445,10 @@ export default function Candidatures() {
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] =
     useState<OwnerCandidate | null>(null);
+  // La discussion démarre vide : plus de messages d'exemple pré-remplis.
   const [chatMessages, setChatMessages] = useState<
     { who: string; txt: string }[]
-  >([
-    {
-      who: t('common.you'),
-      txt: t('chat.defaultMessage'),
-    },
-    {
-      who: t('common.participant'),
-      txt: t('chat.defaultReply'),
-    },
-  ]);
+  >([]);
   const [newMessage, setNewMessage] = useState("");
 
   // États pour la postulation
@@ -591,6 +614,7 @@ export default function Candidatures() {
               `${m.prenom} ${m.nom}`.trim() || m.email || t('cand.member');
             return fullName;
           }),
+          memberIds: equipe.membres.map((m) => Number(m.id_utilisateur)),
           chat: equipe.membres.map((m) => ({
             who: `${m.prenom} ${m.nom}`.trim() || m.email || t('cand.member'),
             txt: `${m.statut === "owner" ? t('cand.creatorBadge') : m.statut === "accepted" ? "✅ " + t('cand.member') : "⏳ " + t('statuts.enAttente')}`,
@@ -610,7 +634,7 @@ export default function Candidatures() {
   // ===== GESTION DES ÉQUIPES =====
   const handleCreateEquipe = async () => {
     if (!annonceId || !newEquipeNom.trim()) {
-      alert(t('cand.teamNameRequired'));
+      notify(t('cand.teamNameRequired'), "error");
       return;
     }
 
@@ -624,49 +648,69 @@ export default function Candidatures() {
       });
 
       console.log("✅ Équipe créée:", data);
+      // Le créateur fait partie de l'équipe qu'il crée (une seule fois).
+      if (user && data?.id_equipe) await api.addMemberToEquipe(data.id_equipe, user.id);
       setShowCreateEquipe(false);
       setNewEquipeNom("");
       setNewEquipeAmbiance("");
       await loadEquipes();
-      alert(t('cand.teamCreated'));
+      notify(t('cand.teamCreated'));
     } catch (error: any) {
       console.error("❌ Erreur création équipe:", error);
-      alert(error?.message || t('cand.teamCreationError'));
+      notify(error?.message || t('cand.teamCreationError'), "error");
     }
   };
 
-  const handleJoinEquipe = async (equipeId: number) => {
+  const isMemberOfEquipe = (equipeId: number) =>
+    equipesReelles.some(
+      (equipe) =>
+        Number(equipe.id_equipe) === Number(equipeId) &&
+        equipe.membres.some((m) => Number(m.id_utilisateur) === currentUserId),
+    );
+
+  const handleJoinEquipe = async (equipeId: number, { silent = false } = {}) => {
     if (!user) {
-      alert(t('cand.loginToJoin'));
-      return;
+      notify(t('cand.loginToJoin'), "info");
+      return false;
+    }
+    // Déjà membre (y compris d'une équipe qu'on a créée) : on ne l'ajoute pas une seconde fois.
+    if (isMemberOfEquipe(equipeId)) {
+      if (!silent) notify(t('cand.alreadyMember'), "info");
+      return false;
     }
 
     try {
       await api.addMemberToEquipe(equipeId, user.id);
       await loadEquipes();
-      alert(t('cand.joinedTeam'));
+      if (!silent) notify(t('cand.joinedTeam'));
+      return true;
     } catch (error: any) {
       console.error("❌ Erreur:", error);
-      alert(error?.message || t('cand.joinError'));
+      notify(error?.message || t('cand.joinError'), "error");
+      return false;
     }
   };
 
-  const handleLeaveEquipe = async (equipeId: number) => {
-    if (!user) {
-      alert(t('common.loading'));
-      return;
-    }
-
-    if (!confirm(t('cand.leaveTeamConfirm'))) return;
-
+  const leaveEquipe = async (equipeId: number) => {
+    if (!user) return;
     try {
       await api.removeMemberFromEquipe(equipeId, user.id);
       await loadEquipes();
-      alert(t('cand.leftTeam'));
+      notify(t('cand.leftTeam'));
     } catch (error: any) {
       console.error("❌ Erreur:", error);
-      alert(error?.message || t('cand.leaveError'));
+      notify(error?.message || t('cand.leaveError'), "error");
     }
+  };
+
+  const handleLeaveEquipe = (equipeId: number) => {
+    if (!user) {
+      notify(t('cand.loginToJoin'), "info");
+      return;
+    }
+    askConfirm(t('cand.leaveTeamConfirm'), () => {
+      void leaveEquipe(equipeId);
+    });
   };
 
   // ===== VÉRIFIER SI L'UTILISATEUR A POSTULÉ =====
@@ -711,12 +755,12 @@ export default function Candidatures() {
     console.log("🔵 annonceId:", annonceId);
 
     if (!user) {
-      alert(t('common.loading'));
+      notify(t('notices.loginRequired'), "info");
       return;
     }
 
     if (!annonceId) {
-      alert(t('realPanel.empty'));
+      notify(t('notices.genericError'), "error");
       return;
     }
 
@@ -738,19 +782,11 @@ export default function Candidatures() {
       setShowNotAppliedMessage(false);
       setShowPostulerModal(false);
       setCandidatureMessage("");
-      alert(t('realPanel.alreadyApplied'));
+      notify(t('notices.applied'));
       await loadRealCandidatures();
     } catch (error: any) {
       console.error("❌ ERREUR DÉTAILLÉE:", error);
-      console.error("❌ Response:", error.response);
-      console.error("❌ Data:", error.response?.data);
-      console.error("❌ Status:", error.response?.status);
-
-      if (error.response?.data?.message) {
-        alert(`❌ ${error.response.data.message}`);
-      } else {
-        alert(t('common.loading'));
-      }
+      notify(error?.response?.data?.message || error?.message || t('notices.genericError'), "error");
     }
     console.log("🔵 === FIN handlePostuler ===");
   };
@@ -812,11 +848,14 @@ export default function Candidatures() {
     }
   };
 
-  const handleDeleteCandidature = async (candidateId: number) => {
+  const handleDeleteCandidature = (candidateId: number) => {
     if (!candidateId) return;
-    const confirmed = window.confirm(t('realPanel.deleteTitle'));
-    if (!confirmed) return;
+    askConfirm(t('notices.deleteCandidatureConfirm'), () => {
+      void deleteCandidature(candidateId);
+    });
+  };
 
+  const deleteCandidature = async (candidateId: number) => {
     setCandidateActionLoading(candidateId);
     setCandidateActionFeedback("");
     try {
@@ -870,12 +909,13 @@ export default function Candidatures() {
   // ===== VOIR MA CANDIDATURE =====
   const handleViewMyCandidature = () => {
     if (!user) {
-      alert(t('common.loading'));
+      notify(t('notices.loginRequired'), "info");
       return;
     }
 
     if (hasApplied) {
-      navigate(`/candidatures?annonceId=${annonceId}`);
+      // Déjà sur la page des candidatures : on amène l'utilisateur à sa carte.
+      document.getElementById("my-candidature")?.scrollIntoView({ behavior: "smooth", block: "center" });
     } else {
       setShowNotAppliedMessage(true);
       setTimeout(() => {
@@ -995,25 +1035,48 @@ export default function Candidatures() {
   const inactiveButtonClass =
     "bg-card text-muted-foreground border border-border hover:border-brand-cyan";
 
-  function changeView(view: typeof activeView) {
-    if (officialNotification === "won" && view === "lost") return;
-    if (officialNotification === "lost" && view === "won") return;
+  const visibleViews = isAnnonceOwner ? OWNER_VIEWS : CANDIDATE_VIEWS;
+
+  function changeView(view: ViewId) {
+    if (!visibleViews.includes(view)) return;
     setActiveView(view);
     if (view === "join" && !joinTarget) setJoinTarget(JOIN_DEFAULT);
   }
 
+  // Un onglet qui ne correspond pas au profil (déposant / candidat) n'est jamais affiché.
   useEffect(() => {
-    if (!officialNotification) return;
-    if (activeView !== officialNotification) {
-      setActiveView(officialNotification);
+    if (!visibleViews.includes(activeView)) setActiveView("flux");
+  }, [isAnnonceOwner, activeView]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pop-up « colocataire validé » / « colocataire non retenu » : elle apparaît
+  // quand le candidat est retenu ou refusé, une seule fois par décision.
+  const resultStatus: "won" | "lost" | null = isAnnonceOwner
+    ? null
+    : officialNotification ?? (isCurrentUserRetained ? "won" : isCurrentUserRefused ? "lost" : null);
+
+  useEffect(() => {
+    if (!resultStatus || !annonceId || !user?.id) return;
+    const key = `${annonceId}:${user.id}:${resultStatus}:${officialNotification ? "official" : "decision"}`;
+    let seen: string[] = [];
+    try {
+      seen = JSON.parse(localStorage.getItem(RESULT_POPUP_KEY) || "[]");
+    } catch {
+      seen = [];
     }
-  }, [activeView, officialNotification]);
+    if (seen.includes(key)) return;
+    setResultPopup(resultStatus);
+    try {
+      localStorage.setItem(RESULT_POPUP_KEY, JSON.stringify([...seen, key].slice(-50)));
+    } catch {
+      // stockage indisponible : la pop-up pourra simplement réapparaître
+    }
+  }, [resultStatus, officialNotification, annonceId, user?.id]);
 
   async function acceptCandidate(id: string) {
     const candidate = ownerCandidates.find((cand) => cand.id === id);
     if (!candidate?.id_candidature) return;
     if (ownerFilled >= TARGET) {
-      alert(t('track.teamCompleteTitle'));
+      notify(t('track.teamCompleteTitle'), "info");
       return;
     }
     await handleCandidateDecision(candidate.id_candidature, "accept");
@@ -1376,16 +1439,8 @@ export default function Candidatures() {
         };
 
     setSelectedCandidate(normalized);
-    setChatMessages([
-      {
-        who: t('common.you'),
-        txt: t('chat.defaultMessage'),
-      },
-      {
-        who: normalized.name,
-        txt: t('chat.defaultReply'),
-      },
-    ]);
+    // Pas de faux échange pré-rempli : la discussion commence vide.
+    setChatMessages([]);
     setChatModalOpen(true);
   }
 
@@ -1414,71 +1469,55 @@ export default function Candidatures() {
     }
   }
 
+  // Les actions d'équipe passent toutes par l'API (plus d'état local qui
+  // ajoutait l'utilisateur à chaque clic sur « Rejoindre »).
   function joinTeam(id: string) {
-    setTeams((prev) =>
-      prev.map((team) =>
-        team.id === id
-          ? { ...team, members: [...team.members, userName] }
-          : team,
-      ),
-    );
-    setMyTeam(id);
+    void handleJoinEquipe(Number(id));
   }
 
-  function switchTeam(id: string) {
-    if (!myTeam) return;
-    setTeams((prev) =>
-      prev.map((team) => {
-        if (team.id === myTeam) {
-          return {
-            ...team,
-            members: team.members.filter((member) => member !== userName),
-          };
-        }
-        if (team.id === id) {
-          return { ...team, members: [...team.members, userName] };
-        }
-        return team;
-      }),
-    );
-    setMyTeam(id);
+  async function switchTeam(id: string) {
+    if (!user || !myTeam || myTeam === id) return;
+    try {
+      await api.removeMemberFromEquipe(Number(myTeam), user.id);
+    } catch (error: any) {
+      notify(error?.message || t('cand.leaveError'), "error");
+      return;
+    }
+    const joined = await handleJoinEquipe(Number(id), { silent: true });
+    if (joined) notify(t('cand.joinedTeam'));
+    else await loadEquipes();
   }
 
   function leaveTeam(id: string) {
-    setTeams((prev) =>
-      prev.map((team) =>
-        team.id === id
-          ? {
-              ...team,
-              members: team.members.filter((member) => member !== userName),
-            }
-          : team,
-      ),
-    );
-    setMyTeam(null);
+    handleLeaveEquipe(Number(id));
   }
 
-  function createTeam() {
+  async function createTeam() {
+    if (!user) {
+      notify(t('cand.loginToJoin'), "info");
+      return;
+    }
+    if (!annonceId) return;
     const title = createTitle.trim() || t('cand.teamNamePlaceholder');
-    const mood = createMood.trim() || t('cand.vibePlaceholder');
-    const newTeam: Team = {
-      id: `t${Date.now()}`,
-      title,
-      mood,
-      members: [userName],
-      chat: [
-        {
-          who: userName,
-          txt: t('cand.teamCreated'),
-        },
-      ],
-      statut: "forming",
-    };
-    setTeams((prev) => [...prev, newTeam]);
-    setMyTeam(newTeam.id);
-    setCreateTitle("");
-    setCreateMood("");
-    setCreateOpen(false);
+    const mood = createMood.trim() || null;
+    try {
+      const created = await api.createEquipe({
+        id_annonce: parseInt(annonceId),
+        id_depot_annonce: parseInt(annonceId),
+        nom: title,
+        ambiance: mood,
+        statut: "forming",
+      });
+      // Le créateur fait partie de son équipe.
+      if (created?.id_equipe) await api.addMemberToEquipe(created.id_equipe, user.id);
+      await loadEquipes();
+      setCreateTitle("");
+      setCreateMood("");
+      setCreateOpen(false);
+      notify(t('cand.teamCreated'));
+    } catch (error: any) {
+      notify(error?.message || t('cand.teamCreationError'), "error");
+    }
   }
 
   function openCelebrate() {
@@ -1499,6 +1538,7 @@ export default function Candidatures() {
         teams={teams}
         joinTarget={joinTarget}
         target={TARGET}
+        currentUserId={currentUserId}
         onJoinTeam={(teamId) => {
           joinTeam(teamId);
           setActiveView("cand");
@@ -1706,7 +1746,7 @@ export default function Candidatures() {
               onChangeView={changeView}
               activeButtonClass={activeButtonClass}
               inactiveButtonClass={inactiveButtonClass}
-              officialNotification={officialNotification}
+              views={visibleViews}
             />
           </div>
 
@@ -1802,12 +1842,13 @@ export default function Candidatures() {
                     {equipesReelles.map((equipe) => {
                       const membres = equipe.membres || [];
                       const totalPlaces = annonceData?.total_colocataires || 3;
+                      // Comparaison numérique : l'id peut arriver en texte depuis l'API.
                       const isCurrentUserInTeam = membres.some(
-                        (m) => m.id_utilisateur === user?.id,
+                        (m) => Number(m.id_utilisateur) === currentUserId,
                       );
                       const isOwner = membres.some(
                         (m) =>
-                          m.id_utilisateur === user?.id && m.statut === "owner",
+                          Number(m.id_utilisateur) === currentUserId && m.statut === "owner",
                       );
 
                       return (
@@ -1900,6 +1941,7 @@ export default function Candidatures() {
 
                           <div className="mt-4 flex flex-wrap gap-2">
                             {!isCurrentUserInTeam &&
+                              membres.length < totalPlaces &&
                               equipe.statut !== "complete" &&
                               equipe.statut !== "selected" && (
                                 <button
@@ -1923,19 +1965,17 @@ export default function Candidatures() {
                             )}
                             {isOwner && (
                               <button
-                                onClick={() => {
-                                  if (
-                                    confirm(t('cand.deleteTeamConfirm'))
-                                  ) {
+                                onClick={() =>
+                                  askConfirm(t('cand.deleteTeamConfirm'), () => {
                                     api
                                       .deleteEquipe(equipe.id_equipe)
                                       .then(() => loadEquipes())
                                       .catch((error) => {
                                         console.error("❌ Erreur:", error);
-                                        alert(t('cand.teamCreationError'));
+                                        notify(error?.message || t('notices.genericError'), "error");
                                       });
-                                  }
-                                }}
+                                  })
+                                }
                                 className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -2291,7 +2331,7 @@ export default function Candidatures() {
                         {t('track.attributedTitle')}
                       </div>
                       <p className="mt-3 text-sm text-muted-foreground">
-                        {t('track.attributedDesc', { team: validatedTeam.title })}
+                        <Trans t={t} i18nKey="track.attributedDesc" values={{ team: validatedTeam.title }} components={{ b: <b /> }} />
                       </p>
                       <div className="mt-4">
                         {renderAvStack(validatedTeam.members)}
@@ -2304,7 +2344,7 @@ export default function Candidatures() {
                         {t('track.teamCompleteTitle')}
                       </div>
                       <p className="mt-3 text-sm text-muted-foreground">
-                        {t('track.teamCompleteDesc', { team: winnerTeam.title, target: TARGET })}
+                        <Trans t={t} i18nKey="track.teamCompleteDesc" values={{ team: winnerTeam.title, target: TARGET }} components={{ b: <b /> }} />
                       </p>
                       <div className="mt-4">
                         {renderAvStack(winnerTeam.members)}
@@ -2392,11 +2432,11 @@ export default function Candidatures() {
                       >
                         <Users className="h-4 w-4" />
                         {validatedTeam
-                          ? myTeamData?.members.includes(userName)
+                          ? myTeamData
                             ? t('cand.teamCreated')
                             : t('cand.title')
                           : winnerTeam
-                            ? winnerTeam.members.includes(userName)
+                            ? winnerTeam.memberIds.includes(currentUserId)
                               ? t('cand.teamCompleteMsg')
                               : t('cand.title')
                             : myTeamData
@@ -2469,7 +2509,7 @@ export default function Candidatures() {
 
                   <div className="mt-6 space-y-4">
                     {teams.map((team) => {
-                      const mine = team.members.includes(userName);
+                      const mine = team.memberIds.includes(currentUserId);
                       const full = team.members.length >= TARGET;
                       return (
                         <div
@@ -2652,179 +2692,99 @@ export default function Candidatures() {
             )}
 
             {activeView === "join" && renderJoinTeam()}
-            {/* ===== 1) Confirmation officielle — colocation lancée + tous les paiements faits ===== */}
-            {activeView === "won" && officialNotification === "won" && (
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
-                <div className="flex justify-center gap-2">
-                  {(["indiv", "group"] as NotificationMode[]).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => setWonMode(mode)}
-                      className={`rounded-full px-6 py-3 text-sm font-semibold ${wonMode === mode ? "bg-brand-cyan text-white" : "border border-border bg-card text-muted-foreground"}`}
-                    >
-                      {mode === "indiv"
-                        ? t('notifications.individual')
-                        : t('notifications.group')}
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-14 text-center">
-                  <div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-brand-green to-brand-cyan">
-                    <Sparkles className="h-10 w-10 text-white" />
-                  </div>
-                  <h2 className="bebas text-3xl sm:text-4xl">
-                    {wonMode === "indiv"
-                      ? `Félicitations, ${colocataireNom} !`
-                      : "Félicitations à toute l'équipe !"}
-                  </h2>
-                  <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                    {wonMode === "indiv"
-                      ? `Ta candidature est retenue : tu fais partie de la colocation ${logementTitre}. Bienvenue ! Emménagement prévu le ${moveInLabel}.`
-                      : `Votre équipe « ${retainedTeamTitle} » remporte la colocation ${logementTitre} ! Vous allez vivre ensemble dès le ${moveInLabel}.`}
-                  </p>
-                  <div className="mt-12 rounded-2xl border border-border bg-brand-sand p-6 text-left text-base text-muted-foreground">
-                    <div className="font-semibold text-brand-dark">
-                      <Calendar className="mr-2 inline h-4 w-4 text-brand-cyan-dark" />
-                      {t('notifications.moveIn')} <span className="font-normal">— {moveInLabel}</span>
-                    </div>
-                    <div className="mt-4 flex items-start gap-3">
-                      <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan-dark" />
-                      <div>
-                        {t('notifications.groupChatOpen')}
-                      </div>
-                    </div>
-                  </div>
-                  <button className="mt-5 w-full rounded-2xl bg-brand-green px-5 py-4 text-base font-semibold text-white hover:bg-brand-green-dark">
-                    {t('notifications.openGroupChat')}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ===== 2) Notification immédiate — candidature acceptée, colocation pas encore lancée officiellement ===== */}
-            {activeView === "won" && officialNotification !== "won" && isCurrentUserRetained && (
-              <div className="rounded-3xl border border-brand-green/30 bg-card p-6 shadow-sm sm:p-8">
-                <div className="mt-4 text-center">
-                  <div className="mx-auto mb-5 grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-brand-green to-brand-cyan">
-                    <Sparkles className="h-10 w-10 text-white" />
-                  </div>
-                  <h2 className="bebas text-3xl sm:text-4xl">
-                    Félicitations, {colocataireNom} !
-                  </h2>
-                  <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                    Ta candidature pour {logementTitre} a été acceptée. La colocation sera confirmée officiellement dès que tous les colocataires auront réglé leur part.
-                  </p>
-                  <div className="mt-12 rounded-2xl border border-border bg-brand-sand p-6 text-left text-base text-muted-foreground">
-                    <div className="font-semibold text-brand-dark">
-                      <Calendar className="mr-2 inline h-4 w-4 text-brand-cyan-dark" />
-                      {t('notifications.moveIn')} <span className="font-normal">— {moveInLabel}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ===== 3) Aucune notification — pas encore de décision ===== */}
-            {activeView === "won" && officialNotification !== "won" && !isCurrentUserRetained && (
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
-                  <Sparkles className="h-5 w-5" /> {t('notifications.title')}
-                </div>
-                <div className="mt-6 rounded-3xl border border-border bg-background p-8 text-center">
-                  <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                    <Sparkles className="h-8 w-8" />
-                  </div>
-                  <h2 className="bebas text-3xl">
-                    {t('notifications.none')}
-                  </h2>
-                  <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
-                    {t('notifications.noneWon')}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {activeView === "lost" && officialNotification === "lost" && (
-              <div className="rounded-3xl border border-red-200 bg-card p-6 shadow-sm">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-center gap-3 text-lg font-semibold text-red-700">
-                    <Shield className="h-5 w-5" /> {t('notifications.title')}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {(["indiv", "group"] as NotificationMode[]).map((mode) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => setLostMode(mode)}
-                        className={`rounded-2xl px-4 py-2 text-sm font-semibold ${lostMode === mode ? "bg-red-500 text-white" : "border border-border bg-card text-muted-foreground"}`}
-                      >
-                        {mode === "indiv"
-                          ? t('notifications.individual')
-                          : t('notifications.group')}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-6 rounded-3xl border border-red-100 bg-red-50 p-6 text-center">
-                  <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-500 text-white mx-auto">
-                    <Shield className="h-8 w-8" />
-                  </div>
-                  <h2 className="bebas text-3xl">
-                    {lostMode === "indiv"
-                      ? t('notifications.notThisTime')
-                      : t('notifications.thanksApplication')}
-                  </h2>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {lostMode === "indiv"
-                      ? lostIndividualMessage
-                      : lostGroupMessage}
-                  </p>
-                  <div className="mt-6 rounded-3xl border border-border bg-card p-5 text-left text-sm text-muted-foreground">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-4 w-4 text-brand-cyan-dark" />
-                      <div>
-                        {t('notifications.mapHint')}
-                      </div>
-                    </div>
-                    <div className="mt-4 flex items-start gap-3">
-                      <Clock className="h-4 w-4 text-brand-cyan-dark" />
-                      <div>
-                        {t('notifications.alertHint')}
-                      </div>
-                    </div>
-                  </div>
-                  <Link
-                    to="/annonces"
-                    className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-red-500 px-5 py-3 text-sm font-semibold text-white hover:bg-red-600"
-                  >
-                    {t('notifications.backToMap')}
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {activeView === "lost" && !officialNotification && (
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                <div className="flex items-center gap-3 text-lg font-semibold text-brand-cyan-dark">
-                  <Shield className="h-5 w-5" /> {t('notifications.title')}
-                </div>
-                <div className="mt-6 rounded-3xl border border-border bg-background p-8 text-center">
-                  <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                    <Shield className="h-8 w-8" />
-                  </div>
-                  <h2 className="bebas text-3xl">
-                    {t('notifications.none')}
-                  </h2>
-                  <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
-                    {t('notifications.noneLost')}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
+
+      {/* ===== POP-UP : colocataire validé / non retenu ===== */}
+      {resultPopup && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 p-4"
+          role="presentation"
+          onClick={() => setResultPopup(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="candidature-result-title"
+            className="celebration-modal relative w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl sm:p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setResultPopup(null)}
+              aria-label={t('common.close')}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-muted"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {resultPopup === "won" ? (
+              <>
+                <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-brand-green to-brand-cyan">
+                  <Sparkles className="h-9 w-9 text-white" />
+                </div>
+                <h2 id="candidature-result-title" className="bebas text-3xl">
+                  {t('notifications.congratsName', { name: colocataireNom })}
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {officialNotification === "won"
+                    ? t('notifications.wonOfficial', { logement: logementTitre })
+                    : t('notifications.wonAccepted', { logement: logementTitre })}
+                </p>
+                <div className="mt-5 rounded-2xl border border-border bg-brand-sand p-4 text-left text-sm text-muted-foreground">
+                  <div className="font-semibold text-brand-dark">
+                    <Calendar className="mr-2 inline h-4 w-4 text-brand-cyan-dark" />
+                    {t('notifications.moveIn')} <span className="font-normal">— {moveInLabel}</span>
+                  </div>
+                  <div className="mt-3 flex items-start gap-2">
+                    <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan-dark" />
+                    <span>{t('notifications.groupChatOpen')}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResultPopup(null);
+                    navigate("/compte?tab=conversations");
+                  }}
+                  className="mt-5 w-full rounded-2xl bg-brand-green px-5 py-3 text-sm font-semibold text-white hover:bg-brand-green-dark"
+                >
+                  {t('notifications.openGroupChat')}
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-full bg-red-500 text-white">
+                  <Shield className="h-9 w-9" />
+                </div>
+                <h2 id="candidature-result-title" className="bebas text-3xl">
+                  {t('notifications.notThisTime')}
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {t('notifications.lostMessage', { logement: logementTitre })}
+                </p>
+                <div className="mt-5 space-y-3 rounded-2xl border border-border bg-card p-4 text-left text-sm text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan-dark" />
+                    <span>{t('notifications.mapHint')}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Clock className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan-dark" />
+                    <span>{t('notifications.alertHint')}</span>
+                  </div>
+                </div>
+                <Link
+                  to="/annonces"
+                  onClick={() => setResultPopup(null)}
+                  className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white hover:bg-red-600"
+                >
+                  {t('notifications.backToMap')}
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <BasicCandidatureModals
         candidatureMessage={candidatureMessage}
@@ -2902,6 +2862,7 @@ export default function Candidatures() {
           }}
         />
       )}
+
     </SiteLayout>
   );
 }

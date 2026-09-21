@@ -1,6 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react'
 import {AdminLayout} from '../../components/admin/AdminLayout'
 import {api, type DemandeServiceStaffItem} from '../../lib/api'
+import {useDialog} from '../../components/ui/Dialog'
 import {
     Search,
     Clock,
@@ -193,13 +194,18 @@ const RdvModal = ({
     onSave: (date: string, note: string) => void
     loading: boolean
 }) => {
+    const dialog = useDialog()
     const [rdvDate, setRdvDate] = useState(demande.rdv_date || new Date().toISOString().slice(0, 16))
     const [rdvNote, setRdvNote] = useState(demande.rdv_note || 'Confirmation des offres souscrites')
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!rdvDate) {
-            alert('Veuillez choisir une date.')
+            void dialog.alert({
+                tone: 'warning',
+                title: 'Date manquante',
+                message: 'Merci de choisir une date et une heure pour le rendez-vous.',
+            })
             return
         }
         onSave(rdvDate, rdvNote)
@@ -303,6 +309,7 @@ const OffreModal = ({
     onClose: () => void
     onSave: (offre: Omit<OffreService, 'id' | 'cle'>) => void
 }) => {
+    const dialog = useDialog()
     const [nom, setNom] = useState('')
     const [prixParJour, setPrixParJour] = useState(8800)
     const [unite, setUnite] = useState('heure')
@@ -311,7 +318,11 @@ const OffreModal = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!nom.trim()) {
-            alert('Veuillez saisir un nom pour l\'offre')
+            void dialog.alert({
+                tone: 'warning',
+                title: 'Nom manquant',
+                message: "Merci de saisir un nom pour l'offre.",
+            })
             return
         }
         onSave({
@@ -403,6 +414,7 @@ const OffreModal = ({
 // ============================================================================
 
 export default function AdminServicesColockoo() {
+    const dialog = useDialog()
     const [demandes, setDemandes] = useState<ServiceDemande[]>([])
     const [offres, setOffres] = useState<OffreService[]>([])
     const [searchQuery, setSearchQuery] = useState('')
@@ -711,7 +723,13 @@ export default function AdminServicesColockoo() {
     }
 
     const handleDeleteOffre = async (id: string) => {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer cette offre ?')) return
+        const confirmed = await dialog.confirm({
+            tone: 'danger',
+            title: 'Supprimer cette offre ?',
+            message: "L'offre de service sera définitivement supprimée.",
+            confirmLabel: 'Supprimer',
+        })
+        if (!confirmed) return
         setLoading(true)
         setError(null)
         try {
@@ -1134,7 +1152,14 @@ export default function AdminServicesColockoo() {
                                                                         <button
                                                                             onClick={async () => {
                                                                                 if (demande.statut === 'annulee') return
-                                                                                if (!confirm('Confirmer l\'annulation de cette demande ?')) return
+                                                                                const confirmed = await dialog.confirm({
+                                                                                    tone: 'danger',
+                                                                                    title: 'Annuler cette demande ?',
+                                                                                    message: 'La demande de service passera au statut « annulée ».',
+                                                                                    confirmLabel: 'Annuler la demande',
+                                                                                    cancelLabel: 'Revenir',
+                                                                                })
+                                                                                if (!confirmed) return
                                                                                 await handleChangeStatut(demande.reference, 'annulee')
                                                                             }}
                                                                             disabled={loading || demande.statut === 'annulee'}

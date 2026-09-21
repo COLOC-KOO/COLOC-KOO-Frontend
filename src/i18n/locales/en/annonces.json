@@ -11,22 +11,26 @@
       "all": "All types",
       "room": "Room",
       "apartment": "Apartment",
-      "house": "House"
+      "house": "House",
+      "title": "Property type"
     },
     "coloc": {
       "all": "All",
       "existing": "Existing housemates",
-      "create": "Housemates to create"
+      "create": "Housemates to create",
+      "title": "Flatshare type"
     },
     "budget": "Budget",
     "services": "Services",
     "noServices": "No active services",
     "city": {
-      "all": "All cities"
+      "all": "All cities",
+      "title": "City"
     },
     "district": {
       "title": "Neighborhood",
       "placeholder": "Ex: Ankorondrano"
-    }
+    },
+    "title": "Filters"
   }
 }

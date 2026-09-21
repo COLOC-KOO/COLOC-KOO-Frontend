@@ -120,37 +120,107 @@ function useLang() {
 /* ---------------------------------------------------------------------- */
 /*  Données "services mutualisés Coloc'KOO"                               */
 /* ---------------------------------------------------------------------- */
-type CkooServiceType = 'hour' | 'forfait' | 'annual' | 'stere'
+// Tarifs mensuels de la plaquette commerciale Coloc'KOO (charges sociales
+// CNAPS / OSTIE et congés payés inclus) : aucun calcul horaire côté client.
+interface CkooOption {
+  id: string
+  label: string
+  price: number
+  // Supplément mensuel de l'option week-end (gardiennage uniquement)
+  weekend?: number
+}
 interface CkooService {
   id: string
-  type: CkooServiceType
-  price: number
+  name: string
+  // Libellé affiché sous le nom, ex. « à partir de 6 200 Ar / h »
+  hint?: string
   star?: boolean
   note?: string
-  name: string
+  // Formules au choix ; un service sans formule est un forfait mensuel fixe
+  options?: CkooOption[]
+  price?: number
 }
 const CKOO_SERVICES: CkooService[] = [
-  { id: 'menage', type: 'hour', price: 5800, name: 'Propreté (ménage, linge, etc.)' },
-  { id: 'jardin', type: 'hour', price: 4500, name: 'Jardinage' },
-  { id: 'gardien', type: 'hour', price: 10800, name: 'Gardiennage' },
-  { id: 'jirama', type: 'forfait', price: 9000, name: 'Relevés Jirama et traçabilité' },
+  {
+    id: 'menage',
+    name: 'Propreté de la maison (ménage, linge, etc.)',
+    hint: 'à partir de 6 200 Ar / h',
+    options: [
+      { id: '1', label: '1 jour / semaine', price: 178000 },
+      { id: '2', label: '2 jours / semaine', price: 348000 },
+      { id: '3', label: '3 jours / semaine', price: 528000 },
+      { id: '4', label: '4 jours / semaine (-10 %)', price: 628000 },
+      { id: '5', label: '5 jours / semaine (-15 %)', price: 738000 },
+    ],
+  },
+  {
+    id: 'jardin',
+    name: 'Jardinage',
+    options: [
+      { id: '1', label: '1 jour / semaine', price: 160000 },
+      { id: '2', label: '2 jours / semaine', price: 325000 },
+      { id: '3', label: '3 jours / semaine', price: 485000 },
+      { id: '4', label: '4 jours / semaine (-10 %)', price: 585000 },
+      { id: '5', label: '5 jours / semaine (-15 %)', price: 690000 },
+    ],
+  },
+  {
+    id: 'gardien',
+    name: 'Gardiennage',
+    hint: 'à partir de 2 900 Ar / h',
+    options: [
+      { id: 'jours', label: '5 jours / semaine', price: 458000, weekend: 190000 },
+      { id: 'nuits', label: '5 nuits / semaine', price: 578000, weekend: 235000 },
+      { id: '24h', label: '24h/24 — 5 jours / semaine', price: 1334000, weekend: 550000 },
+    ],
+  },
   {
     id: 'travaux',
-    type: 'forfait',
-    price: 46400,
-    star: true,
-    note: "Les achats et matériaux restent à la charge des colocataires. ≈ 3 jours/mois d'interventions comptabilisées en moyenne.",
     name: 'Entretien et réalisation petits travaux',
+    hint: 'forfait 3 jours / mois',
+    star: true,
+    note: 'Les achats et matériaux restent à la charge des colocataires.',
+    price: 86000,
   },
-  { id: 'ramonage', type: 'annual', price: 84000, name: 'Ramonage annuel' },
-  { id: 'bois', type: 'stere', price: 14000, name: 'Livraison annuelle de bois de chauffe' },
+  {
+    id: 'jirama',
+    name: 'Relevé Jirama et traçabilité',
+    hint: 'forfait 1 fois / mois',
+    price: 9000,
+  },
 ]
-const HOUR_DAY_OPTIONS = [0.5, 1, 2, 3, 4, 5, 6, 7] // demi-journée, 1 jour, 2 jours, etc.
-const MGMT_FEE_TABLE: Record<number, number> = { 0.5: 4400, 1: 8800, 2: 17600, 3: 26300, 4: 35100, 5: 43900, 6: 43900, 7: 43900 }
-function mgmtFee(days: number) {
-  if (days <= 0) return 0
-  return MGMT_FEE_TABLE[days] ?? 43900
+
+function ckooOptionOf(service: CkooService, sel?: SimSelection): CkooOption | undefined {
+  if (!service.options?.length) return undefined
+  return service.options.find((o) => o.id === sel?.option) ?? service.options[0]
 }
+
+function ckooMonthlyPrice(service: CkooService, sel?: SimSelection): number {
+  const option = ckooOptionOf(service, sel)
+  if (!option) return service.price ?? 0
+  return option.price + (sel?.weekend && option.weekend ? option.weekend : 0)
+}
+
+// Rayon (km) autour du centre d'Antananarivo dans lequel l'offre Coloc'KOO
+// est proposée : couvre les quartiers de Tana (Isoraka, Ankadifotsy, etc.).
+const TANA_CENTER: [number, number] = [-18.8792, 47.5079]
+const TANA_RADIUS_KM = 20
+function isInAntananarivo(lat: number, lng: number) {
+  const toRad = (deg: number) => (deg * Math.PI) / 180
+  const dLat = toRad(lat - TANA_CENTER[0])
+  const dLng = toRad(lng - TANA_CENTER[1])
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(TANA_CENTER[0])) * Math.cos(toRad(lat)) * Math.sin(dLng / 2) ** 2
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) <= TANA_RADIUS_KM
+}
+
+function todayIso() {
+  const now = new Date()
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+  return local.toISOString().slice(0, 10)
+}
+
 function groupThousands(n: number) {
   return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 }
@@ -160,8 +230,10 @@ function fmtAr(x: number) {
 
 interface SimSelection {
   checked: boolean
-  days?: number
-  qty?: number
+  // Identifiant de la formule choisie (CkooOption.id)
+  option?: string
+  // Option week-end (gardiennage)
+  weekend?: boolean
 }
 
 /* ---------------------------------------------------------------------- */
@@ -482,7 +554,11 @@ export default function DepotAnnonceDeux() {
   const [userMovedPin, setUserMovedPin] = useState(false)
   const pinOpaque = userMovedPin && locAddr.trim().length > 0
 
-  const ckooEligible = /antananarivo|tananarive|\btana\b/i.test(locAddr)
+  // L'offre Coloc'KOO est proposée dès que le bien est à Antananarivo, y compris
+  // quand seul un quartier est saisi (ex : « Isoraka ») : on se fie donc à la
+  // position du repère, et au texte saisi en complément.
+  const ckooEligible =
+    /antananarivo|tananarive|\btana\b/i.test(locAddr) || (pin !== null && isInAntananarivo(pin.x, pin.y))
 
   /* AMÉLIORATION CARTE : quand on tape un lieu, la carte se recentre dessus
      et le repère y est placé automatiquement (délai anti-spam de 700 ms). */
@@ -535,32 +611,19 @@ export default function DepotAnnonceDeux() {
   const [ckooChosenNames, setCkooChosenNames] = useState<string[]>([])
 
   const simTotals = useMemo(() => {
-    let monthly = 0
-    let maxDays = 0
-  CKOO_SERVICES.forEach((s) => {
-  const sel = sim[s.id]
-  if (!sel?.checked) return
-  if (s.type === 'hour') {
-    const daysPerWeek = sel.days ?? 1
-    const hoursPerDay = daysPerWeek === 0.5 ? 4 : 8
-    const WEEKS_PER_MONTH = 4.33
-    const hoursPerMonth = daysPerWeek * hoursPerDay * WEEKS_PER_MONTH
-    monthly += s.price * hoursPerMonth
-    if (daysPerWeek > maxDays) maxDays = daysPerWeek
-  } else if (s.type === 'forfait') {
-    monthly += s.price
-  } else if (s.type === 'annual') {
-    monthly += s.price / 12
-  } else if (s.type === 'stere') {
-    monthly += (s.price * (sel.qty ?? 0)) / 12
-  }
-})
-    const mgmt = mgmtFee(maxDays)
-    return { monthly: Math.round((monthly + mgmt) / 100) * 100, mgmt, maxDays }
+    const monthly = CKOO_SERVICES.reduce(
+      (sum, s) => (sim[s.id]?.checked ? sum + ckooMonthlyPrice(s, sim[s.id]) : sum),
+      0,
+    )
+    return { monthly }
   }, [sim])
 
   function integrateSim() {
-    const chosen = CKOO_SERVICES.filter((s) => sim[s.id]?.checked).map((s) => s.name)
+    const chosen = CKOO_SERVICES.filter((s) => sim[s.id]?.checked).map((s) => {
+      const option = ckooOptionOf(s, sim[s.id])
+      if (!option) return s.name
+      return `${s.name} (${option.label}${sim[s.id]?.weekend && option.weekend ? ' + week-end' : ''})`
+    })
     setCkooIntegrated(chosen.length > 0)
     setCkooTotal(simTotals.monthly)
     setCkooChosenNames(chosen)
@@ -582,6 +645,8 @@ export default function DepotAnnonceDeux() {
   const [cautionType, setCautionType] = useState<'' | '1mois' | 'autre'>('')
   const [cautionAutre, setCautionAutre] = useState('')
   const MEUBLEE_OPTIONS = ['Oui', 'Partiellement', 'Non', 'Rachat des meubles']
+  // Une seule réponse possible ; conservé sous forme de tableau (0 ou 1
+  // élément) pour rester compatible avec les brouillons déjà enregistrés.
   const [meublee, setMeublee] = useState<string[]>([])
   const [rachatPrix, setRachatPrix] = useState('')
   const [rachatDescriptif, setRachatDescriptif] = useState('')
@@ -663,7 +728,7 @@ export default function DepotAnnonceDeux() {
     if (draft.charges !== undefined) setCharges(draft.charges)
     if (draft.cautionType !== undefined) setCautionType(draft.cautionType)
     if (draft.cautionAutre !== undefined) setCautionAutre(draft.cautionAutre)
-    if (draft.meublee !== undefined) setMeublee(draft.meublee)
+    if (draft.meublee !== undefined) setMeublee(Array.isArray(draft.meublee) ? draft.meublee.slice(0, 1) : [])
     if (draft.rachatPrix !== undefined) setRachatPrix(draft.rachatPrix)
     if (draft.rachatDescriptif !== undefined) setRachatDescriptif(draft.rachatDescriptif)
     if (draft.regles !== undefined) setRegles(draft.regles)
@@ -719,7 +784,7 @@ export default function DepotAnnonceDeux() {
       chambreSurface: chambre?.surface != null ? String(chambre.surface) : '',
       loyer: chambre?.prix_loyer != null ? String(chambre.prix_loyer) : '',
       charges: chambre?.prix_charges != null ? String(chambre.prix_charges) : '',
-      meublee: meubleeRaw ? meubleeRaw.split(', ').filter(Boolean) : [],
+      meublee: meubleeRaw ? meubleeRaw.split(', ').filter(Boolean).slice(0, 1) : [],
       regles: a.regles ?? [],
       offer: a.extra?.offre ?? 'annonce',
       proEngageChecked: a.extra?.engagement_pro ?? false,
@@ -843,6 +908,10 @@ export default function DepotAnnonceDeux() {
         setStepErr('Merci de renseigner la date de disponibilité, le loyer et si la chambre est meublée.')
         return false
       }
+      if (dispoDate < todayIso()) {
+        setStepErr("La date de disponibilité ne peut pas être antérieure à aujourd'hui.")
+        return false
+      }
     }
     if (key === 'publier' && role === 'pro' && !proEngageChecked) {
       setStepErr('Tu dois confirmer cet engagement pour continuer.')
@@ -891,8 +960,8 @@ export default function DepotAnnonceDeux() {
     setCur((current) => (current === target ? current : target))
   }, [location.search]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function toggleMeublee(option: string) {
-    setMeublee((prev) => (prev.includes(option) ? prev.filter((x) => x !== option) : [...prev, option]))
+  function selectMeublee(option: string) {
+    setMeublee([option])
   }
 
   /* ---------------------------------------------------------------- */
@@ -980,6 +1049,9 @@ export default function DepotAnnonceDeux() {
         surface: surfaceTotale,
         commodites: equipements,
         regles,
+        // Services déjà en place : enregistrés sur l'annonce pour alimenter le
+        // filtre « Services » de la page de recherche.
+        services_communs: [...servicesPersonnel, ...servAutre.map((s) => s.trim()).filter(Boolean)],
         internet: internet,
         parking_voitures: parkingCars,
         parking_motos: parkingMoto,
@@ -1346,9 +1418,9 @@ export default function DepotAnnonceDeux() {
                 <label className="lbl">Nombre de pièces total <span className="opt">(hors cuisine et salle d'eau)</span><span className="req">*</span></label>
                 <div className="inp-suffix" style={{ maxWidth: 200 }}>
                   <input
-                    className="inp"
+                    className="inp inp-pieces"
                     type="number"
-                    min={0}
+                    min={1}
                     placeholder="ex : 4"
                     value={nbPieces}
                     onChange={(e) => setNbPieces(e.target.value)}
@@ -1565,7 +1637,7 @@ export default function DepotAnnonceDeux() {
               <div className="row2">
                 <div className="grp">
                   <label className="lbl">Disponible à partir du<span className="req">*</span></label>
-                  <input className="inp" type="date" value={dispoDate} onChange={(e) => setDispoDate(e.target.value)} />
+                  <input className="inp" type="date" min={todayIso()} value={dispoDate} onChange={(e) => setDispoDate(e.target.value)} />
                 </div>
                {/*  <div className="grp"></div>*/} 
                  {/* <label className="lbl">Surface de la chambre</label>
@@ -1612,11 +1684,19 @@ export default function DepotAnnonceDeux() {
               <div className="grp">
                 <label className="lbl">
                   La chambre est meublée<span className="req">*</span>{' '}
-                  <span className="opt">(plusieurs réponses possibles)</span>
+                  <span className="opt">(une seule réponse possible)</span>
                 </label>
-                <div className="checks-grid">
+                <div className="checks-grid" role="radiogroup">
                   {MEUBLEE_OPTIONS.map((opt) => (
-                    <CheckRow key={opt} label={opt} checked={meublee.includes(opt)} onChange={() => toggleMeublee(opt)} />
+                    <label key={opt} className="check">
+                      <input
+                        type="radio"
+                        name="meublee"
+                        checked={meublee.includes(opt)}
+                        onChange={() => selectMeublee(opt)}
+                      />{' '}
+                      {opt}
+                    </label>
                   ))}
                 </div>
                 {meublee.includes('Rachat des meubles') && (
@@ -1854,63 +1934,51 @@ export default function DepotAnnonceDeux() {
       <div className="modal-doc-body" style={{ paddingTop: 4 }}>
         <div className="sim-scroll">
           {CKOO_SERVICES.map((s) => {
-            const sel = sim[s.id] ?? { checked: false, days: 1, qty: 1 }
-            // Calcul du détail pour les services horaires
-            const daysPerWeek = sel.days ?? 1
-            const hoursPerDay = daysPerWeek === 0.5 ? 4 : 8
-            const hoursPerMonth = daysPerWeek * hoursPerDay * 4.33
-            const costPerMonth = Math.round(hoursPerMonth * s.price)
+            const sel: SimSelection = sim[s.id] ?? { checked: false }
+            const option = ckooOptionOf(s, sel)
+            const minPrice = s.options?.length ? Math.min(...s.options.map((o) => o.price)) : s.price ?? 0
+            const updateSel = (patch: Partial<SimSelection>) =>
+              setSim((prev) => ({ ...prev, [s.id]: { ...sel, option: option?.id, ...patch } }))
             return (
               <div key={s.id} className="sim-svc-block">
                 <label className="sim-svc">
                   <input
                     type="checkbox"
                     checked={sel.checked}
-                    onChange={(e) => setSim((prev) => ({ ...prev, [s.id]: { ...sel, checked: e.target.checked } }))}
+                    onChange={(e) => updateSel({ checked: e.target.checked })}
                   />
-                  <span className="sim-svc-name">{s.name}{s.star ? <span className="req">*</span> : ''}</span>
+                  <span className="sim-svc-name">
+                    {s.name}{s.star ? <span className="req">*</span> : ''}
+                    {s.hint && <span className="sim-svc-hint">{s.hint}</span>}
+                  </span>
                   <span className="sim-svc-price">
-                    {s.type === 'hour' && `${groupThousands(s.price)} Ar / heure`}
-                    {s.type === 'forfait' && `Forfait : ${groupThousands(s.price)} Ar`}
-                    {s.type === 'annual' && `${groupThousands(s.price)} Ar / an`}
-                    {s.type === 'stere' && `${groupThousands(s.price)} Ar / stère`}
+                    {sel.checked
+                      ? `${groupThousands(ckooMonthlyPrice(s, sel))} Ar / mois`
+                      : `${s.options?.length ? 'dès ' : ''}${groupThousands(minPrice)} Ar / mois`}
                   </span>
                 </label>
 
-                {sel.checked && s.type === 'hour' && (
+                {sel.checked && s.options && (
                   <div className="sim-ctrl">
                     <select
                       className="sim-days"
-                      value={sel.days}
-                      onChange={(e) => setSim((prev) => ({ ...prev, [s.id]: { ...sel, days: parseFloat(e.target.value) } }))}
+                      value={option?.id}
+                      onChange={(e) => updateSel({ option: e.target.value })}
                     >
-                      {HOUR_DAY_OPTIONS.map((d) => (
-                        <option key={d} value={d}>
-                          {d === 0.5 ? '½ journée' : `${d} jour${d > 1 ? 's' : ''}`} / semaine
-                        </option>
+                      {s.options.map((o) => (
+                        <option key={o.id} value={o.id}>{o.label}</option>
                       ))}
-                    </select>{' '}
-                    <span className="sim-week">≈ {hoursPerMonth.toFixed(1)} h / mois</span>
-
-                    {/* Détail transparent du calcul */}
-                    <div style={{ fontSize: 11, color: '#666', marginTop: 6, lineHeight: 1.5 }}>
-                      <b>{hoursPerMonth.toFixed(1)} h / mois</b> × {groupThousands(s.price)} Ar/h ={' '}
-                      <b style={{ color: 'var(--g2)' }}>{groupThousands(costPerMonth)} Ar / mois</b>
-                    </div>
-                  </div>
-                )}
-
-                {sel.checked && s.type === 'stere' && (
-                  <div className="sim-ctrl">
-                    <input
-                      type="number"
-                      min={1}
-                      className="sim-qty"
-                      value={sel.qty}
-                      onChange={(e) => setSim((prev) => ({ ...prev, [s.id]: { ...sel, qty: parseFloat(e.target.value) || 0 } }))}
-                      style={{ width: 70 }}
-                    />{' '}
-                    <span className="sim-week">stère(s) / an</span>
+                    </select>
+                    {option?.weekend ? (
+                      <label className="sim-weekend">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(sel.weekend)}
+                          onChange={(e) => updateSel({ weekend: e.target.checked })}
+                        />
+                        Option week-end (+{groupThousands(option.weekend)} Ar)
+                      </label>
+                    ) : null}
                   </div>
                 )}
 
@@ -1922,12 +1990,6 @@ export default function DepotAnnonceDeux() {
           })}
         </div>
       </div>
-      {simTotals.maxDays > 0 && (
-        <div className="sim-sub">
-          <span>Frais de gestion (CNAPS / OSTIE / Mobile Money / Comptabilité)</span>
-          <span>{fmtAr(simTotals.mgmt)} Ar</span>
-        </div>
-      )}
       <div className="sim-total">
         <span className="sim-total-l">Total mensuel cumulé</span>
         <span className="sim-total-v">{fmtAr(simTotals.monthly)} Ar</span>
@@ -1957,7 +2019,7 @@ export default function DepotAnnonceDeux() {
 const depotAnnonceDeuxCss = `
 :root{--g1:#CCCC33;--g2:#99CC33;--cy:#46BDD6;--gr1:#666;--gr2:#999;--dark:#2C2C2C;--cy-lt:#E8F7FA;--g-lt:#F4F8E8;--bd:#e8e8e8;}
 .bb{font-family:'Bebas Neue',Arial,sans-serif;letter-spacing:0.03em;}
-.phead{background:#fff;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:150;padding:11px 20px 12px;}
+.phead{background:#fff;border-bottom:1px solid var(--bd);position:sticky;top:56px;z-index:40;padding:11px 20px 12px;}
 .phead-top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:760px;margin:0 auto 8px;}
 .phead-step{font-size:12px;color:var(--gr2);font-weight:700;white-space:nowrap;}
 .phead-step b{color:var(--cy);}
@@ -1996,6 +2058,7 @@ const depotAnnonceDeuxCss = `
 .inp-suffix{position:relative;}
 .inp-suffix .suf{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--gr2);pointer-events:none;}
 .inp-suffix .inp{padding-right:42px;}
+.inp-suffix .inp.inp-pieces{padding-right:76px;}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(max-width:520px){.row2{grid-template-columns:1fr;}}
 .opts{display:flex;flex-wrap:wrap;gap:9px;}
@@ -2102,6 +2165,9 @@ const depotAnnonceDeuxCss = `
 .sim-svc{display:flex;align-items:center;gap:10px;cursor:pointer;}
 .sim-svc input{width:17px;height:17px;flex-shrink:0;accent-color:var(--g2);cursor:pointer;}
 .sim-svc-name{flex:1;font-size:13px;color:var(--dark);}
+.sim-svc-hint{display:block;font-size:11px;color:var(--gr2);margin-top:1px;}
+.sim-weekend{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--dark);cursor:pointer;}
+.sim-ctrl .sim-weekend input{accent-color:var(--g2);width:15px;height:15px;padding:0;}
 .sim-svc-price{font-size:13px;font-weight:700;color:var(--gr1);white-space:nowrap;}
 .sim-ctrl{margin:8px 0 0 27px;font-size:12px;}
 .sim-ctrl select,.sim-ctrl input{border:1px solid #ddd;border-radius:6px;padding:5px 8px;font-size:12px;}

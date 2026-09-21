@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Settings, Smartphone, Download, Check } from 'lucide-react'
+import { Settings, Smartphone, Download, Check, X, Monitor, Share } from 'lucide-react'
 import { useTranslation, Trans } from 'react-i18next'
+import { canPromptInstall, isAppInstalled, promptInstall } from '../../lib/pwaInstall'
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
 const API = BASE.endsWith('/api') ? BASE.slice(0, -4) : BASE
@@ -98,6 +99,19 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
 
   const [modeAllege, setModeAllege] = useState(false)
   const [horsLigne, setHorsLigne] = useState(true)
+  const [installOpen, setInstallOpen] = useState(false)
+  const [installStatus, setInstallStatus] = useState<'idle' | 'installed' | 'dismissed'>('idle')
+
+  const handleInstallClick = () => {
+    setInstallStatus(isAppInstalled() ? 'installed' : 'idle')
+    setInstallOpen(true)
+  }
+
+  const handleNativeInstall = async () => {
+    const outcome = await promptInstall()
+    if (outcome === 'accepted') setInstallStatus('installed')
+    else if (outcome === 'dismissed') setInstallStatus('dismissed')
+  }
 
   const [defaultMode, setDefaultMode] = useState<'push' | 'email' | 'both'>('push')
   const [events, setEvents] = useState<EventPreference[]>(DEFAULT_EVENTS)
@@ -316,9 +330,8 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
               <Trans
                 i18nKey="displayNetwork.lightModeDesc"
                 t={t}
-                components={{
-                  boldActivated: <b>{t('displayNetwork.activatedAutomatically')}</b>,
-                }}
+                values={{ boldActivated: t('displayNetwork.activatedAutomatically') }}
+                components={{ b: <b /> }}
               />
             </div>
           </div>
@@ -357,11 +370,94 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
               {t('displayNetwork.installAppDesc')}
             </div>
           </div>
-          <button className="shrink-0 inline-flex items-center gap-2 bg-brand-cyan text-white text-sm font-semibold rounded-lg px-4 py-2 hover:bg-brand-cyan-dark transition-colors">
+          <button
+            type="button"
+            onClick={handleInstallClick}
+            className="shrink-0 inline-flex items-center gap-2 bg-brand-cyan text-white text-sm font-semibold rounded-lg px-4 py-2 hover:bg-brand-cyan-dark transition-colors"
+          >
             <Download className="w-4 h-4" /> {t('displayNetwork.installButton')}
           </button>
         </div>
       </div>
+
+      {/* POP-UP « Installer l'application » */}
+      {installOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8"
+          onClick={() => setInstallOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="install-app-title"
+            className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setInstallOpen(false)}
+              aria-label={t('displayNetwork.installModal.close')}
+              className="absolute right-4 top-4 rounded-full bg-muted p-1.5 hover:bg-muted/70"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-brand-cyan-light text-brand-cyan-dark">
+              <Download className="h-6 w-6" />
+            </div>
+            <h3 id="install-app-title" className="bebas mb-1 text-center text-2xl">
+              {t('displayNetwork.installApp')}
+            </h3>
+
+            {installStatus === 'installed' ? (
+              <p className="mt-2 text-center text-sm text-muted-foreground">
+                {t('displayNetwork.installModal.alreadyInstalled')}
+              </p>
+            ) : (
+              <>
+                <p className="mb-4 text-center text-sm text-muted-foreground">
+                  {t('displayNetwork.installModal.intro')}
+                </p>
+                {canPromptInstall() && (
+                  <button
+                    type="button"
+                    onClick={handleNativeInstall}
+                    className="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-cyan px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-cyan-dark"
+                  >
+                    <Download className="h-4 w-4" /> {t('displayNetwork.installModal.installNow')}
+                  </button>
+                )}
+                <ul className="space-y-3 text-sm text-foreground/80">
+                  <li className="flex items-start gap-3">
+                    <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-brand-green" />
+                    <span>{t('displayNetwork.installModal.android')}</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Share className="mt-0.5 h-4 w-4 shrink-0 text-brand-green" />
+                    <span>{t('displayNetwork.installModal.ios')}</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Monitor className="mt-0.5 h-4 w-4 shrink-0 text-brand-green" />
+                    <span>{t('displayNetwork.installModal.desktop')}</span>
+                  </li>
+                </ul>
+                {installStatus === 'dismissed' && (
+                  <p className="mt-4 text-center text-xs text-muted-foreground">
+                    {t('displayNetwork.installModal.dismissed')}
+                  </p>
+                )}
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setInstallOpen(false)}
+              className="mt-5 w-full rounded-lg border border-border py-2.5 text-sm font-semibold hover:bg-muted"
+            >
+              {t('displayNetwork.installModal.close')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* PRÉFÉRENCES DE NOTIFICATION */}
       <div className="bg-white border border-border rounded-2xl p-5 sm:p-6">

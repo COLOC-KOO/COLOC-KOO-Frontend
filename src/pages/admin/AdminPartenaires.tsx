@@ -42,6 +42,7 @@ import {
 } from 'lucide-react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api, type ApiPartenaireRequest } from '../../lib/api'
+import { useDialog } from '../../components/ui/Dialog'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
@@ -561,6 +562,7 @@ function CampagneModal({
   onClose: () => void
   onSave: (payload: Omit<Campagne, 'id_campagne' | 'date_creation' | 'partenaire_nom' | 'partenaire_niveau'> & { visuelFile?: File | null }) => Promise<void>
 }) {
+  const dialog = useDialog()
   const [idPartenaire, setIdPartenaire] = useState(campagne?.id_partenaire || 0)
   const [titre, setTitre] = useState(campagne?.titre || '')
   const [description, setDescription] = useState(campagne?.description || '')
@@ -583,7 +585,11 @@ function CampagneModal({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!idPartenaire || !titre.trim() || !dateDebut) {
-      alert('Veuillez remplir tous les champs obligatoires.')
+      void dialog.alert({
+        tone: 'warning',
+        title: 'Champs manquants',
+        message: 'Merci de sélectionner un partenaire, un titre et une date de début.',
+      })
       return
     }
     setSubmitting(true)
@@ -721,6 +727,7 @@ function CampagneModal({
 
 // ===== COMPOSANT PRINCIPAL =====
 export default function AdminPartenaires() {
+  const dialog = useDialog()
   const [activeTab, setActiveTab] = useState<'gestion' | 'comptes' | 'campagnes'>('gestion')
   const [partenaires, setPartenaires] = useState<Partenaire[]>([])
   const [comptes, setComptes] = useState<PartenaireComplet[]>([])
@@ -847,7 +854,12 @@ export default function AdminPartenaires() {
   }
 
   const handleValidatePartnerRequest = async (requestItem: ApiPartenaireRequest) => {
-    if (!confirm(`Valider la demande de ${requestItem.nom_entreprise || requestItem.nom_contact || 'ce partenaire'} ?`)) return
+    const confirmed = await dialog.confirm({
+      title: 'Valider cette demande ?',
+      message: `La demande de ${requestItem.nom_entreprise || requestItem.nom_contact || 'ce partenaire'} sera acceptée et le partenaire créé.`,
+      confirmLabel: 'Valider',
+    })
+    if (!confirmed) return
     setLoading(true)
     setError(null)
     try {
@@ -872,7 +884,13 @@ export default function AdminPartenaires() {
   }
 
   const handleDeletePartnerRequest = async (id: number) => {
-    if (!confirm('Supprimer cette demande de partenaire ?')) return
+    const confirmed = await dialog.confirm({
+      tone: 'danger',
+      title: 'Supprimer cette demande ?',
+      message: 'La demande de partenariat sera définitivement supprimée.',
+      confirmLabel: 'Supprimer',
+    })
+    if (!confirmed) return
     setLoading(true)
     setError(null)
     try {
@@ -936,7 +954,13 @@ export default function AdminPartenaires() {
   }
 
   const handleDeletePartner = async (id: string) => {
-    if (!confirm('Supprimer ce partenaire ?')) return
+    const confirmed = await dialog.confirm({
+      tone: 'danger',
+      title: 'Supprimer ce partenaire ?',
+      message: 'Le partenaire et ses informations seront définitivement supprimés.',
+      confirmLabel: 'Supprimer',
+    })
+    if (!confirmed) return
     setLoading(true)
     setError(null)
     try {
@@ -1001,7 +1025,13 @@ export default function AdminPartenaires() {
   }
 
   const handleDeleteCampagne = async (id: number) => {
-    if (!confirm('Supprimer cette campagne ?')) return
+    const confirmed = await dialog.confirm({
+      tone: 'danger',
+      title: 'Supprimer cette campagne ?',
+      message: 'La campagne publicitaire sera définitivement supprimée.',
+      confirmLabel: 'Supprimer',
+    })
+    if (!confirmed) return
     setLoading(true)
     setError(null)
     try {

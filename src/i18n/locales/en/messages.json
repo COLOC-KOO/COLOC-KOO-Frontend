@@ -29,6 +29,8 @@
   "send": "Send",
   "report_message": "Report message",
   "report_prompt": "Why are you reporting this message?",
+  "report_reason_label": "Reason for reporting",
+  "report_submit": "Report",
   "report_success": "Message reported",
   "report_error": "Error reporting message",
   "send_error_group": "Please name the group and select at least one member.",

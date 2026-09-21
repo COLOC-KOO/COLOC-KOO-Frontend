@@ -8,6 +8,8 @@ type Props = {
   activeButtonClass: string;
   inactiveButtonClass: string;
   officialNotification?: "won" | "lost" | null;
+  // Onglets affichés (dépendent du profil : déposant ou candidat)
+  views?: ViewId[];
 };
 
 const viewButtons: ViewId[] = ["flux", "track", "cand", "join", "won", "lost"];
@@ -18,10 +20,12 @@ export function CandidaturesViewButtons({
   activeButtonClass,
   inactiveButtonClass,
   officialNotification = null,
+  views = viewButtons,
 }: Props) {
   return (
-    <div className="flex flex-nowrap justify-center gap-0 overflow-hidden pb-1">
-      {viewButtons.map((button) => {
+    // Défilement horizontal sur téléphone : les libellés ne sont plus coupés.
+    <div className="flex max-w-full flex-nowrap justify-start gap-1.5 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] sm:justify-center">
+      {views.map((button) => {
         const isWonNotification = button === "won";
         const isLostNotification = button === "lost";
         const hasOfficialNotification = Boolean(officialNotification);
@@ -53,7 +57,7 @@ export function CandidaturesViewButtons({
             }}
             disabled={disabled}
             aria-disabled={disabled}
-            className={`shrink-0 whitespace-nowrap rounded-md border px-1 py-0.5 text-[8px] font-medium leading-4 transition sm:px-1.5 ${notificationClass}`}
+            className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium leading-4 transition sm:text-xs ${notificationClass}`}
           >
             <CandidaturesViewButtonLabel button={button} />
           </button>

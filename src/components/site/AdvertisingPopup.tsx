@@ -1,21 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Megaphone, X } from 'lucide-react'
+import { useAuth } from '../../lib/auth'
 
+const FIRST_DISPLAY_DELAY_MS = 30 * 1000
 const DISPLAY_INTERVAL_MS = 3 * 60 * 1000
-const DISMISS_STORAGE_KEY = 'colockoo_ads_dismissed_until'
+// Fermeture valable pour la visite en cours : en quittant la plateforme puis en
+// revenant (ou en se reconnectant), les publicités réapparaissent.
+const DISMISS_STORAGE_KEY = 'colockoo_ads_dismissed'
 
-// Une fois fermée (X ou "Plus tard"), la pub ne doit pas réapparaître avant le lendemain.
-function isDismissedForToday(): boolean {
-  const storedUntil = Number(localStorage.getItem(DISMISS_STORAGE_KEY) || 0)
-  return Date.now() < storedUntil
+function readSession(key: string) {
+  try {
+    return sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
 }
 
-function suppressUntilTomorrow() {
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  tomorrow.setHours(0, 0, 0, 0)
-  localStorage.setItem(DISMISS_STORAGE_KEY, String(tomorrow.getTime()))
+function writeSession(key: string, value: string) {
+  try {
+    sessionStorage.setItem(key, value)
+  } catch {
+    // stockage indisponible : la publicité pourra simplement réapparaître
+  }
+}
+
+function isDismissedForVisit(): boolean {
+  return readSession(DISMISS_STORAGE_KEY) === '1'
 }
 
 const ADVERTISEMENTS = [
@@ -45,28 +56,46 @@ const ADVERTISEMENTS = [
  */
 export default function AdvertisingPopup() {
   const { pathname } = useLocation()
+  const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [advertisementIndex, setAdvertisementIndex] = useState(0)
+  // Le chemin courant est lu au déclenchement : le minuteur ne doit plus être
+  // relancé à chaque navigation (sinon il n'atteignait jamais son échéance).
+  const pathnameRef = useRef(pathname)
+  pathnameRef.current = pathname
+
+  // Une (re)connexion relance le cycle des publicités.
+  useEffect(() => {
+    if (!user) return
+    writeSession(DISMISS_STORAGE_KEY, '0')
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // Ne pas afficher de publicité pendant la connexion ni dans le back-office.
-    if (pathname.startsWith('/admin') || pathname === '/auth') {
-      setIsOpen(false)
-      return
-    }
-
-    const interval = window.setInterval(() => {
-      if (isDismissedForToday()) return
+    const show = () => {
+      // Ne pas afficher de publicité pendant la connexion ni dans le back-office.
+      if (pathnameRef.current.startsWith('/admin') || pathnameRef.current === '/auth') return
+      if (isDismissedForVisit()) return
       setAdvertisementIndex((current) => (current + 1) % ADVERTISEMENTS.length)
       setIsOpen(true)
-    }, DISPLAY_INTERVAL_MS)
+    }
 
-    return () => window.clearInterval(interval)
+    const firstTimer = window.setTimeout(show, FIRST_DISPLAY_DELAY_MS)
+    const interval = window.setInterval(show, DISPLAY_INTERVAL_MS)
+
+    return () => {
+      window.clearTimeout(firstTimer)
+      window.clearInterval(interval)
+    }
+  }, [])
+
+  // La publicité disparaît si l'on arrive sur la connexion ou le back-office.
+  useEffect(() => {
+    if (pathname.startsWith('/admin') || pathname === '/auth') setIsOpen(false)
   }, [pathname])
 
   const close = () => {
     setIsOpen(false)
-    suppressUntilTomorrow()
+    writeSession(DISMISS_STORAGE_KEY, '1')
   }
 
   if (!isOpen) return null

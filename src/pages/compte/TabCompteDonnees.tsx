@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import {
   AlertTriangle,
   Download,
@@ -149,7 +149,7 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
       })
 
       setMessage(t('messages.passwordUpdateSuccess'))
-      setForm({ current: form.current, next: '', confirm: '' })
+      setForm({ current: '', next: '', confirm: '' })
       setShowPasswordModal(false)
     } catch {
       setMessage(t('messages.passwordUpdateError'))
@@ -170,33 +170,22 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
         {t('security.subtitle')}
       </p>
 
+      {/* Le mot de passe réel n'est jamais connu du site (il est chiffré) : on
+          affiche un champ masqué « ******** » et la saisie de l'actuel se fait
+          dans la fenêtre de changement de mot de passe. */}
       <div className="max-w-lg">
         <label className="block text-sm font-semibold text-foreground mb-1.5">
           {t('security.currentPassword')}
         </label>
 
-        <div className="relative">
-          <input
-            type={showCurrent ? 'text' : 'password'}
-            value={form.current}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, current: e.target.value }))
-            }
-            className="w-full border border-border rounded-lg px-3 py-2.5 pr-10 text-sm bg-muted/40"
-          />
-
-          <button
-            type="button"
-            onClick={() => setShowCurrent((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            {showCurrent ? (
-              <EyeOff className="w-4 h-4" />
-            ) : (
-              <Eye className="w-4 h-4" />
-            )}
-          </button>
-        </div>
+        <input
+          type="password"
+          value="********"
+          readOnly
+          aria-readonly="true"
+          tabIndex={-1}
+          className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-muted/40 text-foreground/70 cursor-default"
+        />
       </div>
 
       {message && !showPasswordModal ? (
@@ -207,9 +196,9 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
         className="mt-6 bg-brand-green text-white hover:opacity-90"
         onClick={() => {
           setMessage('')
+          setForm({ current: '', next: '', confirm: '' })
           setShowPasswordModal(true)
         }}
-        disabled={!form.current}
       >
         {t('security.changePasswordBtn')}
       </Button>
@@ -237,6 +226,38 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
             <p className="text-sm text-muted-foreground text-center mb-5">
               {t('security.modal.subtitle')}
             </p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                {t('security.currentPassword')}
+              </label>
+
+              <div className="relative">
+                <input
+                  type={showCurrent ? 'text' : 'password'}
+                  value={form.current}
+                  autoComplete="current-password"
+                  placeholder="********"
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, current: e.target.value }))
+                  }
+                  className="w-full border border-border rounded-lg px-3 py-2.5 pr-10 text-sm"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowCurrent((v) => !v)}
+                  aria-label={showCurrent ? t('security.hidePassword') : t('security.showPassword')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showCurrent ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
 
             <div className="mb-4">
               <label className="block text-sm font-semibold text-foreground mb-1.5">
@@ -342,9 +363,12 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
             </div>
 
             <p className="text-sm text-muted-foreground mt-1 max-w-md">
-              {t('security.twoFA.description', {
-                obligatory: t('security.twoFA.obligatory')
-              })}
+              <Trans
+                t={t}
+                i18nKey="security.twoFA.description"
+                values={{ boldObligatory: t('security.twoFA.obligatory') }}
+                components={{ b: <strong className="text-foreground" /> }}
+              />
             </p>
           </div>
 
@@ -409,9 +433,12 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
         </div>
 
         <p className="text-sm text-muted-foreground mb-4 max-w-lg">
-          {t('identity.description', {
-            badgeLabel: t('identity.badgeLabel')
-          })}
+          <Trans
+            t={t}
+            i18nKey="identity.description"
+            values={{ boldBadge: t('identity.badgeLabel') }}
+            components={{ b: <strong className="text-foreground" /> }}
+          />
         </p>
 
         <div className="flex gap-2">

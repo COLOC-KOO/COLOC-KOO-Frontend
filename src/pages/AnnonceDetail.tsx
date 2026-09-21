@@ -6,7 +6,7 @@ import {
   ArrowLeft, BedDouble, Calendar, Check, ChevronDown, Eye, Heart, 
   MessageSquare, MapPin, Send, Share2, Shield, Users, Building2, X,
   User, Phone, Mail, Briefcase, MapPin as MapPinIcon, Calendar as CalendarIcon,
-  Award, Star, ExternalLink, Wifi, Car, Home, PawPrint,
+  Award, Star, UsersRound, Wifi, Car, Home, PawPrint,
   Flame, ArrowUp, Circle, Bike, DollarSign, Zap, Cloud
 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
@@ -64,26 +64,35 @@ function StatItem({ icon, value, label }: { icon: React.ReactNode; value: string
 // =============================================
 // MODAL PROFIL UTILISATEUR
 // =============================================
+type ProfileModalData = {
+  name: string
+  age?: number
+  memberSince?: string
+  avatar?: string
+  bio?: string
+  email?: string
+  phone?: string
+  profession?: string
+  city?: string
+  origin?: string
+  status?: string
+}
+
 interface UserProfileModalProps {
   isOpen: boolean
   onClose: () => void
-  userData: {
-    name: string
-    age?: number
-    budget?: string
-    memberSince?: string
-    avatar?: string
-    bio?: string
-    email?: string
-    phone?: string
-    profession?: string
-    city?: string
-    origin?: string
-    status?: string
-  }
+  onMessage?: () => void
+  userData: ProfileModalData
 }
 
-function UserProfileModal({ isOpen, onClose, userData }: UserProfileModalProps) {
+// Statut public du déposant d'après le profil choisi au dépôt de l'annonce.
+function ownerStatusLabel(role: string | undefined, t: (key: string) => string) {
+  if (role === 'membre') return t('annonceDetail:owner.roleMember')
+  if (role === 'pro') return t('annonceDetail:owner.rolePro')
+  return t('annonceDetail:owner.roleOwner')
+}
+
+function UserProfileModal({ isOpen, onClose, onMessage, userData }: UserProfileModalProps) {
   if (!isOpen) return null
 
   const initials = userData.name
@@ -111,8 +120,8 @@ function UserProfileModal({ isOpen, onClose, userData }: UserProfileModalProps) 
             <div>
               <div className="text-lg font-semibold text-foreground">{userData.name}</div>
               {userData.status && (
-                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <Award className="w-3 h-3 text-brand-cyan" />
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-cyan-light px-2.5 py-0.5 text-xs font-semibold text-brand-cyan-dark">
+                  <Award className="w-3 h-3" />
                   {userData.status}
                 </span>
               )}
@@ -129,11 +138,6 @@ function UserProfileModal({ isOpen, onClose, userData }: UserProfileModalProps) 
 
         {/* Badges */}
         <div className="mt-4 flex flex-wrap gap-2">
-          {userData.budget && (
-            <span className="rounded-full bg-brand-cyan-light px-3 py-1 text-sm font-semibold text-brand-cyan-dark">
-              Budget max de {userData.budget}
-            </span>
-          )}
           {userData.memberSince && (
             <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
               Membre depuis {userData.memberSince}
@@ -187,24 +191,14 @@ function UserProfileModal({ isOpen, onClose, userData }: UserProfileModalProps) 
           )}
         </div>
 
-        {/* Actions */}
-        <div className="mt-5 flex flex-col gap-2">
-          <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white">
-            <Eye className="w-4 h-4 mr-2" /> Voir le profil
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1">
+        {/* Action unique : écrire à la personne */}
+        {onMessage && (
+          <div className="mt-5">
+            <Button className="w-full bg-brand-cyan hover:bg-brand-cyan-dark text-white" onClick={onMessage}>
               <MessageSquare className="w-4 h-4 mr-2" /> Message
             </Button>
-            <Button variant="outline" className="flex-1">
-              <ExternalLink className="w-4 h-4 mr-2" /> Lien
-            </Button>
           </div>
-        </div>
-
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          <a href="#" className="hover:underline">https://lcrf.fr/77zz1b</a>
-        </p>
+        )}
       </div>
     </div>
   )
@@ -238,39 +232,14 @@ export default function AnnonceDetail() {
   const [messageModalCandidate, setMessageModalCandidate] = useState<null | { id: number; userId: number; name: string }>(null)
   const [showOwnerPhone, setShowOwnerPhone] = useState(false)
 
-  // Modal profil utilisateur
+  // Modal profil utilisateur (+ destinataire du bouton « Message »)
   const [profileModal, setProfileModal] = useState<{
     isOpen: boolean
-    userData: {
-      name: string
-      age?: number
-      budget?: string
-      memberSince?: string
-      avatar?: string
-      bio?: string
-      email?: string
-      phone?: string
-      profession?: string
-      city?: string
-      origin?: string
-      status?: string
-    }
+    userData: ProfileModalData
+    messageTarget?: { id: number; userId: number; name: string }
   }>({
     isOpen: false,
-    userData: {
-      name: '',
-      age: 0,
-      budget: '',
-      memberSince: '',
-      avatar: '',
-      bio: '',
-      email: '',
-      phone: '',
-      profession: '',
-      city: '',
-      origin: '',
-      status: ''
-    }
+    userData: { name: '' },
   })
 
   useEffect(() => {
@@ -309,23 +278,14 @@ export default function AnnonceDetail() {
   }, [id, user?.id])
 
   // Ouvrir le modal profil d'un utilisateur
-  const openProfileModal = (userData: {
-    name: string
-    age?: number
-    budget?: string
-    memberSince?: string
-    avatar?: string
-    bio?: string
-    email?: string
-    phone?: string
-    profession?: string
-    city?: string
-    origin?: string
-    status?: string
-  }) => {
+  const openProfileModal = (
+    userData: ProfileModalData,
+    messageTarget?: { id: number; userId: number; name: string },
+  ) => {
     setProfileModal({
       isOpen: true,
-      userData
+      userData,
+      messageTarget,
     })
   }
 
@@ -555,6 +515,19 @@ export default function AnnonceDetail() {
         isOpen={profileModal.isOpen}
         onClose={closeProfileModal}
         userData={profileModal.userData}
+        onMessage={
+          profileModal.messageTarget && Number(profileModal.messageTarget.userId) !== Number(user?.id)
+            ? () => {
+                const target = profileModal.messageTarget!
+                closeProfileModal()
+                if (!user) {
+                  navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
+                  return
+                }
+                setMessageModalCandidate(target)
+              }
+            : undefined
+        }
       />
 
       <div className="max-w-7xl mx-auto px-6 py-6">
@@ -756,22 +729,26 @@ export default function AnnonceDetail() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 border-y border-border py-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6 border-y border-border py-6">
             {/*<StatItem icon={<BedDouble />} value={`${listing.surface || '-'} m2`} label={t('annonceDetail:stats.surface')} />*/}
-            <StatItem icon={<Users />} value={`${listing.rooms}`} label={t('annonceDetail:stats.housemates')} />
-            <StatItem icon={<Shield />} value={
-              listing.candidatureCount && listing.candidatureCount > 0
-                ? t('annonceDetail:stats.existing')
-                : t('annonceDetail:stats.toCreate')
-            } label={t('annonceDetail:stats.colocs')} />
             <StatItem
-              icon={<Check />}
+              icon={<Users />}
+              value={listing.seekingCount ? String(listing.seekingCount) : '—'}
+              label={t('annonceDetail:stats.seeking')}
+            />
+            <StatItem
+              icon={<Shield />}
               value={
-                listing.candidatureCount && listing.candidatureCount > 0
-                  ? String(listing.candidatureCount)
-                  : t('annonceDetail:stats.none')
+                listing.annonceType === 'creation'
+                  ? t('annonceDetail:stats.toCreate')
+                  : t('annonceDetail:stats.existing')
               }
-              label={t('annonceDetail:stats.applications')}
+              label={t('annonceDetail:stats.colocs')}
+            />
+            <StatItem
+              icon={<UsersRound />}
+              value={listing.totalColocataires ? String(listing.totalColocataires) : '—'}
+              label={t('annonceDetail:stats.totalHousemates')}
             />
           </div>
 
@@ -828,12 +805,13 @@ export default function AnnonceDetail() {
                   </div>
                 ) : null}*/}
 
-                {/* Chambres */}
-                {listing.bedrooms > 0 ? (
+                {/* Nombre de pièces total (hors cuisine et salle d'eau) */}
+                {listing.totalPieces ? (
                   <div className="flex items-center gap-2">
                     <BedDouble className="w-4 h-4 text-brand-cyan-dark" />
                     <span className="text-foreground">
-                      {listing.bedrooms} {t('annonceDetail:property.bedrooms')}
+                      {t('annonceDetail:property.totalRooms', { count: listing.totalPieces })}{' '}
+                      <span className="text-muted-foreground">{t('annonceDetail:property.totalRoomsHint')}</span>
                     </span>
                   </div>
                 ) : null}
@@ -1068,25 +1046,21 @@ export default function AnnonceDetail() {
                           {/* Bouton Profil : ouvre le modal profil */}
                           <button
                             type="button"
-                            onClick={() => openProfileModal({
-                              name: fullName,
-                              age: candidate.age || undefined,
-                              budget: '850 €',
-                              memberSince: '3 mois',
-                              avatar: candidate.profile_picture || undefined,
-                              bio: candidate.bio || t('annonceDetail:profile.bio', { 
-                                name: fullName, 
-                                age: candidate.age || 27, 
-                                city: candidate.ville_actuelle || 'Paris',
-                                origin: candidate.ville_origine || 'Lyon'
-                              }),
-                              email: candidate.email || 'contact@email.com',
-                              phone: candidate.telephone || '+33 6 12 34 56 78',
-                              profession: candidate.profession || t('annonceDetail:profile.profession'),
-                              city: candidate.ville_actuelle || 'Paris',
-                              origin: candidate.ville_origine || 'Lyon',
-                              status: 'Salariée, 26 ans'
-                            })}
+                            onClick={() => openProfileModal(
+                              {
+                                name: fullName,
+                                age: candidate.age || undefined,
+                                avatar: candidate.profile_picture || undefined,
+                                bio: candidate.bio || undefined,
+                                email: candidate.email || undefined,
+                                phone: candidate.telephone || undefined,
+                                profession: candidate.profession || undefined,
+                                city: candidate.ville_actuelle || undefined,
+                                origin: candidate.ville_origine || undefined,
+                                status: t('annonceDetail:owner.roleMember'),
+                              },
+                              { id: candidate.id_candidature, userId: Number(candidate.id_utilisateur), name: fullName },
+                            )}
                             className="rounded-full border border-cyan-200 bg-cyan-50 p-2 text-cyan-700 transition hover:bg-cyan-100"
                             title={t('annonceDetail:candidates.viewProfile')}
                           >
@@ -1280,16 +1254,24 @@ export default function AnnonceDetail() {
         </Link>
       )}
 
+      {/* « Voir ma candidature » n'apparaît qu'une fois : si le bloc « candidature
+          envoyée » ci-dessus l'affiche déjà, on ne le répète pas ici. */}
       <div className="grid grid-cols-2 gap-2">
+        {!(hasApplied && Number(listing?.owner?.id) !== Number(user?.id)) && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canViewCandidatures}
+            onClick={handleViewMyCandidature}
+          >
+            <Eye className="w-4 h-4" /> {t('annonceDetail:actions.viewApplication')}
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"
-          disabled={!canViewCandidatures}
-          onClick={handleViewMyCandidature}
+          className={hasApplied && Number(listing?.owner?.id) !== Number(user?.id) ? 'col-span-2' : undefined}
         >
-          <Eye className="w-4 h-4" /> {t('annonceDetail:actions.viewApplication')}
-        </Button>
-        <Button variant="outline" size="sm">
           <Share2 className="w-4 h-4" /> {t('annonceDetail:actions.share')}
         </Button>
       </div>
@@ -1312,13 +1294,14 @@ export default function AnnonceDetail() {
         </div>
       </div>
 
-      {/* Boutons d'action : Message & Profil */}
+      {/* Boutons d'action : Message & Profil (libellés sur plusieurs lignes si
+          besoin, ex. en malgache, au lieu de déborder du cadre) */}
       <div className="grid grid-cols-2 gap-2 mt-4">
         {/* Bouton Message : ouvre le modal message vers le propriétaire (id: -1) */}
         <Button
           variant="outline"
           size="sm"
-          className="w-full flex items-center justify-center gap-1.5 text-xs"
+          className="w-full h-auto min-h-9 py-2 !whitespace-normal text-center leading-tight flex items-center justify-center gap-1.5 text-xs"
           onClick={() => {
             if (!user) {
               navigate(`/auth?mode=signin&redirect=/annonces/${id}`)
@@ -1340,25 +1323,24 @@ export default function AnnonceDetail() {
         <Button
           variant="outline"
           size="sm"
-          className="w-full flex items-center justify-center gap-1.5 text-xs text-brand-cyan border-brand-cyan/30 hover:bg-brand-cyan/10"
+          className="w-full h-auto min-h-9 py-2 !whitespace-normal text-center leading-tight flex items-center justify-center gap-1.5 text-xs text-brand-cyan border-brand-cyan/30 hover:bg-brand-cyan/10"
           onClick={() =>
-            openProfileModal({
-              name: listing?.owner?.name || '',
-              age: 35,
-              budget: '850 €',
-              memberSince: '1 an',
-              avatar: listing?.owner?.profilePicture || undefined,
-              bio: t('annonceDetail:profile.ownerBio', { name: listing?.owner?.name || '' }),
-              email: listing?.owner?.email || undefined,
-              phone: listing?.owner?.phone || undefined,
-              profession: t('annonceDetail:profile.ownerProfession'),
-              city: listing?.city,
-              origin: 'Antananarivo',
-              status: 'Propriétaire',
-            })
+            openProfileModal(
+              {
+                name: listing?.owner?.name || '',
+                avatar: listing?.owner?.profilePicture || undefined,
+                email: listing?.owner?.email || undefined,
+                phone: listing?.owner?.phone || undefined,
+                city: listing?.city,
+                status: ownerStatusLabel(listing?.ownerRole, t),
+              },
+              listing?.owner?.id
+                ? { id: -1, userId: Number(listing.owner.id), name: listing.owner.name }
+                : undefined,
+            )
           }
         >
-          <User className="w-3.5 h-3.5" /> {t('annonceDetail:owner.viewProfile')}
+          <User className="w-3.5 h-3.5 shrink-0" /> {t('annonceDetail:owner.viewProfile')}
         </Button>
       </div>
 

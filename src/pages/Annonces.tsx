@@ -7,7 +7,7 @@ import "leaflet/dist/leaflet.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { ListingCard } from "../components/site/ListingCard";
-import { api, annonceToListing, ApiServiceCkoo, Ville } from "../lib/api";
+import { api, annonceToListing, Ville } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { formatAr } from "../lib/utils";
 import { Listing } from "../types";
@@ -121,6 +121,10 @@ function createPriceIcon(listing: Listing, isActive: boolean) {
   });
 }
 
+// Zoom maximal au cadrage initial : garde une vue d'ensemble de la ville pour
+// situer le bien, même avec une seule annonce.
+const CITY_VIEW_MAX_ZOOM = 13;
+
 function MapBounds({ listings }: { listings: Listing[] }) {
   const map = useMap();
   useEffect(() => {
@@ -130,18 +134,20 @@ function MapBounds({ listings }: { listings: Listing[] }) {
     listings.forEach((listing, index) => {
       bounds.extend(getListingPosition(listing, index));
     });
-    map.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+    map.fitBounds(bounds, { padding: [60, 60], maxZoom: CITY_VIEW_MAX_ZOOM });
   }, [listings, map]);
   return null;
 }
 
+// Au survol d'une annonce, la carte ne zoome plus : elle se déplace seulement
+// (sans changer d'échelle) si le repère est hors de la zone visible.
 function MapFocusController({ target }: { target: [number, number] | null }) {
   const map = useMap();
   const key = target ? target.join(",") : "";
   useEffect(() => {
     if (!target) return;
-    const zoom = Math.max(map.getZoom(), 15);
-    map.flyTo(target, zoom, { duration: 0.6 });
+    if (map.getBounds().pad(-0.1).contains(target)) return;
+    map.panTo(target, { animate: true, duration: 0.5 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
   return null;
@@ -177,9 +183,10 @@ function InteractiveListingsMap({
 
   return (
     <div className="grid min-h-[calc(100vh-190px)] grid-cols-1 overflow-hidden border-t border-sc-bd bg-white lg:grid-cols-[1fr_470px]">
-      <div className="relative min-h-[420px] bg-[#dfead4] lg:min-h-[calc(100vh-190px)]">
+      {/* `isolate` : la carte et ses repères restent sous le header fixe. */}
+      <div className="relative isolate min-h-[420px] bg-[#dfead4] lg:min-h-[calc(100vh-190px)]">
         <MarkerStyles />
-        <MapContainer center={firstPosition} zoom={12} className="h-full w-full" zoomControl={false}>
+        <MapContainer center={firstPosition} zoom={CITY_VIEW_MAX_ZOOM} className="h-full w-full" zoomControl={false}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · précision quartier'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -247,6 +254,32 @@ function InteractiveListingsMap({
       </aside>
     </div>
   );
+}
+
+// Filtres alignés sur les éléments renseignés au dépôt d'annonce
+// (Partie 4 « Services & commodités » et Partie 6 « Règles »).
+const EQUIPMENT_OPTIONS = [
+  "Eau courante",
+  "Surpresseur",
+  "Balcon",
+  "Jardin",
+  "Piscine",
+  "BBQ",
+  "Gazinière / Plaques électriques",
+  "Four",
+  "Machine à laver",
+  "Abri vélo / moto",
+];
+const RULE_OPTIONS = ["Filles uniquement", "Garçons uniquement", "Animaux acceptés", "Famille / Enfant(s) accepté(s)"];
+const SERVICE_OPTIONS = ["Gardien", "Femme de ménage", "Jardinier", "Porteurs d'eau", "Intendance et petits travaux"];
+
+function normalizeOption(value: string) {
+  return normalizeText(value).replace(/\s+/g, " ");
+}
+
+function includesOption(values: string[] | undefined, option: string) {
+  const wanted = normalizeOption(option);
+  return (values || []).some((value) => normalizeOption(String(value)) === wanted);
 }
 
 interface CountriesDevCity {
@@ -319,18 +352,14 @@ export default function Annonces() {
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [type, setType] = useState("");
-  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(0);
-  const [minSurface, setMinSurface] = useState(0);
-  const [maxSurface, setMaxSurface] = useState(0);
-  const [bedrooms, setBedrooms] = useState("");
   const [query, setQuery] = useState("");
   const [colocFilter, setColocFilter] = useState("");
   const [listings, setListings] = useState<Listing[]>([]);
   const [villes, setVilles] = useState<Ville[]>([]);
-  const [services, setServices] = useState<ApiServiceCkoo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -345,29 +374,6 @@ export default function Annonces() {
   const [openDrop, setOpenDrop] = useState<string | null>(null);
   const [externalCities, setExternalCities] = useState<string[]>([]);
 
-  const equipmentOptions = useMemo(
-    () => [
-      { value: "accessibilite_handicape", label: "Accessibilité handicapé" },
-      { value: "air_conditionne", label: "Air conditionné" },
-      { value: "ascenseur", label: "Ascenseur" },
-      { value: "balcon", label: "Balcon" },
-      { value: "garage", label: "Garage" },
-      { value: "jardin", label: "Jardin" },
-      { value: "lave_vaisselle", label: "Lave-vaisselle" },
-      { value: "machine_laver", label: "Machine à laver" },
-      { value: "meuble", label: "Meublé" },
-      { value: "parking", label: "Parking" },
-      { value: "piscine", label: "Piscine" },
-      { value: "wifi", label: "Wifi" },
-      { value: "filles_uniquement", label: "Règle - Filles uniquement" },
-      { value: "garcons_uniquement", label: "Règle - Garçons uniquement" },
-      { value: "fumeurs_acceptes", label: "Règle - Fumeurs acceptés" },
-      { value: "animaux_acceptes", label: "Règle - Animaux acceptés" },
-    ],
-    []
-  );
-
-  const bedroomOptions = useMemo(() => ["1", "2", "3", "4", "5", "6+"], []);
   const typeOptions = useMemo(
     () => [
       { value: "", label: t("annonces:filters.types.all") },
@@ -397,13 +403,10 @@ export default function Annonces() {
     setCity(params.get("ville") || params.get("city") || "");
     setDistrict(params.get("quartier") || params.get("district") || "");
     setColocFilter(params.get("coloc") || "");
-    setSelectedServiceIds(params.get("services")?.split(",").map(Number).filter(Boolean) || []);
+    setSelectedServices(params.get("services")?.split(",").map((i) => i.trim()).filter(Boolean) || []);
     setSelectedEquipments(params.get("equipements")?.split(",").map((i) => i.trim()).filter(Boolean) || []);
     setMinPrice(Number(params.get("minPrice") || 0));
     setMaxPrice(Number(params.get("maxPrice") || 0));
-    setMinSurface(Number(params.get("minSurface") || 0));
-    setMaxSurface(Number(params.get("maxSurface") || 0));
-    setBedrooms(params.get("chambres") || "");
   }, [location.search]);
 
   useEffect(() => {
@@ -419,24 +422,10 @@ export default function Annonces() {
       q: query || undefined,
       coloc: colocFilter || undefined,
     };
-    if (selectedServiceIds.length > 0) params.service = selectedServiceIds.join(",");
-    if (selectedEquipments.length > 0) {
-      params.equipements = selectedEquipments.join(",");
-      params.regles = selectedEquipments.join(",");
-    }
 
-    // Villes/services alimentent les filtres et l'autocomplete : on ne veut pas
-    // qu'un échec du chargement des annonces les fasse disparaître aussi
-    // (c'était le cas avant — un Promise.all unique faisait tout échouer d'un coup).
-    Promise.all([
-      api.villes().catch(() => []),
-      api.services().catch(() => []),
-    ]).then(([villesList, servicesList]) => {
-      setVilles(villesList);
-      setServices(
-        Array.isArray(servicesList) ? servicesList.filter((s) => String(s.cle_service || "").startsWith("service_")) : []
-      );
-    });
+    // Les villes alimentent les filtres et l'autocomplete : on ne veut pas
+    // qu'un échec du chargement des annonces les fasse disparaître aussi.
+    api.villes().catch(() => []).then(setVilles);
 
     api
       .annonces(params)
@@ -450,7 +439,7 @@ export default function Annonces() {
         setError("Impossible de charger les annonces pour le moment. Réessaie dans quelques instants.");
       })
       .finally(() => setLoading(false));
-  }, [city, district, type, selectedServiceIds, selectedEquipments, minPrice, maxPrice, query, colocFilter, t]);
+  }, [city, district, type, minPrice, maxPrice, query, colocFilter, t]);
 
   useEffect(() => {
     if (!user) {
@@ -532,45 +521,21 @@ export default function Annonces() {
 
   const visibleListings = useMemo(() => {
     return listings.filter((listing) => {
-      if (minSurface && listing.surface < minSurface) return false;
-      if (maxSurface && listing.surface > maxSurface) return false;
-      if (bedrooms) {
-        const minBedrooms = bedrooms === "6+" ? 6 : Number(bedrooms);
-        const listingBedrooms = Number(listing.bedrooms || listing.rooms || 0);
-        if (bedrooms === "6+") {
-          if (listingBedrooms < minBedrooms) return false;
-        } else if (listingBedrooms !== minBedrooms) {
-          return false;
-        }
+      if (selectedServices.length > 0 && !selectedServices.every((service) => includesOption(listing.services, service))) {
+        return false;
       }
       if (selectedEquipments.length > 0) {
-        const normalizedAmenities = listing.amenities.map((item) =>
-          item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_")
+        const hasEveryEquipment = selectedEquipments.every(
+          (item) => includesOption(listing.amenities, item) || includesOption(listing.regles, item)
         );
-        const normalizedRules = (listing.regles || []).map((item) =>
-          item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_")
-        );
-        const hasEveryEquipment = selectedEquipments.every((equipment) => {
-          if (equipment === "wifi" && listing.internet) return true;
-          if (equipment === "ascenseur" && listing.elevator) return true;
-          if (equipment === "parking" && ((listing.parkingVoitures ?? 0) > 0 || listing.parkingCouvert)) return true;
-          if (equipment === "animaux_acceptes" && listing.petsAllowed) return true;
-          if (equipment === "fumeurs_acceptes" && listing.smokersAllowed) return true;
-          if (equipment === "filles_uniquement" && listing.womenOnly) return true;
-          if (equipment === "garcons_uniquement" && listing.menOnly) return true;
-          return (
-            normalizedAmenities.some((amenity) => amenity.includes(equipment)) ||
-            normalizedRules.some((rule) => rule.includes(equipment))
-          );
-        });
         if (!hasEveryEquipment) return false;
       }
       return true;
     });
-  }, [listings, minSurface, maxSurface, bedrooms, selectedEquipments]);
+  }, [listings, selectedServices, selectedEquipments]);
 
-  const toggleService = (id: number) => {
-    setSelectedServiceIds((prev) => (prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]));
+  const toggleService = (value: string) => {
+    setSelectedServices((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
   };
   const toggleEquipment = (value: string) => {
     setSelectedEquipments((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
@@ -580,13 +545,10 @@ export default function Annonces() {
     setCity("");
     setDistrict("");
     setType("");
-    setSelectedServiceIds([]);
+    setSelectedServices([]);
     setSelectedEquipments([]);
     setMinPrice(0);
     setMaxPrice(0);
-    setMinSurface(0);
-    setMaxSurface(0);
-    setBedrooms("");
     setQuery("");
     setColocFilter("");
     setShowMobileFilters(false);
@@ -622,7 +584,6 @@ export default function Annonces() {
   const colocRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
   const equipmentsRef = useRef<HTMLDivElement>(null);
-  const bedroomsRef = useRef<HTMLDivElement>(null);
   const cityRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -632,33 +593,32 @@ export default function Annonces() {
       if (openDrop === "coloc" && colocRef.current && !colocRef.current.contains(target)) setOpenDrop(null);
       if (openDrop === "services" && servicesRef.current && !servicesRef.current.contains(target)) setOpenDrop(null);
       if (openDrop === "equipments" && equipmentsRef.current && !equipmentsRef.current.contains(target)) setOpenDrop(null);
-      if (openDrop === "bedrooms" && bedroomsRef.current && !bedroomsRef.current.contains(target)) setOpenDrop(null);
       if (openDrop === "city" && cityRef.current && !cityRef.current.contains(target)) setOpenDrop(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openDrop]);
 
-  const getTypeLabel = (val: string) => typeOptions.find((o) => o.value === val)?.label || t("annonces:filters.types.all");
-  const getColocLabel = (val: string) => colocOptions.find((c) => c.value === val)?.label || t("annonces:filters.coloc.all");
+  // Sans sélection, les pastilles portent le nom du filtre (« Type de bien »,
+  // « Type de coloc ») plutôt que « Tous types » / « Tous », qui se confondaient.
+  const getTypeLabel = (val: string) =>
+    (val && typeOptions.find((o) => o.value === val)?.label) || t("annonces:filters.types.title");
+  const getColocLabel = (val: string) =>
+    (val && colocOptions.find((c) => c.value === val)?.label) || t("annonces:filters.coloc.title");
   const getCityLabel = (val: string) => val || t("annonces:filters.city.all");
-  const getBedroomsLabel = (val: string) => (val ? `${val} chambre${val === "1" ? "" : "s"}` : "Chambres");
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (city) count++;
     if (district) count++;
     if (type) count++;
-    if (selectedServiceIds.length > 0) count++;
+    if (selectedServices.length > 0) count++;
     if (selectedEquipments.length > 0) count++;
     if (minPrice > 0) count++;
     if (maxPrice > 0) count++;
-    if (minSurface > 0) count++;
-    if (maxSurface > 0) count++;
-    if (bedrooms) count++;
     if (colocFilter) count++;
     return count;
-  }, [city, district, type, selectedServiceIds, selectedEquipments, minPrice, maxPrice, minSurface, maxSurface, bedrooms, colocFilter]);
+  }, [city, district, type, selectedServices, selectedEquipments, minPrice, maxPrice, colocFilter]);
 
   const emptyMessage = city || query ? "Aucune annonce disponible." : t("annonces:emptySub");
   const searchedCityLabel = city || query;
@@ -736,56 +696,49 @@ export default function Annonces() {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">Surface</label>
-            <div className="grid grid-cols-2 gap-3">
-              <input type="number" min={0} value={minSurface || ""} onChange={(e) => setMinSurface(Number(e.target.value) || 0)} placeholder="Minimum" className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark" />
-              <input type="number" min={0} value={maxSurface || ""} onChange={(e) => setMaxSurface(Number(e.target.value) || 0)} placeholder="Maximum" className="w-full px-4 py-2.5 border border-sc-bd rounded-xl text-sm bg-white focus:border-sc-cy focus:ring-2 focus:ring-sc-cy/20 transition-all text-sc-dark" />
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">Nombre de chambres</label>
-            <div className="flex flex-wrap gap-2">
-              {bedroomOptions.map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => setBedrooms(bedrooms === opt ? "" : opt)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    bedrooms === opt ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
             <label className="text-sm font-medium text-sc-dark block mb-2">{t("annonces:filters.services")}</label>
             <div className="flex flex-wrap gap-2">
-              {services.filter((s) => s.est_actif === 1).map((service) => (
+              {SERVICE_OPTIONS.map((service) => (
                 <button
-                  key={service.id_service}
-                  onClick={() => toggleService(service.id_service)}
+                  key={service}
+                  onClick={() => toggleService(service)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedServiceIds.includes(service.id_service) ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
+                    selectedServices.includes(service) ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
-                  {service.nom}
+                  {service}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-sc-dark block mb-2">Equipement</label>
+            <label className="text-sm font-medium text-sc-dark block mb-2">Équipements</label>
             <div className="flex flex-wrap gap-2">
-              {equipmentOptions.map((equipment) => (
+              {EQUIPMENT_OPTIONS.map((equipment) => (
                 <button
-                  key={equipment.value}
-                  onClick={() => toggleEquipment(equipment.value)}
+                  key={equipment}
+                  onClick={() => toggleEquipment(equipment)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedEquipments.includes(equipment.value) ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
+                    selectedEquipments.includes(equipment) ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
                   }`}
                 >
-                  {equipment.label}
+                  {equipment}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-sc-dark block mb-2">Règles</label>
+            <div className="flex flex-wrap gap-2">
+              {RULE_OPTIONS.map((rule) => (
+                <button
+                  key={rule}
+                  onClick={() => toggleEquipment(rule)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    selectedEquipments.includes(rule) ? "bg-sc-cy text-white shadow-md" : "bg-white border border-sc-bd text-sc-dark hover:border-sc-cy"
+                  }`}
+                >
+                  {rule}
                 </button>
               ))}
             </div>
@@ -834,7 +787,7 @@ export default function Annonces() {
 
           <div ref={typeRef} className="relative">
             <DropdownPill label={getTypeLabel(type)} icon="ti-home" isOpen={openDrop === "type"} onToggle={() => setOpenDrop((v) => (v === "type" ? null : "type"))} active={type !== ""}>
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Type d'annonce</p>
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">{t("annonces:filters.types.title")}</p>
               {typeOptions.map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
                   <input type="radio" name="type" checked={type === opt.value} onChange={() => { setType(opt.value); setOpenDrop(null); }} className="accent-sc-cy" />
@@ -846,7 +799,7 @@ export default function Annonces() {
 
           <div ref={colocRef} className="relative">
             <DropdownPill label={getColocLabel(colocFilter)} icon="ti-users" isOpen={openDrop === "coloc"} onToggle={() => setOpenDrop((v) => (v === "coloc" ? null : "coloc"))} active={colocFilter !== ""}>
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Type de colocation</p>
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">{t("annonces:filters.coloc.title")}</p>
               {colocOptions.map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
                   <input type="radio" name="coloc" checked={colocFilter === opt.value} onChange={() => { setColocFilter(opt.value); setOpenDrop(null); }} className="accent-sc-cy" />
@@ -865,41 +818,14 @@ export default function Annonces() {
             </div>
           </DropdownPill>
 
-          <DropdownPill label="Surface" icon="ti-ruler-2" isOpen={openDrop === "surface"} onToggle={() => setOpenDrop((v) => (v === "surface" ? null : "surface"))} active={!!(minSurface || maxSurface)}>
-            <p className="text-[11px] font-bold text-sc-gr2 mb-2">Surface (m²)</p>
-            <div className="flex items-center gap-2">
-              <input type="number" placeholder="Min" value={minSurface || ""} onChange={(e) => setMinSurface(Number(e.target.value) || 0)} className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy" step={1} />
-              <span className="text-sc-gr2">—</span>
-              <input type="number" placeholder="Max" value={maxSurface || ""} onChange={(e) => setMaxSurface(Number(e.target.value) || 0)} className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy" step={1} />
-            </div>
-          </DropdownPill>
-
-          <div ref={bedroomsRef} className="relative">
-            <DropdownPill label={getBedroomsLabel(bedrooms)} icon="ti-bed" isOpen={openDrop === "bedrooms"} onToggle={() => setOpenDrop((v) => (v === "bedrooms" ? null : "bedrooms"))} active={bedrooms !== ""} minWidth={140}>
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Nombre de chambres</p>
-              <div className="space-y-1">
-                <label className="flex items-center gap-2 text-sm py-1 cursor-pointer">
-                  <input type="radio" name="bedrooms" checked={bedrooms === ""} onChange={() => { setBedrooms(""); setOpenDrop(null); }} className="accent-sc-cy" />
-                  Toutes
-                </label>
-                {bedroomOptions.map((opt) => (
-                  <label key={opt} className="flex items-center gap-2 text-sm py-1 cursor-pointer">
-                    <input type="radio" name="bedrooms" checked={bedrooms === opt} onChange={() => { setBedrooms(opt); setOpenDrop(null); }} className="accent-sc-cy" />
-                    {opt} chambre{opt === "1" ? "" : "s"}
-                  </label>
-                ))}
-              </div>
-            </DropdownPill>
-          </div>
-
           <div ref={servicesRef} className="relative">
-            <DropdownPill label="Services" icon="ti-sparkles" isOpen={openDrop === "services"} onToggle={() => setOpenDrop((v) => (v === "services" ? null : "services"))} active={selectedServiceIds.length > 0} minWidth={220}>
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Services inclus</p>
+            <DropdownPill label="Services" icon="ti-sparkles" isOpen={openDrop === "services"} onToggle={() => setOpenDrop((v) => (v === "services" ? null : "services"))} active={selectedServices.length > 0} minWidth={220}>
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Services déjà en place</p>
               <div className="space-y-1 max-h-48 overflow-y-auto">
-                {services.filter((s) => s.est_actif === 1).map((service) => (
-                  <label key={service.id_service} className="flex items-center gap-2 text-xs cursor-pointer py-0.5">
-                    <input type="checkbox" checked={selectedServiceIds.includes(service.id_service)} onChange={() => toggleService(service.id_service)} className="accent-sc-cy" />
-                    {service.nom}
+                {SERVICE_OPTIONS.map((service) => (
+                  <label key={service} className="flex items-center gap-2 text-xs cursor-pointer py-0.5">
+                    <input type="checkbox" checked={selectedServices.includes(service)} onChange={() => toggleService(service)} className="accent-sc-cy" />
+                    {service}
                   </label>
                 ))}
               </div>
@@ -907,13 +833,20 @@ export default function Annonces() {
           </div>
 
           <div ref={equipmentsRef} className="relative">
-            <DropdownPill label="Equipement" icon="ti-building" isOpen={openDrop === "equipments"} onToggle={() => setOpenDrop((v) => (v === "equipments" ? null : "equipments"))} active={selectedEquipments.length > 0} minWidth={220}>
-              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Equipements et règles</p>
-              <div className="space-y-1 max-h-48 overflow-y-auto">
-                {equipmentOptions.map((eq) => (
-                  <label key={eq.value} className="flex items-center gap-2 text-xs cursor-pointer py-0.5">
-                    <input type="checkbox" checked={selectedEquipments.includes(eq.value)} onChange={() => toggleEquipment(eq.value)} className="accent-sc-cy" />
-                    {eq.label}
+            <DropdownPill label="Équipements" icon="ti-building" isOpen={openDrop === "equipments"} onToggle={() => setOpenDrop((v) => (v === "equipments" ? null : "equipments"))} active={selectedEquipments.length > 0} minWidth={240}>
+              <p className="text-[11px] font-bold text-sc-gr2 mb-2">Équipements</p>
+              <div className="space-y-1 max-h-60 overflow-y-auto">
+                {EQUIPMENT_OPTIONS.map((eq) => (
+                  <label key={eq} className="flex items-center gap-2 text-xs cursor-pointer py-0.5">
+                    <input type="checkbox" checked={selectedEquipments.includes(eq)} onChange={() => toggleEquipment(eq)} className="accent-sc-cy" />
+                    {eq}
+                  </label>
+                ))}
+                <p className="text-[11px] font-bold text-sc-gr2 pt-2">Règles</p>
+                {RULE_OPTIONS.map((rule) => (
+                  <label key={rule} className="flex items-center gap-2 text-xs cursor-pointer py-0.5">
+                    <input type="checkbox" checked={selectedEquipments.includes(rule)} onChange={() => toggleEquipment(rule)} className="accent-sc-cy" />
+                    {rule}
                   </label>
                 ))}
               </div>
@@ -1148,7 +1081,7 @@ export default function Annonces() {
                       Voir les profils qui recherchent aussi à {searchedCityLabel}
                     </a>
                     <a
-                      href={`/depot_annoncedeux?ville=${encodeURIComponent(searchedCityLabel)}`}
+                      href={`/depot_annonce?ville=${encodeURIComponent(searchedCityLabel)}`}
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-sc-cy text-white text-sm font-medium hover:bg-sc-cy-d transition-colors shadow-md rounded-xl"
                     >
                       <PlusCircle className="w-4 h-4" />

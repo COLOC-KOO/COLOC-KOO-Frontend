@@ -14,7 +14,9 @@
     "title": "Available services",
     "subtitle": "Check one or more services, then send your request.",
     "defaultDesc": "On-demand service.",
-    "empty": "No service available at the moment."
+    "empty": "No service available at the moment.",
+    "onlyAntananarivo": "Coloc'KOO services are only available in Antananarivo for now.",
+    "availability": "Offer available in Antananarivo (districts included) for now."
   },
   "cart": {
     "title": "My request",

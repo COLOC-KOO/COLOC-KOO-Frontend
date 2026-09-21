@@ -29,6 +29,8 @@
   "send": "Envoyer",
   "report_message": "Signaler le message",
   "report_prompt": "Pourquoi signalez-vous ce message ?",
+  "report_reason_label": "Motif du signalement",
+  "report_submit": "Signaler",
   "report_success": "Message signalé",
   "report_error": "Erreur lors du signalement",
   "send_error_group": "Veuillez nommer le groupe et selectionner au moins un membre.",

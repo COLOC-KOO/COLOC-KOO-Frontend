@@ -1,7 +1,7 @@
 {
   "security": {
     "title": "Account Security",
-    "subtitle": "Your data is encrypted in transit (HTTPS) and at rest. Choose a strong password to protect your account.",
+    "subtitle": "Your data is encrypted in transit (HTTPS). Choose a strong password to protect your account.",
     "currentPassword": "Current password",
     "changePasswordBtn": "Change password",
     "modal": {
@@ -17,7 +17,7 @@
     "twoFA": {
       "title": "Two-Factor Authentication (2FA)",
       "badge": "recommended",
-      "description": "Receive a code upon login to secure your account. It is {{obligatory}} for administrator accounts.",
+      "description": "Receive a code when you sign in to secure your account. It is <b>{{boldObligatory}}</b> for administrator accounts.",
       "obligatory": "mandatory"
     },
     "devices": {
@@ -26,12 +26,14 @@
       "disconnectOthers": "Disconnect other devices",
       "disconnecting": "Disconnecting...",
       "daysAgo": "{{count}} days ago"
-    }
+    },
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "identity": {
     "title": "Identity Verification",
     "badge": "coming soon · v2.0",
-    "description": "Optional. Once verified, an {{badgeLabel}} badge reassures your future roommates. Verification will be done via your mobile carrier (USSD: Telma / Orange / Airtel), with no SMS fees.",
+    "description": "Optional. Once confirmed, a <b>{{boldBadge}}</b> badge reassures your future flatmates. Verification will be done through your mobile operator (USSD: Telma / Orange / Airtel), with no SMS fees.",
     "badgeLabel": "“Identity Verified”",
     "notConfirmed": "Identity not verified",
     "comingSoon": "Coming soon"

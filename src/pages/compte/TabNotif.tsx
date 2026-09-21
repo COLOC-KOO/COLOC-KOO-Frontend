@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom'
 import { MessageSquare, Bell, Users, Home, Heart, Trash } from 'lucide-react'
 import { api } from '../../lib/api'
 import { Button } from '../../components/ui/Button'
+import { useDialog } from '../../components/ui/Dialog'
 import { useRealtime } from '../../lib/realtime'   // ⬅️ AJOUT
 
 export default function TabNotif() {
   const { t } = useTranslation('compte')
+  const dialog = useDialog()
   const navigate = useNavigate()
   const { subscribe } = useRealtime()   // ⬅️ AJOUT
   const [notifications, setNotifications] = useState<any[]>([])
@@ -68,7 +70,12 @@ export default function TabNotif() {
 
   const handleDeleteNotification = async (id: number, event: React.MouseEvent) => {
     event.stopPropagation()
-    if (!window.confirm(t('deleteConversationConfirm'))) return
+    const confirmed = await dialog.confirm({
+      tone: 'danger',
+      title: t('deleteConversationConfirm'),
+      confirmLabel: t('delete', { defaultValue: 'Supprimer' }),
+    })
+    if (!confirmed) return
     try {
       await api.deleteNotification(id)
       setNotifications((prev) => prev.filter((n) => n.id_notification !== id))

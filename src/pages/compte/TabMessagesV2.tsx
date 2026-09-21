@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { api, AuthUser, getWebSocketUrl } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { useRealtime } from '../../lib/realtime'
+import { useDialog } from '../../components/ui/Dialog'
 
 // Messages directs (table messages) et de groupe (table groupe_messages) peuvent
 // avoir le même id_message : on les distingue par leur source.
@@ -28,6 +29,7 @@ const conversationTime = (c: any) => {
 
 export default function TabMessagesV2() {
   const { t } = useTranslation('messages')
+  const dialog = useDialog()
   const { user } = useAuth()
   const { subscribe, send } = useRealtime()
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true)
@@ -590,16 +592,29 @@ const emitTyping = (isTyping: boolean) => {
   const handleReportMessage = async (m: any) => {
     if (!m) return
     setReportingMessageId(m.id_message)
-    const raison = window.prompt(t('report_prompt')) || ''
+    const raison = await dialog.prompt({
+      tone: 'warning',
+      title: t('report_prompt'),
+      label: t('report_reason_label', { defaultValue: 'Motif du signalement' }),
+      multiline: true,
+      confirmLabel: t('report_submit', { defaultValue: 'Signaler' }),
+    })
+    if (raison === null) {
+      setReportingMessageId(null)
+      return
+    }
     try {
       if (m.id_groupe != null) {
         await api.reportGroupMessage(m.id_groupe, m.id_message, { raison })
       } else {
         await api.reportMessage(m.id_message, { raison })
       }
-      alert(t('report_success'))
+      dialog.toast(t('report_success'))
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('report_error'))
+      void dialog.alert({
+        tone: 'danger',
+        message: err instanceof Error ? err.message : t('report_error'),
+      })
     } finally {
       setReportingMessageId(null)
     }

@@ -3,13 +3,23 @@
     "title": "Fampiratiana & Rezo",
     "subtitle": "Namboarina mba hiasana na dia miadana na tsy mafy aza ny rezo ny Sarintany'COLOC, na aiza na aiza any Madagasikara.",
     "lightMode": "Mody maivana (fitsitsiana data)",
-    "lightModeDesc": "Mampidina sary maivana kokoa ary mametra ny sarimihetsika. {{boldActivated}} amin'ny rezo 3G+/4G na rehefa tsy misy rezo; azonao forosena eto koa izany.",
+    "lightModeDesc": "Maka sary maivana kokoa ary mametra ny sary mihetsika. <b>{{boldActivated}}</b> amin'ny tambajotra 3G+/4G na tsy misy tambajotra ; azonao atao ihany koa ny manery azy eto.",
     "activatedAutomatically": "Mivelona ho azy",
     "offlineAvailability": "Fampiasana tsy misy rezo",
     "offlineAvailabilityDesc": "Matahiry ireo fampitandremana sy dinika nojerena farany mba hahitana izany indray na tsy misy rezo aza.",
     "installApp": "Hametraka ny fampiharana",
     "installAppDesc": "Ampio amin'ny efijery fandraisanao ny Sarintany'COLOC, tsy mila mandalo amin'ny magazay fampiharana.",
-    "installButton": "Hametraka"
+    "installButton": "Hametraka",
+    "installModal": {
+      "intro": "Ampidiro ao amin'ny efijery fandraisana amin'ny findainao na solosainao ny Sarintany'COLOC mba hisokatra toy ny rindranasa.",
+      "installNow": "Apetraho izao",
+      "android": "Android (Chrome) : menu ⋮ avy eo « Ajouter à l'écran d'accueil » na « Installer l'application ».",
+      "ios": "iPhone (Safari) : bokotra Partager avy eo « Sur l'écran d'accueil ».",
+      "desktop": "Solosaina (Chrome / Edge) : kisary fametrahana eo ankavanan'ny toerana fanoratana adiresy.",
+      "alreadyInstalled": "Efa voapetraka amin'ity fitaovana ity ny rindranasa.",
+      "dismissed": "Nofoanana ny fametrahana. Azonao averina na oviana na oviana.",
+      "close": "Hikatona"
+    }
   },
   "notifications": {
     "title": "Safidy amin'ny fampandrenesana",

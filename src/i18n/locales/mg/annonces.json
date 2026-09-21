@@ -11,18 +11,26 @@
       "all": "Karazana rehetra",
       "room": "Efitra",
       "apartment": "Trano",
-      "house": "Trano fonenana"
+      "house": "Trano fonenana",
+      "title": "Karazana trano"
     },
     "coloc": {
       "all": "Rehetra",
       "existing": "Mpiara-monina efa misy",
-      "create": "Mpiara-monina hoforonina"
+      "create": "Mpiara-monina hoforonina",
+      "title": "Karazana fiarahamonina"
     },
     "budget": "Tetibola",
     "services": "Tolotra",
     "noServices": "Tsy misy tolotra miasa",
     "city": {
-      "all": "Tanàna rehetra"
+      "all": "Tanàna rehetra",
+      "title": "Tanàna"
+    },
+    "title": "Sivana",
+    "district": {
+      "title": "Fokontany",
+      "placeholder": "Ohatra : Antaninarenina"
     }
   }
 }

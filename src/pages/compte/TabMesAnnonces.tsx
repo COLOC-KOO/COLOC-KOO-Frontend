@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Edit, Trash, Image as ImageIcon, Eye, Archive } from 'lucide-react'
 import { api, ApiAnnonce } from '../../lib/api'
 import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
+import { useDialog } from '../../components/ui/Dialog'
 
 const FALLBACK_IMG = LOGO_PLACEHOLDER
 
@@ -19,6 +20,7 @@ function normalizePhotos(value: unknown): string[] {
 
 export default function TabMesAnnonces() {
   const { t } = useTranslation('compte')
+  const dialog = useDialog()
   const [annonces, setAnnonces] = useState<ApiAnnonce[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -91,12 +93,17 @@ export default function TabMesAnnonces() {
   }
 
   const handleDeleteAnnonce = async (annonce: ApiAnnonce) => {
-    if (!window.confirm(t('deleteConfirm'))) return
+    const confirmed = await dialog.confirm({
+      tone: 'danger',
+      title: t('deleteConfirm'),
+      confirmLabel: t('delete', { defaultValue: 'Supprimer' }),
+    })
+    if (!confirmed) return
     try {
       await api.deleteAnnonce(annonce.id)
       setAnnonces((current) => current.filter((a) => a.id !== annonce.id))
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('deleteError'))
+      void dialog.alert({ tone: 'danger', message: err instanceof Error ? err.message : t('deleteError') })
     }
   }
 
@@ -108,7 +115,7 @@ export default function TabMesAnnonces() {
         current.map((a) => (a.id === annonce.id ? { ...a, statut: a.statut === 'archived' ? 'active' : 'archived' } : a))
       )
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('updateError'))
+      void dialog.alert({ tone: 'danger', message: err instanceof Error ? err.message : t('updateError') })
     } finally {
       setArchivingId(null)
     }
@@ -143,7 +150,7 @@ export default function TabMesAnnonces() {
       const { photos } = await api.uploadAnnoncePhotos(formData)
       setEditablePhotos((current) => [...current, ...photos])
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('updateError'))
+      void dialog.alert({ tone: 'danger', message: err instanceof Error ? err.message : t('updateError') })
     } finally {
       setUploadingPhotos(false)
     }
@@ -178,7 +185,7 @@ export default function TabMesAnnonces() {
       handleUpdateAnnonce(updated)
       closeEditModal()
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('updateError'))
+      void dialog.alert({ tone: 'danger', message: err instanceof Error ? err.message : t('updateError') })
     } finally {
       setSaving(false)
     }

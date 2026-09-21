@@ -32,5 +32,10 @@
     "existingColoc": "Colocation existante",
     "colocCreation": "Création d'une colocation",
     "potentialProperty": "Bien immobilier potentiel"
-  }
+  },
+  "stepLocalisation": "Localisation",
+  "stepCriteria": "Critères",
+  "stepNotifications": "Notifications",
+  "previous": "Précédent",
+  "next": "Suivant"
 }

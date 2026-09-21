@@ -1,7 +1,7 @@
 {
   "security": {
     "title": "Sécurité du compte",
-    "subtitle": "Tes données sont chiffrées en transit (HTTPS) et au repos. Choisis un mot de passe solide pour protéger ton compte.",
+    "subtitle": "Tes données sont chiffrées en transit (HTTPS). Choisis un mot de passe solide pour protéger ton compte.",
     "currentPassword": "Mot de passe actuel",
     "changePasswordBtn": "Changer le mot de passe",
     "modal": {
@@ -17,7 +17,7 @@
     "twoFA": {
       "title": "Double authentification (2FA)",
       "badge": "recommandé",
-      "description": "Reçois un code à la connexion pour sécuriser ton compte. Elle est {{boldObligatory}} pour les comptes administrateurs.",
+      "description": "Reçois un code à la connexion pour sécuriser ton compte. Elle est <b>{{boldObligatory}}</b> pour les comptes administrateurs.",
       "obligatory": "obligatoire"
     },
     "devices": {
@@ -26,12 +26,14 @@
       "disconnectOthers": "Déconnecter les autres appareils",
       "disconnecting": "Déconnexion...",
       "daysAgo": "il y a {{count}} jours"
-    }
+    },
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "identity": {
     "title": "Vérification d'identité",
     "badge": "à venir · v2.0",
-    "description": "Optionnelle. Une fois confirmée, un badge {{boldBadge}} rassure tes futurs colocataires. La vérification se fera via ton opérateur mobile (USSD : Telma / Orange / Airtel), sans frais de SMS.",
+    "description": "Optionnelle. Une fois confirmée, un badge <b>{{boldBadge}}</b> rassure tes futurs colocataires. La vérification se fera via ton opérateur mobile (USSD : Telma / Orange / Airtel), sans frais de SMS.",
     "badgeLabel": "« Identité confirmée »",
     "notConfirmed": "Identité non confirmée",
     "comingSoon": "Bientôt disponible"

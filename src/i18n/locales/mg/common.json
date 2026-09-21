@@ -34,7 +34,8 @@
     "previous": "Teo aloha",
     "next": "Manaraka",
     "submit": "Alefa",
-    "success": "Vita soa aman-tsara"
+    "success": "Vita soa aman-tsara",
+    "login": "Hiditra"
   },
   "footer": {
     "title": "SARINTANY'COLOC",
@@ -60,5 +61,9 @@
     "fr": "Français",
     "mg": "Malagasy",
     "en": "English"
-  }
+  },
+  "user": "Mpampiasa",
+  "cgu": "CGU",
+  "contact": "Fifandraisana",
+  "partenaires": "Mpiara-miasa"
 }

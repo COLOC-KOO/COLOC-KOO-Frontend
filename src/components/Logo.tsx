@@ -1,10 +1,11 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import logoImg from '../assets/ColocKOO_LOGO-color-72dpi.png'
+import logoImg from '../assets/sarintany-logo.png'
 
-// Logo officiel (icône + texte indissociables dans le fichier fourni).
+// Pictogramme officiel Sarintany'COLOC (les deux « O » repères), fond transparent
+// pour rester lisible aussi bien sur le header clair que sur le footer sombre.
 export function LogoMark({ className = 'h-8 w-auto', style }: { className?: string; style?: React.CSSProperties }) {
-  return <img src={logoImg} alt="Coloc'KOO" className={className} style={style} />
+  return <img src={logoImg} alt="Sarintany'COLOC" className={className} style={style} />
 }
 
 export function LogoSVG({ height = 28 }: { height?: number }) {

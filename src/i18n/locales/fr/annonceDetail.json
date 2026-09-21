@@ -7,11 +7,13 @@
   "stats": {
     "surface": "Surface",
     "housemates": "Colocataires",
-    "colocs": "Colocs",
-    "existing": "Existants",
+    "colocs": "Colocation",
+    "existing": "Existante",
     "toCreate": "À créer",
     "none": "Aucune",
-    "applications": "Candidatures"
+    "applications": "Candidatures",
+    "seeking": "Colocataire(s) recherché(s)",
+    "totalHousemates": "Total de colocataire(s)"
   },
   "sections": {
     "description": "Description",
@@ -46,11 +48,13 @@
     "address": "Adresse",
     "announcementType": "Type d'annonce",
     "announcementTypeExisting": "Colocataires existants",
-    "announcementTypeCreate": "Colocataires à créer"
+    "announcementTypeCreate": "Colocataires à créer",
+    "totalRooms": "Nombre de pièces total : {{count}}",
+    "totalRoomsHint": "(hors cuisine et salle d'eau)"
   },
   "features": {
-   "internet": "Internet : {{type}}",
-  "internetDefault": "Internet inclus",
+    "internet": "Internet : {{type}}",
+    "internetDefault": "Internet inclus",
     "parking": "Parking",
     "parkingCars": "{{count}} place(s) de parking",
     "parkingMotorcycles": "{{count}} place(s) pour motos",
@@ -122,7 +126,10 @@
     "verified": "Annonce vérifiée par modération",
     "self": "Vous êtes le propriétaire de cette annonce.",
     "unavailable": "Le propriétaire n'est pas disponible pour le moment.",
-    "viewProfile": "Voir le profil du propriétaire"
+    "viewProfile": "Voir le profil du propriétaire",
+    "roleMember": "Colocataire",
+    "roleOwner": "Propriétaire",
+    "rolePro": "Professionnel de l'immobilier"
   },
   "profile": {
     "profession": "Profession",

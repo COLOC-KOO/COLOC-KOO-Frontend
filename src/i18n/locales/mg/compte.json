@@ -154,5 +154,11 @@
   "surfacePlaceholder": "45",
   "neighborhoodPlaceholder": "Analakely, Isoraka...",
   "addressPlaceholder": "12 Rue de la Liberté",
-  "colocatairesPlaceholder": "3"
+  "colocatairesPlaceholder": "3",
+  "selectCity": "Misafidiana tanàna",
+  "selectedCity": "Tanàna voafidy :",
+  "updatingPhoto": "Mandefa ny sary…",
+  "photoUpdated": "Voaova ny sarinao",
+  "photoUpdateError": "Tsy voaova ny sary. Andramo indray.",
+  "cin": "CIN"
 }

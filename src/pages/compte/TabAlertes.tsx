@@ -92,13 +92,12 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
   const TYPES_ANNONCE = [
     { key: 'Colocation existante', label: t('options.existingColoc') },
     { key: "Création d'une colocation", label: t('options.colocCreation') },
-    { key: 'Bien immobilier potentiel', label: t('options.potentialProperty') },
   ]
 
   const steps = [
-    { id: 'localisation', label: t('stepLocalisation') || 'Localisation' },
-    { id: 'criteria', label: t('stepCriteria') || 'Critères' },
-    { id: 'notifications', label: t('stepNotifications') || 'Notifications' },
+    { id: 'localisation', label: t('stepLocalisation') },
+    { id: 'criteria', label: t('stepCriteria') },
+    { id: 'notifications', label: t('stepNotifications') },
   ]
 
   const charger = async () => {
@@ -241,13 +240,19 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
             </div>
             <div className="mb-4">
               <label className="block text-xs font-semibold mb-1">{t('maxPrice')}</label>
-              <input
-                type="number"
-                value={form.prixMax}
-                onChange={(e) => setForm((prev) => ({ ...prev, prixMax: e.target.value }))}
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-green focus:border-transparent outline-none"
-                placeholder={t('maxPricePlaceholder')}
-              />
+              {/* Montant affiché avec séparateur de milliers (200 000 Ar) ; seuls
+                  les chiffres sont conservés dans l'état. */}
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={form.prixMax ? Number(form.prixMax).toLocaleString('fr-FR') : ''}
+                  onChange={(e) => setForm((prev) => ({ ...prev, prixMax: e.target.value.replace(/\D/g, '') }))}
+                  className="w-full border border-border rounded-lg px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-brand-green focus:border-transparent outline-none"
+                  placeholder={t('maxPricePlaceholder')}
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">Ar</span>
+              </div>
             </div>
           </>
         )
@@ -444,7 +449,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
                   onClick={prevStep}
                   className="flex-1 border border-border rounded-lg py-2.5 text-sm font-semibold hover:bg-muted transition-colors flex items-center justify-center gap-2"
                 >
-                  <ChevronLeft className="w-4 h-4" /> {t('previous') || 'Précédent'}
+                  <ChevronLeft className="w-4 h-4" /> {t('previous')}
                 </button>
               ) : (
                 <button
@@ -465,7 +470,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
                       : 'bg-muted text-muted-foreground cursor-not-allowed'
                   }`}
                 >
-                  {t('next') || 'Suivant'} <ChevronRight className="w-4 h-4" />
+                  {t('next')} <ChevronRight className="w-4 h-4" />
                 </button>
               ) : (
                 <button

@@ -1,4 +1,5 @@
 import { UserPlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { CandidateAvatarStack } from "./CandidateAvatarStack";
 
 type Team = {
@@ -6,12 +7,14 @@ type Team = {
   title: string;
   mood: string;
   members: string[];
+  memberIds: number[];
 };
 
 type Props = {
   teams: Team[];
   joinTarget: string;
   target: number;
+  currentUserId: number;
   onJoinTeam: (teamId: string) => void;
   onBackToTeams: () => void;
 };
@@ -20,15 +23,18 @@ export function JoinTeamView({
   teams,
   joinTarget,
   target,
+  currentUserId,
   onJoinTeam,
   onBackToTeams,
 }: Props) {
+  const { t } = useTranslation("candidatures");
   const selectedTeam = teams.find((team) => team.id === joinTarget) || teams[0];
+  const alreadyMember = Boolean(selectedTeam?.memberIds.includes(currentUserId));
 
   if (!selectedTeam) {
     return (
       <div className="rounded-2xl border border-border bg-card p-6 text-center text-muted-foreground">
-        Aucune équipe disponible pour le moment.
+        {t("join.empty")}
       </div>
     );
   }
@@ -41,18 +47,16 @@ export function JoinTeamView({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Équipe sélectionnée
+              {t("join.selected")}
             </div>
             <h2 className="bebas mt-3 text-2xl">{selectedTeam.title}</h2>
           </div>
           <div className="text-right">
             <div className="text-sm text-muted-foreground">
-              {selectedTeam.members.length}/{target} membres
+              {t("join.members", { current: selectedTeam.members.length, target })}
             </div>
             <div className="text-base font-semibold text-brand-cyan-dark">
-              {available > 0
-                ? `${available} place${available > 1 ? "s" : ""} restante${available > 1 ? "s" : ""}`
-                : "Complète"}
+              {available > 0 ? t("join.remaining", { count: available }) : t("join.complete")}
             </div>
           </div>
         </div>
@@ -63,26 +67,33 @@ export function JoinTeamView({
           <CandidateAvatarStack members={selectedTeam.members} target={target} />
         </div>
         <div className="mt-5">
-          {available > 0 ? (
+          {alreadyMember ? (
+            <button
+              className="inline-flex w-full items-center justify-center rounded-xl bg-brand-green-light px-4 py-3 text-sm font-semibold text-brand-green-dark"
+              disabled
+            >
+              {t("join.alreadyMember")}
+            </button>
+          ) : available > 0 ? (
             <button
               className="inline-flex w-full items-center justify-center rounded-xl bg-brand-green px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-dark"
               onClick={() => onJoinTeam(selectedTeam.id)}
             >
-              <UserPlus className="mr-2 h-4 w-4" /> Rejoindre cette équipe
+              <UserPlus className="mr-2 h-4 w-4" /> {t("join.join")}
             </button>
           ) : (
             <button
               className="inline-flex w-full items-center justify-center rounded-xl bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground"
               disabled
             >
-              Équipe complète
+              {t("join.teamComplete")}
             </button>
           )}
           <button
             className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-muted-foreground hover:border-brand-cyan"
             onClick={onBackToTeams}
           >
-            Voir toutes les équipes
+            {t("join.viewAll")}
           </button>
         </div>
       </div>
