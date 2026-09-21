@@ -73,6 +73,37 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
   const [showNext, setShowNext] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
+  // Mot de passe actuel en clair, récupéré à la demande au clic sur l'œil.
+  const [revealed, setRevealed] = useState<string | null>(null)
+  const [revealing, setRevealing] = useState(false)
+  const [revealError, setRevealError] = useState('')
+
+  const handleToggleReveal = async () => {
+    if (showCurrent) {
+      setShowCurrent(false)
+      return
+    }
+
+    setRevealError('')
+
+    // Déjà chargé : on réaffiche sans rappeler l'API.
+    if (revealed !== null) {
+      setShowCurrent(true)
+      return
+    }
+
+    setRevealing(true)
+    try {
+      const { mot_de_passe } = await api.revealPassword()
+      setRevealed(mot_de_passe)
+      setShowCurrent(true)
+    } catch {
+      setRevealError(t('security.revealUnavailable'))
+    } finally {
+      setRevealing(false)
+    }
+  }
+
   const [twoFA, setTwoFA] = useState(true)
   const [savingTwoFA, setSavingTwoFA] = useState(false)
 
@@ -150,6 +181,9 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
 
       setMessage(t('messages.passwordUpdateSuccess'))
       setForm({ current: '', next: '', confirm: '' })
+      // La valeur affichée devient obsolète : on la redemandera au prochain clic.
+      setRevealed(null)
+      setShowCurrent(false)
       setShowPasswordModal(false)
     } catch {
       setMessage(t('messages.passwordUpdateError'))
@@ -170,22 +204,42 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
         {t('security.subtitle')}
       </p>
 
-      {/* Le mot de passe réel n'est jamais connu du site (il est chiffré) : on
-          affiche un champ masqué « ******** » et la saisie de l'actuel se fait
-          dans la fenêtre de changement de mot de passe. */}
+      {/* Champ en lecture seule : le mot de passe en clair n'est demandé au
+          serveur qu'au clic sur l'œil, et n'est renvoyé qu'au propriétaire du
+          compte (route protégée par le token de session). */}
       <div className="max-w-lg">
         <label className="block text-sm font-semibold text-foreground mb-1.5">
           {t('security.currentPassword')}
         </label>
 
-        <input
-          type="password"
-          value="********"
-          readOnly
-          aria-readonly="true"
-          tabIndex={-1}
-          className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-muted/40 text-foreground/70 cursor-default"
-        />
+        <div className="relative">
+          <input
+            type={showCurrent ? 'text' : 'password'}
+            value={showCurrent && revealed !== null ? revealed : '********'}
+            readOnly
+            aria-readonly="true"
+            tabIndex={-1}
+            className="w-full border border-border rounded-lg px-3 py-2.5 pr-10 text-sm bg-muted/40 text-foreground/70 cursor-default"
+          />
+
+          <button
+            type="button"
+            onClick={handleToggleReveal}
+            disabled={revealing}
+            aria-label={showCurrent ? t('security.hidePassword') : t('security.showPassword')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            {showCurrent ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+
+        {revealError ? (
+          <p className="mt-1.5 text-sm text-muted-foreground">{revealError}</p>
+        ) : null}
       </div>
 
       {message && !showPasswordModal ? (
@@ -196,7 +250,9 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
         className="mt-6 bg-brand-green text-white hover:opacity-90"
         onClick={() => {
           setMessage('')
-          setForm({ current: '', next: '', confirm: '' })
+          // Si le mot de passe a déjà été affiché, on pré-remplit le champ
+          // « actuel » pour éviter de le retaper.
+          setForm({ current: revealed ?? '', next: '', confirm: '' })
           setShowPasswordModal(true)
         }}
       >

@@ -28,7 +28,8 @@
       "daysAgo": "il y a {{count}} jours"
     },
     "showPassword": "Afficher le mot de passe",
-    "hidePassword": "Masquer le mot de passe"
+    "hidePassword": "Masquer le mot de passe",
+    "revealUnavailable": "Mot de passe indisponible. Reconnecte-toi pour pouvoir l'afficher."
   },
   "identity": {
     "title": "Vérification d'identité",
