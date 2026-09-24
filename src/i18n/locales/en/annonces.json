@@ -1,5 +1,6 @@
 ﻿{
   "title": "Listings",
+  "recentTitle": "Recent listings",
   "results": "results",
   "found": "found",
   "search": "Where do you want to go?",
@@ -23,6 +24,8 @@
     "budget": "Budget",
     "services": "Services",
     "noServices": "No active services",
+    "equipments": "Amenities",
+    "reset": "Reset",
     "city": {
       "all": "All cities",
       "title": "City"
@@ -32,5 +35,11 @@
       "placeholder": "Ex: Ankorondrano"
     },
     "title": "Filters"
-  }
+  },
+  "view": {
+    "map": "Map"
+  },
+  "alert": {
+  "create": "Create alert"
+}
 }

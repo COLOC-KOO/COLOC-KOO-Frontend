@@ -1,5 +1,6 @@
 ﻿{
   "title": "Annonces",
+  "recentTitle": "Annonces récentes",
   "results": "résultats",
   "found": "trouvé(s)",
   "search": "Où voulez-vous aller ?",
@@ -23,6 +24,8 @@
     "budget": "Budget",
     "services": "Services",
     "noServices": "Aucun service actif",
+    "equipments": "Équipements",
+    "reset": "Réinitialiser",
     "city": {
       "all": "Toutes les villes",
       "title": "Ville"
@@ -32,5 +35,12 @@
       "placeholder": "Ex : Antaninarenina"
     },
     "title": "Filtres"
-  }
+  },
+  "view": {
+    "map": "Carte"
+  },
+  "alert": {
+  "create": "Créer une alerte"
+}
+
 }
