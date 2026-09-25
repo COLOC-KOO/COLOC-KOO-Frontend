@@ -7,6 +7,7 @@
   "loading": "Fikarohana mitohy...",
   "empty": "Tsy misy fanambarana hita",
   "emptySub": "Andramo ovaina ny sivanao",
+  "postCta": "Tsindrio eto raha toa ka hametraka fampilazana sy hitady maimaim-poana ny mpiara-manofa tranonao manaraka. ",
   "filters": {
     "types": {
       "all": "Karazana rehetra",
@@ -37,9 +38,10 @@
     "title": "Fintantavana"
   },
   "view": {
-    "map": "Sarintany"
+    "map": "Sarintany",
+    "list": "Lisitra"
   },
   "alert": {
-  "create": "Mamorona filazana"
+  "create": "Hamorona fampandrenesana "
 }
 }

@@ -7,6 +7,7 @@
   "loading": "Searching...",
   "empty": "No listings found",
   "emptySub": "Try adjusting your search filters",
+  "postCta": "Click here to post a listing and find your next tenants for free.",
   "filters": {
     "types": {
       "all": "All types",
@@ -37,7 +38,8 @@
     "title": "Filters"
   },
   "view": {
-    "map": "Map"
+    "map": "Map",
+     "list": "List"
   },
   "alert": {
   "create": "Create alert"

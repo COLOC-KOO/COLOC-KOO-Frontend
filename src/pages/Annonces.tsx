@@ -767,7 +767,7 @@ export default function Annonces() {
 
         <div className="px-4 py-5 border-b border-sc-bd bg-white">
           <h1 className="font-bebas text-2xl text-sc-dark tracking-wide">
-            Annonces récentes — {(city || query || "Madagascar").toUpperCase()}
+            {t("annonces:recentTitle")} — {(city || query || "Madagascar").toUpperCase()}
           </h1>
           <p className="text-xs text-sc-gr2">
             {loading
@@ -884,7 +884,7 @@ export default function Annonces() {
           <div className="w-px h-4 bg-sc-bd" />
 
           <button onClick={resetFilters} className="text-xs font-bold text-sc-cy px-2 py-1 hover:bg-sc-cy-lt rounded-lg transition-colors">
-            Réinitialiser
+             {t("annonces:filters.reset")}
           </button>
 
           <div className="flex items-center rounded-xl border border-sc-bd bg-white p-0.5">
@@ -895,7 +895,7 @@ export default function Annonces() {
                 viewMode === "map" ? "bg-sc-cy text-white" : "text-sc-dark hover:bg-sc-cy-lt"
               }`}
             >
-              <Map className="h-3.5 w-3.5" /> Carte
+               <Map className="h-3.5 w-3.5" /> {t("annonces:view.map")}
             </button>
             <button
               type="button"
@@ -904,7 +904,7 @@ export default function Annonces() {
                 viewMode === "list" ? "bg-white text-sc-dark shadow-sm" : "text-sc-dark hover:bg-sc-cy-lt"
               }`}
             >
-              <List className="h-3.5 w-3.5" /> Liste
+              <List className="h-3.5 w-3.5" /> {t("annonces:view.list")}
             </button>
           </div>
 
@@ -1048,7 +1048,7 @@ export default function Annonces() {
             className="mx-auto flex min-h-[68px] w-full max-w-[520px] items-center justify-center gap-8 rounded border border-sc-bd bg-white px-8 py-3 text-center text-sm leading-5 text-sc-gr2 shadow-sm transition-colors hover:border-sc-cy hover:text-sc-dark"
           >
             <Pencil className="h-6 w-6 shrink-0 text-emerald-500" />
-            <span>Cliquer ici pour déposer une annonce et trouver gratuitement vos prochains locataires.</span>
+            <span>{t("annonces:postCta")}</span>
           </Link>
         </div>
 

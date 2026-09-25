@@ -1,0 +1,288 @@
+{
+  "step": "Step",
+  "progress": "Progress",
+  "introH": "Post your",
+  "introH2": "listing",
+  "introP": "Free and in under 5 minutes · Stop whenever you like, your draft will be saved",
+  "draftSave": "Save draft",
+  "draftSaved": "Draft saved",
+  "back": "Back",
+  "next": "Continue",
+  "publish": "Publish my listing",
+  "renew": "Renew my listing",
+  "loadingAnnonce": "Loading your listing...",
+  "steps": {
+    "statut": "Your status",
+    "esprit": "The Flatshare Spirit",
+    "logement": "The home",
+    "services": "Services",
+    "chambre": "The room",
+    "regles": "House rules",
+    "photos": "Photos",
+    "publier": "Publish"
+  },
+  "status": {
+    "part": "Part 1",
+    "title": "Your status",
+    "subtitle": "Who are you in relation to this home? This tailors the rest of the form.",
+    "whoLabel": "You are...",
+    "member": {
+      "title": "Flatshare member",
+      "desc": "You live in the home and are looking for housemate(s)."
+    },
+    "owner": {
+      "title": "Property owner",
+      "desc": "You don't live there, but you own the property and are offering it as a flatshare."
+    },
+    "pro": {
+      "title": "Real estate professional",
+      "desc": "Agent or independent manager posting on behalf of an owner."
+    },
+    "checking": "Checking your listings...",
+    "blockedListing": "You already have an active listing as a housemate. Only one listing is allowed per account for this profile — remove it or wait for it to expire before posting a new one.",
+    "partnerCallout": {
+      "title": "You become a solidarity partner of the project",
+      "textPro": "As a real estate professional, you are considered a solidarity partner of Sarintany'COLOC. Your participation helps keep the service sustainable and gives the flatshare community access to better housing.",
+      "textOwner": "As an owner, you are considered a solidarity partner of Sarintany'COLOC. Your participation helps keep the service sustainable and gives the flatshare community access to better housing."
+    },
+    "errors": {
+      "required": "Please select your status.",
+      "blocked": "You already have an active listing: only one submission is allowed per housemate account."
+    }
+  },
+  "esprit": {
+    "part": "Part 2",
+    "title": "The Flatshare Spirit",
+    "subtitleMember": "You live in this house with other housemates. What vibe are you looking for?",
+    "subtitleOther": "You know your property's features, its neighbourhood and neighbours. What vibe seems most suitable?",
+    "modeLabel": "Formation mode",
+    "flux": {
+      "title": "Rolling basis",
+      "desc": "Individual approval: you approve housemates one by one. You can chat with each candidate before accepting them.",
+      "hint": "You stay in control of every approval and can chat with candidates from your inbox before accepting them."
+    },
+    "complete": {
+      "title": "Complete flatshare",
+      "desc": "The home starts once the group is complete: candidates form teams based on the criteria you set below. The first complete team wins. You only approve or decline complete teams.",
+      "hintPro": "As a real estate professional, you are considered a solidarity partner of Sarintany'COLOC.",
+      "hintOwner": "As an owner, you are considered a solidarity partner of Sarintany'COLOC."
+    },
+    "totalColocLabel": "Total number of housemates",
+    "wantedColocLabel": "Number of housemates wanted",
+    "typeAnnonceLabel": "Listing type",
+    "existingColoc": "Existing flatshare",
+    "createColoc": "New flatshare",
+    "ambianceLabel": "Desired flatshare vibe",
+    "recommended": "(recommended)",
+    "ageGroup": "Age range",
+    "ambianceMulti": "Vibe",
+    "multiChoice": "(multiple choices possible)",
+    "ageOptions": ["18–25 years", "25–35 years", "35+ years", "All ages"],
+    "ambianceOptions": [
+      "Calm / studious", "Friendly", "Lively", "Family-oriented",
+      "Professional / working", "Student", "Eco / nature-minded", "Inclusive", "Caring"
+    ],
+    "presentationLabel": "Presentation box",
+    "presentationSub": "— for future housemates",
+    "presentationPlaceholder": "Describe the flatshare vibe, the neighbourhood, the profile you're looking for...",
+    "charLimit": "/ 1000 characters",
+    "errors": {
+      "required": "Please indicate the number of housemates."
+    }
+  },
+  "logement": {
+    "part": "Part 3",
+    "title": "The home",
+    "subtitle": "Describe the property hosting the flatshare.",
+    "typeLabel": "Property type",
+    "typeOptions": ["Apartment", "House", "Other"],
+    "totalColocLabel": "Total number of housemates",
+    "totalColocHint": "A flatshare has at least 2 housemates.",
+    "piecesLabel": "Total number of rooms",
+    "piecesSub": "(excluding kitchen and bathroom)",
+    "piecesPlaceholder": "e.g. 4",
+    "piecesSuffix": "room(s)",
+    "locationLabel": "Property location",
+    "refineLabel": "Fine-tune the location",
+    "refineHint": "Depending on its location, your property can become more appealing. So be precise.",
+    "addressPlaceholder": "Address or neighbourhood — e.g. Ankadifotsy, Antananarivo",
+    "privacyNote": "For privacy reasons, if you enter your exact address, it will never appear on your listing — only the neighbourhood will be visible.",
+    "mapRequiredHint": "Placing a pin on the map is required, even if you entered an address.",
+    "mapDragHint": "Drag to move around · scroll to zoom · click to place your property",
+    "errors": {
+      "locationRequired": "Please place your property on the map (required).",
+      "fieldsRequired": "Please fill in all required fields (*) before continuing."
+    }
+  },
+  "services": {
+    "part": "Part 4",
+    "title": "Services & amenities",
+    "subtitle": "Check everything available in the home.",
+    "equipmentsTitle": "Amenities",
+    "equipmentsOptions": [
+      "Running water", "Water pressure booster", "Balcony", "Garden", "Pool", "BBQ",
+      "Stove / Electric hob", "Oven", "Washing machine", "Bike / motorbike shelter"
+    ],
+    "internetTitle": "Internet connection",
+    "internetOptions": ["ADSL", "Fibre", "Box", "None"],
+    "parkingTitle": "Parking",
+    "parkingCarsLabel": "Capacity — number of cars",
+    "parkingCarsPlaceholder": "e.g. 2",
+    "coveredLabel": "Covered?",
+    "selectPlaceholder": "- Select -",
+    "covered": "Covered",
+    "notCovered": "Not covered",
+    "parkingMotoLabel": "Capacity — number of two-wheelers",
+    "parkingMotoPlaceholder": "e.g. 3",
+    "offeredTitle": "Services offered",
+    "ckooHeadMember": "Want more simplicity day to day?",
+    "ckooHeadOther": "Simplify managing your flatshare?",
+    "ckooText": "With Coloc'KOO, enjoy shared services based on your needs (currently available in Antananarivo).",
+    "ckooModify": "Services included — edit",
+    "ckooSimulate": "Run a simulation",
+    "ckooConfirm": "Thanks for your trust! The selected services will be included in your listing.",
+    "existingServicesTitle": "Services already in place:",
+    "servicesOptions": ["Guard", "Housekeeper", "Gardener", "Water carriers", "Maintenance and small repairs"],
+    "otherService": "Other (specify – 3 max)",
+    "otherServicePlaceholder": "Specify the service...",
+    "addOther": "Add another item",
+    "errors": {
+      "internetRequired": "Please indicate the available internet connection."
+    }
+  },
+  "chambre": {
+    "part": "Part 5",
+    "title": "The room offered",
+    "subtitle": "The conditions of the available room.",
+    "dispoLabel": "Available from",
+    "loyerLabel": "Rent",
+    "loyerSub": "(excluding charges)",
+    "loyerPlaceholder": "350,000",
+    "chargesLabel": "Charges",
+    "chargesSub": "(average / month)",
+    "chargesPlaceholder": "40,000",
+    "ckooExtra": "+ Coloc'KOO services {{amount}} Ar",
+    "advice": "Tip: separate rent from charges (internet, services, etc.) — your listing will be more attractive.",
+    "cautionLabel": "Deposit",
+    "caution1Month": "1 month's rent",
+    "cautionOther": "Other",
+    "cautionOtherPlaceholder": "Deposit amount",
+    "furnishedLabel": "The room is furnished",
+    "furnishedSub": "(only one answer possible)",
+    "furnishedOptions": ["Yes", "Partially", "No", "Buy furniture from tenant"],
+    "resalePriceLabel": "Furniture buyout price",
+    "resalePricePlaceholder": "e.g. 50,000",
+    "resaleDescLabel": "Description of furniture to buy",
+    "resaleDescPlaceholder": "Briefly describe the furniture concerned (bed, wardrobe, appliances...).",
+    "errors": {
+      "required": "Please fill in the availability date, rent, and whether the room is furnished.",
+      "pastDate": "The availability date cannot be earlier than today."
+    }
+  },
+  "regles": {
+    "part": "Part 6",
+    "title": "Flatshare house rules",
+    "subtitle": "Specify the conditions of shared living.",
+    "options": ["Girls only", "Boys only", "Pets allowed", "Family / Children welcome"]
+  },
+  "photos": {
+    "part": "Part 7",
+    "title": "Photos",
+    "subtitle": "Add photos: listings with photos are viewed far more often.",
+    "label": "Property photos",
+    "info": "Listings with photos are viewed on average 7× more often.",
+    "cover": "Cover",
+    "photoN": "Photo {{n}}",
+    "recommendation": "Recommended size: 1200 × 900 px. Up to 3 photos in the free version (max 3 MB / photo)."
+  },
+  "publish": {
+    "title": "Final step — Publish your listing",
+    "renewalNote": "This listing has expired. Renew it to make it visible again for {{duration}} more, without re-entering your information.",
+    "engagement": {
+      "title": "Professional commitment",
+      "text": "By publishing this listing, you confirm that the owner you represent agrees to host a flatshare. This is your responsibility.",
+      "checkbox": "I confirm that the owner represented agrees to a flatshare, and I take responsibility for it."
+    },
+    "recapTitle": "Publication conditions",
+    "recapVisible": "Your listing will be visible for {{duration}}.",
+    "recapReminder": "You'll receive a reminder 7 days before it expires to renew or remove your listing.",
+    "recapModeration": "Each listing is reviewed (moderation) before going live.",
+    "recapFree": "100% free publication — no commission.",
+    "recapOffer": "Partner offer: {{amount}} — your contribution helps keep it free for housemates.",
+    "offered": "Free",
+    "ckooRecapTitle": "Requested Coloc'KOO services",
+    "ckooEstimate": "Estimate: {{amount}} Ar / month (to be confirmed)",
+    "paymentTitle": "Your payment — {{amount}}",
+    "chooseOffer": "Choose your offer",
+    "offerAnnonce": {
+      "name": "Single offer — per listing",
+      "desc": "1 commercial listing · valid for 4 months."
+    },
+    "offerImmo": {
+      "name": "Independent IMMO",
+      "desc": "Same offer, up to 4 commercial listings · valid for 4 months."
+    },
+    "freeLaunch": "Free publication — launch offer. No payment is required for now; the offer's value is shown for reference only.",
+    "connectedNote": "You're logged in as {{account}}. Publishing will use this account.",
+    "notConnectedNote": "To publish your listing, you'll need to log in from your account.",
+    "defaultAccount": "user",
+    "errors": {
+      "engagementRequired": "You must confirm this commitment to continue."
+    }
+  },
+  "simulation": {
+    "title": "Simulate your shared services",
+    "disclaimer": "Amounts are indicative. Our team will contact you to confirm your request.",
+    "perMonthFrom": "from {{amount}} Ar / month",
+    "perMonth": "{{amount}} Ar / month",
+    "weekendOption": "Weekend option (+{{amount}} Ar)",
+    "totalLabel": "Total monthly cost",
+    "legal": "Automatic enrolment with CNAPS and OSTIE, paid leave included.",
+    "integrate": "Add to housemates' charges",
+    "delete": "Delete",
+    "services": {
+      "menage": {
+        "name": "House cleaning (housework, laundry, etc.)",
+        "hint": "from 6,200 Ar / h",
+        "options": {
+          "1": "1 day / week",
+          "2": "2 days / week",
+          "3": "3 days / week",
+          "4": "4 days / week (-10%)",
+          "5": "5 days / week (-15%)"
+        }
+      },
+      "jardin": {
+        "name": "Gardening",
+        "options": {
+          "1": "1 day / week",
+          "2": "2 days / week",
+          "3": "3 days / week",
+          "4": "4 days / week (-10%)",
+          "5": "5 days / week (-15%)"
+        }
+      },
+      "gardien": {
+        "name": "Guarding",
+        "hint": "from 2,900 Ar / h",
+        "options": {
+          "jours": "5 days / week",
+          "nuits": "5 nights / week",
+          "24h": "24/7 — 5 days / week"
+        }
+      },
+      "travaux": {
+        "name": "Maintenance and small repairs",
+        "hint": "flat rate, 3 days / month",
+        "note": "Purchases and materials remain the housemates' responsibility."
+      },
+      "jirama": {
+        "name": "Jirama meter reading and tracking",
+        "hint": "flat rate, once / month"
+      }
+    }
+  },
+  "map": {
+    "precisionAttribution": "neighbourhood accuracy"
+  }
+}

@@ -1,0 +1,288 @@
+{
+  "step": "Dingana",
+  "progress": "Fandrosoana",
+  "introH": "Apetraho ny",
+  "introH2": "fampilazanao ",
+  "introP": "Maimaim-poana ary latsaky ny 5 minitra · Afaka mijanona amin'ny fotoana rehetra ianao ; voatahiry ny volavolanao ",
+  "draftSave": "Tehirizo ny brouillon",
+  "draftSaved": "Voatahiry ny brouillon",
+  "back": "Hiverina",
+  "next": "Hanohy",
+  "publish": "Avoaka ny tatitro",
+  "renew": "Havaozina ny tatitro",
+  "loadingAnnonce": "Fakàna ny tatitrao...",
+  "steps": {
+    "statut": "Ianao ",
+    "esprit": "Ny Fanahin'ilay fiaraha-mipetraka ",
+    "logement": "Ny trano",
+    "services": "Ireo fotodrafitrasa ",
+    "chambre": "Ilay efitrano ",
+    "regles": "Ilay efitrano ",
+    "photos": "Ireo sary ",
+    "publier": "Hizara "
+  },
+  "status": {
+    "part": "Ampahany 1",
+    "title": "Ny satan'ao",
+    "subtitle": "Iza ianao raha oharina amin'io trano io? Io no mamolavola ny sisa amin'ny endri-panontaniana.",
+    "whoLabel": "Ianao dia...",
+    "member": {
+      "title": "Mpikambana ao amin'ny fiarahamonina",
+      "desc": "Mipetraka ao amin'ny trano ianao ary mitady mpiara-monina."
+    },
+    "owner": {
+      "title": "Tompon'ny trano",
+      "desc": "Tsy mipetraka ao ianao fa manana ny fananana ary manolotra izany ho fiarahamonina."
+    },
+    "pro": {
+      "title": "Matihanina amin'ny fananan-tany",
+      "desc": "Mpisolovava na mpandrindra tsy miankina izay mamoaka ho an'ny tompon-trano."
+    },
+    "checking": "Fanamarinana ny tatitrao mitohy...",
+    "blockedListing": "Efa manana tatitra mavitrika ianao amin'ny maha-mpiara-monina. Iray ihany no azo apetraka isaky ny kaonty ho an'ity profil ity — esory na miandrasa ny fahataperan'ny tatitrao efa misy vao mamoaka vaovao.",
+    "partnerCallout": {
+      "title": "Lasa mpiara-miombon'antoka amin'ny tetikasa ianao",
+      "textPro": "Amin'ny maha-matihanina amin'ny fananan-tany anao, heverina ho mpiara-miombon'antoka amin'i Sarintany'COLOC ianao. Ny fandraisanao anjara dia manampy amin'ny fampitohizana ny serivisy sy manome fahazoana trano tsara kokoa ho an'ny fiarahamonin'ny mpiara-monina.",
+      "textOwner": "Amin'ny maha-tompon-trano anao, heverina ho mpiara-miombon'antoka amin'i Sarintany'COLOC ianao. Ny fandraisanao anjara dia manampy amin'ny fampitohizana ny serivisy sy manome fahazoana trano tsara kokoa ho an'ny fiarahamonin'ny mpiara-monina."
+    },
+    "errors": {
+      "required": "Misafidiana ny satan'ao azafady.",
+      "blocked": "Efa manana tatitra mavitrika ianao : iray ihany no azo apetraka isaky ny kaonty mpiara-monina."
+    }
+  },
+  "esprit": {
+    "part": "Ampahany 2",
+    "title": "Ny toe-tsain'ny mpiara-monina",
+    "subtitleMember": "Mipetraka ao amin'ity trano ity miaraka amin'ny mpiara-monina hafa ianao. Toe-javatra manao ahoana no tadiavinao?",
+    "subtitleOther": "Fantatrao ny mombamomba ny fanananao, ny distrika sy ny mpiara-monina manodidina azy. Toe-javatra manao ahoana no heverinao ho mety indrindra?",
+    "modeLabel": "Fomba fananganana",
+    "flux": {
+      "title": "Amin'ny fizotry ny rano",
+      "desc": "Fankatoavana tsirairay : ianao no mankatoa ny mpiara-monina tsirairay. Afaka mifampiresaka amin'ny kandidà tsirairay ianao alohan'ny hanaikenao azy.",
+      "hint": "Mitazona ny fanapahan-kevitra amin'ny fankatoavana tsirairay ianao ary afaka mifampiresaka amin'ny kandidà avy amin'ny hafatrao alohan'ny hanaikenao azy."
+    },
+    "complete": {
+      "title": "Fiarahamonina feno",
+      "desc": "Manomboka ny trano rehefa feno ny vondrona : ny kandidà dia mandrafitra ekipa mifanaraka amin'ny fepetra nomenao etsy ambany. Ny ekipa voalohany feno no mahazo. Ianao dia mankatoa na mandà ekipa feno ihany.",
+      "hintPro": "Amin'ny maha-matihanina amin'ny fananan-tany anao, heverina ho mpiara-miombon'antoka amin'i Sarintany'COLOC ianao.",
+      "hintOwner": "Amin'ny maha-tompon-trano anao, heverina ho mpiara-miombon'antoka amin'i Sarintany'COLOC ianao."
+    },
+    "totalColocLabel": "Isan'ny mpiara-monina rehetra",
+    "wantedColocLabel": "Isan'ny mpiara-monina tadiavina",
+    "typeAnnonceLabel": "Karazan'ny tatitra",
+    "existingColoc": "Fiarahamonina efa misy",
+    "createColoc": "Famoronana fiarahamonina",
+    "ambianceLabel": "Toe-javatra tadiavina amin'ny fiarahamonina",
+    "recommended": "(atolotra)",
+    "ageGroup": "Fatran-taona",
+    "ambianceMulti": "Toe-javatra",
+    "multiChoice": "(azo safidiana maro)",
+    "ageOptions": ["18–25 taona", "25–35 taona", "35 taona no ho miakatra", "Taona rehetra"],
+    "ambianceOptions": [
+      "Mangina / mianatra", "Mahafinaritra", "Mifaly", "Ho an'ny fianakaviana",
+      "Matihanina / miasa", "Mianatra", "Eko / natiora", "Mandray ny rehetra", "Be fitiavana"
+    ],
+    "presentationLabel": "Fampahafantarana",
+    "presentationSub": "— ho an'ny mpiara-monina ho avy",
+    "presentationPlaceholder": "Lazao ny toe-javatra ao amin'ny fiarahamonina, ny distrika, ny profil tadiavina...",
+    "charLimit": "/ 1000 tarehin-tsoratra",
+    "errors": {
+      "required": "Lazao ny isan'ny mpiara-monina azafady."
+    }
+  },
+  "logement": {
+    "part": "Ampahany 3",
+    "title": "Ny trano",
+    "subtitle": "Lazao ny fananana mitantana ny fiarahamonina.",
+    "typeLabel": "Karazana trano",
+    "typeOptions": ["Trano fonenana kely", "Trano", "Hafa"],
+    "totalColocLabel": "Isan'ny mpiara-monina rehetra",
+    "totalColocHint": "Ny fiarahamonina iray dia mitantana mpiara-monina 2 farafahakeliny.",
+    "piecesLabel": "Isan'ny efitra rehetra",
+    "piecesSub": "(tsy anisan'izany ny lakozia sy ny efitra fandroana)",
+    "piecesPlaceholder": "ohatra : 4",
+    "piecesSuffix": "efitra",
+    "locationLabel": "Toerana misy ny fananana",
+    "refineLabel": "Manitsy ny toerana",
+    "refineHint": "Arakaraka ny toerana misy azy, ny fananananao dia mety hahazo lanja bebe kokoa. Koa aoka ho marina.",
+    "addressPlaceholder": "Adiresy na distrika — ohatra : Ankadifotsy, Antananarivo",
+    "privacyNote": "Noho ny antony fiarovana, raha manoratra ny adiresinao marina ianao, dia tsy hiseho amin'ny tatitrao izany — ny distrika ihany no ho hita.",
+    "mapRequiredHint": "Tsy maintsy apetraka eo amin'ny sarintany ny toerana, na dia efa nosoratana aza ny adiresy.",
+    "mapDragHint": "Tsindrio sy kisaho hifindra · roleta hanakatra · tsindrio hametraka ny fanananao",
+    "errors": {
+      "locationRequired": "Apetraho eo amin'ny sarintany ny fanananao (tsy maintsy atao).",
+      "fieldsRequired": "Fenoy ny saha rehetra takiana (*) alohan'ny hanohizana."
+    }
+  },
+  "services": {
+    "part": "Ampahany 4",
+    "title": "Ny serivisy sy kojakoja",
+    "subtitle": "Marika izay rehetra misy ao amin'ny trano.",
+    "equipmentsTitle": "Kojakoja",
+    "equipmentsOptions": [
+      "Rano milalao", "Fitaovana fandrosoan-drano", "Balkonina", "Zaridaina", "Fitobiam-piloman-drano", "Fatana masiaka",
+      "Fatana / Fanaovana gazy", "Lafaoro", "Milina fanasana", "Toby fitehirizana bisikileta / môtô"
+    ],
+    "internetTitle": "Fifandraisana internet",
+    "internetOptions": ["ADSL", "Fibre", "Box", "Tsy misy"],
+    "parkingTitle": "Toby fiparkinga",
+    "parkingCarsLabel": "Habetsahana — isan'ny fiara",
+    "parkingCarsPlaceholder": "ohatra : 2",
+    "coveredLabel": "Voarakotra ve?",
+    "selectPlaceholder": "- Misafidiana -",
+    "covered": "Voarakotra",
+    "notCovered": "Tsy voarakotra",
+    "parkingMotoLabel": "Habetsahana — isan'ny kodiaranina 2",
+    "parkingMotoPlaceholder": "ohatra : 3",
+    "offeredTitle": "Serivisy atolotra",
+    "ckooHeadMember": "Mila fanatsarana bebe kokoa isan'andro?",
+    "ckooHeadOther": "Hanamora ny fitantanana ny fiarahamoninao?",
+    "ckooText": "Miaraka amin'i Coloc'KOO, mahazo serivisy iombonana araka ny filanao (misy any Antananarivo amin'izao fotoana izao).",
+    "ckooModify": "Serivisy voampiditra — ovay",
+    "ckooSimulate": "Manaova simulation",
+    "ckooConfirm": "Misaotra amin'ny fitokisanao! Ny serivisy voafidy dia hampidirina ao amin'ny tatitrao.",
+    "existingServicesTitle": "Ireo serivisy efa misy:",
+    "servicesOptions": ["Mpiambina", "Mpanadio trano", "Mpikarakara zaridaina", "Mpitondra rano", "Fikojakojana sy fanamboarana kely"],
+    "otherService": "Hafa (hazavao – 3 farafahabetsany)",
+    "otherServicePlaceholder": "Hazavao ny serivisy...",
+    "addOther": "Ampidiro singa hafa",
+    "errors": {
+      "internetRequired": "Lazao ny fifandraisana internet misy azafady."
+    }
+  },
+  "chambre": {
+    "part": "Ampahany 5",
+    "title": "Ny efitra atolotra",
+    "subtitle": "Ny fepetra momba ny efitra misy.",
+    "dispoLabel": "Azo alaina manomboka amin'ny",
+    "loyerLabel": "Hofa",
+    "loyerSub": "(tsy anisan'izany ny fandoavana)",
+    "loyerPlaceholder": "350 000",
+    "chargesLabel": "Fandoavana",
+    "chargesSub": "(salaharatra isam-bolana)",
+    "chargesPlaceholder": "40 000",
+    "ckooExtra": "+ serivisy Coloc'KOO {{amount}} Ar",
+    "advice": "Torohevitra : sarahin'ny hofa ny fandoavana (internet, serivisy, sns) — ho mahasarika kokoa ny tatitrao.",
+    "cautionLabel": "Antoka",
+    "caution1Month": "hofa iray volana",
+    "cautionOther": "Hafa",
+    "cautionOtherPlaceholder": "Vola an'ny antoka",
+    "furnishedLabel": "Feno fanaka ny efitra",
+    "furnishedSub": "(valiny iray ihany no azo omena)",
+    "furnishedOptions": ["Eny", "Ampahany", "Tsia", "Fividianana ny fanaka"],
+    "resalePriceLabel": "Vidin'ny fividianana ny fanaka",
+    "resalePricePlaceholder": "ohatra : 50 000",
+    "resaleDescLabel": "Famaritana ny fanaka hovidiana",
+    "resaleDescPlaceholder": "Lazao am-pohifohy ny fanaka voakasik'izany (fandriana, armoara, fitaovana...).",
+    "errors": {
+      "required": "Ampidiro ny daty fahazoana azy, ny hofa ary raha feno fanaka ny efitra.",
+      "pastDate": "Ny daty fahazoana dia tsy azo alohan'ny androany."
+    }
+  },
+  "regles": {
+    "part": "Ampahany 6",
+    "title": "Ny fitsipiky ny fiarahamonina",
+    "subtitle": "Lazao ny fepetra amin'ny fiaraha-monina.",
+    "options": ["Vehivavy ihany", "Lehilahy ihany", "Azo entina ny biby fiompy", "Azo entina ny fianakaviana / zaza"]
+  },
+  "photos": {
+    "part": "Ampahany 7",
+    "title": "Ny sary",
+    "subtitle": "Ampidiro sary : ny tatitra misy sary dia jerena bebe kokoa.",
+    "label": "Sarin'ny trano",
+    "info": "Ny tatitra misy sary dia jerena 7 heny bebe kokoa amin'ny salaharatra.",
+    "cover": "Fonony",
+    "photoN": "Sary {{n}}",
+    "recommendation": "Habe atolotra : 1200 × 900 px. Sary 3 farafahabetsany amin'ny dikany maimaim-poana (3 Mo isaky ny sary farafahabetsany)."
+  },
+  "publish": {
+    "title": "Dingana farany — Avoahy ny tatitrao",
+    "renewalNote": "Efa tapitra ity tatitra ity. Havaozy izy mba hiseho indray mandritra ny {{duration}} fanampiny, tsy voatery hamerina ny fampahalalanao.",
+    "engagement": {
+      "title": "Fanekena ny matihanina",
+      "text": "Amin'ny famoahana an'ity tatitra ity, dia manamafy ianao fa eken'ilay tompon-trano solontenanao ny fiarahamonina. Ianao no mitondra andraikitra amin'izany.",
+      "checkbox": "Manamafy aho fa eken'ny tompon-trano solontenako ny fiarahamonina ary raisiko ny andraikitra amin'izany."
+    },
+    "recapTitle": "Fepetra amin'ny famoahana",
+    "recapVisible": "Ho hita ny tatitrao mandritra ny {{duration}}.",
+    "recapReminder": "Handray fampahatsiahivana 7 andro alohan'ny fahataperana ianao mba hanavao na hanaisotra ny tatitrao.",
+    "recapModeration": "Voamarina (fanaraha-maso) ny tatitra tsirairay alohan'ny hamoahana azy.",
+    "recapFree": "Famoahana 100% maimaim-poana — tsy misy karama.",
+    "recapOffer": "Tolotra mpiara-miombon'antoka : {{amount}} — ny fandraisanao anjara dia manohana ny maimaim-poana amin'ny mpiara-monina.",
+    "offered": "Omena",
+    "ckooRecapTitle": "Serivisy Coloc'KOO angatahina",
+    "ckooEstimate": "Tombana : {{amount}} Ar isam-bolana (hamafisina)",
+    "paymentTitle": "Ny fandoavanao — {{amount}}",
+    "chooseOffer": "Misafidiana ny tolotrao",
+    "offerAnnonce": {
+      "name": "Tolotra tokana — isaky ny tatitra",
+      "desc": "Tatitra ara-barotra 1 · mihatra 4 volana."
+    },
+    "offerImmo": {
+      "name": "Tsy miankina IMMO",
+      "desc": "Tolotra mitovy, hatramin'ny tatitra ara-barotra 4 · mihatra 4 volana."
+    },
+    "freeLaunch": "Famoahana omena — tolotra fanombohana. Tsy misy fandoavam-bola takiana amin'izao fotoana izao ; ny sandan'ny tolotra dia mbola aseho ho fahalalana ihany.",
+    "connectedNote": "Efa miditra ianao amin'ny maha-{{account}}. Io kaonty io no ampiasaina amin'ny famoahana.",
+    "notConnectedNote": "Mba hamoahanao ny tatitrao, tsy maintsy hiditra amin'ny kaontinao ianao.",
+    "defaultAccount": "mpampiasa",
+    "errors": {
+      "engagementRequired": "Tsy maintsy manamafy ity fanekena ity ianao mba hanohizana."
+    }
+  },
+  "simulation": {
+    "title": "Manaova simulation ny serivisy iombonanao",
+    "disclaimer": "Tombana ihany ny vola voalaza. Hifandray aminao ny ekipanay hanamafisana ny fangatahanao.",
+    "perMonthFrom": "manomboka {{amount}} Ar isam-bolana",
+    "perMonth": "{{amount}} Ar isam-bolana",
+    "weekendOption": "Safidy week-end (+{{amount}} Ar)",
+    "totalLabel": "Fitambaran'ny isam-bolana",
+    "legal": "Fisoratana anarana ho isan'ny CNAPS sy OSTIE, misy ny fialan-tsasatra karamaina.",
+    "integrate": "Ampidiro ao amin'ny fandoavan'ny mpiara-monina",
+    "delete": "Fafao",
+    "services": {
+      "menage": {
+        "name": "Fahadiovan'ny trano (fanadiovana, lamba, sns)",
+        "hint": "manomboka 6 200 Ar / ora",
+        "options": {
+          "1": "1 andro / herinandro",
+          "2": "2 andro / herinandro",
+          "3": "3 andro / herinandro",
+          "4": "4 andro / herinandro (-10 %)",
+          "5": "5 andro / herinandro (-15 %)"
+        }
+      },
+      "jardin": {
+        "name": "Fikarakarana zaridaina",
+        "options": {
+          "1": "1 andro / herinandro",
+          "2": "2 andro / herinandro",
+          "3": "3 andro / herinandro",
+          "4": "4 andro / herinandro (-10 %)",
+          "5": "5 andro / herinandro (-15 %)"
+        }
+      },
+      "gardien": {
+        "name": "Fiambenana",
+        "hint": "manomboka 2 900 Ar / ora",
+        "options": {
+          "jours": "5 andro / herinandro",
+          "nuits": "5 alina / herinandro",
+          "24h": "24 ora/24 — 5 andro / herinandro"
+        }
+      },
+      "travaux": {
+        "name": "Fikojakojana sy fanamboarana kely",
+        "hint": "vidiny voafaritra 3 andro / volana",
+        "note": "Ny fividianana sy ny fitaovana dia mbola andraikitry ny mpiara-monina."
+      },
+      "jirama": {
+        "name": "Fitrandrahana Jirama sy fanaraha-maso",
+        "hint": "vidiny voafaritra indray mandeha / volana"
+      }
+    }
+  },
+  "map": {
+    "precisionAttribution": "fahamarinana distrika"
+  }
+}
