@@ -799,8 +799,8 @@ const steps = stepsForRole(role)
       restoreDraft(draft)
       setToastMessage(
         user
-          ? 'Bon retour ! On finalise la publication de ton annonce…'
-          : 'Bon retour ! Ton brouillon a été restauré — connecte-toi pour publier.',
+          ? t('depot:publish.welcomeBackConnected')
+          : t('depot:publish.welcomeBackDraft'),
       )
       setPendingAutoPublish(true)
 
@@ -1060,14 +1060,14 @@ const steps = stepsForRole(role)
         },
       } as any)
 
-      const successMessage = "Annonce ajoutée avec succès, en attente de validation par l'admin"
-      setSuccess(`${successMessage}. Référence : ${response.reference}`)
+      const successMessage = t('depot:publish.success')
+      setSuccess(t('depot:publish.successWithReference', { message: successMessage, reference: response.reference }))
       setToastMessage(successMessage)
       window.setTimeout(() => {
         navigate('/compte?tab=dossier')
       }, 1500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible de publier l'annonce.")
+      setError(err instanceof Error ? err.message : t('depot:publish.error'))
     } finally {
       setSubmitting(false)
     }
@@ -1084,11 +1084,13 @@ const steps = stepsForRole(role)
     try {
       const res = await api.renouvelerAnnonce(annonceId)
       setRenewSuccess(
-        `Ton annonce a été renouvelée. Nouvelle échéance : ${new Date(res.date_expiration).toLocaleDateString('fr-FR')}.`,
+        t('depot:publish.renewedSuccess', {
+          date: new Date(res.date_expiration).toLocaleDateString(),
+        }),
       )
-      setToastMessage('Annonce renouvelée avec succès')
+      setToastMessage(t('depot:publish.renewedToast'))
     } catch (err) {
-      setRenewError(err instanceof Error ? err.message : 'Impossible de renouveler cette annonce.')
+      setRenewError(err instanceof Error ? err.message : t('depot:publish.renewError'))
     } finally {
       setRenewing(false)
     }
@@ -1852,7 +1854,7 @@ const steps = stepsForRole(role)
             )}
             {isLast && !isRenewal && (
               <button className="btn-publish" onClick={handlePublish} disabled={submitting}>
-                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t('depot:publish')}
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t('depot:publishButton')}
               </button>
             )}
             {isRenewal && !renewSuccess && (

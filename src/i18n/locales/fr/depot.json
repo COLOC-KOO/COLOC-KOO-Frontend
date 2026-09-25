@@ -8,7 +8,7 @@
   "draftSaved": "Brouillon enregistré",
   "back": "Retour",
   "next": "Continuer",
-  "publish": "Publier mon annonce",
+  "publishButton": "Publier mon annonce",
   "renew": "Renouveler mon annonce",
   "loadingAnnonce": "Chargement de ton annonce...",
   "steps": {
@@ -226,6 +226,14 @@
     "connectedNote": "Tu es connecté·e en tant que {{account}}. La publication utilise ce compte.",
     "notConnectedNote": "Pour publier ton annonce, tu devras te connecter depuis ton compte.",
     "defaultAccount": "utilisateur",
+    "success": "Annonce ajoutée avec succès, en attente de validation par l'admin",
+    "successWithReference": "{{message}}. Référence : {{reference}}",
+    "error": "Impossible de publier l'annonce.",
+    "renewedSuccess": "Ton annonce a été renouvelée. Nouvelle échéance : {{date}}.",
+    "renewedToast": "Annonce renouvelée avec succès",
+    "renewError": "Impossible de renouveler cette annonce.",
+    "welcomeBackConnected": "Bon retour ! On finalise la publication de ton annonce…",
+    "welcomeBackDraft": "Bon retour ! Ton brouillon a été restauré — connecte-toi pour publier.",
     "errors": {
       "engagementRequired": "Tu dois confirmer cet engagement pour continuer."
     }

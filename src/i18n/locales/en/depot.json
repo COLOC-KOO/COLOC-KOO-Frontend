@@ -8,7 +8,7 @@
   "draftSaved": "Draft saved",
   "back": "Back",
   "next": "Continue",
-  "publish": "Publish my listing",
+  "publishButton": "Publish my listing",
   "renew": "Renew my listing",
   "loadingAnnonce": "Loading your listing...",
   "steps": {
@@ -226,6 +226,14 @@
     "connectedNote": "You're logged in as {{account}}. Publishing will use this account.",
     "notConnectedNote": "To publish your listing, you'll need to log in from your account.",
     "defaultAccount": "user",
+    "success": "Listing added successfully and is awaiting admin approval",
+    "successWithReference": "{{message}}. Reference: {{reference}}",
+    "error": "Unable to publish the listing.",
+    "renewedSuccess": "Your listing has been renewed. New expiry date: {{date}}.",
+    "renewedToast": "Listing renewed successfully",
+    "renewError": "Unable to renew this listing.",
+    "welcomeBackConnected": "Welcome back! We are finalizing your listing publication…",
+    "welcomeBackDraft": "Welcome back! Your draft has been restored — log in to publish it.",
     "errors": {
       "engagementRequired": "You must confirm this commitment to continue."
     }
