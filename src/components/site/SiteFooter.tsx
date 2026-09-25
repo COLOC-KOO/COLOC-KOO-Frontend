@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { LogoSVG, LogoName } from '../Logo'
 
 export default function Footer() {
-  const { t } = useTranslation(['common'])
+  const { t } = useTranslation(['footer'])
 
   return (
     <footer className="bg-[#2c2c2c] py-6 px-6 text-center mt-9">
@@ -12,7 +12,7 @@ export default function Footer() {
         <LogoName subtitleClassName="text-[10px] text-white/40" />
       </div>
       <p className="text-[10px] text-white/35 mb-3 leading-7">
-        Un service gratuit proposé par{' '}
+          {t('footer:freeServiceBy')}{' '}
         <a
           href="https://excellent-consonant-8e8.notion.site/Bienvenue-dans-Coloc-KOO-Services-page-publique-b75006b17258823eaa630105a47d1ffc"
           target="_blank"
@@ -29,19 +29,19 @@ export default function Footer() {
           to="/cgu"
           className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
         >
-          {t('common:cgu')}
+          {t('footer:cgu')}
         </Link>
         <Link
           to="/contact"
           className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
         >
-          {t('common:contact')}
+          {t('footer:contact')}
         </Link>
         <Link
           to="/partenaires"
           className="text-[11px] text-white/45 no-underline hover:text-white/75 transition-colors"
         >
-          {t('common:partenaires')}
+          {t('footer:partenaires')}
         </Link>
       </div>
       <p className="text-[10px] text-white/20 mt-4">

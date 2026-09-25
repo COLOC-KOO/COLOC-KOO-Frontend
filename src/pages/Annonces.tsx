@@ -767,7 +767,7 @@ export default function Annonces() {
 
         <div className="px-4 py-5 border-b border-sc-bd bg-white">
           <h1 className="font-bebas text-2xl text-sc-dark tracking-wide">
-            Annonces récentes — {(city || query || "Madagascar").toUpperCase()}
+            {t("annonces:recentTitle")} — {(city || query || "Madagascar").toUpperCase()}
           </h1>
           <p className="text-xs text-sc-gr2">
             {loading
@@ -777,12 +777,12 @@ export default function Annonces() {
         </div>
 
         <div className="bg-white border-b border-sc-bd px-4 py-2 flex items-center gap-2 flex-wrap sticky top-14 z-30">
-          <span className="text-xs font-bold text-sc-dark flex items-center gap-1">
-            <i className="ti ti-adjustments-horizontal text-sm" /> Filtres
-            {activeFiltersCount > 0 && (
-              <span className="ml-1 bg-sc-cy text-white text-[10px] font-bold px-1.5 rounded-full">{activeFiltersCount}</span>
-            )}
-          </span>
+<span className="text-xs font-bold text-sc-dark flex items-center gap-1">
+  <i className="ti ti-adjustments-horizontal text-sm" /> {t("annonces:filters.title")}
+  {activeFiltersCount > 0 && (
+    <span className="ml-1 bg-sc-cy text-white text-[10px] font-bold px-1.5 rounded-full">{activeFiltersCount}</span>
+  )}
+</span>
           <div className="w-px h-4 bg-sc-bd" />
 
           <div ref={typeRef} className="relative">
@@ -809,7 +809,7 @@ export default function Annonces() {
             </DropdownPill>
           </div>
 
-          <DropdownPill label="Budget" icon="ti-coin" isOpen={openDrop === "budget"} onToggle={() => setOpenDrop((v) => (v === "budget" ? null : "budget"))} active={!!(minPrice || maxPrice)}>
+          <DropdownPill   label={t("annonces:filters.budget")} icon="ti-coin" isOpen={openDrop === "budget"} onToggle={() => setOpenDrop((v) => (v === "budget" ? null : "budget"))} active={!!(minPrice || maxPrice)}>
             <p className="text-[11px] font-bold text-sc-gr2 mb-2">Loyer mensuel (Ar)</p>
             <div className="flex items-center gap-2">
               <input type="number" placeholder="Min" value={minPrice || ""} onChange={(e) => setMinPrice(Number(e.target.value) || 0)} className="w-24 border border-sc-bd rounded-lg px-2 py-1.5 text-xs text-sc-dark outline-none focus:border-sc-cy" step={10000} />
@@ -819,7 +819,7 @@ export default function Annonces() {
           </DropdownPill>
 
           <div ref={servicesRef} className="relative">
-            <DropdownPill label="Services" icon="ti-sparkles" isOpen={openDrop === "services"} onToggle={() => setOpenDrop((v) => (v === "services" ? null : "services"))} active={selectedServices.length > 0} minWidth={220}>
+            <DropdownPill label={t("annonces:filters.services")} icon="ti-sparkles" isOpen={openDrop === "services"} onToggle={() => setOpenDrop((v) => (v === "services" ? null : "services"))} active={selectedServices.length > 0} minWidth={220}>
               <p className="text-[11px] font-bold text-sc-gr2 mb-2">Services déjà en place</p>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {SERVICE_OPTIONS.map((service) => (
@@ -833,7 +833,7 @@ export default function Annonces() {
           </div>
 
           <div ref={equipmentsRef} className="relative">
-            <DropdownPill label="Équipements" icon="ti-building" isOpen={openDrop === "equipments"} onToggle={() => setOpenDrop((v) => (v === "equipments" ? null : "equipments"))} active={selectedEquipments.length > 0} minWidth={240}>
+            <DropdownPill label={t("annonces:filters.equipments")} icon="ti-building" isOpen={openDrop === "equipments"} onToggle={() => setOpenDrop((v) => (v === "equipments" ? null : "equipments"))} active={selectedEquipments.length > 0} minWidth={240}>
               <p className="text-[11px] font-bold text-sc-gr2 mb-2">Équipements</p>
               <div className="space-y-1 max-h-60 overflow-y-auto">
                 {EQUIPMENT_OPTIONS.map((eq) => (
@@ -884,7 +884,7 @@ export default function Annonces() {
           <div className="w-px h-4 bg-sc-bd" />
 
           <button onClick={resetFilters} className="text-xs font-bold text-sc-cy px-2 py-1 hover:bg-sc-cy-lt rounded-lg transition-colors">
-            Réinitialiser
+             {t("annonces:filters.reset")}
           </button>
 
           <div className="flex items-center rounded-xl border border-sc-bd bg-white p-0.5">
@@ -895,7 +895,7 @@ export default function Annonces() {
                 viewMode === "map" ? "bg-sc-cy text-white" : "text-sc-dark hover:bg-sc-cy-lt"
               }`}
             >
-              <Map className="h-3.5 w-3.5" /> Carte
+               <Map className="h-3.5 w-3.5" /> {t("annonces:view.map")}
             </button>
             <button
               type="button"
@@ -904,24 +904,24 @@ export default function Annonces() {
                 viewMode === "list" ? "bg-white text-sc-dark shadow-sm" : "text-sc-dark hover:bg-sc-cy-lt"
               }`}
             >
-              <List className="h-3.5 w-3.5" /> Liste
+              <List className="h-3.5 w-3.5" /> {t("annonces:view.list")}
             </button>
           </div>
 
-          <button
-            onClick={() => {
-              if (user) {
-                navigate("/compte?tab=alertes&create=1");
-                return;
-              }
-              navigate(`/auth?mode=signin&redirect=${encodeURIComponent("/compte?tab=alertes&create=1")}`);
-            }}
-            className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer"
-            style={{ backgroundColor: "#46BDD6" }}
-          >
-            <i className="ti ti-bell-plus text-xs" />
-            Créer une alerte{(city || query) ? <> · <strong>{city || query}</strong></> : null}
-          </button>
+<button
+  onClick={() => {
+    if (user) {
+      navigate("/compte?tab=alertes&create=1");
+      return;
+    }
+    navigate(`/auth?mode=signin&redirect=${encodeURIComponent("/compte?tab=alertes&create=1")}`);
+  }}
+  className="ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90 cursor-pointer"
+  style={{ backgroundColor: "#46BDD6" }}
+>
+  <i className="ti ti-bell-plus text-xs" />
+  {t("annonces:alert.create")}{(city || query) ? <> · <strong>{city || query}</strong></> : null}
+</button>
         </div>
 
         {alertStage !== "closed" && (
@@ -967,7 +967,8 @@ export default function Annonces() {
                 </>
               ) : (
                 <>
-                  <h3 className="bebas text-xl text-slate-900 mb-1">Créer une alerte</h3>
+                  <h3 className="bebas text-xl text-slate-900 mb-1">Créer un
+                    e alerte</h3>
                   <p className="text-sm text-slate-500 mb-4">
                     On te préviendra dès qu'une annonce correspond à ces critères.
                   </p>
@@ -1047,7 +1048,7 @@ export default function Annonces() {
             className="mx-auto flex min-h-[68px] w-full max-w-[520px] items-center justify-center gap-8 rounded border border-sc-bd bg-white px-8 py-3 text-center text-sm leading-5 text-sc-gr2 shadow-sm transition-colors hover:border-sc-cy hover:text-sc-dark"
           >
             <Pencil className="h-6 w-6 shrink-0 text-emerald-500" />
-            <span>Cliquer ici pour déposer une annonce et trouver gratuitement vos prochains locataires.</span>
+            <span>{t("annonces:postCta")}</span>
           </Link>
         </div>
 

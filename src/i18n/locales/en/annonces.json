@@ -1,11 +1,13 @@
 ﻿{
   "title": "Listings",
+  "recentTitle": "Recent listings",
   "results": "results",
   "found": "found",
   "search": "Where do you want to go?",
   "loading": "Searching...",
   "empty": "No listings found",
   "emptySub": "Try adjusting your search filters",
+  "postCta": "Click here to post a listing and find your next tenants for free.",
   "filters": {
     "types": {
       "all": "All types",
@@ -23,6 +25,8 @@
     "budget": "Budget",
     "services": "Services",
     "noServices": "No active services",
+    "equipments": "Amenities",
+    "reset": "Reset",
     "city": {
       "all": "All cities",
       "title": "City"
@@ -32,5 +36,12 @@
       "placeholder": "Ex: Ankorondrano"
     },
     "title": "Filters"
-  }
+  },
+  "view": {
+    "map": "Map",
+     "list": "List"
+  },
+  "alert": {
+  "create": "Create alert"
+}
 }

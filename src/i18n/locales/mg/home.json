@@ -1,10 +1,10 @@
 {
   "hero": {
     "badge": "Fiarahamonina vaovao",
-    "title": "Tadiavo ny trano fiarahamonina, manerana an'i Madagasikara",
-    "subtitle": "Efitra, trano sy trano fonenana voamarina, rakitra an-tserasera, sonia notsorina.",
-    "search": "Mitady trano fiarahamonina aho",
-    "propose": "Manolotra trano fiarahamonina aho",
+    "title": " Mitadiava trano hifampizarana, na aiza na aiza eto Madagasikara ",
+    "subtitle": " Mandoa kely kokoa, miaina tsara kokoa · Serivisy maimaim-poana 100% .",
+    "search": " Mitady trano hifampizarana aho",
+    "propose": " Manolotra trano hifampizarana aho",
     "placeholder": "Tanàna, faritra...",
     "allTypes": "Karazana rehetra",
     "room": "Efitra",
@@ -15,9 +15,9 @@
     "satisfaction": "4,8/5 fahafaham-po"
   },
   "featured": {
-    "title": "Fanambarana farany",
-    "subtitle": "Fifantenana amin'ity herinandro ity, nohamarinin'ny ekipanay",
-    "viewAll": "Hijery rehetra",
+    "title": " Lisitra farany ",
+    "subtitle": "Ny safidy amin'ity herinandro ity, nohamarinin'ny ekipanay.",
+    "viewAll": " Izy rehetra",
     "list": "Lisitra",
     "map": "Sarintany",
     "verified": "Voamarina",
@@ -35,32 +35,32 @@
     "empty": "Tsy misy tanàna misy"
   },
   "howItWorks": {
-    "title": "Ahoana no fiasany",
-    "subtitle": "Dingana 3 tsotra hanombohana ny fiarahamonina",
+    "title": "Ny fomba fiasany ",
+    "subtitle": "Dingana 3 tsotra hahitana mpiara-mipetraka ",
     "viewAll": "Hijery ny fanambarana",
     "startSearch": "Hanomboka ny fikarohana",
     "steps": [
       {
         "number": "01",
-        "title": "Tadiavo amin'ny tanàna misy anao",
-        "description": "Lazao ny tanàna na faritra misy anao. Ny sarintany mifandraika dia mampiseho ny trano fiarahamonina rehetra misy."
+        "title": "Mitadiava ao an-tanànanao na ao an-tanàndehibe misy anao ",
+        "description": "Ampidiro ny anaran'ny tanànanao na ny faritra misy anao. Ny sarintany mifandraika dia mampiseho ny trano azo hifampizarana rehetra manodidina eo."
       },
       {
         "number": "02",
-        "title": "Jereo ny fanambarana voamarina ary mihataka",
-        "description": "Sary, vidiny, tolotra, fitsipika — voasoritra tsara daholo. Ny fanambarana tsirairay dia nohamarinina alohan'ny famoahana."
+        "title": "Jereo ireo fampilazana voamarina ary mandefasa fangatahana ",
+        "description": " Sary, vidiny, tolotra, fitsipiky ny trano, voasoritra tsara daholo. Ny fampilazana tsirairay dia nohamarinina alohan'ny famoahana azy. "
       },
       {
         "number": "03",
         "title": "Mifandraisa mivantana",
-        "description": "Alefaso hafatra voaaro. Tsy misy saram-pandraharahana, 100% maimaim-poana."
+        "description": "Mandefasa hafatra voaaro. Tsy misy saram-pandraharahana, maimaim-poana 100%."
       }
     ]
     ,
     "baseline": {
-      "title": "SEHATRA NATERIN'NY COLOC, HO AN'NY MPIARA-MONINA REHETRA",
-      "desc": "Maimaim-poana ho an'ny mpifanampy rehetra ny serivisy. Voamarina ny fanambarana izay avoaka mba hiantohana ny fiarovana ny tsirairay.",
-      "quote": "\"Tadiavo ny trano fiarahamoninao, manerana an'i Madagasikara.\""
+      "title": " SEHATRA NATERAKY NY MPIARA-MIPETRAKA, HO AN'NY MPIARAMIPETRAKA REHETRA",
+      "desc": " Maimaim-poana ny serivisy ho an'ny mpiara-mipetraka rehetra. Voamarina ny fampilazana izay avoaka mba hiantohana ny fiarovana ny tsirairay. ",
+      "quote": "«Mitadiava mpiara-mipetraka, manerana an'i Madagasikara.»"
     }
   },
   "partners": {
