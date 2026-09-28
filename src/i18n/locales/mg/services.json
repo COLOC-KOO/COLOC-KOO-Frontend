@@ -10,14 +10,36 @@
     "notConnected": "Tsy tafiditra",
     "notConnectedDesc": "mijery malalaka, miditra mba handefasana fangatahana."
   },
-  "catalogue": {
-    "title": "Tolotra misy",
-    "subtitle": " Misafidiana serivisy iray na maromaro, avy eo alefaso ny fangatahanao. ",
-    "defaultDesc": "Tolotra misy eto Antananarivo ihany aloha hatreto ",
-    "empty": "Tsy misy tolotra misy amin'izao fotoana izao.",
-    "onlyAntananarivo": "Ny tolotra Coloc'KOO dia azo atao ao Antananarivo ihany aloha hatreto.",
-    "availability": "Tolotra misy ao Antananarivo (anisan'izany ny fokontany) aloha hatreto."
-  },
+ "catalogue": {
+  "title": "Tolotra misy",
+  "subtitle": "Misafidiana serivisy iray na maromaro, avy eo alefaso ny fangatahanao.",
+  "defaultDesc": "Tolotra misy eto Antananarivo ihany aloha hatreto",
+  "empty": "Tsy misy tolotra misy amin'izao fotoana izao.",
+  "onlyAntananarivo": "Ny tolotra Coloc'KOO dia azo atao ao Antananarivo ihany aloha hatreto.",
+  "availability": "Tolotra misy ao Antananarivo (anisan'izany ny fokontany) aloha hatreto.",
+  "items": {
+    "cleaning": {
+      "name": "Fanadiovana ny trano :  Fanadiovana, fanasan-damba, sns.",
+      "description": "manomboka amin'ny 1 andro isan-kerinandro (hatramin'ny 5 andro isan-kerinandro). "
+    },
+    "gardening": {
+      "name": "Fikarakarana zaridaina Fikojakojana ny zaridaina ",
+      "description": " manomboka amin'ny 1 andro isan-kerinandro (hatramin'ny 5 andro isan-kerinandro). "
+    },
+    "guarding": {
+      "name": "Fiambenana trano",
+      "description": "5 andro isan-kerinandro, 5 alina isan-kerinandro na 24 ora isan'andro — misy safidy amin'ny faran'ny herinandro."
+    },
+    "maintenance": {
+      "name": " Fikojakojana sy fanamboarana madinika.  ",
+      "description": "Sarany raikitra: 3 andro isam-bolana. Ireo mpiaramipetraka no miandraikitra ny fividianana izay fitaovana sy akora ilaina "
+    },
+    "jirama": {
+      "name": ": Famakiana metatra sy fanarahana ny fampiasana ny JIRAMA ",
+      "description": "Tolotra misy vidiny raikitra: famakiana 1 isambolana."
+    }
+  }
+},
   "cart": {
     "title": "Ny fangatahako",
     "item": "zavatra",
@@ -29,7 +51,7 @@
     "submit": "Alefaso ny fangatahana",
     "loginToSubmit": "Hiditra mba hangataka",
     "clear": "Ariana ny fifantenana",
-    "disclaimer": "Sanda tombantombana. Ny vidiny farany dia nohamarinin'ny Coloc'KOO, ivelan'ny sehatra."
+    "disclaimer": " Ity dia sanda fanondroana. Ny tolobidy farany dia hohamarinin’i Coloc’KOO, ivelan’ny sehatra"
   },
   "history": {
     "title": "Ny fangatahako"
