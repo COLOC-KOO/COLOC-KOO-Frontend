@@ -2,7 +2,7 @@
   "hero": {
     "badge": "Tolotra Coloc'KOO",
     "title": "Mangataha tolotra, izahay no hikarakara ny ambiny",
-    "subtitle": "Fandresena, fambolena, tolotra madinika isan'andro… Safidio izay ilainao ary alefaso ny fangatahanao. Mpanolo-tsaina Coloc'KOO hiverina aminao."
+    "subtitle": "fanadiovana trano ,asa madinika isan'andro… Mifidiana izay ilainao ary alefaso ny fangatahanao. Hisy mpanolotsaina avy amin'ny Coloc'KOO hifandray aminao."
   },
   "user": {
     "myAccount": "Ny kaotiko",
@@ -12,8 +12,8 @@
   },
   "catalogue": {
     "title": "Tolotra misy",
-    "subtitle": "Safidio iray na maromaro, ary alefaso ny fangatahanao.",
-    "defaultDesc": "Tolotra araka ny fangatahana.",
+    "subtitle": " Misafidiana serivisy iray na maromaro, avy eo alefaso ny fangatahanao. ",
+    "defaultDesc": "Tolotra misy eto Antananarivo ihany aloha hatreto ",
     "empty": "Tsy misy tolotra misy amin'izao fotoana izao.",
     "onlyAntananarivo": "Ny tolotra Coloc'KOO dia azo atao ao Antananarivo ihany aloha hatreto.",
     "availability": "Tolotra misy ao Antananarivo (anisan'izany ny fokontany) aloha hatreto."
