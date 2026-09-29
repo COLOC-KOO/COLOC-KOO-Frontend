@@ -1,9 +1,9 @@
 {
   "security": {
-    "title": "Ankino ny kaontinao",
-    "subtitle": "Voaaro amin'ny fanafenana (HTTPS) ny angon-drakitrao. Mifidiana teny miafina matanjaka mba hiarovana ny kaontinao.",
+    "title": " Fiarovana ny kaonty",
+    "subtitle": "Voaaro amin'ny fanafenana (HTTPS) ny kaontinao. Mifidiana teny miafina matanjaka mba hiarovana ny kaontinao. ",
     "currentPassword": "Teny miafina ampiasaina izao",
-    "changePasswordBtn": "Hanojo ny teny miafina",
+    "changePasswordBtn": " hanova ny tenimiafina ",
     "modal": {
       "title": "Hanojo ny teny miafina",
       "subtitle": "Mifidiana teny miafina vaovao, tsy mitovy amin'ny taloha.",
@@ -15,25 +15,25 @@
       "updating": "Fanavaozana..."
     },
     "twoFA": {
-      "title": "Fanamarinana indroakely (2FA)",
+      "title": "Fanamarinana roa sosona (2FA) (soso-kevitra) ",
       "badge": "toroana hevitra",
       "description": "Mahazo kaody rehefa miditra mba hiarovana ny kaontinao. <b>{{boldObligatory}}</b> izany ho an'ny kaonty mpitantana (admin).",
       "obligatory": "tsy maintsy atao"
     },
     "devices": {
-      "title": "Aparey mifandray",
+      "title": " Fitaovana mifandray ",
       "currentDevice": "ity aparey ity",
-      "disconnectOthers": "Hanesotra ireo aparey hafa",
+      "disconnectOthers": " Mivoaha amin'ny fitaovana hafa ",
       "disconnecting": "Manesotra...",
       "daysAgo": "{{count}} andro lasa"
     },
     "showPassword": "Asehoy ny teny miafina",
     "hidePassword": "Afeno ny teny miafina",
-    "revealUnavailable": "Tsy azo alaina ny teny miafina. Midira indray mba hahafahana mampiseho azy."
+    "revealUnavailable": "Tsy hita ny tenimiafina. Mba miverena miditra indray azafady mba hahitanao azy."
   },
   "identity": {
     "title": "Fanamarinana ny mombamomba anao",
-    "badge": "ho avy · v2.0",
+    "badge": " Ho avy tsy ho ela · v2.0 ",
     "description": "Azo atao na tsy atao. Rehefa voaamarina, misy famantarana <b>{{boldBadge}}</b> mampitoky ireo mpiray trano aminao amin'ny hoavy. Ny fanamarinana dia atao amin'ny alalan'ny mpamatsy rezo findainao (USSD: Telma / Orange / Airtel), tsy misy sarany SMS.",
     "badgeLabel": "« Mombamomba voaamarina »",
     "notConfirmed": "Mombamomba tsy mbola voaamarina",
@@ -43,19 +43,19 @@
     "title": "Mombamomba anao manokana",
     "subtitle": "Ianao no mifehy ny fampiasana ny datsinao, araka ny fitsipika RGPD.",
     "analytics": {
-      "title": "Fampiasana data amin'ny fikarohana sy famakafakana tsy mitonona anarana",
-      "description": "Manampy amin'ny fahafantarana ny tsenan'ny colocation any Madagasikara. Data tsy mitonona anarana, tsy hamidy mihitsy."
+      "title": " Fampiasana ny angon-drakitra ho an'ny famakafakana tsy mitonona anarana",
+      "description": "Manampy anay hahatakatra ny tsenan'ny fiarahamipetraka eto Madagasikara. Atao tsy mitonona anarana ny angon-drakitra ary tsy amidy na oviana na oviana. "
     },
     "partners": {
-      "title": "Mahazo fampahafantarana avy amin'ireo mpiara-miasa",
-      "description": "Tolotra fiahiana, trano fonenana, asa ho an'ny mpianatra. Tsy misy dokam-barotra manelingelina.",
+      "title": " Mandray fampahalalana avy amin'ireo mpiara-miombon'antoka",
+      "description": " Tolotra avy amin'ny vondrom-piara-mipetraka, trano fonenana, asa ho an'ny mpianatra. Tsy misy dokam-barotra manelingelina. ",
       "partnerOptIn": "Opt-in ho an'ny mpiara-miasa"
     },
     "retention": {
-      "title": "Fitehirizana ny datsinao",
-      "line1": "Fampitandremana sy lahatsoratra: tehirizina 5 taona (tsy hitan'ny besinimaro), avy eo fafana ho azy.",
-      "line2": "Sary: tehirizina 1 taona farafahatsorany.",
-      "line3": "Afaka mangataka ny hitrandraka na hamafa ny datsinao ianao amin'ny fotoana rehetra."
+      "title": "Fitahirizana ny angon-drakitra ",
+      "line1": "Fampilazana sy hafatra an-tsoratra: tazomina mandritra ny 5 taona (tsy hita ampahibemaso), avy eo voafafa ho azy.",
+      "line2": "Sary : tahirizina 1 taona farafahabetsany ",
+      "line3": "Azonao atao ny mangataka ny fakana na ny famafana ny angon-drakitrao amin'ny fotoana rehetra."
     },
     "downloadData": "Hampidina ny datiko"
   },

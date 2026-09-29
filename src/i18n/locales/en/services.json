@@ -11,13 +11,35 @@
     "notConnectedDesc": "browse freely, log in to submit a request."
   },
   "catalogue": {
-    "title": "Available services",
-    "subtitle": "Check one or more services, then send your request.",
-    "defaultDesc": "On-demand service.",
-    "empty": "No service available at the moment.",
-    "onlyAntananarivo": "Coloc'KOO services are only available in Antananarivo for now.",
-    "availability": "Offer available in Antananarivo (districts included) for now."
-  },
+  "title": "Available services",
+  "subtitle": "Choose one or more services, then send your request.",
+  "defaultDesc": "Services currently available in Antananarivo only",
+  "empty": "No services available at the moment.",
+  "onlyAntananarivo": "Coloc'KOO services are currently available in Antananarivo only.",
+  "availability": "Services available in Antananarivo (including its districts) for now.",
+  "items": {
+    "cleaning": {
+      "name": "House cleaning",
+      "description": "Housework, laundry, etc. — from 1 day/week (up to 5 days/week)."
+    },
+    "gardening": {
+      "name": "Gardening",
+      "description": "Garden upkeep — from 1 day/week (up to 5 days/week)."
+    },
+    "guarding": {
+      "name": "Guarding",
+      "description": "5 days/week, 5 nights/week or 24/7 — weekend option available."
+    },
+    "maintenance": {
+      "name": "Maintenance and small repairs",
+      "description": "Flat rate, 3 days/month. Purchases and materials remain the housemates' responsibility."
+    },
+    "jirama": {
+      "name": "Jirama meter reading and tracking",
+      "description": "Flat rate, 1 reading per month."
+    }
+  }
+},
   "cart": {
     "title": "My request",
     "item": "item",
