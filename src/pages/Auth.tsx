@@ -50,11 +50,11 @@ function destinationFor(connected: AuthUser, redirect: string | null) {
   return isStaff ? "/admin" : "/compte";
 }
 
-export default function Auth() {
+export default function Auth({ maintenanceMode = false }: { maintenanceMode?: boolean }) {
   const { t } = useTranslation("auth");
   const [params] = useSearchParams();
   const [mode, setMode] = useState<"signin" | "signup">(
-    params.get("mode") === "signup" ? "signup" : "signin",
+    !maintenanceMode && params.get("mode") === "signup" ? "signup" : "signin",
   );
   const [form, setForm] = useState<AuthForm>({
     prenom: "",
@@ -77,6 +77,10 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, register, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (maintenanceMode) setMode("signin");
+  }, [maintenanceMode]);
 
   useEffect(() => {
     if (!user || justRegistered.current) return;
@@ -226,6 +230,11 @@ export default function Auth() {
             </div>
           ) : (
           <>
+          {maintenanceMode && (
+            <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              Le site est en maintenance. La connexion est réservée aux membres autorisés de l’équipe.
+            </div>
+          )}
           <div className="flex gap-1 p-1 bg-muted rounded-xl text-sm mb-6">
             <button
               type="button"
@@ -238,7 +247,7 @@ export default function Auth() {
             >
               {t("signin")}
             </button>
-            <button
+            {!maintenanceMode && <button
               type="button"
               onClick={() => setMode("signup")}
               className={`flex-1 py-2 rounded-md font-semibold ${
@@ -248,7 +257,7 @@ export default function Auth() {
               }`}
             >
               {t("signup")}
-            </button>
+            </button>}
           </div>
 
           <h1 className="bebas text-3xl text-slate-900">

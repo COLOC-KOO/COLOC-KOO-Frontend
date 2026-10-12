@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import Home from './pages/Home'
 import Annonces from './pages/Annonces'
 import AnnonceDetail from './pages/AnnonceDetail'
@@ -40,6 +41,8 @@ import AdminContratsEDL from './pages/admin/AdminContrat'
 import { useAuth } from './lib/auth'
 import { ConfigProvider } from './lib/config'
 import AdvertisingPopup from './components/site/AdvertisingPopup'
+import Maintenance from './pages/Maintenance'
+import { api } from './lib/api'
 
 // Remet la page en haut à chaque changement de route (React Router ne le fait pas nativement).
 function ScrollToTop() {
@@ -64,6 +67,90 @@ export default function App() {
   return (
     <ConfigProvider>
       <ScrollToTop />
+      <SiteAccess />
+    </ConfigProvider>
+  )
+}
+
+function SiteAccess() {
+  const { pathname } = useLocation()
+  const { isAdmin, loading: authLoading } = useAuth()
+  const [maintenanceMode, setMaintenanceMode] = useState<boolean | null>(null)
+  const [statusError, setStatusError] = useState<string | null>(null)
+  const [retry, setRetry] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    api.siteStatus()
+      .then(({ maintenanceMode: enabled }) => {
+        if (active) {
+          setMaintenanceMode(enabled)
+          setStatusError(null)
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setStatusError(error instanceof Error ? error.message : 'Impossible de vérifier le statut du site.')
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [retry])
+
+  let screenKey: string
+  let screen: React.ReactNode
+
+  if (pathname === '/auth') {
+    screenKey = 'auth'
+    screen = <Auth maintenanceMode={maintenanceMode !== false} />
+  } else if (pathname.startsWith('/admin') || isAdmin) {
+    screenKey = 'platform'
+    screen = <AppRoutes />
+  } else if (authLoading || maintenanceMode === null) {
+    screenKey = statusError ? 'status-error' : 'loading'
+    screen = statusError ? (
+        <main className="grid min-h-screen place-items-center px-6 text-center">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900">Statut du site indisponible</h1>
+            <p className="mt-2 text-sm text-slate-600">{statusError}</p>
+            <button
+              type="button"
+              onClick={() => setRetry((value) => value + 1)}
+              className="mt-5 rounded-lg bg-brand-cyan px-4 py-2 font-semibold text-white"
+            >
+              Réessayer
+            </button>
+          </div>
+        </main>
+      ) : <div className="min-h-screen grid place-items-center">Chargement...</div>
+  } else if (maintenanceMode) {
+    screenKey = 'maintenance'
+    screen = <Maintenance />
+  } else {
+    screenKey = 'platform'
+    screen = <AppRoutes />
+  }
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={screenKey}
+        className="min-h-screen"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.35, ease: 'easeInOut' }}
+      >
+        {screen}
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+function AppRoutes() {
+  return (
+    <>
       <AdvertisingPopup />
       <Routes>
         {/* Site public */}
@@ -109,8 +196,8 @@ export default function App() {
       <Route path="/admin/boost-annonce" element={<AdminRoute><AdminBooster /></AdminRoute>} />
       <Route path="/admin/contrats-edl" element={<AdminRoute><AdminContratsEDL /></AdminRoute>} />
       {/* 404 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </ConfigProvider>
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+    </>
 )
 }
