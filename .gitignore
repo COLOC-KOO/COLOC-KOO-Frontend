@@ -23,6 +23,7 @@ npm-debug.log*
 .env
 .env.production
 .dev.vars
+*.tsbuildinfo
 
 # misc
 .DS_Store
