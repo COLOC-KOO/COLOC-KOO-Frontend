@@ -673,6 +673,9 @@ async function requestWithFallback<T>(primaryPath: string, fallbackPath: string,
 }
 
 export const api = {
+    siteStatus() {
+        return request<{ maintenanceMode: boolean }>('/meta/site-status')
+    },
     login(payload: { email: string; mot_de_passe: string }) {
         return request<{ user: AuthUser; token: string }>('/auth/login', {
             method: 'POST',

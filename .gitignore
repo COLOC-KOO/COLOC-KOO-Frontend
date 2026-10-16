@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 .wrangler/
+*.tsbuildinfo
 
 # Runtime data
 pids
@@ -22,6 +23,7 @@ npm-debug.log*
 .env
 .env.production
 .dev.vars
+*.tsbuildinfo
 
 # misc
 .DS_Store
