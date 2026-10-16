@@ -1,11 +1,13 @@
 ﻿{
   "title": "Annonces",
+  "recentTitle": "Annonces récentes",
   "results": "résultats",
   "found": "trouvé(s)",
   "search": "Où voulez-vous aller ?",
   "loading": "Recherche en cours...",
   "empty": "Aucune annonce trouvée",
   "emptySub": "Essayez de modifier vos filtres de recherche",
+  "postCta": "Cliquer ici pour déposer une annonce et trouver gratuitement vos prochains locataires.",
   "filters": {
     "types": {
       "all": "Tous types",
@@ -23,6 +25,8 @@
     "budget": "Budget",
     "services": "Services",
     "noServices": "Aucun service actif",
+    "equipments": "Équipements",
+    "reset": "Réinitialiser",
     "city": {
       "all": "Toutes les villes",
       "title": "Ville"
@@ -32,5 +36,13 @@
       "placeholder": "Ex : Antaninarenina"
     },
     "title": "Filtres"
-  }
+  },
+  "view": {
+    "map": "Carte",
+    "list": "Liste"
+  },
+  "alert": {
+  "create": "Créer une alerte"
+}
+
 }

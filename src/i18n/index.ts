@@ -27,6 +27,7 @@ import frPreferences from './locales/fr/preferences.json'
 import frCompteSecurites from './locales/fr/compteSecurite.json'
 import frProfilsRecherche from'./locales/fr/profilsRecherecheLongement.json'
 import frCandidaturesPanel from './locales/fr/candidaturesPanel.json'
+import frDepot from './locales/fr/depot.json'
 // Importer toutes les traductions (MG)
 import mgCommon from './locales/mg/common.json'
 import mgHome from './locales/mg/home.json'
@@ -50,6 +51,7 @@ import mgPreferences from './locales/mg/preferences.json'
 import mgCompteSecurites from './locales/mg/compteSecurite.json'
 import mgProfilsRecherche from './locales/mg/profilsRecherecheLongement.json'
 import mgCandidaturesPanel from './locales/mg/candidaturesPanel.json'
+import mgDepot from './locales/mg/depot.json'
 // Importer toutes les traductions (EN)
 import enCommon from './locales/en/common.json'
 import enHome from './locales/en/home.json'
@@ -73,6 +75,7 @@ import enPreferences from './locales/en/preferences.json'
 import enCompteSecurite from './locales/en/compteSecurite.json'
 import enProfilsRecherche from'./locales/en/profilsRechercheLongement.json'
 import enCandidaturesPanel from './locales/en/candidaturesPanel.json'
+import enDepot from './locales/en/depot.json'
 const resources = {
   fr: {
     common: frCommon,
@@ -97,6 +100,7 @@ const resources = {
     preferences:frPreferences,
     compteSecurites:frCompteSecurites,
     profilsRecherche:frProfilsRecherche,
+    depot:frDepot
   },
   mg: {
     common: mgCommon,
@@ -121,6 +125,7 @@ const resources = {
     preferences:mgPreferences,
     compteSecurites:mgCompteSecurites,
     profilsRecherche:mgProfilsRecherche,
+    depot:mgDepot
 
   },
   en: {
@@ -146,6 +151,7 @@ const resources = {
     preferences:enPreferences,
     compteSecurites:enCompteSecurite,
     profilsRecherche:enProfilsRecherche,
+    depot:enDepot
   },
 }
 
@@ -182,6 +188,7 @@ i18n
       'compteSecurites',
       'profilsRecherche',
       'candidaturesPanel',
+      'depot'
     ],
     defaultNS: 'common',
     detection: {

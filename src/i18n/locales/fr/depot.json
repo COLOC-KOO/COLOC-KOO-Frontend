@@ -1,0 +1,296 @@
+{
+  "step": "Étape",
+  "progress": "Progression",
+  "introH": "Dépose ton",
+  "introH2": "annonce",
+  "introP": "Gratuit et en moins de 5 minutes · Tu peux t'arrêter quand tu veux, ton brouillon sera conservé",
+  "draftSave": "Enregistrer le brouillon",
+  "draftSaved": "Brouillon enregistré",
+  "back": "Retour",
+  "next": "Continuer",
+  "publishButton": "Publier mon annonce",
+  "renew": "Renouveler mon annonce",
+  "loadingAnnonce": "Chargement de ton annonce...",
+  "steps": {
+    "statut": "Ton statut",
+    "esprit": "L'Esprit Coloc'",
+    "logement": "Le logement",
+    "services": "Les services",
+    "chambre": "La chambre",
+    "regles": "Les règles",
+    "photos": "Les photos",
+    "publier": "Publier"
+  },
+  "status": {
+    "part": "Partie 1",
+    "title": "Ton statut",
+    "subtitle": "Qui es-tu par rapport à ce logement ? Cela adapte la suite du formulaire.",
+    "whoLabel": "Tu es...",
+    "member": {
+      "title": "Membre de la colocation",
+      "desc": "Tu vis dans le logement et cherches un·e (des) coloc(s)."
+    },
+    "owner": {
+      "title": "Propriétaire du logement",
+      "desc": "Tu n'y vis pas mais tu possèdes le bien et le proposes en colocation."
+    },
+    "pro": {
+      "title": "Professionnel de l'immobilier",
+      "desc": "Agent ou gestionnaire indépendant qui publie pour le compte d'un propriétaire."
+    },
+    "checking": "Vérification de tes annonces en cours...",
+    "blockedListing": "Tu as déjà une annonce active en tant que colocataire. Un seul dépôt est possible par compte pour ce profil — retire ou attends l'expiration de ton annonce en cours pour en publier une nouvelle.",
+    "partnerCallout": {
+      "title": "Tu deviens partenaire solidaire du projet",
+      "textPro": "En tant que professionnel de l'immobilier, tu es considéré·e comme un partenaire solidaire de Sarintany'COLOC. Ta participation aide à rendre le service soutenable et permet à la communauté de colocataires d'accéder à un meilleur logement.",
+      "textOwner": "En tant que propriétaire, tu es considéré·e comme un partenaire solidaire de Sarintany'COLOC. Ta participation aide à rendre le service soutenable et permet à la communauté de colocataires d'accéder à un meilleur logement."
+    },
+    "errors": {
+      "required": "Merci de sélectionner ton statut.",
+      "blocked": "Tu as déjà une annonce active : un seul dépôt est possible par compte colocataire."
+    }
+  },
+  "esprit": {
+    "part": "Partie 2",
+    "title": "L'Esprit Coloc'",
+    "subtitleMember": "Tu habites dans cette maison avec d'autres colocataires. Quelle ambiance recherches-tu ?",
+    "subtitleOther": "Tu connais les caractéristiques de ton bien, son quartier et ses voisins. Quelle ambiance te paraît être la plus appropriée ?",
+    "modeLabel": "Mode de constitution",
+    "flux": {
+      "title": "Au fil de l'eau",
+      "desc": "Validation individuelle : tu valides les colocataires un par un. Tu peux échanger avec chaque candidat·e avant de l'accepter.",
+      "hint": "Tu gardes la main sur chaque validation et peux discuter avec les candidat·e·s depuis ta messagerie avant de les accepter."
+    },
+    "complete": {
+      "title": "Colocation complète",
+      "desc": "Le logement démarre une fois le groupe complet : les candidat·e·s forment des équipes en lien avec les critères que tu as renseignés ci-après. La première équipe au complet l'emporte. Tu ne valides ou ne refuses que des équipes complètes.",
+      "hintPro": "En tant que professionnel de l'immobilier, tu es considéré·e comme un partenaire solidaire de Sarintany'COLOC.",
+      "hintOwner": "En tant que propriétaire, tu es considéré·e comme un partenaire solidaire de Sarintany'COLOC."
+    },
+    "totalColocLabel": "Nombre total de colocataires",
+    "wantedColocLabel": "Nombre de colocataires recherchés",
+    "typeAnnonceLabel": "Type d'annonce",
+    "existingColoc": "Colocation existante",
+    "createColoc": "Création d'une colocation",
+    "ambianceLabel": "Ambiance de la colocation souhaitée",
+    "recommended": "(recommandé)",
+    "ageGroup": "Tranche d'âge",
+    "ambianceMulti": "Ambiance",
+    "multiChoice": "(plusieurs choix possibles)",
+    "ageOptions": ["18–25 ans", "25–35 ans", "35 ans et +", "Tous âges"],
+    "ambianceOptions": [
+      "Calme / studieuse", "Conviviale", "Festive", "Familiale",
+      "Pro / actifs", "Étudiante", "Éco / nature", "Inclusive", "Bienveillante"
+    ],
+    "presentationLabel": "Encart de présentation",
+    "presentationSub": "— à destination des futurs colocataires",
+    "presentationPlaceholder": "Décris l'ambiance de la coloc, le quartier, le profil recherché...",
+    "charLimit": "/ 1000 caractères",
+    "errors": {
+      "required": "Merci d'indiquer le nombre de colocataires."
+    }
+  },
+  "logement": {
+    "part": "Partie 3",
+    "title": "Le logement",
+    "subtitle": "Décris le bien qui accueille la colocation.",
+    "typeLabel": "Type de logement",
+    "typeOptions": ["Appartement", "Maison", "Autre"],
+    "totalColocLabel": "Nombre total de colocataires",
+    "totalColocHint": "Une colocation compte au moins 2 colocataires.",
+    "piecesLabel": "Nombre de pièces total",
+    "piecesSub": "(hors cuisine et salle d'eau)",
+    "piecesPlaceholder": "ex : 4",
+    "piecesSuffix": "pièce(s)",
+    "locationLabel": "Localisation du bien",
+    "refineLabel": "Affiner son emplacement",
+    "refineHint": "En fonction de son emplacement, ton logement peut gagner en intérêt. Alors sois précis.",
+    "addressPlaceholder": "Adresse ou quartier — ex : Ankadifotsy, Antananarivo",
+    "privacyNote": "Pour des raisons de confidentialité, si tu renseignes ton adresse exacte, celle-ci n'apparaîtra jamais sur ton annonce — seul le quartier sera visible.",
+    "mapRequiredHint": "Le placement sur la carte est obligatoire, même si tu as saisi une adresse.",
+    "mapDragHint": "Glisse pour te déplacer · molette pour zoomer · clique pour placer ton bien",
+    "errors": {
+      "locationRequired": "Merci de placer ton logement sur la carte (obligatoire).",
+      "fieldsRequired": "Merci de compléter tous les champs obligatoires (*) avant de continuer."
+    }
+  },
+  "services": {
+    "part": "Partie 4",
+    "title": "Les services & commodités",
+    "subtitle": "Coche tout ce qui est disponible dans le logement.",
+    "equipmentsTitle": "Équipements",
+    "equipmentsOptions": [
+      "Eau courante", "Surpresseur", "Balcon", "Jardin", "Piscine", "BBQ",
+      "Gazinière / Plaques électriques", "Four", "Machine à laver", "Abri vélo / moto"
+    ],
+    "internetTitle": "Connexion internet",
+    "internetOptions": ["ADSL", "Fibre", "Box", "Aucune"],
+    "parkingTitle": "Parking",
+    "parkingCarsLabel": "Capacité — nombre de voitures",
+    "parkingCarsPlaceholder": "ex : 2",
+    "coveredLabel": "Couvert ?",
+    "selectPlaceholder": "- Sélectionner -",
+    "covered": "Couvert",
+    "notCovered": "Non couvert",
+    "parkingMotoLabel": "Capacité — nombre de 2 roues",
+    "parkingMotoPlaceholder": "ex : 3",
+    "offeredTitle": "Services proposés",
+    "ckooHeadMember": "Plus de simplicité au quotidien ?",
+    "ckooHeadOther": "Simplifie la gestion de ta colocation ?",
+    "ckooText": "Avec Coloc'KOO, profite de services mutualisés selon tes besoins (offre disponible à Antananarivo pour le moment).",
+    "ckooModify": "Services intégrés — modifier",
+    "ckooSimulate": "Faire une simulation",
+    "ckooConfirm": "Merci pour ta confiance ! Les services sélectionnés seront intégrés à ton annonce.",
+    "existingServicesTitle": "Les services déjà en place :",
+    "servicesOptions": ["Gardien", "Femme de ménage", "Jardinier", "Porteurs d'eau", "Intendance et petits travaux"],
+    "otherService": "Autre (préciser – 3 Max)",
+    "otherServicePlaceholder": "Précise le service...",
+    "addOther": "Ajouter un autre élément",
+    "errors": {
+      "internetRequired": "Merci d'indiquer la connexion internet disponible."
+    }
+  },
+  "chambre": {
+    "part": "Partie 5",
+    "title": "La chambre proposée",
+    "subtitle": "Les conditions de la chambre disponible.",
+    "dispoLabel": "Disponible à partir du",
+    "loyerLabel": "Loyer",
+    "loyerSub": "(hors charges)",
+    "loyerPlaceholder": "350 000",
+    "chargesLabel": "Charges",
+    "chargesSub": "(moyenne / mois)",
+    "chargesPlaceholder": "40 000",
+    "ckooExtra": "+ services Coloc'KOO {{amount}} Ar",
+    "advice": "Conseil : dissocie le loyer des charges (internet, services, etc.) — ton annonce sera plus attractive.",
+    "cautionLabel": "Caution",
+    "caution1Month": "1 mois de loyer",
+    "cautionOther": "Autre",
+    "cautionOtherPlaceholder": "Montant de la caution",
+    "furnishedLabel": "La chambre est meublée",
+    "furnishedSub": "(une seule réponse possible)",
+    "furnishedOptions": ["Oui", "Partiellement", "Non", "Rachat des meubles"],
+    "resalePriceLabel": "Prix de rachat des meubles",
+    "resalePricePlaceholder": "ex : 50 000",
+    "resaleDescLabel": "Descriptif des meubles à racheter",
+    "resaleDescPlaceholder": "Décris en quelques lignes les meubles concernés (lit, armoire, électroménager...).",
+    "errors": {
+      "required": "Merci de renseigner la date de disponibilité, le loyer et si la chambre est meublée.",
+      "pastDate": "La date de disponibilité ne peut pas être antérieure à aujourd'hui."
+    }
+  },
+  "regles": {
+    "part": "Partie 6",
+    "title": "Les règles de la coloc",
+    "subtitle": "Précise les conditions de vie commune.",
+    "options": ["Filles uniquement", "Garçons uniquement", "Animaux acceptés", "Famille / Enfant(s) accepté(s)"]
+  },
+  "photos": {
+    "part": "Partie 7",
+    "title": "Les photos",
+    "subtitle": "Ajoute des photos : les annonces avec photos sont bien plus consultées.",
+    "label": "Photos du logement",
+    "info": "Les annonces avec photos sont en moyenne 7× plus consultées.",
+    "cover": "Couverture",
+    "photoN": "Photo {{n}}",
+    "recommendation": "Dimensions recommandées : 1200 × 900 px. 3 photos maximum en version gratuite (max 3 Mo / photo)."
+  },
+  "publish": {
+    "title": "Étape finale — Publie ton annonce",
+    "renewalNote": "Cette annonce a expiré. Renouvelle-la pour qu'elle redevienne visible pendant {{duration}} de plus, sans avoir à ressaisir tes informations.",
+    "engagement": {
+      "title": "Engagement du professionnel",
+      "text": "En publiant cette annonce, tu attestes que le propriétaire que tu représentes est d'accord pour accueillir une colocation. Cette responsabilité t'engage.",
+      "checkbox": "J'atteste que le propriétaire représenté est d'accord pour une colocation et j'en assume la responsabilité."
+    },
+    "recapTitle": "Conditions de publication",
+    "recapVisible": "Ton annonce sera visible pendant {{duration}}.",
+    "recapReminder": "Tu recevras une relance 7 jours avant l'échéance pour renouveler ou retirer ton annonce.",
+    "recapModeration": "Chaque annonce est vérifiée (modération) avant sa mise en ligne.",
+    "recapFree": "Publication 100% gratuite — aucune commission.",
+    "recapOffer": "Offre partenaire : {{amount}} — ta contribution soutient la gratuité côté colocataires.",
+    "offered": "Offert",
+    "ckooRecapTitle": "Services Coloc'KOO demandés",
+    "ckooEstimate": "Estimation : {{amount}} Ar / mois (à confirmer)",
+    "paymentTitle": "Ton paiement — {{amount}}",
+    "chooseOffer": "Choisis ton offre",
+    "offerAnnonce": {
+      "name": "Offre unique — à l'annonce",
+      "desc": "1 annonce à but commercial · validité 4 mois."
+    },
+    "offerImmo": {
+      "name": "Indépendant IMMO",
+      "desc": "Même offre, jusqu'à 4 annonces commerciales · validité 4 mois."
+    },
+    "freeLaunch": "Publication offerte — offre de lancement. Aucun paiement n'est requis pour le moment ; la valeur de l'offre reste affichée à titre indicatif.",
+    "connectedNote": "Tu es connecté·e en tant que {{account}}. La publication utilise ce compte.",
+    "notConnectedNote": "Pour publier ton annonce, tu devras te connecter depuis ton compte.",
+    "defaultAccount": "utilisateur",
+    "success": "Annonce ajoutée avec succès, en attente de validation par l'admin",
+    "successWithReference": "{{message}}. Référence : {{reference}}",
+    "error": "Impossible de publier l'annonce.",
+    "renewedSuccess": "Ton annonce a été renouvelée. Nouvelle échéance : {{date}}.",
+    "renewedToast": "Annonce renouvelée avec succès",
+    "renewError": "Impossible de renouveler cette annonce.",
+    "welcomeBackConnected": "Bon retour ! On finalise la publication de ton annonce…",
+    "welcomeBackDraft": "Bon retour ! Ton brouillon a été restauré — connecte-toi pour publier.",
+    "errors": {
+      "engagementRequired": "Tu dois confirmer cet engagement pour continuer."
+    }
+  },
+  "simulation": {
+    "title": "Simule tes services mutualisés",
+    "disclaimer": "Les montants sont indicatifs. Notre équipe te contactera pour confirmer ta demande.",
+    "perMonthFrom": "dès {{amount}} Ar / mois",
+    "perMonth": "{{amount}} Ar / mois",
+    "weekendOption": "Option week-end (+{{amount}} Ar)",
+    "totalLabel": "Total mensuel cumulé",
+    "legal": "Inscription systématique à la CNAPS et à l'OSTIE, congés payés inclus.",
+    "integrate": "Intégrer aux charges des colocs",
+    "delete": "Supprimer",
+    "services": {
+      "menage": {
+        "name": "Propreté de la maison (ménage, linge, etc.)",
+        "hint": "à partir de 6 200 Ar / h",
+        "options": {
+          "1": "1 jour / semaine",
+          "2": "2 jours / semaine",
+          "3": "3 jours / semaine",
+          "4": "4 jours / semaine (-10 %)",
+          "5": "5 jours / semaine (-15 %)"
+        }
+      },
+      "jardin": {
+        "name": "Jardinage",
+        "options": {
+          "1": "1 jour / semaine",
+          "2": "2 jours / semaine",
+          "3": "3 jours / semaine",
+          "4": "4 jours / semaine (-10 %)",
+          "5": "5 jours / semaine (-15 %)"
+        }
+      },
+      "gardien": {
+        "name": "Gardiennage",
+        "hint": "à partir de 2 900 Ar / h",
+        "options": {
+          "jours": "5 jours / semaine",
+          "nuits": "5 nuits / semaine",
+          "24h": "24h/24 — 5 jours / semaine"
+        }
+      },
+      "travaux": {
+        "name": "Entretien et réalisation petits travaux",
+        "hint": "forfait 3 jours / mois",
+        "note": "Les achats et matériaux restent à la charge des colocataires."
+      },
+      "jirama": {
+        "name": "Relevé Jirama et traçabilité",
+        "hint": "forfait 1 fois / mois"
+      }
+    }
+  },
+  "map": {
+    "precisionAttribution": "précision quartier"
+  }
+}

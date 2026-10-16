@@ -621,9 +621,9 @@ export default function AnnonceDetail() {
         </div>
         <div className="mt-6 grid gap-4 border-t border-slate-200 pt-5 md:grid-cols-2">
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--brand-cyan-dark)]">Commodités</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--brand-cyan-dark)]">{t('annonceDetail:sections.amenities')}</h2>
             <div className="mt-3 flex flex-wrap gap-2">
-              {(listing.amenities.length ? listing.amenities : ['Aucune commodité renseignée']).map((item) => (
+              {(listing.amenities.length ? listing.amenities : [t('annonceDetail:noAmenities')]).map((item) => (
                 <span key={item} className="rounded-full border border-[var(--brand-cyan-dark)]/20 bg-white px-3 py-1 text-sm text-slate-700">
                   {item}
                 </span>
@@ -631,9 +631,9 @@ export default function AnnonceDetail() {
             </div>
           </div>
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--brand-green-dark)]">Règles</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-[var(--brand-green-dark)]">{t('annonceDetail:sections.rules')}</h2>
             <div className="mt-3 flex flex-wrap gap-2">
-              {((listing.regles && listing.regles.length > 0) ? listing.regles : ['Aucune règle renseignée']).map((item) => (
+              {((listing.regles && listing.regles.length > 0) ? listing.regles : [t('annonceDetail:noRules')]).map((item) => (
                 <span key={item} className="rounded-full border border-[var(--brand-green-dark)]/20 bg-white px-3 py-1 text-sm text-slate-700">
                   {item}
                 </span>

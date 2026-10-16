@@ -11,13 +11,35 @@
     "notConnectedDesc": "parcourez librement, connectez-vous pour envoyer une demande."
   },
   "catalogue": {
-    "title": "Services disponibles",
-    "subtitle": "Cochez une ou plusieurs prestations, puis envoyez votre demande.",
-    "defaultDesc": "Prestation à la demande.",
-    "empty": "Aucun service disponible pour le moment.",
-    "onlyAntananarivo": "Les services Coloc'KOO sont disponibles uniquement à Antananarivo pour le moment.",
-    "availability": "Offre disponible à Antananarivo (quartiers compris) pour le moment."
-  },
+  "title": "Services disponibles",
+  "subtitle": "Sélectionne un ou plusieurs services, puis envoie ta demande.",
+  "defaultDesc": "Services disponibles uniquement à Antananarivo pour le moment",
+  "empty": "Aucun service disponible pour le moment.",
+  "onlyAntananarivo": "Les services Coloc'KOO sont pour l'instant disponibles uniquement à Antananarivo.",
+  "availability": "Services disponibles à Antananarivo (quartiers inclus) pour le moment.",
+  "items": {
+    "cleaning": {
+      "name": "Propreté de la maison",
+      "description": "Ménage, linge, etc. — à partir de 1 jour/semaine (jusqu'à 5 jours/semaine)."
+    },
+    "gardening": {
+      "name": "Jardinage",
+      "description": "Entretien du jardin — à partir de 1 jour/semaine (jusqu'à 5 jours/semaine)."
+    },
+    "guarding": {
+      "name": "Gardiennage",
+      "description": "5 jours/semaine, 5 nuits/semaine ou 24h/24 — option week-end possible."
+    },
+    "maintenance": {
+      "name": "Entretien et réalisation petits travaux",
+      "description": "Forfait 3 jours/mois. Les achats et matériaux restent à la charge des colocataires."
+    },
+    "jirama": {
+      "name": "Relevé Jirama et traçabilité",
+      "description": "Forfait 1 relevé par mois."
+    }
+  }
+},
   "cart": {
     "title": "Ma demande",
     "item": "article",

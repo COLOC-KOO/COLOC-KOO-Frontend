@@ -1,11 +1,13 @@
 {
   "title": "Fanambarana",
+  "recentTitle": "Fampahafantarana vao haingana",
   "results": "valiny",
   "found": "hita",
   "search": "Aiza no tianao haleha?",
   "loading": "Fikarohana mitohy...",
   "empty": "Tsy misy fanambarana hita",
   "emptySub": "Andramo ovaina ny sivanao",
+  "postCta": "Tsindrio eto raha toa ka hametraka fampilazana sy hitady maimaim-poana ny mpiara-manofa tranonao manaraka. ",
   "filters": {
     "types": {
       "all": "Karazana rehetra",
@@ -21,16 +23,25 @@
       "title": "Karazana fiarahamonina"
     },
     "budget": "Tetibola",
-    "services": "Tolotra",
+    "services": "Serivisy",
     "noServices": "Tsy misy tolotra miasa",
+    "equipments": "Kojakoja",
+    "reset": "Averina amin'ny laoniny",
     "city": {
       "all": "Tanàna rehetra",
       "title": "Tanàna"
     },
-    "title": "Sivana",
     "district": {
       "title": "Fokontany",
       "placeholder": "Ohatra : Antaninarenina"
-    }
-  }
+    },
+    "title": "Fintantavana"
+  },
+  "view": {
+    "map": "Sarintany",
+    "list": "Lisitra"
+  },
+  "alert": {
+  "create": "Hamorona fampandrenesana "
+}
 }

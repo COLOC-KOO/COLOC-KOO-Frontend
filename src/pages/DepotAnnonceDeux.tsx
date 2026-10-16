@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   AlertCircle,
@@ -56,13 +57,15 @@ import { cn } from '../lib/utils'
  * (parcours de dépôt d'annonce) + corrections du PDF
  * "Suite réunion 20260804 - DEPOT".
  *
+ * i18n : toutes les chaînes affichées passent désormais par react-i18next
+ * (namespace "depot"), à la place de l'ancien système STR/useLang.
+ *
  * AMÉLIORATION CARTE : la fausse carte CSS a été remplacée par une VRAIE carte
  * Leaflet (tuiles OpenStreetMap). Quand on tape un lieu dans
  * « Localisation du bien », la carte se recentre automatiquement dessus et le
  * repère y est placé. Le repère reste déplaçable / plaçable au clic.
  * ==========================================================================*/
 
-type Lang = 'FR' | 'MG' | 'ENG'
 type Role = 'membre' | 'proprio' | 'pro' | null
 
 const LAUNCH_FREE = true // offre partenaire offerte pendant le lancement (cf. PDF étape 4/7)
@@ -91,51 +94,21 @@ function dataUrlToFile(dataUrl: string, filename: string, mime: string): File {
 }
 
 /* ---------------------------------------------------------------------- */
-/*  i18n minimal                                                           */
-/* ---------------------------------------------------------------------- */
-const STR = {
-  nav_register: { FR: "S'inscrire", MG: 'Misoratra', ENG: 'Sign up' },
-  step_word: { FR: 'Étape', MG: 'Dingana', ENG: 'Step' },
-  progress: { FR: 'Progression', MG: 'Fandrosoana', ENG: 'Progress' },
-  intro_h: { FR: 'Dépose ton', MG: 'Apetraho ny', ENG: 'Post your' },
-  intro_h2: { FR: 'annonce', MG: 'tatitra', ENG: 'listing' },
-  intro_p: {
-    FR: "Gratuit et en moins de 5 minutes · Tu peux t'arrêter quand tu veux, ton brouillon sera conservé",
-    MG: "Maimaim-poana, latsaky ny 5 minitra · Afaka mijanona ianao na oviana na oviana, hotehirizina ny brouillon-nao",
-    ENG: 'Free and in under 5 minutes · Stop whenever you like, your draft will be saved',
-  },
-  draft_save: { FR: 'Enregistrer le brouillon', MG: 'Tehirizo ny brouillon', ENG: 'Save draft' },
-  draft_saved: { FR: 'Brouillon enregistré', MG: 'Voatahiry ny brouillon', ENG: 'Draft saved' },
-  back: { FR: 'Retour', MG: 'Hiverina', ENG: 'Back' },
-  next: { FR: 'Continuer', MG: 'Hanohy', ENG: 'Continue' },
-  publish: { FR: 'Publier mon annonce', MG: 'Avoaka ny tatitro', ENG: 'Publish my listing' },
-} as const
-
-function useLang() {
-  const [lang, setLang] = useState<Lang>('FR')
-  const t = (key: keyof typeof STR) => STR[key][lang]
-  return { lang, setLang, t }
-}
-
-/* ---------------------------------------------------------------------- */
 /*  Données "services mutualisés Coloc'KOO"                               */
 /* ---------------------------------------------------------------------- */
 // Tarifs mensuels de la plaquette commerciale Coloc'KOO (charges sociales
 // CNAPS / OSTIE et congés payés inclus) : aucun calcul horaire côté client.
+// Les libellés affichés viennent du JSON (namespace "depot" > simulation.services.<id>),
+// seuls les montants restent ici.
 interface CkooOption {
   id: string
-  label: string
   price: number
   // Supplément mensuel de l'option week-end (gardiennage uniquement)
   weekend?: number
 }
 interface CkooService {
   id: string
-  name: string
-  // Libellé affiché sous le nom, ex. « à partir de 6 200 Ar / h »
-  hint?: string
   star?: boolean
-  note?: string
   // Formules au choix ; un service sans formule est un forfait mensuel fixe
   options?: CkooOption[]
   price?: number
@@ -143,49 +116,39 @@ interface CkooService {
 const CKOO_SERVICES: CkooService[] = [
   {
     id: 'menage',
-    name: 'Propreté de la maison (ménage, linge, etc.)',
-    hint: 'à partir de 6 200 Ar / h',
     options: [
-      { id: '1', label: '1 jour / semaine', price: 178000 },
-      { id: '2', label: '2 jours / semaine', price: 348000 },
-      { id: '3', label: '3 jours / semaine', price: 528000 },
-      { id: '4', label: '4 jours / semaine (-10 %)', price: 628000 },
-      { id: '5', label: '5 jours / semaine (-15 %)', price: 738000 },
+      { id: '1', price: 178000 },
+      { id: '2', price: 348000 },
+      { id: '3', price: 528000 },
+      { id: '4', price: 628000 },
+      { id: '5', price: 738000 },
     ],
   },
   {
     id: 'jardin',
-    name: 'Jardinage',
     options: [
-      { id: '1', label: '1 jour / semaine', price: 160000 },
-      { id: '2', label: '2 jours / semaine', price: 325000 },
-      { id: '3', label: '3 jours / semaine', price: 485000 },
-      { id: '4', label: '4 jours / semaine (-10 %)', price: 585000 },
-      { id: '5', label: '5 jours / semaine (-15 %)', price: 690000 },
+      { id: '1', price: 160000 },
+      { id: '2', price: 325000 },
+      { id: '3', price: 485000 },
+      { id: '4', price: 585000 },
+      { id: '5', price: 690000 },
     ],
   },
   {
     id: 'gardien',
-    name: 'Gardiennage',
-    hint: 'à partir de 2 900 Ar / h',
     options: [
-      { id: 'jours', label: '5 jours / semaine', price: 458000, weekend: 190000 },
-      { id: 'nuits', label: '5 nuits / semaine', price: 578000, weekend: 235000 },
-      { id: '24h', label: '24h/24 — 5 jours / semaine', price: 1334000, weekend: 550000 },
+      { id: 'jours', price: 458000, weekend: 190000 },
+      { id: 'nuits', price: 578000, weekend: 235000 },
+      { id: '24h', price: 1334000, weekend: 550000 },
     ],
   },
   {
     id: 'travaux',
-    name: 'Entretien et réalisation petits travaux',
-    hint: 'forfait 3 jours / mois',
     star: true,
-    note: 'Les achats et matériaux restent à la charge des colocataires.',
     price: 86000,
   },
   {
     id: 'jirama',
-    name: 'Relevé Jirama et traçabilité',
-    hint: 'forfait 1 fois / mois',
     price: 9000,
   },
 ]
@@ -319,12 +282,16 @@ function InteractiveMap({
   onUserMovePin,
   focus,
   pinOpacity = 1,
+  hintText,
+  attributionText,
 }: {
   pin: { x: number; y: number } | null
   onPlacePin: (pin: { x: number; y: number }) => void
   onUserMovePin: (pin: { x: number; y: number }) => void
   focus: [number, number] | null
   pinOpacity?: number
+  hintText: string
+  attributionText: string
 }) {
   return (
     <div className="realmap">
@@ -336,7 +303,7 @@ function InteractiveMap({
         className="h-full w-full"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · précision quartier'
+          attribution={`&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · ${attributionText}`}
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <ZoomControl position="bottomright" />
@@ -360,7 +327,7 @@ function InteractiveMap({
         )}
       </MapContainer>
       <div className="dmap-hint">
-        <Hand size={12} style={{ color: 'var(--cy)' }} /> Glisse pour te déplacer · molette pour zoomer · clique pour placer ton bien
+        <Hand size={12} style={{ color: 'var(--cy)' }} /> {hintText}
       </div>
     </div>
   )
@@ -460,10 +427,10 @@ function ErrBox({ children }: { children: React.ReactNode }) {
  *  COMPOSANT PRINCIPAL
  * ====================================================================*/
 export default function DepotAnnonceDeux() {
+  const { t } = useTranslation(['depot'])
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
-  const { lang, setLang, t } = useLang()
 
   const { id: annonceId } = useParams<{ id?: string }>()
   const isRenewal = !!annonceId
@@ -479,18 +446,18 @@ export default function DepotAnnonceDeux() {
   const [maxStep, setMaxStep] = useState(0)
   const [stepErr, setStepErr] = useState<string | null>(null)
 
-  const allStepDefs = [
-    { key: 'statut', title: 'Ton statut', part: 1 },
-    { key: 'esprit', title: "L'Esprit Coloc'", part: 2 },
-    { key: 'logement', title: 'Le logement', part: 3 },
-    { key: 'services', title: 'Les services', part: 4 },
-    { key: 'chambre', title: 'La chambre', part: 5 },
-    { key: 'regles', title: 'Les règles', part: 6 },
-    { key: 'photos', title: 'Les photos', part: 7 },
-    { key: 'publier', title: 'Publier', part: null },
-  ] as const
-  const stepsForRole = (r: Role) => allStepDefs.filter((s) => !(s.key === 'regles' && r === 'proprio'))
-  const steps = useMemo(() => stepsForRole(role), [role])
+const allStepDefs = [
+  { key: 'statut', title: t('depot:steps.statut') },
+  { key: 'esprit', title: t('depot:steps.esprit') },
+  { key: 'logement', title: t('depot:steps.logement') },
+  { key: 'services', title: t('depot:steps.services') },
+  { key: 'chambre', title: t('depot:steps.chambre') },
+  { key: 'regles', title: t('depot:steps.regles') },
+  { key: 'photos', title: t('depot:steps.photos') },
+  { key: 'publier', title: t('depot:steps.publier') },
+] as const
+const stepsForRole = (r: Role) => allStepDefs.filter((s) => !(s.key === 'regles' && r === 'proprio'))
+const steps = stepsForRole(role)
   useEffect(() => {
     if (cur > steps.length - 1) setCur(steps.length - 1)
     if (maxStep > steps.length - 1) setMaxStep(steps.length - 1)
@@ -588,17 +555,14 @@ export default function DepotAnnonceDeux() {
   }, [locAddr])
 
   /* ---- Étape 4 : services & commodités ---- */
-  const EQUIPEMENTS = [
-    'Eau courante', 'Surpresseur', 'Balcon', 'Jardin', 'Piscine', 'BBQ',
-    'Gazinière / Plaques électriques', 'Four', 'Machine à laver', 'Abri vélo / moto',
-  ]
+  const EQUIPEMENTS = t('depot:services.equipmentsOptions', { returnObjects: true }) as string[]
   const [equipements, setEquipements] = useState<string[]>([])
   const [internet, setInternet] = useState('')
   const [parkingCars, setParkingCars] = useState('')
   const [parkingCarsCouvert, setParkingCarsCouvert] = useState('')
   const [parkingMoto, setParkingMoto] = useState('')
   const [parkingMotoCouvert, setParkingMotoCouvert] = useState('')
-  const SERVICES_PERSONNEL = ['Gardien', 'Femme de ménage', 'Jardinier', "Porteurs d'eau", 'Intendance et petits travaux']
+  const SERVICES_PERSONNEL = t('depot:services.servicesOptions', { returnObjects: true }) as string[]
   const [servicesPersonnel, setServicesPersonnel] = useState<string[]>([])
   const [servAutre, setServAutre] = useState<string[]>([])
   const [servAutreOn, setServAutreOn] = useState(false)
@@ -621,8 +585,11 @@ export default function DepotAnnonceDeux() {
   function integrateSim() {
     const chosen = CKOO_SERVICES.filter((s) => sim[s.id]?.checked).map((s) => {
       const option = ckooOptionOf(s, sim[s.id])
-      if (!option) return s.name
-      return `${s.name} (${option.label}${sim[s.id]?.weekend && option.weekend ? ' + week-end' : ''})`
+      const serviceName = t(`depot:simulation.services.${s.id}.name`)
+      if (!option) return serviceName
+      const optionLabel = t(`depot:simulation.services.${s.id}.options.${option.id}`)
+      const weekendSuffix = sim[s.id]?.weekend && option.weekend ? ' + week-end' : ''
+      return `${serviceName} (${optionLabel}${weekendSuffix})`
     })
     setCkooIntegrated(chosen.length > 0)
     setCkooTotal(simTotals.monthly)
@@ -644,7 +611,7 @@ export default function DepotAnnonceDeux() {
   const [charges, setCharges] = useState('')
   const [cautionType, setCautionType] = useState<'' | '1mois' | 'autre'>('')
   const [cautionAutre, setCautionAutre] = useState('')
-  const MEUBLEE_OPTIONS = ['Oui', 'Partiellement', 'Non', 'Rachat des meubles']
+  const MEUBLEE_OPTIONS = t('depot:chambre.furnishedOptions', { returnObjects: true }) as string[]
   // Une seule réponse possible ; conservé sous forme de tableau (0 ou 1
   // élément) pour rester compatible avec les brouillons déjà enregistrés.
   const [meublee, setMeublee] = useState<string[]>([])
@@ -652,7 +619,7 @@ export default function DepotAnnonceDeux() {
   const [rachatDescriptif, setRachatDescriptif] = useState('')
 
   /* ---- Étape 6 : règles ---- */
-  const REGLES = ['Filles uniquement', 'Garçons uniquement', 'Animaux acceptés', 'Famille / Enfant(s) accepté(s)']
+  const REGLES = t('depot:regles.options', { returnObjects: true }) as string[]
   const [regles, setRegles] = useState<string[]>([])
 
   /* ---- Étape 7 : photos ---- */
@@ -806,7 +773,7 @@ export default function DepotAnnonceDeux() {
         setCur(s.length - 1)
         setMaxStep(s.length - 1)
       } catch (err) {
-        if (!cancelled) setRenewError(err instanceof Error ? err.message : "Impossible de charger l'annonce.")
+        if (!cancelled) setRenewError(err instanceof Error ? err.message : t('depot:publish.errors.loadFailed', "Impossible de charger l'annonce."))
       } finally {
         if (!cancelled) setLoadingAnnonce(false)
       }
@@ -832,8 +799,8 @@ export default function DepotAnnonceDeux() {
       restoreDraft(draft)
       setToastMessage(
         user
-          ? 'Bon retour ! On finalise la publication de ton annonce…'
-          : 'Bon retour ! Ton brouillon a été restauré — connecte-toi pour publier.',
+          ? t('depot:publish.welcomeBackConnected')
+          : t('depot:publish.welcomeBackDraft'),
       )
       setPendingAutoPublish(true)
 
@@ -868,17 +835,17 @@ export default function DepotAnnonceDeux() {
     const key = steps[cur]?.key
     if (key === 'statut') {
       if (!role) {
-        setStepErr('Merci de sélectionner ton statut.')
+        setStepErr(t('depot:status.errors.required'))
         return false
       }
       if (role === 'membre' && blockedExistingListing) {
-        setStepErr('Tu as déjà une annonce active : un seul dépôt est possible par compte colocataire.')
+        setStepErr(t('depot:status.errors.blocked'))
         return false
       }
     }
     if (key === 'esprit' && role === 'membre') {
       if (nbColocTotal === '' || nbColoc === '') {
-        setStepErr('Merci d\'indiquer le nombre de colocataires.')
+        setStepErr(t('depot:esprit.errors.required'))
         return false
       }
     }
@@ -892,29 +859,29 @@ export default function DepotAnnonceDeux() {
       if (!ok) {
         setStepErr(
           !locOk
-            ? 'Merci de placer ton logement sur la carte (obligatoire).'
-            : 'Merci de compléter tous les champs obligatoires (*) avant de continuer.',
+            ? t('depot:logement.errors.locationRequired')
+            : t('depot:logement.errors.fieldsRequired'),
         )
         return false
       }
     }
     if (key === 'services' && !internet) {
-      setStepErr("Merci d'indiquer la connexion internet disponible.")
+      setStepErr(t('depot:services.errors.internetRequired'))
       return false
     }
     if (key === 'chambre') {
       const loyerDigits = loyer.replace(/\D/g, '')
       if (!dispoDate || !loyerDigits || meublee.length === 0) {
-        setStepErr('Merci de renseigner la date de disponibilité, le loyer et si la chambre est meublée.')
+        setStepErr(t('depot:chambre.errors.required'))
         return false
       }
       if (dispoDate < todayIso()) {
-        setStepErr("La date de disponibilité ne peut pas être antérieure à aujourd'hui.")
+        setStepErr(t('depot:chambre.errors.pastDate'))
         return false
       }
     }
     if (key === 'publier' && role === 'pro' && !proEngageChecked) {
-      setStepErr('Tu dois confirmer cet engagement pour continuer.')
+      setStepErr(t('depot:publish.errors.engagementRequired'))
       return false
     }
     return true
@@ -1085,20 +1052,22 @@ export default function DepotAnnonceDeux() {
           services_personnel: servicesPersonnel,
           services_autre: servAutre,
           services_ckoo: ckooIntegrated ? { services: ckooChosenNames, total_mensuel: ckooTotal } : null,
-          rachat_meubles: meublee.includes('Rachat des meubles') ? { prix: rachatPrix, descriptif: rachatDescriptif } : null,
+          rachat_meubles: meublee.includes('Rachat des meubles') || meublee.includes(t('depot:chambre.furnishedOptions.3'))
+            ? { prix: rachatPrix, descriptif: rachatDescriptif }
+            : null,
           offre: isPaidRole ? offer : null,
           engagement_pro: role === 'pro' ? proEngageChecked : null,
         },
       } as any)
 
-      const successMessage = "Annonce ajoutée avec succès, en attente de validation par l'admin"
-      setSuccess(`${successMessage}. Référence : ${response.reference}`)
+      const successMessage = t('depot:publish.success')
+      setSuccess(t('depot:publish.successWithReference', { message: successMessage, reference: response.reference }))
       setToastMessage(successMessage)
       window.setTimeout(() => {
         navigate('/compte?tab=dossier')
       }, 1500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible de publier l'annonce.")
+      setError(err instanceof Error ? err.message : t('depot:publish.error'))
     } finally {
       setSubmitting(false)
     }
@@ -1115,11 +1084,13 @@ export default function DepotAnnonceDeux() {
     try {
       const res = await api.renouvelerAnnonce(annonceId)
       setRenewSuccess(
-        `Ton annonce a été renouvelée. Nouvelle échéance : ${new Date(res.date_expiration).toLocaleDateString('fr-FR')}.`,
+        t('depot:publish.renewedSuccess', {
+          date: new Date(res.date_expiration).toLocaleDateString(),
+        }),
       )
-      setToastMessage('Annonce renouvelée avec succès')
+      setToastMessage(t('depot:publish.renewedToast'))
     } catch (err) {
-      setRenewError(err instanceof Error ? err.message : 'Impossible de renouveler cette annonce.')
+      setRenewError(err instanceof Error ? err.message : t('depot:publish.renewError'))
     } finally {
       setRenewing(false)
     }
@@ -1130,8 +1101,9 @@ export default function DepotAnnonceDeux() {
   /* ---------------------------------------------------------------- */
   const stepKey = steps[cur]?.key
   const isLast = cur === steps.length - 1
-  const recapDuration = isPaidRole ? '4 mois' : '2 mois'
+  const recapDurationValue = isPaidRole ? '4 mois' : '2 mois'
   const currentAmountLabel = role === 'pro' && offer === 'immo' ? '50 000 Ar' : '20 000 Ar'
+  const connectedAccountLabel = user?.email || user?.telephone || t('depot:publish.defaultAccount')
 
   return (
     <SiteLayout>
@@ -1147,9 +1119,9 @@ export default function DepotAnnonceDeux() {
       <div className="phead">
         <div className="phead-top">
           <div className="phead-step">
-            {t('step_word')} <b>{cur + 1}</b> / <b>{steps.length}</b>
+            {t('depot:step')} <b>{cur + 1}</b> / <b>{steps.length}</b>
           </div>
-          <div className="phead-title bb">{t('progress')}</div>
+          <div className="phead-title bb">{t('depot:progress')}</div>
         </div>
         <div className="pbar">
           <div className="pbar-fill" style={{ width: `${((cur + 1) / steps.length) * 100}%` }} />
@@ -1171,9 +1143,9 @@ export default function DepotAnnonceDeux() {
       <div className="wrap">
         <div className="intro">
           <div className="intro-h bb">
-            {t('intro_h')} <span>{t('intro_h2')}</span>
+            {t('depot:introH')} <span>{t('depot:introH2')}</span>
           </div>
-          <div className="intro-p">{t('intro_p')}</div>
+          <div className="intro-p">{t('depot:introP')}</div>
         </div>
 
         {error && (
@@ -1185,57 +1157,54 @@ export default function DepotAnnonceDeux() {
 
         <div className="card">
           {isRenewal && loadingAnnonce && (
-            <div className="hint"><Loader2 size={14} className="animate-spin" /> Chargement de ton annonce...</div>
+            <div className="hint"><Loader2 size={14} className="animate-spin" /> {t('depot:loadingAnnonce')}</div>
           )}
 
           <div className="draft-bar">
             <button
               className="btn-draft"
               style={{ marginLeft: 'auto' }}
-              onClick={() => setToastMessage(t('draft_saved'))}
+              onClick={() => setToastMessage(t('depot:draftSaved'))}
             >
-              <Save size={14} /> {t('draft_save')}
+              <Save size={14} /> {t('depot:draftSave')}
             </button>
           </div>
 
           {/* ÉTAPE 1 — STATUT */}
           {stepKey === 'statut' && (
             <section className="step on">
-              <div className="s-title bb"><UserCheck size={22} /> <span className="s-part">Partie 1</span> — Ton statut</div>
-              <div className="s-sub">Qui es-tu par rapport à ce logement ? Cela adapte la suite du formulaire.</div>
+              <div className="s-title bb"><UserCheck size={22} /> <span className="s-part">{t('depot:status.part')}</span> — {t('depot:status.title')}</div>
+              <div className="s-sub">{t('depot:status.subtitle')}</div>
               <div className="grp">
-                <label className="lbl">Tu es...<span className="req">*</span></label>
+                <label className="lbl">{t('depot:status.whoLabel')}<span className="req">*</span></label>
                 <div className="opts" style={{ flexDirection: 'column' }}>
                   <OptCard
                     icon={Users}
-                    title="Membre de la colocation"
-                    desc="Tu vis dans le logement et cherches un·e (des) coloc(s)."
+                    title={t('depot:status.member.title')}
+                    desc={t('depot:status.member.desc')}
                     on={role === 'membre'}
                     onClick={() => setRole('membre')}
                   />
                   <OptCard
                     icon={KeyRound}
-                    title="Propriétaire du logement"
-                    desc="Tu n'y vis pas mais tu possèdes le bien et le proposes en colocation."
+                    title={t('depot:status.owner.title')}
+                    desc={t('depot:status.owner.desc')}
                     on={role === 'proprio'}
                     onClick={() => setRole('proprio')}
                   />
                   <OptCard
                     icon={Briefcase}
-                    title="Professionnel de l'immobilier"
-                    desc="Agent ou gestionnaire indépendant qui publie pour le compte d'un propriétaire."
+                    title={t('depot:status.pro.title')}
+                    desc={t('depot:status.pro.desc')}
                     on={role === 'pro'}
                     onClick={() => setRole('pro')}
                   />
                 </div>
                 {role === 'membre' && checkingExistingListing && (
-                  <div className="hint"><Loader2 size={12} className="animate-spin" /> Vérification de tes annonces en cours...</div>
+                  <div className="hint"><Loader2 size={12} className="animate-spin" /> {t('depot:status.checking')}</div>
                 )}
                 {role === 'membre' && !checkingExistingListing && blockedExistingListing && (
-                  <ErrBox>
-                    Tu as déjà une annonce active en tant que colocataire. Un seul dépôt est possible par compte pour
-                    ce profil — retire ou attends l'expiration de ton annonce en cours pour en publier une nouvelle.
-                  </ErrBox>
+                  <ErrBox>{t('depot:status.blockedListing')}</ErrBox>
                 )}
                 {stepErr && <ErrBox>{stepErr}</ErrBox>}
                 {isPaidRole && (
@@ -1243,12 +1212,12 @@ export default function DepotAnnonceDeux() {
                     <HeartHandshake size={20} />
                     <div>
                       <div style={{ fontWeight: 700, color: 'var(--dark)', marginBottom: 3 }}>
-                        Tu deviens partenaire solidaire du projet
+                        {t('depot:status.partnerCallout.title')}
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--gr1)', lineHeight: 1.55 }}>
-                        En tant que {role === 'pro' ? "professionnel de l'immobilier" : 'propriétaire'}, tu es considéré·e
-                        comme un partenaire solidaire de Sarintany'COLOC. Ta participation aide à rendre le service
-                        soutenable et permet à la communauté de colocataires d'accéder à un meilleur logement.
+                        {role === 'pro'
+                          ? t('depot:status.partnerCallout.textPro')
+                          : t('depot:status.partnerCallout.textOwner')}
                       </div>
                     </div>
                   </div>
@@ -1260,53 +1229,42 @@ export default function DepotAnnonceDeux() {
           {/* ÉTAPE 2 — ESPRIT COLOC */}
           {stepKey === 'esprit' && (
             <section className="step on">
-              <div className="s-title bb"><UsersRound size={22} /> <span className="s-part">Partie 2</span> — L'Esprit Coloc'</div>
+              <div className="s-title bb"><UsersRound size={22} /> <span className="s-part">{t('depot:esprit.part')}</span> — {t('depot:esprit.title')}</div>
               <div className="s-sub">
-                {role === 'membre'
-                  ? "Tu habites dans cette maison avec d'autres colocataires. Quelle ambiance recherches-tu ?"
-                  : 'Tu connais les caractéristiques de ton bien, son quartier et ses voisins. Quelle ambiance te paraît être la plus appropriée ?'}
+                {role === 'membre' ? t('depot:esprit.subtitleMember') : t('depot:esprit.subtitleOther')}
               </div>
 
               <div className="grp">
-                <label className="lbl">Mode de constitution</label>
+                <label className="lbl">{t('depot:esprit.modeLabel')}</label>
                 {mode === 'flux' ? (
                   <div className="mc on">
                     <div className="oc-ico"><UserCheck size={18} /></div>
                     <div>
-                      <div className="oc-t">Au fil de l'eau</div>
-                      <div className="oc-d">
-                        Validation individuelle : tu valides les colocataires un par un. Tu peux échanger avec chaque
-                        candidat·e avant de l'accepter.
-                      </div>
+                      <div className="oc-t">{t('depot:esprit.flux.title')}</div>
+                      <div className="oc-d">{t('depot:esprit.flux.desc')}</div>
                     </div>
                   </div>
                 ) : (
                   <div className="mc on">
                     <div className="oc-ico"><UsersRound size={18} /></div>
                     <div>
-                      <div className="oc-t">Colocation complète</div>
-                      <div className="oc-d">
-                        Le logement démarre une fois le groupe complet : les candidat·e·s forment des équipes en lien
-                        avec les critères que tu as renseignés ci-après. La première équipe au complet l'emporte.
-                        Tu ne valides ou ne refuses que des équipes complètes.
-                      </div>
+                      <div className="oc-t">{t('depot:esprit.complete.title')}</div>
+                      <div className="oc-d">{t('depot:esprit.complete.desc')}</div>
                     </div>
                   </div>
                 )}
                 {mode === 'flux' && (
                   <div className="cond show">
                     <div style={{ fontSize: 12, color: 'var(--gr1)', lineHeight: 1.55, textAlign: 'center' }}>
-                      <MessageCircle size={14} style={{ color: 'var(--cy)' }} /> Tu gardes la main sur chaque
-                      validation et peux discuter avec les candidat·e·s depuis ta messagerie avant de les accepter.
+                      <MessageCircle size={14} style={{ color: 'var(--cy)' }} /> {t('depot:esprit.flux.hint')}
                     </div>
                   </div>
                 )}
                 {mode === 'complete' && (
                   <div className="cond show">
                     <div style={{ fontSize: 12, color: 'var(--gr1)', lineHeight: 1.55, textAlign: 'center' }}>
-                      <HeartHandshake size={14} style={{ color: 'var(--cy)' }} /> En tant que{' '}
-                      {role === 'pro' ? "professionnel de l'immobilier" : 'propriétaire'}, tu es considéré·e comme un
-                      partenaire solidaire de Sarintany'COLOC.
+                      <HeartHandshake size={14} style={{ color: 'var(--cy)' }} />{' '}
+                      {role === 'pro' ? t('depot:esprit.complete.hintPro') : t('depot:esprit.complete.hintOwner')}
                     </div>
                   </div>
                 )}
@@ -1314,7 +1272,7 @@ export default function DepotAnnonceDeux() {
 
               {role === 'membre' && (
                 <div className="grp">
-                  <label className="lbl">Nombre total de colocataires<span className="req">*</span></label>
+                  <label className="lbl">{t('depot:esprit.totalColocLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     {['2', '3', '4', '5', '6+'].map((n) => (
                       <Pill key={n} label={n} on={nbColocTotal === n} onClick={() => setNbColocTotal(n)} />
@@ -1325,7 +1283,7 @@ export default function DepotAnnonceDeux() {
 
               {role === 'membre' && (
                 <div className="grp">
-                  <label className="lbl">Nombre de colocataires recherchés<span className="req">*</span></label>
+                  <label className="lbl">{t('depot:esprit.wantedColocLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     {['1', '2', '3', '4+'].map((n) => (
                       <Pill key={n} label={n} on={nbColoc === n} onClick={() => setNbColoc(n)} />
@@ -1336,53 +1294,51 @@ export default function DepotAnnonceDeux() {
 
               {role !== 'membre' && (
                 <div className="grp">
-                  <label className="lbl">Type d'annonce<span className="req">*</span></label>
+                  <label className="lbl">{t('depot:esprit.typeAnnonceLabel')}<span className="req">*</span></label>
                   <div className="pills">
-                    <Pill label="Colocation existante" on={typeAnnonce === 'existante'} onClick={() => setTypeAnnonce('existante')} />
-                    <Pill label="Création d'une colocation" on={typeAnnonce === 'creation'} onClick={() => setTypeAnnonce('creation')} />
+                    <Pill label={t('depot:esprit.existingColoc')} on={typeAnnonce === 'existante'} onClick={() => setTypeAnnonce('existante')} />
+                    <Pill label={t('depot:esprit.createColoc')} on={typeAnnonce === 'creation'} onClick={() => setTypeAnnonce('creation')} />
                   </div>
                 </div>
               )}
 
               <div className="grp">
                 <label className="lbl">
-                  Ambiance de la colocation souhaitée <span className="opt">(recommandé)</span>
+                  {t('depot:esprit.ambianceLabel')} <span className="opt">{t('depot:esprit.recommended')}</span>
                 </label>
-                <div style={{ fontSize: 12, color: 'var(--gr1)', fontWeight: 700, margin: '2px 0 6px' }}>Tranche d'âge</div>
+                <div style={{ fontSize: 12, color: 'var(--gr1)', fontWeight: 700, margin: '2px 0 6px' }}>{t('depot:esprit.ageGroup')}</div>
                 <div className="pills">
-                  {['18–25 ans', '25–35 ans', '35 ans et +', 'Tous âges'].map((a) => (
+                  {(t('depot:esprit.ageOptions', { returnObjects: true }) as string[]).map((a) => (
                     <Pill key={a} label={a} on={ambianceAge === a} onClick={() => setAmbianceAge(a)} />
                   ))}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--gr1)', fontWeight: 700, margin: '14px 0 6px' }}>
-                  Ambiance <span style={{ fontWeight: 400, color: 'var(--gr2)' }}>(plusieurs choix possibles)</span>
+                  {t('depot:esprit.ambianceMulti')} <span style={{ fontWeight: 400, color: 'var(--gr2)' }}>{t('depot:esprit.multiChoice')}</span>
                 </div>
                 <div className="pills">
-                  {['Calme / studieuse', 'Conviviale', 'Festive', 'Familiale', 'Pro / actifs', 'Étudiante', 'Éco / nature', 'Inclusive', 'Bienveillante'].map(
-                    (a) => (
-                      <Pill
-                        key={a}
-                        label={a}
-                        on={ambiance.includes(a)}
-                        onClick={() => setAmbiance((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))}
-                      />
-                    ),
-                  )}
+                  {(t('depot:esprit.ambianceOptions', { returnObjects: true }) as string[]).map((a) => (
+                    <Pill
+                      key={a}
+                      label={a}
+                      on={ambiance.includes(a)}
+                      onClick={() => setAmbiance((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))}
+                    />
+                  ))}
                 </div>
               </div>
 
               <div className="grp">
                 <label className="lbl">
-                  Encart de présentation <span className="opt">— à destination des futurs colocataires</span>
+                  {t('depot:esprit.presentationLabel')} <span className="opt">{t('depot:esprit.presentationSub')}</span>
                 </label>
                 <textarea
                   className="ta"
                   maxLength={1000}
                   value={presentation}
                   onChange={(e) => setPresentation(e.target.value)}
-                  placeholder="Décris l'ambiance de la coloc, le quartier, le profil recherché..."
+                  placeholder={t('depot:esprit.presentationPlaceholder')}
                 />
-                <div className={cn('charcount', presentation.length >= 1000 && 'over')}>{presentation.length} / 1000 caractères</div>
+                <div className={cn('charcount', presentation.length >= 1000 && 'over')}>{presentation.length} {t('depot:esprit.charLimit')}</div>
               </div>
             </section>
           )}
@@ -1390,13 +1346,13 @@ export default function DepotAnnonceDeux() {
           {/* ÉTAPE 3 — LOGEMENT */}
           {stepKey === 'logement' && (
             <section className="step on">
-              <div className="s-title bb"><Home size={22} /> <span className="s-part">Partie 3</span> — Le logement</div>
-              <div className="s-sub">Décris le bien qui accueille la colocation.</div>
+              <div className="s-title bb"><Home size={22} /> <span className="s-part">{t('depot:logement.part')}</span> — {t('depot:logement.title')}</div>
+              <div className="s-sub">{t('depot:logement.subtitle')}</div>
 
               <div className="grp">
-                <label className="lbl">Type de logement<span className="req">*</span></label>
+                <label className="lbl">{t('depot:logement.typeLabel')}<span className="req">*</span></label>
                 <div className="pills">
-                  {['Appartement', 'Maison', 'Autre'].map((v) => (
+                  {(t('depot:logement.typeOptions', { returnObjects: true }) as string[]).map((v) => (
                     <Pill key={v} label={v} on={typeLogement === v} onClick={() => setTypeLogement(v)} />
                   ))}
                 </div>
@@ -1404,50 +1360,50 @@ export default function DepotAnnonceDeux() {
 
               {role !== 'membre' && (
                 <div className="grp">
-                  <label className="lbl">Nombre total de colocataires<span className="req">*</span></label>
+                  <label className="lbl">{t('depot:logement.totalColocLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     {['2', '3', '4', '5', '6+'].map((v) => (
                       <Pill key={v} label={v} on={nbColocTotal === v} onClick={() => setNbColocTotal(v)} />
                     ))}
                   </div>
-                  <div className="hint"><Info size={11} /> Une colocation compte au moins 2 colocataires.</div>
+                  <div className="hint"><Info size={11} /> {t('depot:logement.totalColocHint')}</div>
                 </div>
               )}
 
               <div className="grp">
-                <label className="lbl">Nombre de pièces total <span className="opt">(hors cuisine et salle d'eau)</span><span className="req">*</span></label>
+                <label className="lbl">{t('depot:logement.piecesLabel')} <span className="opt">{t('depot:logement.piecesSub')}</span><span className="req">*</span></label>
                 <div className="inp-suffix" style={{ maxWidth: 200 }}>
                   <input
                     className="inp inp-pieces"
                     type="number"
                     min={1}
-                    placeholder="ex : 4"
+                    placeholder={t('depot:logement.piecesPlaceholder')}
                     value={nbPieces}
                     onChange={(e) => setNbPieces(e.target.value)}
                   />
-                  <span className="suf">pièce(s)</span>
+                  <span className="suf">{t('depot:logement.piecesSuffix')}</span>
                 </div>
               </div>
 
               <div className="grp">
                 <label className="lbl">
-                  Localisation du bien<span className="req">*</span>
+                  {t('depot:logement.locationLabel')}<span className="req">*</span>
                 </label>
 
                 {/* Sous-titre avec astérisque */}
                 <p className="subtitle">
-                  Affiner son emplacement<span className="req">*</span>
+                  {t('depot:logement.refineLabel')}<span className="req">*</span>
                 </p>
 
                 {/* Sous-titre bleu bien visible */}
                 <p className="subtitle-blue">
-                  En fonction de son emplacement, ton logement peut gagner en intérêt. Alors sois précis.
+                  {t('depot:logement.refineHint')}
                 </p>
 
                 <input
                   className="inp"
                   type="text"
-                  placeholder="Adresse ou quartier — ex : Ankadifotsy, Antananarivo"
+                  placeholder={t('depot:logement.addressPlaceholder')}
                   style={{ marginBottom: 10 }}
                   value={locAddr}
                   onChange={(e) => setLocAddr(e.target.value)}
@@ -1462,14 +1418,15 @@ export default function DepotAnnonceDeux() {
                   }}
                   focus={focus}
                   pinOpacity={pinOpaque ? 1 : 0}
+                  hintText={t('depot:logement.mapDragHint')}
+                  attributionText={t('depot:map.precisionAttribution')}
                 />
 
                 <div className="note" style={{ justifyContent: 'center', textAlign: 'center' }}>
-                  <Lock size={13} /> Pour des raisons de confidentialité, si tu renseignes ton adresse
-                  exacte, celle-ci n'apparaîtra jamais sur ton annonce — seul le quartier sera visible.
+                  <Lock size={13} /> {t('depot:logement.privacyNote')}
                 </div>
                 <div className="hint" style={{ justifyContent: 'center', textAlign: 'center' }}>
-                  <Info size={11} /> Le placement sur la carte est obligatoire, même si tu as saisi une adresse.
+                  <Info size={11} /> {t('depot:logement.mapRequiredHint')}
                 </div>
               </div>
 
@@ -1480,11 +1437,11 @@ export default function DepotAnnonceDeux() {
           {/* ÉTAPE 4 — SERVICES & COMMODITÉS */}
           {stepKey === 'services' && (
             <section className="step on">
-              <div className="s-title bb"><Wrench size={22} /> <span className="s-part">Partie 4</span> — Les services & commodités</div>
-              <div className="s-sub">Coche tout ce qui est disponible dans le logement.</div>
+              <div className="s-title bb"><Wrench size={22} /> <span className="s-part">{t('depot:services.part')}</span> — {t('depot:services.title')}</div>
+              <div className="s-sub">{t('depot:services.subtitle')}</div>
 
               <div className="grp">
-                <div className="grp-t">Équipements</div>
+                <div className="grp-t">{t('depot:services.equipmentsTitle')}</div>
                 <div className="checks-grid">
                   {EQUIPEMENTS.map((eq) => (
                     <CheckRow
@@ -1498,9 +1455,9 @@ export default function DepotAnnonceDeux() {
               </div>
 
               <div className="grp">
-                <div className="grp-t">Connexion internet<span className="req">*</span></div>
+                <div className="grp-t">{t('depot:services.internetTitle')}<span className="req">*</span></div>
                 <div className="pills">
-                  {['ADSL', 'Fibre', 'Box', 'Aucune'].map((v) => (
+                  {(t('depot:services.internetOptions', { returnObjects: true }) as string[]).map((v) => (
                     <Pill key={v} label={v} on={internet === v} onClick={() => setInternet(v)} />
                   ))}
                 </div>
@@ -1508,62 +1465,61 @@ export default function DepotAnnonceDeux() {
               </div>
 
               <div className="grp">
-                <div className="grp-t">Parking</div>
+                <div className="grp-t">{t('depot:services.parkingTitle')}</div>
                 <div className="row2">
                   <div>
-                    <label className="lbl">Capacité — nombre de voitures</label>
-                    <input className="inp" type="number" min={0} placeholder="ex : 2" value={parkingCars} onChange={(e) => setParkingCars(e.target.value)} />
+                    <label className="lbl">{t('depot:services.parkingCarsLabel')}</label>
+                    <input className="inp" type="number" min={0} placeholder={t('depot:services.parkingCarsPlaceholder')} value={parkingCars} onChange={(e) => setParkingCars(e.target.value)} />
                   </div>
                   <div>
-                    <label className="lbl">Couvert ?</label>
+                    <label className="lbl">{t('depot:services.coveredLabel')}</label>
                     <select className="sel" value={parkingCarsCouvert} onChange={(e) => setParkingCarsCouvert(e.target.value)}>
-                      <option value="">- Sélectionner -</option>
-                      <option>Couvert</option>
-                      <option>Non couvert</option>
+                      <option value="">{t('depot:services.selectPlaceholder')}</option>
+                      <option>{t('depot:services.covered')}</option>
+                      <option>{t('depot:services.notCovered')}</option>
                     </select>
                   </div>
                 </div>
                 <div className="row2" style={{ marginTop: 9 }}>
                   <div>
-                    <label className="lbl">Capacité — nombre de 2 roues</label>
-                    <input className="inp" type="number" min={0} placeholder="ex : 3" value={parkingMoto} onChange={(e) => setParkingMoto(e.target.value)} />
+                    <label className="lbl">{t('depot:services.parkingMotoLabel')}</label>
+                    <input className="inp" type="number" min={0} placeholder={t('depot:services.parkingMotoPlaceholder')} value={parkingMoto} onChange={(e) => setParkingMoto(e.target.value)} />
                   </div>
                   <div>
-                    <label className="lbl">Couvert ?</label>
+                    <label className="lbl">{t('depot:services.coveredLabel')}</label>
                     <select className="sel" value={parkingMotoCouvert} onChange={(e) => setParkingMotoCouvert(e.target.value)}>
-                      <option value="">- Sélectionner -</option>
-                      <option>Couvert</option>
-                      <option>Non couvert</option>
+                      <option value="">{t('depot:services.selectPlaceholder')}</option>
+                      <option>{t('depot:services.covered')}</option>
+                      <option>{t('depot:services.notCovered')}</option>
                     </select>
                   </div>
                 </div>
               </div>
 
               <div className="grp">
-                <div className="grp-t">Services proposés</div>
+                <div className="grp-t">{t('depot:services.offeredTitle')}</div>
                 {ckooEligible && (
                   <div className="ckoo-teaser">
                     <div className="ckoo-teaser-head bb">
-                      {role === 'membre' ? 'Plus de simplicité au quotidien ?' : 'Simplifie la gestion de ta colocation ?'}
+                      {role === 'membre' ? t('depot:services.ckooHeadMember') : t('depot:services.ckooHeadOther')}
                     </div>
                     <div className="ckoo-teaser-txt">
-                      Avec Coloc'KOO, profite de services mutualisés selon tes besoins (offre disponible à
-                      Antananarivo pour le moment).
+                      {t('depot:services.ckooText')}
                     </div>
                     <button type="button" className="ckoo-teaser-btn" onClick={() => setSimOpen(true)}>
                       {ckooIntegrated ? <CheckCircle2 size={16} /> : <Calculator size={16} />}
-                      {ckooIntegrated ? 'Services intégrés — modifier' : 'Faire une simulation'}
+                      {ckooIntegrated ? t('depot:services.ckooModify') : t('depot:services.ckooSimulate')}
                     </button>
                     {ckooIntegrated && (
                       <div className="ckoo-teaser-confirm" style={{ display: 'flex' }}>
                         <HeartHandshake size={14} />
-                        <span>Merci pour ta confiance ! Les services sélectionnés seront intégrés à ton annonce.</span>
+                        <span>{t('depot:services.ckooConfirm')}</span>
                       </div>
                     )}
                   </div>
                 )}
                 <div style={{ fontSize: 12, color: 'var(--gr1)', fontWeight: 700, margin: '16px 0 8px' }}>
-                  Les services déjà en place :
+                  {t('depot:services.existingServicesTitle')}
                 </div>
                 <div className="checks-grid">
                   {SERVICES_PERSONNEL.map((sv) => (
@@ -1588,7 +1544,7 @@ export default function DepotAnnonceDeux() {
                         else if (servAutre.length === 0) setServAutre([''])
                       }}
                     />{' '}
-                    Autre (préciser – 3 Max)
+                    {t('depot:services.otherService')}
                   </label>
                   {servAutreOn && (
                     <div style={{ marginTop: 6 }}>
@@ -1597,7 +1553,7 @@ export default function DepotAnnonceDeux() {
                           <input
                             className="inp"
                             style={{ flex: 1 }}
-                            placeholder="Précise le service..."
+                            placeholder={t('depot:services.otherServicePlaceholder')}
                             value={v}
                             onChange={(e) =>
                               setServAutre((prev) => prev.map((x, idx) => (idx === i ? e.target.value : x)))
@@ -1618,7 +1574,7 @@ export default function DepotAnnonceDeux() {
                           onClick={() => setServAutre((prev) => [...prev, ''])}
                           style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', color: 'var(--g2)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
                         >
-                          <Plus size={14} /> Ajouter un autre élément
+                          <Plus size={14} /> {t('depot:services.addOther')}
                         </button>
                       )}
                     </div>
@@ -1631,60 +1587,52 @@ export default function DepotAnnonceDeux() {
           {/* ÉTAPE 5 — CHAMBRE */}
           {stepKey === 'chambre' && (
             <section className="step on">
-              <div className="s-title bb"><Bed size={22} /> <span className="s-part">Partie 5</span> — La chambre proposée</div>
-              <div className="s-sub">Les conditions de la chambre disponible.</div>
+              <div className="s-title bb"><Bed size={22} /> <span className="s-part">{t('depot:chambre.part')}</span> — {t('depot:chambre.title')}</div>
+              <div className="s-sub">{t('depot:chambre.subtitle')}</div>
 
               <div className="row2">
                 <div className="grp">
-                  <label className="lbl">Disponible à partir du<span className="req">*</span></label>
+                  <label className="lbl">{t('depot:chambre.dispoLabel')}<span className="req">*</span></label>
                   <input className="inp" type="date" min={todayIso()} value={dispoDate} onChange={(e) => setDispoDate(e.target.value)} />
                 </div>
-               {/*  <div className="grp"></div>*/} 
-                 {/* <label className="lbl">Surface de la chambre</label>
-                  <div className="inp-suffix">
-                    <input className="inp" type="number" min={0} placeholder="ex : 14" value={chambreSurface} onChange={(e) => setChambreSurface(e.target.value)} />
-                    <span className="suf">m²</span>
-                  </div> */}
-                
               </div>
 
               <div className="row2">
                 <div className="grp">
-                  <label className="lbl">Loyer <span className="opt">(hors charges)</span><span className="req">*</span></label>
-                  <MoneyInput value={loyer} onChange={setLoyer} placeholder="350 000" />
+                  <label className="lbl">{t('depot:chambre.loyerLabel')} <span className="opt">{t('depot:chambre.loyerSub')}</span><span className="req">*</span></label>
+                  <MoneyInput value={loyer} onChange={setLoyer} placeholder={t('depot:chambre.loyerPlaceholder')} />
                 </div>
                 <div className="grp">
-                  <label className="lbl">Charges <span className="opt">(moyenne / mois)</span></label>
-                  <MoneyInput value={charges} onChange={setCharges} placeholder="40 000" />
+                  <label className="lbl">{t('depot:chambre.chargesLabel')} <span className="opt">{t('depot:chambre.chargesSub')}</span></label>
+                  <MoneyInput value={charges} onChange={setCharges} placeholder={t('depot:chambre.chargesPlaceholder')} />
                   {ckooIntegrated && (
                     <div style={{ fontSize: 12, color: 'var(--g2)', fontWeight: 700, marginTop: 6 }}>
-                      <Sparkles size={12} /> + services Coloc'KOO {fmtAr(ckooTotal)} Ar
+                      <Sparkles size={12} /> {t('depot:chambre.ckooExtra', { amount: fmtAr(ckooTotal) })}
                     </div>
                   )}
                 </div>
               </div>
               <div className="note" style={{ background: 'var(--cy-lt)', borderColor: 'rgba(70,189,214,.3)', display: 'block', textAlign: 'center' }}>
-                <Info size={13} style={{ color: 'var(--cy)' }} /> <b>Conseil :</b> dissocie le loyer des charges (internet,
-                services, etc.) — ton annonce sera plus attractive.
+                <Info size={13} style={{ color: 'var(--cy)' }} /> {t('depot:chambre.advice')}
               </div>
 
               <div className="grp">
-                <label className="lbl">Caution</label>
+                <label className="lbl">{t('depot:chambre.cautionLabel')}</label>
                 <div className="pills">
-                  <Pill label="1 mois de loyer" on={cautionType === '1mois'} onClick={() => setCautionType('1mois')} />
-                  <Pill label="Autre" on={cautionType === 'autre'} onClick={() => setCautionType('autre')} />
+                  <Pill label={t('depot:chambre.caution1Month')} on={cautionType === '1mois'} onClick={() => setCautionType('1mois')} />
+                  <Pill label={t('depot:chambre.cautionOther')} on={cautionType === 'autre'} onClick={() => setCautionType('autre')} />
                 </div>
                 {cautionType === 'autre' && (
                   <div style={{ marginTop: 9, maxWidth: 260 }}>
-                    <MoneyInput value={cautionAutre} onChange={setCautionAutre} placeholder="Montant de la caution" />
+                    <MoneyInput value={cautionAutre} onChange={setCautionAutre} placeholder={t('depot:chambre.cautionOtherPlaceholder')} />
                   </div>
                 )}
               </div>
 
               <div className="grp">
                 <label className="lbl">
-                  La chambre est meublée<span className="req">*</span>{' '}
-                  <span className="opt">(une seule réponse possible)</span>
+                  {t('depot:chambre.furnishedLabel')}<span className="req">*</span>{' '}
+                  <span className="opt">{t('depot:chambre.furnishedSub')}</span>
                 </label>
                 <div className="checks-grid" role="radiogroup">
                   {MEUBLEE_OPTIONS.map((opt) => (
@@ -1699,17 +1647,17 @@ export default function DepotAnnonceDeux() {
                     </label>
                   ))}
                 </div>
-                {meublee.includes('Rachat des meubles') && (
+                {meublee.includes(MEUBLEE_OPTIONS[3]) && (
                   <div className="cond show" style={{ marginTop: 10 }}>
-                    <label className="lbl">Prix de rachat des meubles</label>
+                    <label className="lbl">{t('depot:chambre.resalePriceLabel')}</label>
                     <div style={{ maxWidth: 260 }}>
-                      <MoneyInput value={rachatPrix} onChange={setRachatPrix} placeholder="ex : 50 000" />
+                      <MoneyInput value={rachatPrix} onChange={setRachatPrix} placeholder={t('depot:chambre.resalePricePlaceholder')} />
                     </div>
-                    <label className="lbl" style={{ marginTop: 11 }}>Descriptif des meubles à racheter</label>
+                    <label className="lbl" style={{ marginTop: 11 }}>{t('depot:chambre.resaleDescLabel')}</label>
                     <textarea
                       className="ta"
                       style={{ minHeight: 70 }}
-                      placeholder="Décris en quelques lignes les meubles concernés (lit, armoire, électroménager...)."
+                      placeholder={t('depot:chambre.resaleDescPlaceholder')}
                       value={rachatDescriptif}
                       onChange={(e) => setRachatDescriptif(e.target.value)}
                     />
@@ -1723,8 +1671,8 @@ export default function DepotAnnonceDeux() {
           {/* ÉTAPE 6 — RÈGLES */}
           {stepKey === 'regles' && (
             <section className="step on">
-              <div className="s-title bb"><Scale size={22} /> <span className="s-part">Partie 6</span> — Les règles de la coloc</div>
-              <div className="s-sub">Précise les conditions de vie commune.</div>
+              <div className="s-title bb"><Scale size={22} /> <span className="s-part">{t('depot:regles.part')}</span> — {t('depot:regles.title')}</div>
+              <div className="s-sub">{t('depot:regles.subtitle')}</div>
               <div className="grp">
                 <div className="checks-grid">
                   {REGLES.map((r) => (
@@ -1743,12 +1691,12 @@ export default function DepotAnnonceDeux() {
           {/* ÉTAPE 7 — PHOTOS */}
           {stepKey === 'photos' && (
             <section className="step on">
-              <div className="s-title bb"><Camera size={22} /> <span className="s-part">Partie 7</span> — Les photos</div>
-              <div className="s-sub">Ajoute des photos : les annonces avec photos sont bien plus consultées.</div>
+              <div className="s-title bb"><Camera size={22} /> <span className="s-part">{t('depot:photos.part')}</span> — {t('depot:photos.title')}</div>
+              <div className="s-sub">{t('depot:photos.subtitle')}</div>
               <div className="grp">
-                <label className="lbl">Photos du logement</label>
+                <label className="lbl">{t('depot:photos.label')}</label>
                 <div className="photos-info">
-                  <Camera size={16} /> <div>Les annonces avec photos sont en moyenne <b>7× plus consultées</b>.</div>
+                  <Camera size={16} /> <div>{t('depot:photos.info')}</div>
                 </div>
                 <div className="photo-grid">
                   {[0, 1, 2].map((i) => (
@@ -1762,10 +1710,10 @@ export default function DepotAnnonceDeux() {
                       {!photoPreviews[i] && (
                         <span className="ps-ph" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
                           <Camera size={22} />
-                          <span className="ps-t">{i === 0 ? 'Couverture' : `Photo ${i + 1}`}</span>
+                          <span className="ps-t">{i === 0 ? t('depot:photos.cover') : t('depot:photos.photoN', { n: i + 1 })}</span>
                         </span>
                       )}
-                      {photoPreviews[i] && <img src={photoPreviews[i]!} alt={`Photo ${i + 1}`} />}
+                      {photoPreviews[i] && <img src={photoPreviews[i]!} alt={t('depot:photos.photoN', { n: i + 1 })} />}
                       <button
                         type="button"
                         className="ps-del"
@@ -1781,7 +1729,7 @@ export default function DepotAnnonceDeux() {
                   ))}
                 </div>
                 <div style={{ fontSize: 10.5, color: 'var(--gr2)', lineHeight: 1.5, marginTop: 9 }}>
-                  Dimensions recommandées : 1200 × 900 px. 3 photos maximum en version gratuite (max 3 Mo / photo).
+                  {t('depot:photos.recommendation')}
                 </div>
               </div>
             </section>
@@ -1790,12 +1738,11 @@ export default function DepotAnnonceDeux() {
           {/* ÉTAPE 8 — PUBLIER */}
           {stepKey === 'publier' && (
             <section className="step on">
-              <div className="s-title bb"><Send size={22} /> Étape finale — Publie ton annonce</div>
+              <div className="s-title bb"><Send size={22} /> {t('depot:publish.title')}</div>
 
               {isRenewal && (
                 <div className="note" style={{ marginBottom: 14 }}>
-                  <Clock size={13} /> Cette annonce a expiré. Renouvelle-la pour qu'elle redevienne visible
-                  {' '}pendant {recapDuration} de plus, sans avoir à ressaisir tes informations.
+                  <Clock size={13} /> {t('depot:publish.renewalNote', { duration: recapDurationValue })}
                 </div>
               )}
 
@@ -1812,71 +1759,69 @@ export default function DepotAnnonceDeux() {
                     <ShieldCheck size={20} style={{ color: '#c0492f' }} />
                     <div>
                       <div style={{ fontWeight: 700, color: 'var(--dark)', marginBottom: 3 }}>
-                        Engagement du professionnel<span className="req">*</span>
+                        {t('depot:publish.engagement.title')}<span className="req">*</span>
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--gr1)', lineHeight: 1.55 }}>
-                        En publiant cette annonce, tu attestes que le propriétaire que tu représentes est d'accord
-                        pour accueillir une colocation. Cette responsabilité t'engage.
+                        {t('depot:publish.engagement.text')}
                       </div>
                     </div>
                   </div>
                   <label className="check" style={{ marginTop: 10 }}>
                     <input type="checkbox" checked={proEngageChecked} onChange={(e) => setProEngageChecked(e.target.checked)} />{' '}
-                    J'atteste que le propriétaire représenté est d'accord pour une colocation et j'en assume la responsabilité.
+                    {t('depot:publish.engagement.checkbox')}
                   </label>
                   {stepErr && <ErrBox>{stepErr}</ErrBox>}
                 </div>
               )}
 
               <div className="recap">
-                <div className="recap-t">Conditions de publication</div>
-                <div className="recap-row"><Clock size={14} /> Ton annonce sera visible pendant <b style={{ color: 'var(--dark)' }}>&nbsp;{recapDuration}</b>.</div>
-                <div className="recap-row"><Bell size={14} /> Tu recevras une relance 7 jours avant l'échéance pour renouveler ou retirer ton annonce.</div>
-                <div className="recap-row"><ShieldCheck size={14} /> Chaque annonce est vérifiée (modération) avant sa mise en ligne.</div>
+                <div className="recap-t">{t('depot:publish.recapTitle')}</div>
+                <div className="recap-row"><Clock size={14} /> {t('depot:publish.recapVisible', { duration: recapDurationValue })}</div>
+                <div className="recap-row"><Bell size={14} /> {t('depot:publish.recapReminder')}</div>
+                <div className="recap-row"><ShieldCheck size={14} /> {t('depot:publish.recapModeration')}</div>
                 {!isPaidRole && (
-                  <div className="recap-row"><HeartHandshake size={14} /> Publication 100% gratuite — aucune commission.</div>
+                  <div className="recap-row"><HeartHandshake size={14} /> {t('depot:publish.recapFree')}</div>
                 )}
                 {isPaidRole && (
                   <div className="recap-row">
-                    <HeartHandshake size={14} /> Offre partenaire : <b style={{ color: 'var(--dark)' }}>&nbsp;
-                      {LAUNCH_FREE ? <><s style={{ color: 'var(--gr2)' }}>{currentAmountLabel}</s> <span style={{ color: 'var(--g2)' }}>Offert</span></> : currentAmountLabel}
-                    </b> — ta contribution soutient la gratuité côté colocataires.
+                    <HeartHandshake size={14} /> {t('depot:publish.recapOffer', {
+                      amount: LAUNCH_FREE ? `${currentAmountLabel} ${t('depot:publish.offered')}` : currentAmountLabel,
+                    })}
                   </div>
                 )}
               </div>
 
               {ckooIntegrated && (
                 <div className="recap" style={{ background: 'linear-gradient(135deg,var(--g-lt),var(--cy-lt))', borderColor: 'rgba(153,204,51,.3)' }}>
-                  <div className="recap-t" style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Sparkles size={16} style={{ color: 'var(--g2)' }} /> Services Coloc'KOO demandés</div>
+                  <div className="recap-t" style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Sparkles size={16} style={{ color: 'var(--g2)' }} /> {t('depot:publish.ckooRecapTitle')}</div>
                   <div className="recap-row" style={{ alignItems: 'flex-start' }}><ListChecks size={14} /> <span style={{ color: 'var(--dark)' }}>{ckooChosenNames.join(' · ')}</span></div>
-                  <div className="recap-row"><Wallet size={14} /> Estimation : <b style={{ color: 'var(--dark)' }}>&nbsp;{fmtAr(ckooTotal)} Ar / mois</b> (à confirmer)</div>
+                  <div className="recap-row"><Wallet size={14} /> {t('depot:publish.ckooEstimate', { amount: fmtAr(ckooTotal) })}</div>
                 </div>
               )}
 
               {isPaidRole && (
                 <div className="recap" style={{ background: 'linear-gradient(135deg,var(--cy-lt),var(--g-lt))', borderColor: 'rgba(70,189,214,.25)' }}>
                   <div className="recap-t" style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <Wallet size={16} style={{ color: 'var(--cy)' }} /> Ton paiement — {currentAmountLabel}
+                    <Wallet size={16} style={{ color: 'var(--cy)' }} /> {t('depot:publish.paymentTitle', { amount: currentAmountLabel })}
                   </div>
                   {role === 'pro' && (
                     <div style={{ margin: '9px 0 12px' }}>
-                      <label className="lbl" style={{ marginBottom: 8 }}>Choisis ton offre<span className="req">*</span></label>
+                      <label className="lbl" style={{ marginBottom: 8 }}>{t('depot:publish.chooseOffer')}<span className="req">*</span></label>
                       <div className="offer-opts">
                         <div className={cn('offer-card', offer === 'annonce' && 'on')} onClick={() => setOffer('annonce')}>
-                          <div className="of-top"><span className="of-name">Offre unique — à l'annonce</span><span className="of-price"><span className="nominal">20 000 Ar</span> <span className="of-offert" style={{ display: 'inline' }}>Offert</span></span></div>
-                          <div className="of-d">1 annonce à but commercial · validité 4 mois.</div>
+                          <div className="of-top"><span className="of-name">{t('depot:publish.offerAnnonce.name')}</span><span className="of-price"><span className="nominal">20 000 Ar</span> <span className="of-offert" style={{ display: 'inline' }}>{t('depot:publish.offered')}</span></span></div>
+                          <div className="of-d">{t('depot:publish.offerAnnonce.desc')}</div>
                         </div>
                         <div className={cn('offer-card', offer === 'immo' && 'on')} onClick={() => setOffer('immo')}>
-                          <div className="of-top"><span className="of-name">Indépendant IMMO</span><span className="of-price"><span className="nominal">50 000 Ar</span> <span className="of-offert" style={{ display: 'inline' }}>Offert</span></span></div>
-                          <div className="of-d">Même offre, jusqu'à 4 annonces commerciales · validité 4 mois.</div>
+                          <div className="of-top"><span className="of-name">{t('depot:publish.offerImmo.name')}</span><span className="of-price"><span className="nominal">50 000 Ar</span> <span className="of-offert" style={{ display: 'inline' }}>{t('depot:publish.offered')}</span></span></div>
+                          <div className="of-d">{t('depot:publish.offerImmo.desc')}</div>
                         </div>
                       </div>
                     </div>
                   )}
                   <div className="pay-free">
                     <Gift size={20} />
-                    <div><b>Publication offerte — offre de lancement.</b> Aucun paiement n'est requis pour le moment ;
-                      la valeur de l'offre reste affichée à titre indicatif.</div>
+                    <div><b>{t('depot:publish.freeLaunch')}</b></div>
                   </div>
                 </div>
               )}
@@ -1884,12 +1829,11 @@ export default function DepotAnnonceDeux() {
               <div className="note" style={{ marginTop: 14 }}>
                 {user ? (
                   <>
-                    <Info size={13} /> Tu es connecté·e en tant que <b>{user.email || user.telephone || 'utilisateur'}</b>. La
-                    publication utilise ce compte.
+                    <Info size={13} /> {t('depot:publish.connectedNote', { account: connectedAccountLabel })}
                   </>
                 ) : (
                   <>
-                    <Info size={13} /> Pour publier ton annonce, tu devras te connecter depuis ton compte.
+                    <Info size={13} /> {t('depot:publish.notConnectedNote')}
                   </>
                 )}
               </div>
@@ -1900,22 +1844,22 @@ export default function DepotAnnonceDeux() {
           <div className="formnav">
             {cur > 0 && !isRenewal && (
               <button className="btn-back" onClick={prevStep}>
-                <ArrowLeft size={16} /> {t('back')}
+                <ArrowLeft size={16} /> {t('depot:back')}
               </button>
             )}
             {!isLast && !isRenewal && (
               <button className="btn-next" onClick={nextStep}>
-                {t('next')} <ArrowRight size={16} />
+                {t('depot:next')} <ArrowRight size={16} />
               </button>
             )}
             {isLast && !isRenewal && (
               <button className="btn-publish" onClick={handlePublish} disabled={submitting}>
-                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t('publish')}
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t('depot:publishButton')}
               </button>
             )}
             {isRenewal && !renewSuccess && (
               <button className="btn-publish" onClick={handleRenouveler} disabled={renewing || loadingAnnonce}>
-                {renewing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Renouveler mon annonce
+                {renewing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t('depot:renew')}
               </button>
             )}
           </div>
@@ -1927,9 +1871,9 @@ export default function DepotAnnonceDeux() {
   <div className="modal-overlay open" onClick={() => setSimOpen(false)}>
     <div className="modal modal-doc" onClick={(e) => e.stopPropagation()}>
       <button className="modal-close" onClick={() => setSimOpen(false)}><X size={16} /></button>
-      <div className="modal-h bb" style={{ textAlign: 'center' }}>Simule tes services mutualisés</div>
+      <div className="modal-h bb" style={{ textAlign: 'center' }}>{t('depot:simulation.title')}</div>
       <div className="modal-p" style={{ textAlign: 'center', marginBottom: 6, fontSize: 11 }}>
-        Les montants sont indicatifs. Notre équipe te contactera pour confirmer ta demande.
+        {t('depot:simulation.disclaimer')}
       </div>
       <div className="modal-doc-body" style={{ paddingTop: 4 }}>
         <div className="sim-scroll">
@@ -1937,6 +1881,9 @@ export default function DepotAnnonceDeux() {
             const sel: SimSelection = sim[s.id] ?? { checked: false }
             const option = ckooOptionOf(s, sel)
             const minPrice = s.options?.length ? Math.min(...s.options.map((o) => o.price)) : s.price ?? 0
+            const serviceName = t(`depot:simulation.services.${s.id}.name`)
+            const serviceHint = t(`depot:simulation.services.${s.id}.hint`, '')
+            const serviceNote = t(`depot:simulation.services.${s.id}.note`, '')
             const updateSel = (patch: Partial<SimSelection>) =>
               setSim((prev) => ({ ...prev, [s.id]: { ...sel, option: option?.id, ...patch } }))
             return (
@@ -1948,13 +1895,15 @@ export default function DepotAnnonceDeux() {
                     onChange={(e) => updateSel({ checked: e.target.checked })}
                   />
                   <span className="sim-svc-name">
-                    {s.name}{s.star ? <span className="req">*</span> : ''}
-                    {s.hint && <span className="sim-svc-hint">{s.hint}</span>}
+                    {serviceName}{s.star ? <span className="req">*</span> : ''}
+                    {serviceHint && <span className="sim-svc-hint">{serviceHint}</span>}
                   </span>
                   <span className="sim-svc-price">
                     {sel.checked
-                      ? `${groupThousands(ckooMonthlyPrice(s, sel))} Ar / mois`
-                      : `${s.options?.length ? 'dès ' : ''}${groupThousands(minPrice)} Ar / mois`}
+                      ? t('depot:simulation.perMonth', { amount: groupThousands(ckooMonthlyPrice(s, sel)) })
+                      : s.options?.length
+                        ? t('depot:simulation.perMonthFrom', { amount: groupThousands(minPrice) })
+                        : t('depot:simulation.perMonth', { amount: groupThousands(minPrice) })}
                   </span>
                 </label>
 
@@ -1966,7 +1915,7 @@ export default function DepotAnnonceDeux() {
                       onChange={(e) => updateSel({ option: e.target.value })}
                     >
                       {s.options.map((o) => (
-                        <option key={o.id} value={o.id}>{o.label}</option>
+                        <option key={o.id} value={o.id}>{t(`depot:simulation.services.${s.id}.options.${o.id}`)}</option>
                       ))}
                     </select>
                     {option?.weekend ? (
@@ -1976,14 +1925,14 @@ export default function DepotAnnonceDeux() {
                           checked={Boolean(sel.weekend)}
                           onChange={(e) => updateSel({ weekend: e.target.checked })}
                         />
-                        Option week-end (+{groupThousands(option.weekend)} Ar)
+                        {t('depot:simulation.weekendOption', { amount: groupThousands(option.weekend) })}
                       </label>
                     ) : null}
                   </div>
                 )}
 
-                {sel.checked && s.note && (
-                  <div className="sim-note-legend"><Info size={12} /> {s.note}</div>
+                {sel.checked && serviceNote && (
+                  <div className="sim-note-legend"><Info size={12} /> {serviceNote}</div>
                 )}
               </div>
             )
@@ -1991,20 +1940,20 @@ export default function DepotAnnonceDeux() {
         </div>
       </div>
       <div className="sim-total">
-        <span className="sim-total-l">Total mensuel cumulé</span>
+        <span className="sim-total-l">{t('depot:simulation.totalLabel')}</span>
         <span className="sim-total-v">{fmtAr(simTotals.monthly)} Ar</span>
       </div>
       <div className="sim-legal">
         <ShieldCheck size={14} />
-        <div>Inscription systématique à la <b>CNAPS</b> et à l'<b>OSTIE</b>, congés payés inclus.</div>
+        <div>{t('depot:simulation.legal')}</div>
       </div>
-      <button className="modal-btn" onClick={integrateSim}><Plus size={16} /> Intégrer aux charges des colocs</button>
+      <button className="modal-btn" onClick={integrateSim}><Plus size={16} /> {t('depot:simulation.integrate')}</button>
       <button
         type="button"
         onClick={deleteSim}
         style={{ display: 'block', width: '100%', marginTop: 8, background: 'none', border: 'none', color: 'var(--gr2)', fontSize: 12, textDecoration: 'underline', cursor: 'pointer' }}
       >
-        <Trash2 size={13} /> Supprimer
+        <Trash2 size={13} /> {t('depot:simulation.delete')}
       </button>
     </div>
   </div>

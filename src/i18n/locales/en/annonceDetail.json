@@ -3,7 +3,8 @@
   "verified": "Verified listing",
   "perMonth": "/ month",
   "noDescription": "No description.",
-  "noAmenities": "To be specified",
+  "noAmenities": "No amenities specified",
+  "noRules": "No rules specified",
   "stats": {
     "surface": "Surface",
     "housemates": "Housemates",

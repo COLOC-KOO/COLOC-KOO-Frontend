@@ -14,8 +14,9 @@ import { api, ServiceCatalogueItem, DemandeServiceGroup, ApiBooster } from '../l
 import { cn } from '../lib/utils'
 
 // Choisit une icône adaptée selon le nom du service (fallback : cloche).
+// Basé sur le nom français stocké en base : ne PAS passer le nom traduit.
 function getServiceIcon(nom: string): React.ElementType {
-  const k = (nom || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const k = (nom || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   if (k.includes('jardin') || k.includes('espace vert')) return Leaf
   if (k.includes('jirama') || k.includes('electr') || k.includes('courant')) return Zap
   if (k.includes('eau') || k.includes('plomb')) return Droplets
@@ -39,7 +40,7 @@ function normaliseVille(value: unknown) {
   return String(value || '')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .trim()
 }
 
@@ -93,6 +94,15 @@ const BOOST_SECTIONS: Array<{
 
 export default function Services() {
   const { t } = useTranslation(['services', 'common'])
+
+  // Traduction du catalogue : la `cle` renvoyée par l'API (ex. "service_proprete")
+  // est directement la clé du JSON (services:catalogue.<cle>.nom / .description).
+  // defaultValue = texte français de la base, si la traduction manque.
+  const serviceName = (cle: string | undefined, fallback: string) =>
+    cle ? t(`services:catalogue.${cle}.nom`, { defaultValue: fallback }) : fallback
+  const serviceDesc = (cle: string | undefined, fallback: string) =>
+    cle ? t(`services:catalogue.${cle}.description`, { defaultValue: fallback }) : fallback
+
   const heroTitle = t('services:hero.title')
   const [heroTitleLead, ...heroTitleRest] = heroTitle.split(',')
   const { user } = useAuth()
@@ -181,6 +191,13 @@ export default function Services() {
   )
   const total = selectedLines.reduce((sum, l) => sum + l.prix, 0)
   const count = selectedLines.length
+
+  // L'historique (/mine) ne renvoie que le nom français des lignes : on retrouve
+  // la `cle` correspondante via le catalogue déjà chargé, pour pouvoir traduire.
+  const cleByNom = useMemo(
+    () => new Map(catalogue.map((c) => [c.nom, c.cle])),
+    [catalogue],
+  )
 
   const toggle = (id: number) =>
     setSelected((prev) => {
@@ -488,11 +505,13 @@ export default function Services() {
                         <Icon className="w-4 h-4 text-brand-cyan-dark" />
                       </div>
 
-                      {/* Nom + description */}
+                      {/* Nom + description (traduits via le JSON) */}
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-foreground leading-snug truncate">{s.nom}</div>
+                        <div className="font-semibold text-foreground leading-snug truncate">
+                          {serviceName(s.cle, s.nom)}
+                        </div>
                         <p className="text-sm text-muted-foreground line-clamp-1">
-                          {s.description || t('services:catalogue.defaultDesc')}
+                          {serviceDesc(s.cle, s.description || t('services:catalogue.defaultDesc'))}
                         </p>
                       </div>
 
@@ -551,7 +570,7 @@ export default function Services() {
                           >
                             <div className="min-w-0 flex items-center gap-2">
                               <Check className="w-3.5 h-3.5 text-brand-green flex-shrink-0" />
-                              <p className="font-medium text-foreground truncate">{l.nom}</p>
+                              <p className="font-medium text-foreground truncate">{serviceName(l.cle, l.nom)}</p>
                             </div>
                             <span className="font-semibold whitespace-nowrap">{formatAr(l.prix)}</span>
                           </motion.li>
@@ -640,7 +659,7 @@ export default function Services() {
                     <ul className="text-sm text-muted-foreground space-y-1">
                       {d.lignes.map((l, idx) => (
                         <li key={idx} className="flex justify-between gap-3">
-                          <span>{l.nom}</span>
+                          <span>{serviceName(cleByNom.get(l.nom), l.nom)}</span>
                           <span>{formatAr(l.sous_total)}</span>
                         </li>
                       ))}

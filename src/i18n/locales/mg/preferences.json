@@ -1,14 +1,14 @@
 {
   "displayNetwork": {
-    "title": "Fampiratiana & Rezo",
-    "subtitle": "Namboarina mba hiasana na dia miadana na tsy mafy aza ny rezo ny Sarintany'COLOC, na aiza na aiza any Madagasikara.",
-    "lightMode": "Mody maivana (fitsitsiana data)",
-    "lightModeDesc": "Maka sary maivana kokoa ary mametra ny sary mihetsika. <b>{{boldActivated}}</b> amin'ny tambajotra 3G+/4G na tsy misy tambajotra ; azonao atao ihany koa ny manery azy eto.",
+    "title": "Fanehoana & tambazotra",
+    "subtitle": "Ny Sarintany'COLOC dia natao hiasa na dia amin'ny fifandraisana miadana na tsy milamina aza, na aiza na aiza eto Madagasikara. ",
+    "lightMode": "fitsitsiana angon-drakitra finday ",
+    "lightModeDesc": "Mampiseho sary maivana kokoa ary mametra ny sary mihetsika. <b>{{boldActivated}}</b>  Mandeha ho azy rehefa mampiasa tambajotra 3G+/4G na rehefa tsy misy aterineto ; azonao atao ihany koa ny mampandeha azy eto.",
     "activatedAutomatically": "Mivelona ho azy",
-    "offlineAvailability": "Fampiasana tsy misy rezo",
-    "offlineAvailabilityDesc": "Matahiry ireo fampitandremana sy dinika nojerena farany mba hahitana izany indray na tsy misy rezo aza.",
-    "installApp": "Hametraka ny fampiharana",
-    "installAppDesc": "Ampio amin'ny efijery fandraisanao ny Sarintany'COLOC, tsy mila mandalo amin'ny magazay fampiharana.",
+    "offlineAvailability": "Azo ampiasaina na tsy misy aterineto ",
+    "offlineAvailabilityDesc": " Tehirizo ireo fampilazana sy resaka vao nojerena mba hahafahanao miditra amin'izy ireo na tsy misy fifandraisana amin'ny internet aza.",
+    "installApp": "Apetraho ny fampiharana ",
+    "installAppDesc": "Ampidiro ao amin'ny efijery fandraisanao ny Sarintany'COLOC, tsy mila mandalo amin'ny tsena fampiharana.",
     "installButton": "Hametraka",
     "installModal": {
       "intro": "Ampidiro ao amin'ny efijery fandraisana amin'ny findainao na solosainao ny Sarintany'COLOC mba hisokatra toy ny rindranasa.",
@@ -22,13 +22,13 @@
     }
   },
   "notifications": {
-    "title": "Safidy amin'ny fampandrenesana",
-    "subtitle": "Safidio ny fomba tianao hampahafantarana anao.",
+    "title": "Safidin'ny fampandrenesana ",
+    "subtitle": " Fidio ny fomba tianao ampandrenesana. Ho azo ampiasaina ny fampandrenesana SMS aorian'ny famoahana azy amin'ny fomba ofisialy. ",
     "smsInfo": "Hanolotra SMS izahay aorian'ny fandefasana amin mefio.",
     "defaultMode": "Fomba mahazatra",
-    "pushOnly": "Push ihany",
-    "emailOnly": "E-mail ihany",
-    "both": "Izy roa",
+    "pushOnly": " Fampandrenesana Push ihany",
+    "emailOnly": " Mailaka ihany ",
+    "both": " Izy roa ",
     "table": {
       "event": "Zava-nitranga",
       "push": "Push",
@@ -36,13 +36,13 @@
       "notApplicable": "Tsy mihatra"
     },
     "events": {
-      "new_msg": "Hafatra vaovao voaray",
-      "expire_j7": "Fampitandremana ho lany daty (A-7)",
-      "expired": "Fampitandremana efa lany daty — fangatahana fanavaozana",
-      "alert_match": "Fampitandremana vaovao mifanaraka amin'ny alerte",
-      "msg_auto": "Hafatra tsy lasa (fanar think automatique)",
-      "msg_blocked": "Hafatra voasakana voaray",
-      "pub_confirm": "Fanamarinana ny famoahana fampitandremana"
+      "new_msg": "Hafatra vaovao ",
+      "expire_j7": "Fampilazana ho lany daty (7 andro sisa) ",
+      "expired": "Fampilazana lany daty— fangatahana fanavaozana",
+      "alert_match": " Fampilazana vaovao mifanaraka amin'ny fampandrenesana ",
+      "msg_auto": "Hafatra tsy lasa (fandrindrana mandeha ho azy)",
+      "msg_blocked": "Hafatra voasakana azo ",
+      "pub_confirm": "Fanamafisana ny dingana ny fampilazana "
     },
     "save": "Tahirizina",
     "saved": "Voatahiry"

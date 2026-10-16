@@ -3,7 +3,8 @@
   "verified": "Annonce validée",
   "perMonth": "/ mois",
   "noDescription": "Aucune description.",
-  "noAmenities": "À préciser",
+  "noAmenities": "Aucune commodité renseignée",
+  "noRules": "Aucune règle renseignée",
   "stats": {
     "surface": "Surface",
     "housemates": "Colocataires",
