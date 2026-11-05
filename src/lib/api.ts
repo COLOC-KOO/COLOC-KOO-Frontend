@@ -1622,6 +1622,15 @@ export const api = {
     backofficePartenaires() {
         return request<ApiPartenaire[]>('/backoffice/partenaires')
     },
+    backofficePartnerPricing() {
+        return request<Record<'Bronze' | 'Argent' | 'Or' | 'Diamant', number>>('/backoffice/partenaires/tarifs')
+    },
+    saveBackofficePartnerPricing(tarifs: Record<'Bronze' | 'Argent' | 'Or' | 'Diamant', number>) {
+        return request<{ message: string }>('/backoffice/partenaires/tarifs', {
+            method: 'PUT',
+            body: JSON.stringify({ tarifs }),
+        })
+    },
     uploadPartenaireLogo(file: File) {
         const formData = new FormData()
         formData.append('logo', file)

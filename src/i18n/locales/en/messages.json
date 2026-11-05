@@ -2,6 +2,8 @@
   "title": "Messages",
   "search_placeholder": "Search by listing or contact",
   "loading_conversations": "Loading conversations...",
+  "load_conversations_error": "Unable to load conversations.",
+  "load_messages_error": "Unable to load messages.",
   "no_conversations_found": "No conversations found.",
   "no_conversations_yet": "No conversations yet.",
   "new_discussion": "New chat",

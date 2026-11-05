@@ -43,9 +43,19 @@ import {
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api, type ApiPartenaireRequest, type Ville } from '../../lib/api'
 import { useDialog } from '../../components/ui/Dialog'
+import { useAuth } from '../../lib/auth'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+const PARTNER_LEVELS = ['Bronze', 'Argent', 'Or', 'Diamant'] as const
+type PartnerLevel = typeof PARTNER_LEVELS[number]
+type PartnerPricing = Record<PartnerLevel, number>
+const DEFAULT_PARTNER_PRICING: PartnerPricing = {
+  Bronze: 0,
+  Argent: 0,
+  Or: 0,
+  Diamant: 0,
+}
 
 function normalizeCampaignImageUrl(value: string | null | undefined) {
   if (!value) return ''
@@ -422,18 +432,21 @@ const PartenaireStatutBadge = ({ statut }: { statut: PartenaireComplet['statut']
 // ===== MODALE PARTENAIRE (GESTION) =====
 function PartnerModal({
   partner,
+  pricing,
   onClose,
   onSave,
 }: {
   partner?: Partenaire | null
+  pricing: PartnerPricing
   onClose: () => void
   onSave: (payload: Omit<Partenaire, 'id' | 'dateCreation'> & { logoFile?: File | null }) => Promise<boolean>
 }) {
-  const dialog = useDialog()
   const [nom, setNom] = useState(partner?.nom || '')
   const [secteur, setSecteur] = useState(partner?.secteur || '')
-  const [niveau, setNiveau] = useState(partner?.niveau || 'Bronze')
-  const [montant, setMontant] = useState(String(partner?.montant ?? 0))
+  const [niveau, setNiveau] = useState<PartnerLevel>(() =>
+    PARTNER_LEVELS.find((level) => level === partner?.niveau) || 'Bronze'
+  )
+  const montant = pricing[niveau]
   const [remise, setRemise] = useState(partner?.remise || '')
   const [engagement, setEngagement] = useState(partner?.engagement || '')
   const [logo, setLogo] = useState(partner?.logo || '')
@@ -452,22 +465,13 @@ function PartnerModal({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!nom.trim()) return
-    const parsedAmount = Number(montant)
-    if (!Number.isFinite(parsedAmount) || parsedAmount < 0) {
-      void dialog.alert({
-        tone: 'warning',
-        title: 'Montant invalide',
-        message: 'Le montant du partenariat doit être un nombre positif ou nul.',
-      })
-      return
-    }
     setSubmitting(true)
     try {
       const saved = await onSave({ 
         nom: nom.trim(), 
         secteur: secteur.trim(), 
         niveau: niveau.trim(), 
-        montant: parsedAmount,
+        montant,
         remise: remise.trim(), 
         engagement: engagement.trim(), 
         logo: logo.trim(), 
@@ -509,27 +513,23 @@ function PartnerModal({
               <select
                 required
                 value={niveau}
-                onChange={(e) => setNiveau(e.target.value)}
-                className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
+                onChange={(e) => setNiveau(e.target.value as PartnerLevel)}
+                className="mt-2 w-full bg-white/5 text-white border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
               >
-                <option value="">Sélectionnez un niveau</option>
-                <option value="Bronze">Bronze</option>
-                <option value="Argent">Argent</option>
-                <option value="Or">Or</option>
-                <option value="Diamant">Diamant</option>
+                <option value="" className="bg-[#242526] text-white">Sélectionnez un niveau</option>
+                {PARTNER_LEVELS.map((level) => (
+                  <option key={level} value={level} className="bg-[#242526] text-white">
+                    {level}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="text-xs text-white/40 uppercase">Montant du partenariat (MGA)</label>
-              <input
-                type="number"
-                required
-                min="0"
-                step="1000"
-                value={montant}
-                onChange={(e) => setMontant(e.target.value)}
-                className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
-              />
+              <label className="text-xs text-white/40 uppercase">Montant automatique du partenariat (MGA)</label>
+              <output className="mt-2 block w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
+                {montant.toLocaleString('fr-FR')} MGA
+              </output>
+              <p className="mt-1 text-xs text-white/40">Le montant est défini par le tarif du niveau choisi.</p>
             </div>
             <div>
               <label className="text-xs text-white/40 uppercase">Remise</label>
@@ -804,8 +804,18 @@ function CampagneModal({
 // ===== COMPOSANT PRINCIPAL =====
 export default function AdminPartenaires() {
   const dialog = useDialog()
+  const { user } = useAuth()
+  const isSuperAdmin = user?.poste === 'superadmin'
   const [activeTab, setActiveTab] = useState<'gestion' | 'comptes' | 'campagnes'>('gestion')
   const [partenaires, setPartenaires] = useState<Partenaire[]>([])
+  const [partnerPricing, setPartnerPricing] = useState<PartnerPricing>(DEFAULT_PARTNER_PRICING)
+  const [partnerPricingDraft, setPartnerPricingDraft] = useState<Record<PartnerLevel, string>>({
+    Bronze: '0',
+    Argent: '0',
+    Or: '0',
+    Diamant: '0',
+  })
+  const [savingPartnerPricing, setSavingPartnerPricing] = useState(false)
   const [comptes, setComptes] = useState<PartenaireComplet[]>([])
   const [campagnes, setCampagnes] = useState<Campagne[]>([])
   const [villes, setVilles] = useState<Ville[]>([])
@@ -904,17 +914,25 @@ export default function AdminPartenaires() {
     setLoading(true)
     setError(null)
     try {
-      const [partenairesData, campagnesData, requestsData, villesData] = await Promise.all([
+      const [partenairesData, campagnesData, requestsData, villesData, pricingData] = await Promise.all([
         api.backofficePartenaires(),
         api.campagnes ? api.campagnes() : Promise.resolve([]),
         api.backofficePartenaireRequests(),
-        api.villes()
+        api.villes(),
+        api.backofficePartnerPricing(),
       ])
       setPartenaires(partenairesData.map(mapPartenaire))
       setComptes(partenairesData.map(mapPartenaireComplet))
       setCampagnes((campagnesData || []).map(mapCampagne))
       setPartnerRequests(requestsData || [])
       setVilles(villesData)
+      setPartnerPricing(pricingData)
+      setPartnerPricingDraft({
+        Bronze: String(pricingData.Bronze),
+        Argent: String(pricingData.Argent),
+        Or: String(pricingData.Or),
+        Diamant: String(pricingData.Diamant),
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger les données')
     } finally {
@@ -924,7 +942,34 @@ export default function AdminPartenaires() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [isSuperAdmin])
+
+  const handleSavePartnerPricing = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const tarifs = {} as PartnerPricing
+    for (const level of PARTNER_LEVELS) {
+      const amount = Number(partnerPricingDraft[level])
+      if (!Number.isFinite(amount) || amount < 0) {
+        setError(`Le tarif ${level} doit être un nombre positif ou nul.`)
+        return
+      }
+      tarifs[level] = amount
+    }
+
+    setSavingPartnerPricing(true)
+    setError(null)
+    try {
+      await api.saveBackofficePartnerPricing(tarifs)
+      setPartnerPricing(tarifs)
+      setSuccessMessage('Grille tarifaire enregistrée et montants des partenaires recalculés')
+      await loadData()
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible d’enregistrer la grille tarifaire')
+    } finally {
+      setSavingPartnerPricing(false)
+    }
+  }
 
   // Gestion des partenaires
   const handleOpenAddPartner = () => {
@@ -1213,6 +1258,47 @@ export default function AdminPartenaires() {
         {/* ===== ONGLET GESTION PARTENAIRES (EXISTANT) ===== */}
         {activeTab === 'gestion' && (
           <>
+            {isSuperAdmin && (
+              <form
+                onSubmit={handleSavePartnerPricing}
+                className="rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)] p-4 sm:p-5"
+              >
+                <div className="mb-4">
+                  <h2 className="font-semibold">Tarifs automatiques par type de partenariat</h2>
+                  <p className="mt-1 text-xs text-white/50">
+                    Les nouveaux partenaires reprennent le tarif de leur niveau. En enregistrant, les montants des partenaires existants sont recalculés aussi.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  {PARTNER_LEVELS.map((level) => (
+                    <label key={level} className="text-xs text-white/50">
+                      {level} (MGA)
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        required
+                        value={partnerPricingDraft[level]}
+                        onChange={(event) => setPartnerPricingDraft((current) => ({
+                          ...current,
+                          [level]: event.target.value,
+                        }))}
+                        className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-cyan/50"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={savingPartnerPricing || loading}
+                    className="rounded-lg bg-brand-cyan px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50"
+                  >
+                    {savingPartnerPricing ? 'Enregistrement...' : 'Enregistrer les tarifs'}
+                  </button>
+                </div>
+              </form>
+            )}
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
@@ -1918,6 +2004,7 @@ export default function AdminPartenaires() {
       {showPartnerModal && (
         <PartnerModal
           partner={editingPartner}
+          pricing={partnerPricing}
           onClose={() => setShowPartnerModal(false)}
           onSave={handleSavePartner}
         />
