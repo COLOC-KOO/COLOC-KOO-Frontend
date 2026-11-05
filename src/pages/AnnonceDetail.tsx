@@ -1264,7 +1264,10 @@ export default function AnnonceDetail() {
             disabled={!canViewCandidatures}
             onClick={handleViewMyCandidature}
           >
-            <Eye className="w-4 h-4" /> {t('annonceDetail:actions.viewApplication')}
+            <Eye className="w-4 h-4" />
+            {Number(listing?.owner?.id) === Number(user?.id)
+              ? t('annonceDetail:user.manageApplications')
+              : t('annonceDetail:actions.viewApplication')}
           </Button>
         )}
         <Button

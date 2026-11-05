@@ -105,12 +105,18 @@
     "locationLabel": "Property location",
     "refineLabel": "Fine-tune the location",
     "refineHint": "Depending on its location, your property can become more appealing. So be precise.",
-    "addressPlaceholder": "Address or neighbourhood — e.g. Ankadifotsy, Antananarivo",
+    "cityLabel": "City",
+    "cityPlaceholder": "Choose a city",
+    "neighborhoodLabel": "Neighborhood",
+    "neighborhoodPlaceholder": "e.g. Isoraka",
+    "addressLabel": "Address or landmark (optional)",
+    "addressPlaceholder": "e.g. near the university",
     "privacyNote": "For privacy reasons, if you enter your exact address, it will never appear on your listing — only the neighbourhood will be visible.",
     "mapRequiredHint": "Placing a pin on the map is required, even if you entered an address.",
     "mapDragHint": "Drag to move around · scroll to zoom · click to place your property",
     "errors": {
       "locationRequired": "Please place your property on the map (required).",
+      "citiesLoad": "Unable to load the list of cities.",
       "fieldsRequired": "Please fill in all required fields (*) before continuing."
     }
   },

@@ -5,8 +5,16 @@ import { LazyImage } from '../ui/LazyImage'
 import { LITE_HERO_GRADIENT } from '../ui/LazyBackgroundImage'
 import { useLiteMode } from '../../lib/useLiteMode'
 import HeroImg from '../../assets/WhatsApp Image 2026-09-11 at 15.55.47.jpeg'
+import InstallAppPanel from '../../pages/compte/InstallAppPanel'
 
 type HomeHeroProps = { mode: 'chercher' | 'proposer'; onModeChange: (mode: 'chercher' | 'proposer') => void; searchTerm: string; onSearchTermChange: (value: string) => void; suggestions: string[]; onSearch: () => void }
+
+function normalizeCity(value: string) {
+  const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  return /\b(toliara|tulear|toliary)\b/.test(normalized)
+    ? normalized.replace(/\b(tulear|toliary)\b/g, 'toliara')
+    : normalized
+}
 
 export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, suggestions, onSearch }: HomeHeroProps) {
   const liteMode = useLiteMode()
@@ -32,7 +40,7 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
   }
 
   const filteredSuggestions = searchTerm
-    ? suggestions.filter((city) => city.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 8)
+    ? suggestions.filter((city) => normalizeCity(city).includes(normalizeCity(searchTerm))).slice(0, 8)
     : visibleSuggestions
 
   const handleSearchTermChange = (value: string) => {
@@ -46,7 +54,7 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
       return
     }
 
-    const hasMatches = suggestions.some((city) => city.toLowerCase().includes(trimmedValue.toLowerCase()))
+    const hasMatches = suggestions.some((city) => normalizeCity(city).includes(normalizeCity(trimmedValue)))
     if (!hasMatches) {
       setSearchMessage('Cette localité n’existe pas ou n’est pas encore disponible')
       return
@@ -120,6 +128,9 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
           )}
         </div>
         {searchMessage && <p className="mt-2 text-xs font-medium text-amber-200">{searchMessage}</p>}
+        <div className="mt-4">
+          <InstallAppPanel compact buttonLabel={t('home:cta.installApp')} />
+        </div>
         <div className="mt-5 flex gap-4 rounded-xl bg-white/10 px-5 py-2.5">{[['120', 'annonces actives'], ['12', 'villes couvertes'], ['850', 'colocataires']].map(([number, label], index) => <div key={label} className={`text-center ${index > 0 ? 'border-l border-white/15 pl-4' : ''}`}><div className="bebas text-2xl tracking-wide text-white">{number}</div><div className="mt-0.5 text-[10px] text-white/50">{label}</div></div>)}</div>
       </div>
     </section>

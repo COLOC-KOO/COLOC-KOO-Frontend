@@ -105,7 +105,7 @@ const BOOST_SECTIONS: Array<{
   },
 ]
 
-export default function Services() {
+export default function Services({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation(['services', 'common'])
 
   // Traduction du catalogue : la `cle` renvoyée par l'API (ex. "service_proprete")
@@ -282,8 +282,8 @@ export default function Services() {
     annulee: { label: t('services:status.canceled'), cls: 'bg-red-100 text-red-600' },
   }
 
-  return (
-    <SiteLayout>
+  const content = (
+    <div>
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
@@ -804,8 +804,9 @@ export default function Services() {
           </motion.div>
         )}
       </AnimatePresence>
-    </SiteLayout>
+    </div>
   )
+  return embedded ? content : <SiteLayout>{content}</SiteLayout>
 }
 
 function Info({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {

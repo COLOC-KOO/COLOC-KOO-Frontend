@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Home, Mail } from "lucide-react";
 import { Logo } from "../components/Logo";
 import { Button } from "../components/ui/Button";
-import { AuthUser, Poste } from "../lib/api";
+import { api, ApiError, AuthUser, Poste } from "../lib/api";
 import { roleLevel, useAuth } from "../lib/auth";
 
 const MIN_SIGNUP_AGE = 17;
@@ -68,35 +68,62 @@ export default function Auth({ maintenanceMode = false }: { maintenanceMode?: bo
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  // Compte tout juste créé : on affiche la confirmation avant de rediriger.
-  const [createdAccount, setCreatedAccount] = useState<AuthUser | null>(null);
-  const justRegistered = useRef(false);
+  // Le compte reste en attente jusqu'à la confirmation de l'adresse e-mail.
+  const [createdEmail, setCreatedEmail] = useState("");
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState("");
+  const [resending, setResending] = useState(false);
   // "Quitter" doit ramener là où l'utilisateur venait (ex: son brouillon
   // d'annonce en cours) plutôt que toujours à l'accueil.
   const backTo = params.get("redirect") || "/";
   const [showPassword, setShowPassword] = useState(false);
-  const { login, register, user } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+  const verificationToken = params.get("verificationToken");
 
   useEffect(() => {
     if (maintenanceMode) setMode("signin");
   }, [maintenanceMode]);
 
   useEffect(() => {
-    if (!user || justRegistered.current) return;
+    if (!user || verificationToken) return;
     navigate(destinationFor(user, params.get("redirect")), { replace: true });
-  }, [navigate, user]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const continueAfterSignup = () => {
-    if (!createdAccount) return;
-    navigate(destinationFor(createdAccount, params.get("redirect")), { replace: true });
-  };
+  }, [navigate, user, verificationToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!createdAccount) return;
-    const timer = window.setTimeout(continueAfterSignup, 5000);
-    return () => window.clearTimeout(timer);
-  }, [createdAccount]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!verificationToken) return;
+    let cancelled = false;
+    api.verifyEmail(verificationToken)
+      .then(() => {
+        if (cancelled) return;
+        setVerificationStatus(t("verificationSuccess"));
+        setMode("signin");
+        navigate("/auth?mode=signin", { replace: true });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        const message = err instanceof ApiError && err.code === 'EMAIL_VERIFICATION_INVALID'
+          ? t("verificationInvalid")
+          : err instanceof Error ? err.message : t("verificationInvalid");
+        setVerificationStatus(message);
+      });
+    return () => { cancelled = true; };
+  }, [verificationToken, navigate, t]);
+
+  const resendVerification = async (email: string) => {
+    setResending(true);
+    setVerificationMessage("");
+    try {
+      const result = await api.resendVerificationEmail(email);
+      setVerificationEmail(email);
+      setVerificationMessage(result.message);
+    } catch (err) {
+      setVerificationMessage(err instanceof Error ? err.message : t("verificationResendError"));
+    } finally {
+      setResending(false);
+    }
+  };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -135,8 +162,7 @@ export default function Auth({ maintenanceMode = false }: { maintenanceMode?: bo
         navigate(destinationFor(connected, params.get("redirect")), { replace: true });
         return;
       }
-      justRegistered.current = true;
-      const connected = await register({
+      const result = await api.register({
         email: values.email,
         mot_de_passe: values.mot_de_passe,
         nom: values.nom,
@@ -145,10 +171,22 @@ export default function Auth({ maintenanceMode = false }: { maintenanceMode?: bo
         poste: values.poste as Poste,
         date_naissance: values.date_naissance,
       });
-      setCreatedAccount(connected);
+      setCreatedEmail(result.email);
+      setVerificationEmail(result.email);
+      setVerificationMessage(result.message);
     } catch (err) {
-      justRegistered.current = false;
-      setError(err instanceof Error ? err.message : t("loginError"));
+      const apiError = err instanceof ApiError ? err : null;
+      const message = apiError?.code === 'EMAIL_VERIFICATION_REQUIRED'
+        ? t("verificationRequired", { email: values.email })
+        : apiError?.code === 'EMAIL_VERIFICATION_EMAIL_FAILED'
+          ? t("verificationEmailFailed")
+          : err instanceof Error ? err.message : t("loginError");
+      if (apiError?.code === 'EMAIL_VERIFICATION_REQUIRED') {
+        setVerificationEmail(values.email);
+      } else if (apiError?.code === 'EMAIL_VERIFICATION_EMAIL_FAILED') {
+        setVerificationEmail(values.email);
+      }
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -207,29 +245,30 @@ export default function Auth({ maintenanceMode = false }: { maintenanceMode?: bo
           <div className="md:hidden mb-6 flex justify-center">
             <Logo />
           </div>
-          {createdAccount ? (
+          {createdEmail ? (
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-green-light text-brand-green-dark">
                 <CheckCircle2 className="h-8 w-8" />
               </div>
               <h1 className="bebas text-3xl text-slate-900">{t("accountCreatedTitle")}</h1>
-              <p className="mt-3 text-sm text-slate-600">
-                {t("accountCreatedWelcome", { name: createdAccount.prenom || createdAccount.name || "" })}
-              </p>
+              <p className="mt-3 text-sm text-slate-600">{t("accountCreatedWelcome")}</p>
               <div className="mt-4 flex items-start gap-3 rounded-xl border border-brand-cyan/20 bg-brand-cyan-light/60 p-3 text-left text-sm text-slate-700">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan-dark" />
-                <span>{t("confirmationEmailSent", { email: createdAccount.email })}</span>
+                <span>{t("confirmationEmailSent", { email: createdEmail })}</span>
               </div>
-              <Button
-                type="button"
-                onClick={continueAfterSignup}
-                className="mt-6 w-full bg-gradient-to-r from-brand-cyan to-brand-green hover:opacity-90 text-white shadow-lg shadow-brand-cyan/20"
-              >
-                {t("continue")}
-              </Button>
+              {verificationMessage && <p className="mt-3 text-sm text-slate-600">{verificationMessage}</p>}
+              <button type="button" disabled={resending} onClick={() => resendVerification(createdEmail)} className="mt-4 text-sm font-semibold text-brand-cyan-dark underline disabled:opacity-50">
+                {resending ? t("processing") : t("resendVerification")}
+              </button>
+              <Link to="/auth?mode=signin" className="mt-4 block text-sm font-semibold text-brand-green-dark">{t("backToSignin")}</Link>
             </div>
           ) : (
           <>
+          {verificationStatus && (
+            <div className="mb-4 rounded-lg border border-brand-green/30 bg-brand-green-light/50 p-3 text-sm text-brand-green-dark">
+              {verificationStatus}
+            </div>
+          )}
           {maintenanceMode && (
             <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
               Le site est en maintenance. La connexion est réservée aux membres autorisés de l’équipe.
@@ -414,6 +453,15 @@ export default function Auth({ maintenanceMode = false }: { maintenanceMode?: bo
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {error}
+              </div>
+            )}
+            {verificationEmail && (
+              <div className="rounded-lg border border-brand-cyan/20 bg-brand-cyan-light/60 p-3 text-sm text-slate-700">
+                <p>{t("verificationRequired", { email: verificationEmail })}</p>
+                {verificationMessage && <p className="mt-2">{verificationMessage}</p>}
+                <button type="button" disabled={resending} onClick={() => resendVerification(verificationEmail)} className="mt-2 font-semibold text-brand-cyan-dark underline disabled:opacity-50">
+                  {resending ? t("processing") : t("resendVerification")}
+                </button>
               </div>
             )}
             <Button

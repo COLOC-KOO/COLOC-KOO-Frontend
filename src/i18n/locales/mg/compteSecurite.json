@@ -28,8 +28,7 @@
       "daysAgo": "{{count}} andro lasa"
     },
     "showPassword": "Asehoy ny teny miafina",
-    "hidePassword": "Afeno ny teny miafina",
-    "revealUnavailable": "Tsy hita ny tenimiafina. Mba miverena miditra indray azafady mba hahitanao azy."
+    "hidePassword": "Afeno ny teny miafina"
   },
   "identity": {
     "title": "Fanamarinana ny mombamomba anao",

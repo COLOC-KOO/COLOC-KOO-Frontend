@@ -28,8 +28,7 @@
       "daysAgo": "{{count}} days ago"
     },
     "showPassword": "Show password",
-    "hidePassword": "Hide password",
-    "revealUnavailable": "Password unavailable. Sign in again to be able to display it."
+    "hidePassword": "Hide password"
   },
   "identity": {
     "title": "Identity Verification",

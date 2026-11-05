@@ -511,26 +511,42 @@ const steps = stepsForRole(role)
   const [nbPieces, setNbPieces] = useState('')
   const [surfaceTotale, setSurfaceTotale] = useState('')
   const [locAddr, setLocAddr] = useState('')
+  const [locVille, setLocVille] = useState('')
+  const [locQuartier, setLocQuartier] = useState('')
+  const [cityOptions, setCityOptions] = useState<string[]>([])
+  const [cityLoadError, setCityLoadError] = useState('')
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null)
   const [focus, setFocus] = useState<[number, number] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    api.villes()
+      .then((villes) => {
+        if (!cancelled) setCityOptions(villes.map((ville) => ville.nom_ville))
+      })
+      .catch((error) => {
+        if (!cancelled) setCityLoadError(error instanceof Error ? error.message : t('depot:logement.errors.citiesLoad'))
+      })
+    return () => { cancelled = true }
+  }, [t])
 
   // Distingue le positionnement AUTOMATIQUE (géocodage) du geste UTILISATEUR.
   // Le pin devient opaque seulement quand :
   //   - une adresse/quartier est saisie
   //   - ET l'utilisateur a déplacé le pointeur lui-même sur la carte
   const [userMovedPin, setUserMovedPin] = useState(false)
-  const pinOpaque = userMovedPin && locAddr.trim().length > 0
+  const pinOpaque = userMovedPin && Boolean(locAddr.trim() || locVille || locQuartier)
 
   // L'offre Coloc'KOO est proposée dès que le bien est à Antananarivo, y compris
   // quand seul un quartier est saisi (ex : « Isoraka ») : on se fie donc à la
   // position du repère, et au texte saisi en complément.
   const ckooEligible =
-    /antananarivo|tananarive|\btana\b/i.test(locAddr) || (pin !== null && isInAntananarivo(pin.x, pin.y))
+    /antananarivo|tananarive|\btana\b/i.test(`${locAddr} ${locVille} ${locQuartier}`) || (pin !== null && isInAntananarivo(pin.x, pin.y))
 
   /* AMÉLIORATION CARTE : quand on tape un lieu, la carte se recentre dessus
      et le repère y est placé automatiquement (délai anti-spam de 700 ms). */
   useEffect(() => {
-    const query = locAddr.trim()
+    const query = [locAddr, locQuartier, locVille, 'Madagascar'].filter(Boolean).join(', ').trim()
     if (!query) return
     const timer = window.setTimeout(() => {
       ;(async () => {
@@ -552,7 +568,7 @@ const steps = stepsForRole(role)
       })()
     }, 700)
     return () => window.clearTimeout(timer)
-  }, [locAddr])
+  }, [locAddr, locQuartier, locVille])
 
   /* ---- Étape 4 : services & commodités ---- */
   const EQUIPEMENTS = t('depot:services.equipmentsOptions', { returnObjects: true }) as string[]
@@ -675,6 +691,8 @@ const steps = stepsForRole(role)
     if (draft.nbPieces !== undefined) setNbPieces(draft.nbPieces)
     if (draft.surfaceTotale !== undefined) setSurfaceTotale(draft.surfaceTotale)
     if (draft.locAddr !== undefined) setLocAddr(draft.locAddr)
+    if (draft.locVille !== undefined) setLocVille(draft.locVille)
+    if (draft.locQuartier !== undefined) setLocQuartier(draft.locQuartier)
     if (draft.pin !== undefined) setPin(draft.pin)
     if (draft.equipements !== undefined) setEquipements(draft.equipements)
     if (draft.internet !== undefined) setInternet(draft.internet)
@@ -738,6 +756,8 @@ const steps = stepsForRole(role)
       nbPieces: String(a.nombre_pieces ?? ''),
       surfaceTotale: String(a.surface_totale ?? a.surface ?? ''),
       locAddr: a.adresse_exacte ?? a.adresse ?? a.quartier ?? '',
+      locVille: a.ville ?? '',
+      locQuartier: a.quartier ?? '',
       pin: a.latitude && a.longitude ? { x: Number(a.latitude), y: Number(a.longitude) } : null,
       equipements: a.amenities ?? a.commodites ?? [],
       internet: a.internet ?? '',
@@ -855,10 +875,11 @@ const steps = stepsForRole(role)
         (role === 'membre' || (typeAnnonce !== '' && nbColocTotal !== '')) &&
         typeLogement !== '' &&
         nbPieces.trim() !== '' &&
+        locVille.trim() !== '' &&
         locOk
       if (!ok) {
         setStepErr(
-          !locOk
+          !locOk || !locVille.trim()
             ? t('depot:logement.errors.locationRequired')
             : t('depot:logement.errors.fieldsRequired'),
         )
@@ -941,7 +962,7 @@ const steps = stepsForRole(role)
     const draft = {
       savedAt: Date.now(),
       role, typeAnnonce, ambianceAge, ambiance, presentation,
-      typeLogement, nbColoc, nbColocTotal, nbPieces, surfaceTotale, locAddr, pin,
+      typeLogement, nbColoc, nbColocTotal, nbPieces, surfaceTotale, locAddr, locVille, locQuartier, pin,
       equipements, internet, parkingCars, parkingCarsCouvert, parkingMoto, parkingMotoCouvert,
       servicesPersonnel, servAutre, servAutreOn,
       sim, ckooIntegrated, ckooTotal, ckooChosenNames,
@@ -979,8 +1000,8 @@ const steps = stepsForRole(role)
 
       let latitude = -18.8792
       let longitude = 47.5079
-      let quartier = deriveQuartierFromAddress(locAddr)
-      let ville = deriveVilleFromAddress(locAddr)
+      let quartier = locQuartier || deriveQuartierFromAddress(locAddr)
+      let ville = locVille || deriveVilleFromAddress(locAddr)
       if (pin) {
         latitude = pin.x
         longitude = pin.y
@@ -994,9 +1015,9 @@ const steps = stepsForRole(role)
               longitude = geo.longitude
             }
             const geoQuartier = (geo as any).quartier || (geo as any).district || (geo as any).neighbourhood
-            if (geoQuartier) quartier = geoQuartier
+            if (geoQuartier && !quartier) quartier = geoQuartier
             const geoVille = (geo as any).ville || (geo as any).city || (geo as any).town
-            if (geoVille) ville = geoVille
+            if (geoVille && !ville) ville = geoVille
           }
         } catch {
           // le repère placé par l'utilisateur reste l'indicateur principal
@@ -1400,7 +1421,38 @@ const steps = stepsForRole(role)
                   {t('depot:logement.refineHint')}
                 </p>
 
+                <label className="lbl" htmlFor="listing-city">{t('depot:logement.cityLabel')}<span className="req">*</span></label>
+                <select
+                  id="listing-city"
+                  className="inp"
+                  style={{ marginBottom: 10 }}
+                  value={locVille}
+                  onChange={(e) => setLocVille(e.target.value)}
+                  required
+                >
+                  <option value="">{t('depot:logement.cityPlaceholder')}</option>
+                  {cityOptions.map((ville) => <option key={ville} value={ville}>{ville}</option>)}
+                </select>
+                {cityLoadError && <p className="mb-2 text-sm text-red-600">{t('depot:logement.errors.citiesLoad')} {cityLoadError}</p>}
+
+                <label className="lbl" htmlFor="listing-neighborhood">{t('depot:logement.neighborhoodLabel')}</label>
                 <input
+                  id="listing-neighborhood"
+                  className="inp"
+                  type="text"
+                  list="quartiers-suggestions"
+                  placeholder={t('depot:logement.neighborhoodPlaceholder')}
+                  style={{ marginBottom: 10 }}
+                  value={locQuartier}
+                  onChange={(e) => setLocQuartier(e.target.value)}
+                />
+                <datalist id="quartiers-suggestions">
+                  {['Analamahitsy', 'Ankadifotsy', 'Ankadimbahoaka', 'Ankadivato', 'Ankatso', 'Andohalo', 'Anosy', 'Antaninarenina', 'Isoraka', 'Mahamasina', 'Tsaralalana'].map((quartier) => <option key={quartier} value={quartier} />)}
+                </datalist>
+
+                <label className="lbl" htmlFor="listing-address">{t('depot:logement.addressLabel')}</label>
+                <input
+                  id="listing-address"
                   className="inp"
                   type="text"
                   placeholder={t('depot:logement.addressPlaceholder')}

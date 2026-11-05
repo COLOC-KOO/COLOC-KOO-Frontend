@@ -24,6 +24,7 @@ export default function AdminAnnonces() {
   const [showRejectionModal, setShowRejectionModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
+  const [isPhotoZoomed, setIsPhotoZoomed] = useState(false)
    const [editForm, setEditForm] = useState({
      titre: '',
      description: '',
@@ -67,7 +68,42 @@ export default function AdminAnnonces() {
     setShowViewModal(true)
   }, [annonces, searchParams])
 
+  useEffect(() => {
+    if (!showViewModal || !selectedAnnonce) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (isPhotoZoomed) {
+          setIsPhotoZoomed(false)
+        } else {
+          closeViewModal()
+        }
+        return
+      }
+
+      const target = event.target
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+      ) return
+
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault()
+        const photosCount = selectedAnnonce.photos.length || 1
+        setSelectedPhotoIndex((current) => (
+          event.key === 'ArrowRight'
+            ? (current + 1) % photosCount
+            : (current - 1 + photosCount) % photosCount
+        ))
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [showViewModal, selectedAnnonce, isPhotoZoomed])
+
   function closeViewModal() {
+    setIsPhotoZoomed(false)
     setShowViewModal(false)
     setSearchParams((current) => {
       const next = new URLSearchParams(current)
@@ -313,6 +349,7 @@ export default function AdminAnnonces() {
              title={selectedAnnonce.titre}
              selectedIndex={selectedPhotoIndex}
              onSelect={setSelectedPhotoIndex}
+             onZoom={() => setIsPhotoZoomed(true)}
            />
            <div className="grid grid-cols-2 gap-4 mt-4">
              <Info label="Titre" value={selectedAnnonce.titre} />
@@ -358,6 +395,37 @@ export default function AdminAnnonces() {
            <p className="mt-4 text-sm text-white/70">{selectedAnnonce.description || 'Aucune description.'}</p>
          </Modal>
        )}
+
+      {isPhotoZoomed && selectedAnnonce && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Photo agrandie de ${selectedAnnonce.titre}`}
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 p-4"
+          onClick={() => setIsPhotoZoomed(false)}
+        >
+          <button
+            type="button"
+            autoFocus
+            aria-label="Fermer la photo agrandie"
+            onClick={() => setIsPhotoZoomed(false)}
+            className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img
+            src={(selectedAnnonce.photos.length ? selectedAnnonce.photos : ['https://picsum.photos/seed/colockoo/900/400'])[selectedPhotoIndex]}
+            alt={`${selectedAnnonce.titre} — photo ${selectedPhotoIndex + 1}`}
+            className="max-h-[90vh] max-w-[92vw] cursor-zoom-out object-contain"
+            onClick={(event) => event.stopPropagation()}
+          />
+          {selectedAnnonce.photos.length > 1 && (
+            <div className="absolute bottom-4 rounded-full bg-black/60 px-3 py-1 text-sm text-white">
+              {selectedPhotoIndex + 1} / {selectedAnnonce.photos.length} · utilisez ← et → pour naviguer
+            </div>
+          )}
+        </div>
+      )}
 
       {showRejectionModal && selectedAnnonce && (
         <Modal title="Refuser l'annonce" onClose={() => setShowRejectionModal(false)} narrow>
@@ -491,11 +559,13 @@ function PhotoGallery({
   title,
   selectedIndex,
   onSelect,
+  onZoom,
 }: {
   photos: string[]
   title: string
   selectedIndex: number
   onSelect: (index: number) => void
+  onZoom: () => void
 }) {
   const images = photos.length ? photos : ['https://picsum.photos/seed/colockoo/900/400']
   const currentIndex = Math.min(selectedIndex, images.length - 1)
@@ -503,7 +573,14 @@ function PhotoGallery({
   return (
     <div>
       <div className="relative">
-        <img src={images[currentIndex]} className="w-full h-56 object-cover rounded-lg" alt={`${title} — photo ${currentIndex + 1}`} />
+        <button
+          type="button"
+          onClick={onZoom}
+          aria-label="Agrandir la photo sélectionnée"
+          className="block w-full cursor-zoom-in"
+        >
+          <img src={images[currentIndex]} className="w-full h-56 object-cover rounded-lg" alt={`${title} — photo ${currentIndex + 1}`} />
+        </button>
         {images.length > 1 && (
           <>
             <button

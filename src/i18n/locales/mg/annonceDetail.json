@@ -144,8 +144,9 @@
   "user": {
     "connected": "Tafiditra amin'ny maha {{name}}",
     "connectedDesc": "Afaka mandefa ny fangatahanao mivantana avy amin'ity pejy ity ianao.",
-    "ownerTitle": "Fitantanana ny fangatahana",
-    "ownerDesc": "Ny fitantanana ny fangatahana dia atao avy amin'ny pejy natokana.",
+    "ownerTitle": "Ianao no nametraka ity fanambarana ity",
+    "ownerDesc": "Tsy afaka mandefa fangatahana amin'ny fanambaranao manokana ianao. Jereo ao amin'ny pejy natokana ireo fangatahana voaray.",
+    "manageApplications": "Hitantana ny fangatahana",
     "applied": "Voaray tsara ny fangatahanao.",
     "appliedDesc": "Afaka manaraka ny fivoarana sy mahita ny mpifaninana hafa amin'ity fanambarana ity ianao.",
     "viewApplication": "Hijery ny fangatahako",

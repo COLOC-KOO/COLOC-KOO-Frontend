@@ -906,24 +906,6 @@ export default function Candidatures() {
     }
   };
 
-  // ===== VOIR MA CANDIDATURE =====
-  const handleViewMyCandidature = () => {
-    if (!user) {
-      notify(t('notices.loginRequired'), "info");
-      return;
-    }
-
-    if (hasApplied) {
-      // Déjà sur la page des candidatures : on amène l'utilisateur à sa carte.
-      document.getElementById("my-candidature")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    } else {
-      setShowNotAppliedMessage(true);
-      setTimeout(() => {
-        setShowNotAppliedMessage(false);
-      }, 5000);
-    }
-  };
-
   // ===== EFFETS =====
   useEffect(() => {
     if (winnerTeam && !validatedTeam && !waitDeadline) {
@@ -1810,7 +1792,6 @@ export default function Candidatures() {
                 onDeleteCandidature={handleDeleteCandidature}
                 onOpenChat={openChat}
                 onPostuler={() => setShowPostulerModal(true)}
-                onViewMyCandidature={handleViewMyCandidature}
               />
             )}
             {/* ===== SECTION ÉQUIPES RÉELLES ===== */}

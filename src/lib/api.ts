@@ -8,6 +8,16 @@ const API_BASE_URL = API_URL.replace(/\/api\/?$/, '')
 const TOKEN_KEY = 'colockoo_token'
 const USER_KEY = 'colockoo_user'
 
+export class ApiError extends Error {
+    code?: string
+
+    constructor(message: string, code?: string) {
+        super(message)
+        this.name = 'ApiError'
+        this.code = code
+    }
+}
+
 export type Poste = 'superadmin' | 'admin' | 'moderateur' | 'proprietaire' | 'agent' | 'colocataire'
 export interface AppareilConnecte {
   id: number | string
@@ -681,7 +691,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const text = await response.text()
     const data = text ? JSON.parse(text) : null
     if (!response.ok) {
-        throw new Error(data?.message || 'Erreur API')
+        throw new ApiError(data?.message || 'Erreur API', data?.code)
     }
     return data as T
 }
@@ -745,9 +755,18 @@ export const api = {
         poste: Poste
         date_naissance: string
     }) {
-        return request<{ user: AuthUser; token: string }>('/auth/register', {
+        return request<{ email: string; message: string }>('/auth/register', {
             method: 'POST',
             body: JSON.stringify(payload),
+        })
+    },
+    verifyEmail(token: string) {
+        return request<{ message: string }>(`/auth/verify-email?token=${encodeURIComponent(token)}`)
+    },
+    resendVerificationEmail(email: string) {
+        return request<{ message: string }>('/auth/resend-verification-email', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
         })
     },
     me() {
@@ -783,13 +802,6 @@ export const api = {
             body: JSON.stringify(payload),
         })
     },
-    // Mot de passe en clair du compte connecté (le serveur ne renvoie que celui
-    // du porteur du token). Indisponible tant que le compte ne s'est pas
-    // reconnecté depuis l'activation du coffre.
-    revealPassword() {
-        return request<{ mot_de_passe: string }>('/auth/me/password')
-    },
-
     // ===== SÉCURITÉ DU COMPTE =====
 
 // Récupérer la valeur enregistrée dans la BDD

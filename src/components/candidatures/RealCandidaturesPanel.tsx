@@ -1,4 +1,4 @@
-import { Check, Eye, MessageCircle, Trash2, UserPlus, X } from "lucide-react";
+import { Check, MessageCircle, Trash2, UserPlus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type OwnerCandidate = {
@@ -107,7 +107,6 @@ type Props = {
   onDeleteCandidature: (candidateId: number) => void;
   onOpenChat: (candidate: any) => void;
   onPostuler: () => void;
-  onViewMyCandidature: () => void;
 };
 
 export function RealCandidaturesPanel({
@@ -124,7 +123,6 @@ export function RealCandidaturesPanel({
   onDeleteCandidature,
   onOpenChat,
   onPostuler,
-  onViewMyCandidature,
 }: Props) {
   const { t } = useTranslation('candidaturesPanel');
 
@@ -139,17 +137,6 @@ export function RealCandidaturesPanel({
           >
             <UserPlus className="h-4 w-4" />
             {t('panel.apply_button')}
-          </button>
-        )}
-        {/* Un seul bouton « Voir ma candidature » (il apparaissait deux fois). */}
-        {hasApplied && user && (
-          <button
-            type="button"
-            onClick={onViewMyCandidature}
-            className="inline-flex items-center gap-2 rounded-xl border border-brand-cyan bg-brand-cyan-light/30 px-4 py-2 text-sm font-semibold text-brand-cyan-dark transition-colors hover:bg-brand-cyan-light"
-          >
-            <Eye className="h-4 w-4" />
-            {t('panel.view_my_candidature')}
           </button>
         )}
       </div>
@@ -202,7 +189,7 @@ function RealCandidaturesList({
   onCandidateDecision,
   onDeleteCandidature,
   onOpenChat,
-}: Omit<Props, "annonceId" | "hasApplied" | "showNotAppliedMessage" | "onPostuler" | "onViewMyCandidature">) {
+}: Omit<Props, "annonceId" | "hasApplied" | "showNotAppliedMessage" | "onPostuler">) {
   const { t, i18n } = useTranslation('candidaturesPanel');
 
   if (loadingCandidatures) {

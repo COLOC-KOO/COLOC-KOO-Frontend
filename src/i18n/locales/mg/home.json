@@ -83,6 +83,29 @@
     "title": "Tompon-trano na masoivoho ?",
     "subtitle": "Avoahy ny fanambaranao ary karakarao ny mpiara-monina aminao mora foana.",
     "deposer": "Hametraka fanambarana",
-    "partenaire": "Ho mpiara-miara"
+    "partenaire": "Ho mpiara-miara",
+    "installApp": "Hametraka ny rindranasa"
+  },
+  "popup": {
+    "advertising": "Dokam-barotra",
+    "close": "Hakatona ny dokam-barotra",
+    "later": "Aorian'izay",
+    "ads": {
+      "partners": {
+        "title": "Fantaro ireo mpiara-miasa aminay",
+        "description": "Mahazoa tolotra ilaina amin'ny fametrahana, fifindrana trano ary fiainana vaovao miaraka.",
+        "label": "Hijery ny mpiara-miasa"
+      },
+      "services": {
+        "title": "Ataovy mora kokoa ny fametrahana",
+        "description": "Jereo ny tolotra Coloc-KOO natao hanampy anao isan'andro.",
+        "label": "Hijery ny tolotra"
+      },
+      "listings": {
+        "title": "Miandry anao ny trano fonenanao manaraka",
+        "description": "Jereo ireo fanambarana vaovao ary tadiavo ny trano iarahana mifanaraka amin'ny filanao.",
+        "label": "Hijery ny fanambarana"
+      }
+    }
   }
 }

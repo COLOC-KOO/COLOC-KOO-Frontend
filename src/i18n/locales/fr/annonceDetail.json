@@ -145,8 +145,9 @@
   "user": {
     "connected": "Connecté en tant que {{name}}",
     "connectedDesc": "Tu peux envoyer ta candidature directement depuis cette page.",
-    "ownerTitle": "Gestion des candidatures",
-    "ownerDesc": "La gestion des candidatures se fait depuis la page dédiée.",
+    "ownerTitle": "Annonce déposée par toi",
+    "ownerDesc": "Tu ne peux pas candidater à ta propre annonce. Consulte les demandes reçues depuis la page dédiée.",
+    "manageApplications": "Gérer les candidatures",
     "applied": "Votre candidature a bien été enregistrée.",
     "appliedDesc": "Vous pouvez suivre l'avancement et voir les autres candidats de cette annonce.",
     "viewApplication": "Voir ma candidature",
