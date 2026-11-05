@@ -1592,6 +1592,38 @@ export const api = {
             date_creation: string
         }>>('/backoffice/messages-contact')
     },
+    backofficeConversations() {
+        return request<Array<{
+            membre_a: number
+            membre_b: number
+            interlocuteur_id: number
+            interlocuteur_nom: string
+            interlocuteur_prenom: string
+            dernier_message: string
+            date_dernier_message: string
+            total_messages: number
+            non_lus: number
+        }>>('/backoffice/conversations')
+    },
+    backofficeConversationMessages(membreA: number | string, membreB: number | string) {
+        return request<Array<{
+            id_message: number
+            id_expediteur: number
+            id_destinataire: number
+            id_annonce: number | null
+            sujet: string | null
+            contenu: string
+            date_envoi: string
+            est_lu: number
+            message_parent: number | null
+            signalement_abus: number
+            expediteur_nom: string
+            expediteur_prenom: string
+            destinataire_nom: string
+            destinataire_prenom: string
+            annonce_titre: string | null
+        }>>(`/backoffice/conversations/${membreA}/${membreB}`)
+    },
     deleteBackofficeContactMessage(id: string | number) {
         return request<{ message: string }>(`/backoffice/messages-contact/${id}`, {method: 'DELETE'})
     },
