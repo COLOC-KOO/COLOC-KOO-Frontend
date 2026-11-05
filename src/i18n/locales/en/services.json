@@ -17,6 +17,13 @@
   "empty": "No services available at the moment.",
   "onlyAntananarivo": "Coloc'KOO services are currently available in Antananarivo only.",
   "availability": "Services available in Antananarivo (including its districts) for now.",
+  "perDay": "per day",
+  "dayDiscount": "Discount: {{fourDays}}% from 4 days · {{fiveDays}}% from 5 days",
+  "numberOfDays": "Number of days",
+  "days_one": "{{count}} day",
+  "days_other": "{{count}} days",
+  "discountApplied": "-{{percent}}%",
+  "savedAmount": "{{amount}} saved",
   "items": {
     "cleaning": {
       "name": "House cleaning",

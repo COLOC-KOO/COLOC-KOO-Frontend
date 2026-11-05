@@ -390,6 +390,8 @@ export interface ServiceCatalogueItem {
     description: string | null
     prix: number
     unite: 'heure' | 'forfait' | 'jour' | 'mois' | 'an' | 'stere' | string
+    reduction_4_jours?: number
+    reduction_5_jours?: number
 }
 
 export interface DemandeServiceGroup {
@@ -404,6 +406,7 @@ export interface DemandeServiceGroup {
         unite: string
         quantite: number
         prix_unitaire: number
+        reduction_pourcentage?: number
         sous_total: number
     }>
     dernier_contact?: string | null
@@ -433,6 +436,7 @@ export interface DemandeServiceStaffItem {
         unite: string
         quantite: number
         prix_unitaire: number
+        reduction_pourcentage?: number
         sous_total: number
     }>
     dernier_contact?: string | null
@@ -450,6 +454,8 @@ export interface ApiServiceCkoo {
     prix: number
     unite?: string | null
     est_actif: 0 | 1
+    reduction_4_jours?: number
+    reduction_5_jours?: number
     duree?: number | null
 }
 
@@ -1022,7 +1028,7 @@ export const api = {
         return request<ServiceCatalogueItem[]>('/demandes-service/catalogue')
     },
     createDemandeService(payload: {
-        services: Array<{ id_service: number }>
+        services: Array<{ id_service: number; quantite: number }>
         message?: string
         telephone?: string
     }) {
@@ -1559,6 +1565,8 @@ export const api = {
         description?: string;
         prix?: number;
         unite?: string;
+        reduction_4_jours?: number;
+        reduction_5_jours?: number;
         est_actif?: 0 | 1;
         duree?: number | null
     }) {
@@ -1573,6 +1581,8 @@ export const api = {
         description: string;
         prix: number;
         unite: string;
+        reduction_4_jours: number;
+        reduction_5_jours: number;
         est_actif: 0 | 1;
         duree: number | null
     }>) {

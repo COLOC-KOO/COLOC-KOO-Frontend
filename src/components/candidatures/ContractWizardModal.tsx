@@ -21,7 +21,7 @@ type Props = {
   mobileMoneyList: Array<{ nom: string; numero: string; couleur: string; hint: string }>;
   moyenPaiement: string | null;
   myShare: number | null;
-  ownerRetained: Array<{ name: string }>;
+  ownerRetained: Array<{ name: string; email?: string; telephone?: string }>;
   paymentInfo: { reference: string; montant: number; paidCount?: number; total?: number; allPaid?: boolean } | null;
   payRef: string;
   moveInLabel: string;
@@ -60,6 +60,13 @@ function repairUtf8Text(value: string) {
   } catch {
     return value;
   }
+}
+
+function getMediaUrl(path: string) {
+  if (/^(https?:|data:|blob:)/i.test(path)) return path;
+  const apiBaseUrl = (import.meta.env.VITE_API_URL || "http://localhost:4000/api")
+    .replace(/\/api\/?$/, "");
+  return `${apiBaseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
 export function ContractWizardModal({
@@ -109,6 +116,7 @@ export function ContractWizardModal({
   const fallbackPrice = contractMode === "edl" ? 10000 : contractMode === "both" ? 37000 : 27000;
   const previewTotal = (typeof previewAmount === "function" ? previewAmount(contractMode) : null) || fallbackPrice;
   const isEdlOnly = contractMode === "edl";
+  const includesEdl = contractMode === "edl" || contractMode === "both";
   const priceLabel = isEdlOnly ? "Document d'état des lieux (forfait)" : "Création du contrat (forfait)";
   const displayedAmount = myShare != null && myShare > 0 ? myShare : (orderTotal > 0 ? orderTotal : previewTotal);
   const coName = repairUtf8Text(ownerRetained.map((candidate) => candidate.name).join(", ")) || "—";
@@ -245,6 +253,87 @@ export function ContractWizardModal({
         {contractStep === "contenu" && (
           <div className="mt-6 space-y-3">
             <h3 className="bebas text-2xl text-brand-dark">{isEdlOnly ? "TA PRESTATION" : "CE QUE COMPREND TON CONTRAT"}</h3>
+            {includesEdl && (
+              <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4 text-left">
+                <section>
+                  <h4 className="text-sm font-bold text-brand-dark">
+                    Parties concernées par l’état des lieux
+                  </h4>
+                  <div className="mt-3 space-y-3 text-sm">
+                    <div className="rounded-lg border border-border bg-white p-3">
+                      <div className="font-semibold text-brand-dark">
+                        Propriétaire / bailleur
+                      </div>
+                      <div className="mt-1 text-muted-foreground">
+                        {repairUtf8Text(annonceData?.auteur || "Non renseigné")}
+                      </div>
+                      {annonceData?.auteur_email && (
+                        <div className="text-xs text-muted-foreground">
+                          {annonceData.auteur_email}
+                        </div>
+                      )}
+                      {annonceData?.auteur_telephone && (
+                        <div className="text-xs text-muted-foreground">
+                          {annonceData.auteur_telephone}
+                        </div>
+                      )}
+                    </div>
+                    <div className="rounded-lg border border-border bg-white p-3">
+                      <div className="font-semibold text-brand-dark">
+                        Locataire(s)
+                      </div>
+                      {ownerRetained.length > 0 ? (
+                        <ul className="mt-2 space-y-2">
+                          {ownerRetained.map((person, index) => (
+                            <li
+                              key={`${person.name}-${index}`}
+                              className="text-muted-foreground"
+                            >
+                              <div className="font-medium text-foreground">
+                                {repairUtf8Text(person.name)}
+                              </div>
+                              {person.email && (
+                                <div className="text-xs">{person.email}</div>
+                              )}
+                              {person.telephone && (
+                                <div className="text-xs">{person.telephone}</div>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Aucun locataire retenu pour le moment.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h4 className="text-sm font-bold text-brand-dark">
+                    Photos du logement
+                  </h4>
+                  {annonceData?.photos?.length ? (
+                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {annonceData.photos.map((photo: string, index: number) => (
+                        <img
+                          key={`${photo}-${index}`}
+                          src={getMediaUrl(photo)}
+                          alt={`Photo ${index + 1} du logement`}
+                          loading="lazy"
+                          className="h-24 w-full rounded-lg border border-border object-cover"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Aucune photo du logement n’est disponible.
+                    </p>
+                  )}
+                </section>
+              </div>
+            )}
             {!isEdlOnly && <div className="space-y-2">{clauses.map(([title, description]) => <div key={title} className="flex items-start gap-3 rounded-xl border border-border px-4 py-3"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-green-dark" /><div><div className="text-sm font-semibold">{repairUtf8Text(title)}</div><div className="text-xs text-muted-foreground">{repairUtf8Text(description)}</div></div></div>)}</div>}
             {!isEdlOnly &&
               activeContratOffers.map((offer) => (

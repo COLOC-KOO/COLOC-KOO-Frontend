@@ -17,6 +17,13 @@
   "empty": "Aucun service disponible pour le moment.",
   "onlyAntananarivo": "Les services Coloc'KOO sont pour l'instant disponibles uniquement à Antananarivo.",
   "availability": "Services disponibles à Antananarivo (quartiers inclus) pour le moment.",
+  "perDay": "par jour",
+  "dayDiscount": "Réduction : {{fourDays}} % dès 4 jours · {{fiveDays}} % dès 5 jours",
+  "numberOfDays": "Nombre de jours",
+  "days_one": "{{count}} jour",
+  "days_other": "{{count}} jours",
+  "discountApplied": "-{{percent}} %",
+  "savedAmount": "{{amount}} économisés",
   "items": {
     "cleaning": {
       "name": "Propreté de la maison",

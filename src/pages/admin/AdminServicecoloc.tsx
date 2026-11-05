@@ -24,6 +24,7 @@ import {
     Calendar,
     User,
     Loader2,
+    Pencil,
 } from 'lucide-react'
 
 // ============================================================================
@@ -34,6 +35,7 @@ interface ServiceLigne {
     nom: string
     quantite: number
     prix_unitaire: number
+    reduction_pourcentage?: number
     sous_total: number
 }
 
@@ -65,6 +67,8 @@ interface ApiServiceCkooRow {
     prix: number
     unite?: string | null
     est_actif: 0 | 1
+    reduction_4_jours?: number | string | null
+    reduction_5_jours?: number | string | null
 }
 
 interface OffreService {
@@ -72,6 +76,8 @@ interface OffreService {
     cle: string
     nom: string
     prixParJour: number
+    reduction4Jours: number
+    reduction5Jours: number
     unite: string
     description?: string
     actif: boolean
@@ -96,6 +102,7 @@ function mapDemandeService(d: DemandeServiceStaffItem): ServiceDemande {
             nom: l.nom || 'Service',
             quantite: l.quantite || 1,
             prix_unitaire: l.prix_unitaire || 0,
+            reduction_pourcentage: l.reduction_pourcentage || 0,
             sous_total: l.sous_total || 0,
         })),
         total: d.total || 0,
@@ -122,6 +129,8 @@ function mapServiceCkooRow(service: ApiServiceCkooRow): OffreService | null {
         cle: service.cle_service || '',
         nom: service.nom || 'Service sans nom',
         prixParJour: Number(service.prix || 0),
+        reduction4Jours: Number(service.reduction_4_jours || 0),
+        reduction5Jours: Number(service.reduction_5_jours || 0),
         unite: service.unite || 'heure',
         description: service.description || undefined,
         actif: Boolean(service.est_actif),
@@ -304,18 +313,22 @@ const RdvModal = ({
 
 const OffreModal = ({
                         onClose,
-                        onSave
+                        onSave,
+                        offre,
                     }: {
     onClose: () => void
-    onSave: (offre: Omit<OffreService, 'id' | 'cle'>) => void
+    onSave: (offre: Omit<OffreService, 'id' | 'cle'>) => Promise<boolean>
+    offre?: OffreService | null
 }) => {
     const dialog = useDialog()
-    const [nom, setNom] = useState('')
-    const [prixParJour, setPrixParJour] = useState(8800)
-    const [unite, setUnite] = useState('heure')
-    const [description, setDescription] = useState('')
+    const [nom, setNom] = useState(offre?.nom || '')
+    const [prixParJour, setPrixParJour] = useState(offre?.prixParJour ?? 8800)
+    const [reduction4Jours, setReduction4Jours] = useState(offre?.reduction4Jours ?? 10)
+    const [reduction5Jours, setReduction5Jours] = useState(offre?.reduction5Jours ?? 15)
+    const [unite, setUnite] = useState(offre?.unite || 'heure')
+    const [description, setDescription] = useState(offre?.description || '')
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!nom.trim()) {
             void dialog.alert({
@@ -325,14 +338,33 @@ const OffreModal = ({
             })
             return
         }
-        onSave({
+        if (
+            !Number.isFinite(reduction4Jours) ||
+            !Number.isFinite(reduction5Jours) ||
+            reduction4Jours < 0 ||
+            reduction4Jours > 100 ||
+            reduction5Jours < 0 ||
+            reduction5Jours > 100 ||
+            reduction5Jours < reduction4Jours
+        ) {
+            void dialog.alert({
+                tone: 'warning',
+                title: 'Pourcentage invalide',
+                message: 'Les réductions doivent être comprises entre 0 et 100 %, et celle dès 5 jours doit être au moins égale à celle dès 4 jours.',
+            })
+            return
+        }
+        if (await onSave({
             nom: nom.trim(),
             prixParJour,
+            reduction4Jours: unite === 'jour' ? reduction4Jours : 0,
+            reduction5Jours: unite === 'jour' ? reduction5Jours : 0,
             unite,
             description: description.trim() || undefined,
-            actif: true
-        })
-        onClose()
+            actif: offre?.actif ?? true
+        })) {
+            onClose()
+        }
     }
 
     return (
@@ -342,7 +374,9 @@ const OffreModal = ({
                 onClick={e => e.stopPropagation()}
             >
                 <div className="p-4 border-b border-white/10 flex items-center justify-between">
-                    <h3 className="text-xl font-bold">Ajouter une offre</h3>
+                    <h3 className="text-xl font-bold">
+                        {offre ? 'Modifier une offre' : 'Ajouter une offre'}
+                    </h3>
                     <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-lg transition">
                         <X className="w-5 h-5"/>
                     </button>
@@ -382,6 +416,34 @@ const OffreModal = ({
                             <option value="mois" className="bg-[oklch(0.22_0.005_260)]">Mois</option>
                         </select>
                     </div>
+                    {unite === 'jour' && (
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm text-white/60 mb-1">Réduction dès 4 jours (%)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value={reduction4Jours}
+                                    onChange={(e) => setReduction4Jours(Number(e.target.value))}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-white/60 mb-1">Réduction dès 5 jours (%)</label>
+                                <input
+                                    type="number"
+                                    min={reduction4Jours}
+                                    max="100"
+                                    step="0.1"
+                                    value={reduction5Jours}
+                                    onChange={(e) => setReduction5Jours(Number(e.target.value))}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
+                                />
+                            </div>
+                        </div>
+                    )}
                     <div>
                         <label className="block text-sm text-white/60 mb-1">Description</label>
                         <input
@@ -395,8 +457,8 @@ const OffreModal = ({
                     <div className="flex gap-3 pt-2">
                         <button type="submit"
                                 className="flex-1 bg-brand-cyan text-[oklch(0.15_0_0)] font-bold px-4 py-2 rounded-lg hover:opacity-80 transition">
-                            <Plus className="w-4 h-4 inline mr-2"/>
-                            Ajouter
+                            {offre ? <Pencil className="w-4 h-4 inline mr-2"/> : <Plus className="w-4 h-4 inline mr-2"/>}
+                            {offre ? 'Enregistrer' : 'Ajouter'}
                         </button>
                         <button type="button" onClick={onClose}
                                 className="flex-1 bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 transition text-white/60">
@@ -420,6 +482,7 @@ export default function AdminServicesColockoo() {
     const [searchQuery, setSearchQuery] = useState('')
     const [filterStatut, setFilterStatut] = useState<string>('tous')
     const [showOffreModal, setShowOffreModal] = useState(false)
+    const [editingOffre, setEditingOffre] = useState<OffreService | null>(null)
     const [showRdvModal, setShowRdvModal] = useState(false)
     const [selectedDemande, setSelectedDemande] = useState<ServiceDemande | null>(null)
     const [expandedRef, setExpandedRef] = useState<string | null>(null)
@@ -699,7 +762,7 @@ export default function AdminServicesColockoo() {
     //  FONCTIONS D'ACTION - OFFRES
     // ================================================================
 
-    const handleAddOffre = async (offre: Omit<OffreService, 'id' | 'cle'>) => {
+    const handleAddOffre = async (offre: Omit<OffreService, 'id' | 'cle'>): Promise<boolean> => {
         setLoading(true)
         setError(null)
         try {
@@ -709,14 +772,43 @@ export default function AdminServicesColockoo() {
                 nom: offre.nom,
                 description: offre.description || '',
                 prix: offre.prixParJour,
+                reduction_4_jours: offre.reduction4Jours,
+                reduction_5_jours: offre.reduction5Jours,
                 unite: offre.unite || 'heure',
                 est_actif: offre.actif ? 1 : 0,
             })
             await loadAdminServiceData()
             setSuccessMessage(`Offre "${offre.nom}" ajoutée avec succès`)
             window.setTimeout(() => setSuccessMessage(null), 3000)
+            return true
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Impossible d\'ajouter l\'offre')
+            return false
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleEditOffre = async (offre: Omit<OffreService, 'id' | 'cle'>): Promise<boolean> => {
+        if (!editingOffre) return false
+        setLoading(true)
+        setError(null)
+        try {
+            await api.updateServiceCkoo(editingOffre.id, {
+                nom: offre.nom,
+                description: offre.description || '',
+                prix: offre.prixParJour,
+                reduction_4_jours: offre.reduction4Jours,
+                reduction_5_jours: offre.reduction5Jours,
+                unite: offre.unite,
+            })
+            await loadAdminServiceData()
+            setSuccessMessage(`Offre "${offre.nom}" modifiée avec succès`)
+            window.setTimeout(() => setSuccessMessage(null), 3000)
+            return true
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Impossible de modifier l\'offre')
+            return false
         } finally {
             setLoading(false)
         }
@@ -1022,7 +1114,11 @@ export default function AdminServicesColockoo() {
                                                                             <tbody className="divide-y divide-white/5">
                                                                             {demande.lignes && demande.lignes.map((l, idx) => (
                                                                                 <tr key={idx} className="text-white/80">
-                                                                                    <td className="p-2.5">{l.nom || 'Service'}</td>
+                                                                                    <td className="p-2.5">
+                                                                                        {l.nom || 'Service'}
+                                                                                        {l.quantite > 1 && <span className="ml-1 text-xs text-white/40">× {l.quantite} jours</span>}
+                                                                                        {l.reduction_pourcentage ? <span className="ml-1 text-xs text-brand-green">(-{l.reduction_pourcentage} %)</span> : null}
+                                                                                    </td>
                                                                                     <td className="p-2.5 text-right tabular-nums">{l.prix_unitaire.toLocaleString('fr-FR')} Ar</td>
                                                                                     <td className="p-2.5 text-right tabular-nums">{l.sous_total.toLocaleString('fr-FR')} Ar</td>
                                                                                 </tr>
@@ -1191,7 +1287,10 @@ export default function AdminServicesColockoo() {
                   <span className="ml-2 text-xs bg-white/10 px-2 py-0.5 rounded-full">{offres.length} offres</span>
                 </span>
                                 <button
-                                    onClick={() => setShowOffreModal(true)}
+                                    onClick={() => {
+                                        setEditingOffre(null)
+                                        setShowOffreModal(true)
+                                    }}
                                     className="flex items-center gap-2 px-3 py-1.5 bg-brand-cyan text-[oklch(0.15_0_0)] font-medium rounded-lg text-sm hover:opacity-80 transition"
                                 >
                                     <Plus className="w-4 h-4"/>
@@ -1207,7 +1306,10 @@ export default function AdminServicesColockoo() {
                                             Offre
                                         </th>
                                         <th className="text-right p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
-                                            Prix / jour (MGA)
+                                            Prix / unité (MGA)
+                                        </th>
+                                        <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
+                                            Réductions
                                         </th>
                                         <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
                                             Unité
@@ -1232,6 +1334,13 @@ export default function AdminServicesColockoo() {
                                             <td className="p-3 text-right font-bold text-brand-cyan">
                                                 {offre.prixParJour.toLocaleString('fr-FR')} MGA
                                             </td>
+                                            <td className="p-3 text-center text-xs text-white/60">
+                                                {offre.unite === 'jour' ? (
+                                                    <span>
+                                                        {offre.reduction4Jours}% dès 4 j · {offre.reduction5Jours}% dès 5 j
+                                                    </span>
+                                                ) : '—'}
+                                            </td>
                                             <td className="p-3 text-center">
                                                 <span className="text-xs text-white/60">{offre.unite}</span>
                                             </td>
@@ -1246,6 +1355,17 @@ export default function AdminServicesColockoo() {
                                             </td>
                                             <td className="p-3 text-center">
                                                 <div className="flex items-center justify-center gap-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingOffre(offre)
+                                                            setShowOffreModal(true)
+                                                        }}
+                                                        className="p-1.5 hover:bg-brand-cyan/20 rounded-lg transition text-brand-cyan"
+                                                        title="Modifier"
+                                                        aria-label={`Modifier l'offre ${offre.nom}`}
+                                                    >
+                                                        <Pencil className="w-4 h-4"/>
+                                                    </button>
                                                     <button
                                                         onClick={() => handleToggleOffre(offre.id)}
                                                         className={`p-1.5 rounded-lg transition ${
@@ -1344,8 +1464,13 @@ export default function AdminServicesColockoo() {
             {/* Modale d'ajout d'offre */}
             {showOffreModal && (
                 <OffreModal
-                    onClose={() => setShowOffreModal(false)}
-                    onSave={handleAddOffre}
+                    key={editingOffre?.id ?? 'new'}
+                    offre={editingOffre}
+                    onClose={() => {
+                        setShowOffreModal(false)
+                        setEditingOffre(null)
+                    }}
+                    onSave={editingOffre ? handleEditOffre : handleAddOffre}
                 />
             )}
         </AdminLayout>

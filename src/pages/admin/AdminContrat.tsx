@@ -936,14 +936,26 @@ export default function AdminContratsEDL() {
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  // État pour l'ajout d'offre
+  // État pour l'ajout et la modification d'offre
   const [showAddOffre, setShowAddOffre] = useState(false);
+  const [editingOffre, setEditingOffre] = useState<OffreCommerciale | null>(
+    null,
+  );
   const [newOffreNom, setNewOffreNom] = useState("");
   const [newOffrePrix, setNewOffrePrix] = useState("");
   const [newOffreType, setNewOffreType] = useState<"contrat" | "edl">(
     "contrat",
   );
   const [newOffreDescription, setNewOffreDescription] = useState("");
+
+  const closeOffreModal = () => {
+    setShowAddOffre(false);
+    setEditingOffre(null);
+    setNewOffreNom("");
+    setNewOffrePrix("");
+    setNewOffreType("contrat");
+    setNewOffreDescription("");
+  };
 
   // Types et statuts pour les filtres
   const types = useMemo(() => {
@@ -1306,6 +1318,54 @@ export default function AdminContratsEDL() {
     }
   };
 
+  const handleEditOffre = async () => {
+    if (!editingOffre) return;
+
+    if (!newOffreNom.trim() || !newOffrePrix) {
+      void dialog.alert({
+        tone: "warning",
+        title: "Champs manquants",
+        message: "Merci de renseigner le nom de l'offre et son prix.",
+      });
+      return;
+    }
+
+    const prix = parseInt(newOffrePrix);
+    if (isNaN(prix) || prix <= 0) {
+      void dialog.alert({
+        tone: "warning",
+        title: "Prix invalide",
+        message: "Le prix doit être un nombre supérieur à 0.",
+      });
+      return;
+    }
+
+    setError(null);
+    try {
+      await api.updateServiceCkoo(editingOffre.id, {
+        nom: newOffreNom.trim(),
+        description: newOffreDescription.trim(),
+        prix,
+      });
+      await loadOffres();
+      closeOffreModal();
+      setSuccessMessage("Offre modifiée avec succès");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Impossible de modifier l'offre",
+      );
+    }
+  };
+
+  const handleSaveOffre = () => {
+    if (editingOffre) {
+      void handleEditOffre();
+      return;
+    }
+    void handleAddOffre();
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-5">
@@ -1327,6 +1387,24 @@ export default function AdminContratsEDL() {
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Actualiser
           </button>
+        </div>
+
+        <div className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-4">
+          <div className="flex items-start gap-3">
+            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+            <div>
+              <h2 className="text-sm font-semibold text-amber-200">
+                Point de cadrage à organiser avec le client
+              </h2>
+              <p className="mt-1 text-xs leading-relaxed text-white/60">
+                Définir l’intégration d’offres de documents pour les locataires,
+                propriétaires et professionnels : saisie des champs, choix des
+                clauses, aperçu des premières pages, paiement Mobile Money et
+                PDF final non modifiable. Les EDL devront être communs aux trois
+                profils.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Messages */}
@@ -1672,7 +1750,10 @@ export default function AdminContratsEDL() {
                 </p>
               </div>
               <button
-                onClick={() => setShowAddOffre(true)}
+                onClick={() => {
+                  closeOffreModal();
+                  setShowAddOffre(true);
+                }}
                 className="flex items-center gap-2 px-3 py-2 bg-brand-cyan text-[oklch(0.15_0_0)] font-bold rounded-lg hover:opacity-80 transition"
               >
                 <Plus className="w-4 h-4" />
@@ -1727,7 +1808,23 @@ export default function AdminContratsEDL() {
                       <td className="p-3 text-right font-bold text-brand-cyan">
                         {offre.prix.toLocaleString("fr-FR")} MGA
                       </td>
-                      <td className="p-3 text-center">
+                      <td className="p-3">
+                        <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => {
+                            setEditingOffre(offre);
+                            setNewOffreNom(offre.nom);
+                            setNewOffrePrix(String(offre.prix));
+                            setNewOffreType(offre.type);
+                            setNewOffreDescription(offre.description || "");
+                            setShowAddOffre(true);
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-brand-cyan/20 text-brand-cyan transition"
+                          title="Modifier"
+                          aria-label={`Modifier l'offre ${offre.nom}`}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleDeleteOffre(offre.id)}
                           className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition"
@@ -1735,6 +1832,7 @@ export default function AdminContratsEDL() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1757,16 +1855,18 @@ export default function AdminContratsEDL() {
       {showAddOffre && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowAddOffre(false)}
+          onClick={closeOffreModal}
         >
           <div
             className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold">Ajouter une offre</h3>
+              <h3 className="text-xl font-bold">
+                {editingOffre ? "Modifier une offre" : "Ajouter une offre"}
+              </h3>
               <button
-                onClick={() => setShowAddOffre(false)}
+                onClick={closeOffreModal}
                 className="p-1 hover:bg-white/10 rounded-lg transition"
               >
                 <X className="w-5 h-5" />
@@ -1796,7 +1896,8 @@ export default function AdminContratsEDL() {
                   onChange={(e) =>
                     setNewOffreType(e.target.value as "contrat" | "edl")
                   }
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
+                  disabled={Boolean(editingOffre)}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50 disabled:opacity-60"
                 >
                   <option
                     value="contrat"
@@ -1838,16 +1939,16 @@ export default function AdminContratsEDL() {
 
               <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => setShowAddOffre(false)}
+                  onClick={closeOffreModal}
                   className="flex-1 px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition text-white/60"
                 >
                   Annuler
                 </button>
                 <button
-                  onClick={handleAddOffre}
+                  onClick={handleSaveOffre}
                   className="flex-1 px-4 py-2 bg-brand-cyan text-[oklch(0.15_0_0)] font-bold rounded-lg hover:opacity-80 transition"
                 >
-                  Ajouter
+                  {editingOffre ? "Enregistrer" : "Ajouter"}
                 </button>
               </div>
             </div>
