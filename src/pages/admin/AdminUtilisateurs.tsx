@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Ban, CheckCircle, Loader2, RefreshCw, Search, Shield, X } from 'lucide-react'
+import { Ban, CheckCircle, Loader2, RefreshCw, Search, Shield, X, XCircle } from 'lucide-react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api, BackofficeMember } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
@@ -29,6 +29,7 @@ export default function AdminUtilisateurs() {
   const { user } = useAuth()
   const dialog = useDialog()
   const [active, setActive] = useState('all')
+  const [verificationFilter, setVerificationFilter] = useState('all')
   const [search, setSearch] = useState('')
   // Terme réellement envoyé au serveur (saisie temporisée de 350 ms)
   const [searchQuery, setSearchQuery] = useState('')
@@ -59,9 +60,13 @@ export default function AdminUtilisateurs() {
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase()
-    if (!term) return users
-    return users.filter((u) => `${u.name} ${u.email} ${u.telephone || ''}`.toLowerCase().includes(term))
-  }, [search, users])
+    return users.filter((u) => {
+      const matchesSearch = !term || `${u.name} ${u.email} ${u.telephone || ''}`.toLowerCase().includes(term)
+      const verificationStatus = u.verificationStatus || (u.verification ? 'conforme' : 'a_verifier')
+      const matchesVerification = verificationFilter === 'all' || verificationStatus === verificationFilter
+      return matchesSearch && matchesVerification
+    })
+  }, [search, users, verificationFilter])
 
   const isSelf = (member: BackofficeMember) => Number(member.id) === Number(user?.id)
 
@@ -74,7 +79,6 @@ export default function AdminUtilisateurs() {
       })
       return
     }
-
     if (statut === STATUT_SUSPENDU) {
       const confirmed = await dialog.confirm({
         tone: 'danger',
@@ -95,6 +99,45 @@ export default function AdminUtilisateurs() {
           ? `Compte de ${member.name || member.email} suspendu`
           : `Compte de ${member.name || member.email} réactivé`,
       )
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Mise à jour impossible'
+      setError(message)
+      void dialog.alert({ tone: 'danger', title: 'Mise à jour impossible', message })
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  async function applyVerification(member: BackofficeMember, statut: 'conforme' | 'non_conforme') {
+    let raison: string | undefined
+    if (statut === 'non_conforme') {
+      const response = await dialog.prompt({
+        tone: 'warning',
+        title: 'Motif du refus',
+        message: `Indiquez le motif de refus pour le profil de ${member.name || member.email}.`,
+        label: 'Motif',
+        placeholder: 'Ex. document illisible ou information incohérente',
+        required: true,
+        multiline: true,
+        confirmLabel: 'Refuser le profil',
+      })
+      if (response === null) return
+      raison = response.trim()
+    }
+
+    setPendingId(member.id)
+    setError('')
+    try {
+      const result = await api.updateMemberVerification(member.id, { statut, raison })
+      setUsers((current) => current.map((item) => item.id === member.id
+        ? {
+            ...item,
+            verification: statut === 'conforme',
+            verificationStatus: statut,
+            verificationReason: statut === 'non_conforme' ? raison || null : null,
+          }
+        : item))
+      dialog.toast(result.changed ? 'Vérification du profil mise à jour' : 'Le statut était déjà à jour')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Mise à jour impossible'
       setError(message)
@@ -164,6 +207,26 @@ export default function AdminUtilisateurs() {
               ))}
             </div>
           </div>
+          <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-white/40">Vérification des profils :</span>
+            {[
+              { label: 'Tous', value: 'all' },
+              { label: 'À vérifier', value: 'a_verifier' },
+              { label: 'Vérifiés', value: 'conforme' },
+              { label: 'Refusés', value: 'non_conforme' },
+            ].map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setVerificationFilter(filter.value)}
+                className={`px-2.5 py-1 text-xs rounded-lg ${
+                  verificationFilter === filter.value ? 'bg-brand-cyan text-[oklch(0.15_0_0)] font-semibold' : 'text-white/60 hover:bg-white/5'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-xs uppercase text-white/40 border-b border-white/10">
@@ -171,6 +234,7 @@ export default function AdminUtilisateurs() {
                   <th className="text-left p-4 font-medium">Utilisateur</th>
                   <th className="text-left font-medium">Role</th>
                   <th className="text-left font-medium">Statut</th>
+                  <th className="text-left font-medium">Vérification</th>
                   <th className="text-left font-medium">Annonces</th>
                   <th className="text-left font-medium">Signalements</th>
                   <th className="text-left font-medium">Inscription</th>
@@ -200,7 +264,13 @@ export default function AdminUtilisateurs() {
                       </td>
                       <td className="text-white/70">{roleLabels[u.poste] || u.poste}</td>
                       <td>
-                        <StatusBadge statut={u.statut} verified={u.verification} />
+                        <StatusBadge statut={u.statut} />
+                      </td>
+                      <td>
+                        <VerificationBadge
+                          status={u.verificationStatus || (u.verification ? 'conforme' : 'a_verifier')}
+                          reason={u.verificationReason}
+                        />
                       </td>
                       <td className="text-white/60">{u.annoncesCount}</td>
                       <td className="text-white/60">
@@ -218,6 +288,28 @@ export default function AdminUtilisateurs() {
                             </span>
                           ) : (
                             <>
+                              {(u.verificationStatus || (u.verification ? 'conforme' : 'a_verifier')) === 'a_verifier' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => applyVerification(u, 'conforme')}
+                                    className="p-1.5 hover:bg-white/10 rounded text-brand-green"
+                                    title="Valider ce profil"
+                                    aria-label="Valider ce profil"
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => applyVerification(u, 'non_conforme')}
+                                    className="p-1.5 hover:bg-white/10 rounded text-brand-magenta"
+                                    title="Refuser ce profil avec un motif"
+                                    aria-label="Refuser ce profil"
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
                               <button
                                 onClick={() => applyStatus(u, STATUT_ACTIF)}
                                 disabled={self || !suspended}
@@ -257,12 +349,12 @@ export default function AdminUtilisateurs() {
                 })}
                 {!loading && filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="text-center py-8 text-white/40">Aucun utilisateur trouve</td>
+                    <td colSpan={8} className="text-center py-8 text-white/40">Aucun utilisateur trouvé</td>
                   </tr>
                 )}
                 {loading && (
                   <tr>
-                    <td colSpan={7} className="text-center py-8 text-white/40">Chargement...</td>
+                    <td colSpan={8} className="text-center py-8 text-white/40">Chargement...</td>
                   </tr>
                 )}
               </tbody>
@@ -277,7 +369,7 @@ export default function AdminUtilisateurs() {
 // Le statut du compte et la vérification d'identité sont deux informations
 // distinctes : afficher « Vérifié » à la place du statut masquait les
 // suspensions (le badge ne changeait pas après l'action).
-function StatusBadge({ statut, verified }: { statut?: string; verified?: boolean }) {
+function StatusBadge({ statut }: { statut?: string }) {
   const badge =
     statut === STATUT_SUSPENDU || statut === 'banned' ? (
       <span className="text-[10px] font-bold text-brand-magenta px-2 py-1 rounded-full border border-brand-magenta/30 bg-brand-magenta/10">
@@ -291,17 +383,22 @@ function StatusBadge({ statut, verified }: { statut?: string; verified?: boolean
       <span className="text-[10px] font-bold text-brand-green px-2 py-1 rounded-full border border-brand-green/30 bg-brand-green/10">Actif</span>
     )
 
+  return badge
+}
+
+function VerificationBadge({ status, reason }: { status: string; reason?: string | null }) {
+  const config = {
+    a_verifier: { label: 'À vérifier', className: 'text-brand-yellow border-brand-yellow/30 bg-brand-yellow/10' },
+    conforme: { label: 'Vérifié', className: 'text-brand-cyan border-brand-cyan/30 bg-brand-cyan/10' },
+    non_conforme: { label: 'Refusé', className: 'text-brand-magenta border-brand-magenta/30 bg-brand-magenta/10' },
+  }[status] || { label: status, className: 'text-white/60 border-white/20 bg-white/5' }
+
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {badge}
-      {verified && (
-        <span
-          className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-cyan px-2 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10"
-          title="Identité vérifiée"
-        >
-          <Shield className="w-3 h-3" /> Verifie
-        </span>
-      )}
+    <div className="flex flex-col items-start gap-1">
+      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full border ${config.className}`}>
+        <Shield className="w-3 h-3" /> {config.label}
+      </span>
+      {status === 'non_conforme' && reason && <span className="max-w-40 text-[10px] text-white/50">{reason}</span>}
     </div>
   )
 }

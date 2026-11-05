@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CheckCircle, Eye, Pencil, RefreshCw, Search, Save, Trash2, X, XCircle, Home, Users, Ruler, Bed, Wifi, Car, Dog, Shield } from 'lucide-react'
+import { CheckCircle, ChevronLeft, ChevronRight, Eye, Pencil, RefreshCw, Search, Save, Trash2, X, XCircle, Home, Users, Ruler, Bed, Wifi, Car, Dog, Shield } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { ApiAnnonce, api } from '../../lib/api'
 import { formatAr } from '../../lib/utils'
@@ -12,6 +13,7 @@ const filters = [
 ]
 
 export default function AdminAnnonces() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [active, setActive] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [annonces, setAnnonces] = useState<ApiAnnonce[]>([])
@@ -21,6 +23,7 @@ export default function AdminAnnonces() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showRejectionModal, setShowRejectionModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
    const [editForm, setEditForm] = useState({
      titre: '',
      description: '',
@@ -53,6 +56,25 @@ export default function AdminAnnonces() {
   }
 
   useEffect(loadAnnonces, [])
+
+  useEffect(() => {
+    const annonceId = Number(searchParams.get('annonceId'))
+    if (!Number.isInteger(annonceId) || annonceId <= 0) return
+    const annonce = annonces.find((item) => item.id === annonceId)
+    if (!annonce) return
+    setSelectedAnnonce(annonce)
+    setSelectedPhotoIndex(0)
+    setShowViewModal(true)
+  }, [annonces, searchParams])
+
+  function closeViewModal() {
+    setShowViewModal(false)
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.delete('annonceId')
+      return next
+    })
+  }
 
   const filteredAnnonces = useMemo(() => {
     const term = searchTerm.toLowerCase()
@@ -238,7 +260,7 @@ export default function AdminAnnonces() {
                      <td className="text-white/50 text-xs">{new Date(annonce.date_creation).toLocaleDateString('fr-FR')}</td>
                      <td className="p-4 text-right">
                        <div className="flex justify-end gap-1 flex-wrap">
-                         <button onClick={() => { setSelectedAnnonce(annonce); setShowViewModal(true) }} className="p-1.5 hover:bg-white/10 rounded text-white/70 hover:text-white" title="Voir">
+                         <button onClick={() => { setSelectedAnnonce(annonce); setSelectedPhotoIndex(0); setShowViewModal(true) }} className="p-1.5 hover:bg-white/10 rounded text-white/70 hover:text-white" title="Voir">
                            <Eye className="w-4 h-4" />
                          </button>
                          {annonce.statut === 'pending' && (
@@ -285,8 +307,13 @@ export default function AdminAnnonces() {
       </div>
 
        {showViewModal && selectedAnnonce && (
-         <Modal title="Details de l'annonce" onClose={() => setShowViewModal(false)}>
-           <img src={selectedAnnonce.photos[0] || 'https://picsum.photos/seed/colockoo/900/400'} className="w-full h-48 object-cover rounded-lg" alt="" />
+         <Modal title="Détails de l'annonce" onClose={closeViewModal}>
+           <PhotoGallery
+             photos={selectedAnnonce.photos}
+             title={selectedAnnonce.titre}
+             selectedIndex={selectedPhotoIndex}
+             onSelect={setSelectedPhotoIndex}
+           />
            <div className="grid grid-cols-2 gap-4 mt-4">
              <Info label="Titre" value={selectedAnnonce.titre} />
              <Info label="Ville" value={selectedAnnonce.ville} />
@@ -455,6 +482,68 @@ function Info({ label, value }: { label: string; value: string }) {
     <div>
       <label className="text-white/40 text-xs">{label}</label>
       <p className="font-medium text-white">{value}</p>
+    </div>
+  )
+}
+
+function PhotoGallery({
+  photos,
+  title,
+  selectedIndex,
+  onSelect,
+}: {
+  photos: string[]
+  title: string
+  selectedIndex: number
+  onSelect: (index: number) => void
+}) {
+  const images = photos.length ? photos : ['https://picsum.photos/seed/colockoo/900/400']
+  const currentIndex = Math.min(selectedIndex, images.length - 1)
+
+  return (
+    <div>
+      <div className="relative">
+        <img src={images[currentIndex]} className="w-full h-56 object-cover rounded-lg" alt={`${title} — photo ${currentIndex + 1}`} />
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => onSelect((currentIndex - 1 + images.length) % images.length)}
+              aria-label="Photo précédente"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelect((currentIndex + 1) % images.length)}
+              aria-label="Photo suivante"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+            <span className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-xs text-white">
+              {currentIndex + 1} / {images.length}
+            </span>
+          </>
+        )}
+      </div>
+      {images.length > 1 && (
+        <div className="mt-2 flex gap-2 overflow-x-auto">
+          {images.map((photo, index) => (
+            <button
+              key={`${photo}-${index}`}
+              type="button"
+              onClick={() => onSelect(index)}
+              aria-label={`Afficher la photo ${index + 1}`}
+              aria-pressed={currentIndex === index}
+              className={`shrink-0 rounded-md border-2 ${currentIndex === index ? 'border-brand-cyan' : 'border-transparent'}`}
+            >
+              <img src={photo} alt="" className="h-14 w-20 rounded object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
