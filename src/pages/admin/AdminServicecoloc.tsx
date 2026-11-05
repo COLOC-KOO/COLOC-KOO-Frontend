@@ -35,6 +35,7 @@ interface ServiceLigne {
     nom: string
     quantite: number
     prix_unitaire: number
+    reduction_pourcentage?: number
     sous_total: number
 }
 
@@ -66,6 +67,8 @@ interface ApiServiceCkooRow {
     prix: number
     unite?: string | null
     est_actif: 0 | 1
+    reduction_4_jours?: number | string | null
+    reduction_5_jours?: number | string | null
 }
 
 interface OffreService {
@@ -73,6 +76,8 @@ interface OffreService {
     cle: string
     nom: string
     prixParJour: number
+    reduction4Jours: number
+    reduction5Jours: number
     unite: string
     description?: string
     actif: boolean
@@ -97,6 +102,7 @@ function mapDemandeService(d: DemandeServiceStaffItem): ServiceDemande {
             nom: l.nom || 'Service',
             quantite: l.quantite || 1,
             prix_unitaire: l.prix_unitaire || 0,
+            reduction_pourcentage: l.reduction_pourcentage || 0,
             sous_total: l.sous_total || 0,
         })),
         total: d.total || 0,
@@ -123,6 +129,8 @@ function mapServiceCkooRow(service: ApiServiceCkooRow): OffreService | null {
         cle: service.cle_service || '',
         nom: service.nom || 'Service sans nom',
         prixParJour: Number(service.prix || 0),
+        reduction4Jours: Number(service.reduction_4_jours || 0),
+        reduction5Jours: Number(service.reduction_5_jours || 0),
         unite: service.unite || 'heure',
         description: service.description || undefined,
         actif: Boolean(service.est_actif),
@@ -315,6 +323,8 @@ const OffreModal = ({
     const dialog = useDialog()
     const [nom, setNom] = useState(offre?.nom || '')
     const [prixParJour, setPrixParJour] = useState(offre?.prixParJour ?? 8800)
+    const [reduction4Jours, setReduction4Jours] = useState(offre?.reduction4Jours ?? 10)
+    const [reduction5Jours, setReduction5Jours] = useState(offre?.reduction5Jours ?? 15)
     const [unite, setUnite] = useState(offre?.unite || 'heure')
     const [description, setDescription] = useState(offre?.description || '')
 
@@ -328,9 +338,27 @@ const OffreModal = ({
             })
             return
         }
+        if (
+            !Number.isFinite(reduction4Jours) ||
+            !Number.isFinite(reduction5Jours) ||
+            reduction4Jours < 0 ||
+            reduction4Jours > 100 ||
+            reduction5Jours < 0 ||
+            reduction5Jours > 100 ||
+            reduction5Jours < reduction4Jours
+        ) {
+            void dialog.alert({
+                tone: 'warning',
+                title: 'Pourcentage invalide',
+                message: 'Les réductions doivent être comprises entre 0 et 100 %, et celle dès 5 jours doit être au moins égale à celle dès 4 jours.',
+            })
+            return
+        }
         if (await onSave({
             nom: nom.trim(),
             prixParJour,
+            reduction4Jours: unite === 'jour' ? reduction4Jours : 0,
+            reduction5Jours: unite === 'jour' ? reduction5Jours : 0,
             unite,
             description: description.trim() || undefined,
             actif: offre?.actif ?? true
@@ -388,6 +416,34 @@ const OffreModal = ({
                             <option value="mois" className="bg-[oklch(0.22_0.005_260)]">Mois</option>
                         </select>
                     </div>
+                    {unite === 'jour' && (
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm text-white/60 mb-1">Réduction dès 4 jours (%)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value={reduction4Jours}
+                                    onChange={(e) => setReduction4Jours(Number(e.target.value))}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-white/60 mb-1">Réduction dès 5 jours (%)</label>
+                                <input
+                                    type="number"
+                                    min={reduction4Jours}
+                                    max="100"
+                                    step="0.1"
+                                    value={reduction5Jours}
+                                    onChange={(e) => setReduction5Jours(Number(e.target.value))}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
+                                />
+                            </div>
+                        </div>
+                    )}
                     <div>
                         <label className="block text-sm text-white/60 mb-1">Description</label>
                         <input
@@ -716,6 +772,8 @@ export default function AdminServicesColockoo() {
                 nom: offre.nom,
                 description: offre.description || '',
                 prix: offre.prixParJour,
+                reduction_4_jours: offre.reduction4Jours,
+                reduction_5_jours: offre.reduction5Jours,
                 unite: offre.unite || 'heure',
                 est_actif: offre.actif ? 1 : 0,
             })
@@ -740,6 +798,8 @@ export default function AdminServicesColockoo() {
                 nom: offre.nom,
                 description: offre.description || '',
                 prix: offre.prixParJour,
+                reduction_4_jours: offre.reduction4Jours,
+                reduction_5_jours: offre.reduction5Jours,
                 unite: offre.unite,
             })
             await loadAdminServiceData()
@@ -1054,7 +1114,11 @@ export default function AdminServicesColockoo() {
                                                                             <tbody className="divide-y divide-white/5">
                                                                             {demande.lignes && demande.lignes.map((l, idx) => (
                                                                                 <tr key={idx} className="text-white/80">
-                                                                                    <td className="p-2.5">{l.nom || 'Service'}</td>
+                                                                                    <td className="p-2.5">
+                                                                                        {l.nom || 'Service'}
+                                                                                        {l.quantite > 1 && <span className="ml-1 text-xs text-white/40">× {l.quantite} jours</span>}
+                                                                                        {l.reduction_pourcentage ? <span className="ml-1 text-xs text-brand-green">(-{l.reduction_pourcentage} %)</span> : null}
+                                                                                    </td>
                                                                                     <td className="p-2.5 text-right tabular-nums">{l.prix_unitaire.toLocaleString('fr-FR')} Ar</td>
                                                                                     <td className="p-2.5 text-right tabular-nums">{l.sous_total.toLocaleString('fr-FR')} Ar</td>
                                                                                 </tr>
@@ -1242,7 +1306,10 @@ export default function AdminServicesColockoo() {
                                             Offre
                                         </th>
                                         <th className="text-right p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
-                                            Prix / jour (MGA)
+                                            Prix / unité (MGA)
+                                        </th>
+                                        <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
+                                            Réductions
                                         </th>
                                         <th className="text-center p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
                                             Unité
@@ -1266,6 +1333,13 @@ export default function AdminServicesColockoo() {
                                             </td>
                                             <td className="p-3 text-right font-bold text-brand-cyan">
                                                 {offre.prixParJour.toLocaleString('fr-FR')} MGA
+                                            </td>
+                                            <td className="p-3 text-center text-xs text-white/60">
+                                                {offre.unite === 'jour' ? (
+                                                    <span>
+                                                        {offre.reduction4Jours}% dès 4 j · {offre.reduction5Jours}% dès 5 j
+                                                    </span>
+                                                ) : '—'}
                                             </td>
                                             <td className="p-3 text-center">
                                                 <span className="text-xs text-white/60">{offre.unite}</span>

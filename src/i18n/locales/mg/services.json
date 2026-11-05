@@ -17,6 +17,13 @@
   "empty": "Tsy misy tolotra misy amin'izao fotoana izao.",
   "onlyAntananarivo": "Ny tolotra Coloc'KOO dia azo atao ao Antananarivo ihany aloha hatreto.",
   "availability": "Tolotra misy ao Antananarivo (anisan'izany ny fokontany) aloha hatreto.",
+  "perDay": "isan'andro",
+  "dayDiscount": "Fihenam-bidy: {{fourDays}}% manomboka amin'ny 4 andro · {{fiveDays}}% manomboka amin'ny 5 andro",
+  "numberOfDays": "Isan'ny andro",
+  "days_one": "{{count}} andro",
+  "days_other": "{{count}} andro",
+  "discountApplied": "-{{percent}}%",
+  "savedAmount": "{{amount}} no voatahiry",
   "items": {
     "cleaning": {
       "name": "Fanadiovana ny trano :  Fanadiovana, fanasan-damba, sns.",

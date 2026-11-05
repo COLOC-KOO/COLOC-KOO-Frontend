@@ -58,6 +58,19 @@ function formatAr(n: number) {
   return `${(n || 0).toLocaleString('fr-FR')} Ar`
 }
 
+function getServicePricing(service: ServiceCatalogueItem, quantity: number) {
+  const reduction = service.unite === 'jour'
+    ? quantity >= 5
+      ? Number(service.reduction_5_jours || 0)
+      : quantity >= 4
+        ? Number(service.reduction_4_jours || 0)
+        : 0
+    : 0
+  const baseTotal = service.prix * quantity
+  const total = Math.round(baseTotal * (1 - reduction / 100))
+  return { reduction, total, savings: baseTotal - total }
+}
+
 const fadeInUp = {
   initial: { opacity: 0, y: 24 },
   animate: { opacity: 1, y: 0 },
@@ -130,7 +143,7 @@ export default function Services() {
   const [openBoostDetails, setOpenBoostDetails] = useState<'boost' | 'boosturgent' | null>(null)
 
   // Sélection multiple (sans quantité) : ensemble d'id_service cochés.
-  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [selected, setSelected] = useState<Map<number, number>>(new Map())
   const [message, setMessage] = useState('')
   const [telephone, setTelephone] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -189,7 +202,10 @@ export default function Services() {
     () => catalogue.filter((s) => selected.has(s.id)),
     [catalogue, selected],
   )
-  const total = selectedLines.reduce((sum, l) => sum + l.prix, 0)
+  const total = selectedLines.reduce(
+    (sum, line) => sum + getServicePricing(line, selected.get(line.id) || 1).total,
+    0,
+  )
   const count = selectedLines.length
 
   // L'historique (/mine) ne renvoie que le nom français des lignes : on retrouve
@@ -201,11 +217,13 @@ export default function Services() {
 
   const toggle = (id: number) =>
     setSelected((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      const next = new Map(prev)
+      next.has(id) ? next.delete(id) : next.set(id, 1)
       return next
     })
-  const clearCart = () => setSelected(new Set())
+  const setServiceQuantity = (id: number, quantity: number) =>
+    setSelected((prev) => new Map(prev).set(id, quantity))
+  const clearCart = () => setSelected(new Map())
 
   // Cocher une offre décoche automatiquement toute autre offre sélectionnée ;
   // recocher la même offre la décoche (retour à l'état initial).
@@ -240,7 +258,10 @@ export default function Services() {
     setError('')
     try {
       const res = await api.createDemandeService({
-        services: selectedLines.map((l) => ({ id_service: l.id })),
+        services: selectedLines.map((line) => ({
+          id_service: line.id,
+          quantite: selected.get(line.id) || 1,
+        })),
         message: message.trim() || undefined,
         telephone: telephone.trim() || undefined,
       })
@@ -483,55 +504,88 @@ export default function Services() {
               <div className="space-y-3">
                 {catalogue.map((s, i) => {
                   const active = selected.has(s.id)
+                  const quantity = selected.get(s.id) || 1
                   const Icon = getServiceIcon(s.nom)
+                  const hasDayDiscount = s.unite === 'jour' &&
+                    (Number(s.reduction_4_jours || 0) > 0 || Number(s.reduction_5_jours || 0) > 0)
                   return (
-                    <motion.button
+                    <motion.div
                       key={s.id}
-                      type="button"
-                      onClick={() => toggle(s.id)}
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      aria-pressed={active}
-                      className={cn(
-                        'group w-full text-left rounded-2xl border bg-white p-4 flex items-center gap-4 transition-all duration-200 hover:shadow-md',
-                        active
-                          ? 'border-brand-cyan ring-2 ring-brand-cyan/25 shadow-sm'
-                          : 'border-border/60 hover:border-brand-cyan/40',
-                      )}
                     >
-                      {/* Icône */}
-                      <div className="w-9 h-9 rounded-xl bg-brand-cyan/10 flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-4 h-4 text-brand-cyan-dark" />
-                      </div>
-
-                      {/* Nom + description (traduits via le JSON) */}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-foreground leading-snug truncate">
-                          {serviceName(s.cle, s.nom)}
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-1">
-                          {serviceDesc(s.cle, s.description || t('services:catalogue.defaultDesc'))}
-                        </p>
-                      </div>
-
-                      {/* Prix (unité masquée) */}
-                      <div className="text-right flex-shrink-0">
-                        <div className="text-lg font-extrabold text-foreground tabular-nums leading-none">{formatAr(s.prix)}</div>
-                      </div>
-
-                      {/* Checkbox rond */}
-                      <span
+                      <button
+                        type="button"
+                        onClick={() => toggle(s.id)}
+                        aria-pressed={active}
                         className={cn(
-                          'w-6 h-6 rounded-full grid place-items-center border-2 flex-shrink-0 transition-all',
+                          'group w-full text-left rounded-2xl border bg-white p-4 flex items-center gap-4 transition-all duration-200 hover:shadow-md',
                           active
-                            ? 'bg-brand-cyan border-brand-cyan text-white'
-                            : 'border-border/70 group-hover:border-brand-cyan/60',
+                            ? 'border-brand-cyan ring-2 ring-brand-cyan/25 shadow-sm'
+                            : 'border-border/60 hover:border-brand-cyan/40',
                         )}
                       >
-                        {active && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
-                      </span>
-                    </motion.button>
+                        <div className="w-9 h-9 rounded-xl bg-brand-cyan/10 flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-4 h-4 text-brand-cyan-dark" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-foreground leading-snug truncate">
+                            {serviceName(s.cle, s.nom)}
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-1">
+                            {serviceDesc(s.cle, s.description || t('services:catalogue.defaultDesc'))}
+                          </p>
+                          {hasDayDiscount && (
+                            <p className="mt-1 text-xs font-semibold text-brand-green-dark">
+                              {t('services:catalogue.dayDiscount', {
+                                fourDays: s.reduction_4_jours,
+                                fiveDays: s.reduction_5_jours,
+                              })}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-lg font-extrabold text-foreground tabular-nums leading-none">
+                            {formatAr(s.prix)}
+                          </div>
+                          {s.unite === 'jour' && (
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {t('services:catalogue.perDay')}
+                            </div>
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            'w-6 h-6 rounded-full grid place-items-center border-2 flex-shrink-0 transition-all',
+                            active
+                              ? 'bg-brand-cyan border-brand-cyan text-white'
+                              : 'border-border/70 group-hover:border-brand-cyan/60',
+                          )}
+                        >
+                          {active && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
+                        </span>
+                      </button>
+                      {active && s.unite === 'jour' && (
+                        <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-brand-cyan/20 bg-white px-4 py-3">
+                          <label htmlFor={`service-days-${s.id}`} className="text-sm font-medium text-foreground">
+                            {t('services:catalogue.numberOfDays')}
+                          </label>
+                          <select
+                            id={`service-days-${s.id}`}
+                            value={quantity}
+                            onChange={(event) => setServiceQuantity(s.id, Number(event.target.value))}
+                            className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground"
+                          >
+                            {[1, 2, 3, 4, 5].map((days) => (
+                              <option key={days} value={days}>
+                                {t('services:catalogue.days', { count: days })}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </motion.div>
                   )
                 })}
               </div>
@@ -568,11 +622,36 @@ export default function Services() {
                             exit={{ opacity: 0, height: 0 }}
                             className="flex items-center justify-between gap-3 text-sm"
                           >
-                            <div className="min-w-0 flex items-center gap-2">
-                              <Check className="w-3.5 h-3.5 text-brand-green flex-shrink-0" />
-                              <p className="font-medium text-foreground truncate">{serviceName(l.cle, l.nom)}</p>
+                            <div className="min-w-0 flex items-start gap-2">
+                              <Check className="mt-0.5 w-3.5 h-3.5 text-brand-green flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="font-medium text-foreground truncate">{serviceName(l.cle, l.nom)}</p>
+                                {l.unite === 'jour' && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {t('services:catalogue.days', { count: selected.get(l.id) || 1 })}
+                                    {(() => {
+                                      const pricing = getServicePricing(l, selected.get(l.id) || 1)
+                                      return pricing.reduction > 0
+                                        ? ` · ${t('services:catalogue.discountApplied', { percent: pricing.reduction })} (${t('services:catalogue.savedAmount', { amount: formatAr(pricing.savings) })})`
+                                        : ''
+                                    })()}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <span className="font-semibold whitespace-nowrap">{formatAr(l.prix)}</span>
+                            {(() => {
+                              const pricing = getServicePricing(l, selected.get(l.id) || 1)
+                              return (
+                                <span className="flex flex-col items-end font-semibold whitespace-nowrap">
+                                  {pricing.reduction > 0 && (
+                                    <span className="text-xs text-muted-foreground line-through">
+                                      {formatAr(l.prix * (selected.get(l.id) || 1))}
+                                    </span>
+                                  )}
+                                  <span>{formatAr(pricing.total)}</span>
+                                </span>
+                              )
+                            })()}
                           </motion.li>
                         ))}
                       </AnimatePresence>
@@ -659,7 +738,19 @@ export default function Services() {
                     <ul className="text-sm text-muted-foreground space-y-1">
                       {d.lignes.map((l, idx) => (
                         <li key={idx} className="flex justify-between gap-3">
-                          <span>{serviceName(cleByNom.get(l.nom), l.nom)}</span>
+                          <span>
+                            {serviceName(cleByNom.get(l.nom), l.nom)}
+                            {l.unite === 'jour' && l.quantite > 1 && (
+                              <span className="ml-1 text-xs">
+                                ({t('services:catalogue.days', { count: l.quantite })})
+                              </span>
+                            )}
+                            {l.reduction_pourcentage ? (
+                              <span className="ml-1 text-xs text-brand-green-dark">
+                                {t('services:catalogue.discountApplied', { percent: l.reduction_pourcentage })}
+                              </span>
+                            ) : null}
+                          </span>
                           <span>{formatAr(l.sous_total)}</span>
                         </li>
                       ))}
