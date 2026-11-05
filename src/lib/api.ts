@@ -228,6 +228,8 @@ export interface ApiMembreEquipe {
 export interface Campagne {
     id_campagne: number
     id_partenaire: number
+    id_ville?: number | null
+    ville_nom?: string | null
     titre: string
     description: string | null
     emplacement: 'carte' | 'fil_annonces' | 'bandeau_regional' | 'page_partenaire'
@@ -245,6 +247,7 @@ export interface ApiPartenaire {
     nom: string
     secteur?: string | null
     niveau: 'Bronze' | 'Argent' | 'Or' | 'Diamant'
+    montant?: number | string | null
     remise?: string | null
     engagement?: string | null
     logo?: string | null
@@ -255,6 +258,8 @@ export interface ApiPartenaire {
 export interface ApiPartenaireCampagne {
     id_campagne: number
     id_partenaire: number
+    id_ville?: number | null
+    ville_nom?: string | null
     titre: string
     description: string | null
     emplacement: 'carte' | 'fil_annonces' | 'bandeau_regional' | 'page_partenaire'
@@ -1681,6 +1686,7 @@ export const api = {
         nom: string;
         secteur?: string;
         niveau?: string;
+        montant?: number;
         remise?: string;
         engagement?: string;
         logo?: string;
@@ -1695,6 +1701,7 @@ export const api = {
         nom: string;
         secteur: string;
         niveau: string;
+        montant: number;
         remise: string;
         engagement: string;
         logo: string;
@@ -1779,6 +1786,7 @@ export const api = {
 
     createCampagne(payload: {
         id_partenaire: number
+        id_ville?: number | null
         titre: string
         description?: string | null
         emplacement: string
@@ -1795,6 +1803,7 @@ export const api = {
 
     updateCampagne(id: string | number, payload: Partial<{
         id_partenaire: number
+        id_ville: number | null
         titre: string
         description: string | null
         emplacement: string

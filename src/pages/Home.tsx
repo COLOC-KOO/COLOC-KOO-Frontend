@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { Button } from "../components/ui/Button";
-import { api, annonceToListing, type ApiPartenaireCampagne } from "../lib/api";
+import { api, annonceToListing, type ApiPartenaireCampagne, type Ville } from "../lib/api";
 import { CityInfo, Listing } from "../types";
 import { useAuth } from "../lib/auth";
 import { HomeHero } from "../components/home/HomeHero";
@@ -11,6 +11,15 @@ import { FeaturedListingsSection } from "../components/home/FeaturedListingsSect
 import { CitiesExploreSection } from "../components/home/CitiesExploreSection";
 import { HowItWorksSection } from "../components/home/HowItWorksSection";
 import { PartnersSection } from "../components/home/PartnersSection";
+
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:4000/api"
+).replace(/\/api\/?$/, "");
+
+function normalizeCampaignImageUrl(value: string) {
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${API_BASE_URL}${value.startsWith("/") ? "" : "/"}${value}`;
+}
 
 export default function Home() {
   const { t } = useTranslation(["home", "common"]);
@@ -22,6 +31,9 @@ export default function Home() {
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [cityCards, setCityCards] = useState<CityInfo[]>([]);
   const [partners, setPartners] = useState<ApiPartenaireCampagne[]>([]);
+  const [campaigns, setCampaigns] = useState<ApiPartenaireCampagne[]>([]);
+  const [availableCities, setAvailableCities] = useState<Ville[]>([]);
+  const [selectedCityId, setSelectedCityId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
@@ -61,7 +73,12 @@ export default function Home() {
 
     Promise.all([
       api.annonces({ statut: "active" }).catch(() => []),
-      api.villes().catch(() => []),
+      api.villes().catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Impossible de charger la liste des villes.");
+        }
+        return [];
+      }),
       api.partenairesCampagnes().catch(() => []),
     ])
       .then(([annonces, villes, campagnes]) => {
@@ -86,14 +103,15 @@ export default function Home() {
           .sort((a, b) => b.count - a.count)
           .slice(0, 6);
 
-        const dedupedCampaignPartners = Array.isArray(campagnes)
-          ? campagnes.filter((item, index, array) => {
+        const cardCampaigns = Array.isArray(campagnes)
+          ? campagnes.filter((item) => item.emplacement === "carte")
+          : [];
+        const dedupedCampaignPartners = cardCampaigns.filter((item, index, array) => {
               const firstIndex = array.findIndex(
                 (candidate) => candidate.id_partenaire === item.id_partenaire,
               );
               return firstIndex === index;
-            })
-          : [];
+            });
 
         setFeaturedListings(mapped.slice(0, 6));
         setCityCards(
@@ -107,6 +125,8 @@ export default function Home() {
               })),
         );
         setPartners(dedupedCampaignPartners);
+        setCampaigns(Array.isArray(campagnes) ? campagnes : []);
+        setAvailableCities(villes);
 
         const suggestionSet = new Set<string>();
         mapped.forEach((listing) => {
@@ -128,6 +148,7 @@ export default function Home() {
           setFeaturedListings([]);
           setCityCards([]);
           setPartners([]);
+          setCampaigns([]);
         }
       })
       .finally(() => {
@@ -242,6 +263,10 @@ export default function Home() {
 
   const totalSlides = Math.max(1, partners.length - itemsPerSlide + 1);
   const maxIndex = Math.max(0, partners.length - itemsPerSlide);
+  const regionalCampaigns = campaigns.filter((campaign) => campaign.emplacement === "bandeau_regional");
+  const visibleRegionalCampaigns = regionalCampaigns.filter(
+    (campaign) => String(campaign.id_ville ?? "") === selectedCityId,
+  );
 
   const handleSearch = () => {
     const query = searchTerm.trim();
@@ -290,8 +315,65 @@ export default function Home() {
         onSearch={handleSearch}
       />
 
+      {regionalCampaigns.length > 0 && (
+        <section className="border-b border-cyan-100 bg-gradient-to-r from-cyan-50 to-white py-5">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:px-6 md:flex-row md:items-center">
+            <label className="flex shrink-0 flex-col gap-1 text-sm font-medium text-slate-700">
+              Choisis ta ville pour voir les offres locales
+              <select
+                value={selectedCityId}
+                onChange={(event) => setSelectedCityId(event.target.value)}
+                className="min-w-64 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
+              >
+                <option value="">Sélectionner une ville</option>
+                {availableCities.map((city) => (
+                  <option key={city.id_ville} value={city.id_ville}>
+                    {city.nom_ville} — {city.nom_region}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="grid flex-1 gap-3">
+              {error ? (
+                <p className="self-center text-sm text-rose-700">
+                  Impossible de charger les villes pour afficher les offres locales.
+                </p>
+              ) : visibleRegionalCampaigns.length === 0 ? (
+                <p className="self-center text-sm text-slate-500">
+                  Sélectionne une ville pour découvrir les offres partenaires disponibles.
+                </p>
+              ) : visibleRegionalCampaigns.map((campaign) => (
+                <article
+                  key={campaign.id_campagne}
+                  className="flex min-h-24 items-center gap-4 overflow-hidden rounded-2xl border border-cyan-100 bg-white p-3 shadow-sm"
+                >
+                  {campaign.visuel && (
+                    <img
+                      src={normalizeCampaignImageUrl(campaign.visuel)}
+                      alt=""
+                      className="h-20 w-24 shrink-0 rounded-xl object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-cyan-700">
+                      {campaign.partenaire_nom || "Partenaire local"}
+                    </p>
+                    <h2 className="font-semibold text-slate-900">{campaign.titre}</h2>
+                    {campaign.description && (
+                      <p className="mt-1 text-sm text-slate-600">{campaign.description}</p>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <FeaturedListingsSection
         featuredListings={featuredListings}
+        campaigns={campaigns}
         loading={loading}
         hoveredListingId={hoveredListingId}
         setHoveredListingId={setHoveredListingId}

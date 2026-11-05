@@ -12,10 +12,6 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:4000/api"
 ).replace(/\/api\/?$/, "");
 
-// La home ne met en avant que les partenaires du plus haut niveau (Diamant) ;
-// l'annuaire complet avec tous les niveaux reste sur /partenaires-tous.
-const HOME_LEVEL = "diamant";
-
 function normalizeImageUrl(value: string | null | undefined) {
   if (!value) return "";
   const trimmed = value.trim();
@@ -64,10 +60,7 @@ export function PartnersSection({ partners, loading }: PartnersSectionProps) {
   const { t } = useTranslation(["home", "common"]);
 
   const filteredPartners = useMemo(() => {
-    return partners.filter((partner) => {
-      const partnerLevel = normalizePartnerLevel(partner.partenaire_niveau || partner.niveau);
-      return partnerLevel === HOME_LEVEL;
-    });
+    return partners.filter((partner) => partner.emplacement === "carte");
   }, [partners]);
 
   const displayedPartners = filteredPartners.slice(0, 6);
