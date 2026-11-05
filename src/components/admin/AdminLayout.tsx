@@ -235,6 +235,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const { user, logout } = useAuth();
   const viewRole = roleLevel(user?.poste);
+  const canManageServiceDemandes = viewRole >= 2;
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -272,11 +273,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       }
       // Demandes de service : chargées à part pour ne pas impacter les autres
       // sources si l'appel échoue (ex. rôle sans accès).
-      try {
-        const demandes = await api.backofficeDemandesService();
-        if (active) setServiceDemandes(demandes);
-      } catch {
-        if (active) setServiceDemandes([]);
+      if (canManageServiceDemandes) {
+        try {
+          const demandes = await api.backofficeDemandesService();
+          if (active) setServiceDemandes(demandes);
+        } catch {
+          if (active) setServiceDemandes([]);
+        }
+      } else if (active) {
+        setServiceDemandes([]);
       }
     };
 
@@ -284,7 +289,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [canManageServiceDemandes]);
 
   useEffect(() => {
     if (notificationOpen) {
@@ -351,6 +356,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       setContactMessages([]);
     } finally {
       setLoadingNotifications(false);
+    }
+    if (!canManageServiceDemandes) {
+      setServiceDemandes([]);
+      return;
     }
     try {
       setServiceDemandes(await api.backofficeDemandesService());
