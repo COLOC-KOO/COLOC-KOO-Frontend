@@ -42,6 +42,8 @@ export interface AuthUser {
     date_inscription?: string
     languePreferee?: number | null
     verification?: boolean
+    verificationStatus?: 'a_verifier' | 'conforme' | 'non_conforme'
+    verificationReason?: string | null
     /** Indique si la double authentification est activée pour ce compte. */
     two_fa_enabled?: boolean | number
     statut?: string
@@ -149,7 +151,16 @@ export interface ApiCandidature {
     prenom?: string
     email?: string
     telephone?: string
+    profile_picture?: string | null
     utilisateur_id?: number
+    membres?: Array<{
+        id: number
+        nom: string
+        initiales?: string | null
+        statut: string
+        profession?: string | null
+        age?: number | null
+    }>
 }
 
 export interface ApiProfilRechercheLogement {
@@ -338,16 +349,25 @@ export interface CreateAlertePayload {
 
 export interface BackofficeDashboard {
     annoncesFile: number
-    validationsAujourdhui: number
     signalements: number
     membresActifs: number
     annoncesMois: number
-    tauxValidation: number
     candidaturesMois: number
-    contratsMois: number
     chiffreAffairesMois: number
-    objectifJour: number
-    progressObjectif: number
+    startDate: string
+    endDate: string
+    previousStartDate: string
+    previousEndDate: string
+    comparaison: {
+        annonces: number
+        candidatures: number
+        membres: number
+        revenus: number
+        annoncesPrecedentes: number
+        candidaturesPrecedentes: number
+        membresPrecedents: number
+        revenusPrecedents: number
+    }
 }
 
 export interface ApiJournalEntry {
@@ -1104,6 +1124,9 @@ export const api = {
             if (value !== undefined && value !== '') search.set(key, String(value))
         })
         const query = search.toString()
+        if (params.startDate || params.endDate) {
+            return request<ApiAnnonce[]>(`/annonces${query ? `?${query}` : ''}`)
+        }
         return requestWithFallback<ApiAnnonce[]>(`/depot-annonce${query ? `?${query}` : ''}`, `/annonces${query ? `?${query}` : ''}`)
     },
     annonce(id: string | number) {
@@ -1221,8 +1244,12 @@ export const api = {
         });
     },
 
-    adminCandidatures() {
-        return request<ApiCandidature[]>('/candidatures/admin/all')
+    adminCandidatures(startDate?: string, endDate?: string) {
+        const search = new URLSearchParams()
+        if (startDate) search.set('startDate', startDate)
+        if (endDate) search.set('endDate', endDate)
+        const query = search.toString()
+        return request<ApiCandidature[]>(`/candidatures/admin/all${query ? `?${query}` : ''}`)
     },
     updateCandidatureStatus(id: string | number, statut: string) {
         return request<{ message: string }>(`/candidatures/${id}/status`, {
@@ -1384,8 +1411,9 @@ export const api = {
             body: JSON.stringify(payload),
         })
     },
-    backofficeDashboard() {
-        return request<BackofficeDashboard>('/backoffice/dashboard')
+    backofficeDashboard(startDate: string, endDate: string) {
+        const search = new URLSearchParams({ startDate, endDate })
+        return request<BackofficeDashboard>(`/backoffice/dashboard?${search.toString()}`)
     },
     backofficeColocationStats() {
         return request<{
@@ -1669,6 +1697,18 @@ export const api = {
             method: 'PATCH',
             body: JSON.stringify(payload),
         })
+    },
+    updateMemberVerification(id: string | number, payload: {
+        statut: 'a_verifier' | 'conforme' | 'non_conforme';
+        raison?: string
+    }) {
+        return request<{ message: string; changed: boolean; statut: 'a_verifier' | 'conforme' | 'non_conforme'; raison?: string | null }>(
+            `/backoffice/membres/${id}/verification`,
+            {
+                method: 'PATCH',
+                body: JSON.stringify(payload),
+            }
+        )
     },
 
     // ================================================================
