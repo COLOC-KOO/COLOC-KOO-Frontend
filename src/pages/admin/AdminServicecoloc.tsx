@@ -24,6 +24,7 @@ import {
     Calendar,
     User,
     Loader2,
+    Pencil,
 } from 'lucide-react'
 
 // ============================================================================
@@ -304,18 +305,20 @@ const RdvModal = ({
 
 const OffreModal = ({
                         onClose,
-                        onSave
+                        onSave,
+                        offre,
                     }: {
     onClose: () => void
-    onSave: (offre: Omit<OffreService, 'id' | 'cle'>) => void
+    onSave: (offre: Omit<OffreService, 'id' | 'cle'>) => Promise<boolean>
+    offre?: OffreService | null
 }) => {
     const dialog = useDialog()
-    const [nom, setNom] = useState('')
-    const [prixParJour, setPrixParJour] = useState(8800)
-    const [unite, setUnite] = useState('heure')
-    const [description, setDescription] = useState('')
+    const [nom, setNom] = useState(offre?.nom || '')
+    const [prixParJour, setPrixParJour] = useState(offre?.prixParJour ?? 8800)
+    const [unite, setUnite] = useState(offre?.unite || 'heure')
+    const [description, setDescription] = useState(offre?.description || '')
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!nom.trim()) {
             void dialog.alert({
@@ -325,14 +328,15 @@ const OffreModal = ({
             })
             return
         }
-        onSave({
+        if (await onSave({
             nom: nom.trim(),
             prixParJour,
             unite,
             description: description.trim() || undefined,
-            actif: true
-        })
-        onClose()
+            actif: offre?.actif ?? true
+        })) {
+            onClose()
+        }
     }
 
     return (
@@ -342,7 +346,9 @@ const OffreModal = ({
                 onClick={e => e.stopPropagation()}
             >
                 <div className="p-4 border-b border-white/10 flex items-center justify-between">
-                    <h3 className="text-xl font-bold">Ajouter une offre</h3>
+                    <h3 className="text-xl font-bold">
+                        {offre ? 'Modifier une offre' : 'Ajouter une offre'}
+                    </h3>
                     <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-lg transition">
                         <X className="w-5 h-5"/>
                     </button>
@@ -395,8 +401,8 @@ const OffreModal = ({
                     <div className="flex gap-3 pt-2">
                         <button type="submit"
                                 className="flex-1 bg-brand-cyan text-[oklch(0.15_0_0)] font-bold px-4 py-2 rounded-lg hover:opacity-80 transition">
-                            <Plus className="w-4 h-4 inline mr-2"/>
-                            Ajouter
+                            {offre ? <Pencil className="w-4 h-4 inline mr-2"/> : <Plus className="w-4 h-4 inline mr-2"/>}
+                            {offre ? 'Enregistrer' : 'Ajouter'}
                         </button>
                         <button type="button" onClick={onClose}
                                 className="flex-1 bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 transition text-white/60">
@@ -420,6 +426,7 @@ export default function AdminServicesColockoo() {
     const [searchQuery, setSearchQuery] = useState('')
     const [filterStatut, setFilterStatut] = useState<string>('tous')
     const [showOffreModal, setShowOffreModal] = useState(false)
+    const [editingOffre, setEditingOffre] = useState<OffreService | null>(null)
     const [showRdvModal, setShowRdvModal] = useState(false)
     const [selectedDemande, setSelectedDemande] = useState<ServiceDemande | null>(null)
     const [expandedRef, setExpandedRef] = useState<string | null>(null)
@@ -699,7 +706,7 @@ export default function AdminServicesColockoo() {
     //  FONCTIONS D'ACTION - OFFRES
     // ================================================================
 
-    const handleAddOffre = async (offre: Omit<OffreService, 'id' | 'cle'>) => {
+    const handleAddOffre = async (offre: Omit<OffreService, 'id' | 'cle'>): Promise<boolean> => {
         setLoading(true)
         setError(null)
         try {
@@ -715,8 +722,33 @@ export default function AdminServicesColockoo() {
             await loadAdminServiceData()
             setSuccessMessage(`Offre "${offre.nom}" ajoutée avec succès`)
             window.setTimeout(() => setSuccessMessage(null), 3000)
+            return true
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Impossible d\'ajouter l\'offre')
+            return false
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleEditOffre = async (offre: Omit<OffreService, 'id' | 'cle'>): Promise<boolean> => {
+        if (!editingOffre) return false
+        setLoading(true)
+        setError(null)
+        try {
+            await api.updateServiceCkoo(editingOffre.id, {
+                nom: offre.nom,
+                description: offre.description || '',
+                prix: offre.prixParJour,
+                unite: offre.unite,
+            })
+            await loadAdminServiceData()
+            setSuccessMessage(`Offre "${offre.nom}" modifiée avec succès`)
+            window.setTimeout(() => setSuccessMessage(null), 3000)
+            return true
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Impossible de modifier l\'offre')
+            return false
         } finally {
             setLoading(false)
         }
@@ -1191,7 +1223,10 @@ export default function AdminServicesColockoo() {
                   <span className="ml-2 text-xs bg-white/10 px-2 py-0.5 rounded-full">{offres.length} offres</span>
                 </span>
                                 <button
-                                    onClick={() => setShowOffreModal(true)}
+                                    onClick={() => {
+                                        setEditingOffre(null)
+                                        setShowOffreModal(true)
+                                    }}
                                     className="flex items-center gap-2 px-3 py-1.5 bg-brand-cyan text-[oklch(0.15_0_0)] font-medium rounded-lg text-sm hover:opacity-80 transition"
                                 >
                                     <Plus className="w-4 h-4"/>
@@ -1246,6 +1281,17 @@ export default function AdminServicesColockoo() {
                                             </td>
                                             <td className="p-3 text-center">
                                                 <div className="flex items-center justify-center gap-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingOffre(offre)
+                                                            setShowOffreModal(true)
+                                                        }}
+                                                        className="p-1.5 hover:bg-brand-cyan/20 rounded-lg transition text-brand-cyan"
+                                                        title="Modifier"
+                                                        aria-label={`Modifier l'offre ${offre.nom}`}
+                                                    >
+                                                        <Pencil className="w-4 h-4"/>
+                                                    </button>
                                                     <button
                                                         onClick={() => handleToggleOffre(offre.id)}
                                                         className={`p-1.5 rounded-lg transition ${
@@ -1344,8 +1390,13 @@ export default function AdminServicesColockoo() {
             {/* Modale d'ajout d'offre */}
             {showOffreModal && (
                 <OffreModal
-                    onClose={() => setShowOffreModal(false)}
-                    onSave={handleAddOffre}
+                    key={editingOffre?.id ?? 'new'}
+                    offre={editingOffre}
+                    onClose={() => {
+                        setShowOffreModal(false)
+                        setEditingOffre(null)
+                    }}
+                    onSave={editingOffre ? handleEditOffre : handleAddOffre}
                 />
             )}
         </AdminLayout>
