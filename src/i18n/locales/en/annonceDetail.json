@@ -144,8 +144,9 @@
   "user": {
     "connected": "Logged in as {name}",
     "connectedDesc": "You can send your application directly from this page.",
-    "ownerTitle": "Application management",
-    "ownerDesc": "Application management is done from the dedicated page.",
+    "ownerTitle": "You posted this listing",
+    "ownerDesc": "You cannot apply to your own listing. Review incoming applications from the dedicated page.",
+    "manageApplications": "Manage applications",
     "applied": "Your application has been registered.",
     "appliedDesc": "You can track the progress and see other candidates for this listing.",
     "viewApplication": "View my application",

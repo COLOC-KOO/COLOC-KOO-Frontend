@@ -105,12 +105,18 @@
     "locationLabel": "Localisation du bien",
     "refineLabel": "Affiner son emplacement",
     "refineHint": "En fonction de son emplacement, ton logement peut gagner en intérêt. Alors sois précis.",
-    "addressPlaceholder": "Adresse ou quartier — ex : Ankadifotsy, Antananarivo",
+    "cityLabel": "Ville",
+    "cityPlaceholder": "Choisir une ville",
+    "neighborhoodLabel": "Quartier",
+    "neighborhoodPlaceholder": "Ex. Isoraka",
+    "addressLabel": "Adresse ou repère (facultatif)",
+    "addressPlaceholder": "Ex. près de l'université",
     "privacyNote": "Pour des raisons de confidentialité, si tu renseignes ton adresse exacte, celle-ci n'apparaîtra jamais sur ton annonce — seul le quartier sera visible.",
     "mapRequiredHint": "Le placement sur la carte est obligatoire, même si tu as saisi une adresse.",
     "mapDragHint": "Glisse pour te déplacer · molette pour zoomer · clique pour placer ton bien",
     "errors": {
       "locationRequired": "Merci de placer ton logement sur la carte (obligatoire).",
+      "citiesLoad": "Impossible de charger la liste des villes.",
       "fieldsRequired": "Merci de compléter tous les champs obligatoires (*) avant de continuer."
     }
   },

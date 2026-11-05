@@ -83,6 +83,29 @@
     "title": "Owner or agency?",
     "subtitle": "Publish your listing and manage your housemates with ease.",
     "deposer": "Post a listing",
-    "partenaire": "Become a partner"
+    "partenaire": "Become a partner",
+    "installApp": "Install the app"
+  },
+  "popup": {
+    "advertising": "Advertisement",
+    "close": "Close advertisement",
+    "later": "Maybe later",
+    "ads": {
+      "partners": {
+        "title": "Discover our partners",
+        "description": "Find useful services for moving in, relocating, and starting your new colocation.",
+        "label": "View partners"
+      },
+      "services": {
+        "title": "Make settling in easier",
+        "description": "Explore Coloc-KOO services designed to support you in everyday life.",
+        "label": "Discover services"
+      },
+      "listings": {
+        "title": "Your future home is waiting",
+        "description": "Browse new listings and find a colocation that suits your needs.",
+        "label": "View listings"
+      }
+    }
   }
 }

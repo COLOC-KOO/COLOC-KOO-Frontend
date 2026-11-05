@@ -7,7 +7,6 @@ interface AuthContextValue {
   loading: boolean
   isAdmin: boolean
   login: (email: string, mot_de_passe: string) => Promise<AuthUser>
-  register: (payload: Parameters<typeof api.register>[0]) => Promise<AuthUser>
   updateProfile: (payload: Record<string, unknown>) => Promise<AuthUser>
   logout: () => void
 }
@@ -45,12 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin: Boolean(user && adminRoles.has(user.poste)),
       async login(email, mot_de_passe) {
         const session = await api.login({ email, mot_de_passe })
-        saveSession(session.user, session.token)
-        setUser(session.user)
-        return session.user
-      },
-      async register(payload) {
-        const session = await api.register(payload)
         saveSession(session.user, session.token)
         setUser(session.user)
         return session.user

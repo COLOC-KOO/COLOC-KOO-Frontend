@@ -5,6 +5,8 @@
   "myAlerts": "Mes alertes",
   "conversations": "Conversations",
   "preferences": "Préférences",
+  "servicesTab": "Services Coloc'KOO",
+  "installAppTab": "Installer l'application",
   "accountAndData": "Compte & données",
   "userProfile": "Profil utilisateur",
   "personalAccountOf": "Compte personnel de {{name}}",

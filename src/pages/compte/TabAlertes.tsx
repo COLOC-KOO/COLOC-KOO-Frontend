@@ -21,7 +21,6 @@ interface AlerteForm {
   prixMax: string
   typeBien: string[]
   reglesColoc: string[]
-  typeAnnonce: string[]
   notifPush: boolean
   notifEmail: boolean
 }
@@ -32,7 +31,6 @@ const EMPTY_FORM: AlerteForm = {
   prixMax: '',
   typeBien: [],
   reglesColoc: [],
-  typeAnnonce: [],
   notifPush: true,
   notifEmail: true,
 }
@@ -87,11 +85,6 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
     { key: 'Fille uniquement', label: t('options.girlsOnly') },
     { key: 'Garçon uniquement', label: t('options.boysOnly') },
     { key: 'Animaux acceptés', label: t('options.petsAllowed') },
-  ]
-
-  const TYPES_ANNONCE = [
-    { key: 'Colocation existante', label: t('options.existingColoc') },
-    { key: "Création d'une colocation", label: t('options.colocCreation') },
   ]
 
   const steps = [
@@ -158,7 +151,6 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
         prix_max: form.prixMax ? Number(form.prixMax) : null,
         types_bien: form.typeBien,
         regles: form.reglesColoc,
-        types_annonce: form.typeAnnonce,
         notif_push: form.notifPush,
         notif_email: form.notifEmail,
       }),
@@ -197,7 +189,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
       case 0: // Localisation
         return !!form.idVille
       case 1: // Critères
-        return form.typeBien.length > 0 || form.reglesColoc.length > 0 || form.typeAnnonce.length > 0 || !!form.prixMax
+        return form.typeBien.length > 0 || form.reglesColoc.length > 0 || !!form.prixMax
       case 2: // Notifications
         return true
       default:
@@ -288,19 +280,6 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
               </div>
             </div>
 
-            <div className="mb-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('announcementType')}</div>
-              <div className="grid grid-cols-2 gap-2">
-                {TYPES_ANNONCE.map((item) => (
-                  <Checkbox
-                    key={item.key}
-                    label={item.label}
-                    checked={form.typeAnnonce.includes(item.key)}
-                    onChange={() => setForm((prev) => ({ ...prev, typeAnnonce: toggleInArray(prev.typeAnnonce, item.key) }))}
-                  />
-                ))}
-              </div>
-            </div>
           </>
         )
 

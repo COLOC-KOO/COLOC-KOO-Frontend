@@ -13,7 +13,8 @@ import {
   Settings,
   ShieldCheck,
   ShieldOff,
-  User
+  User,
+  Wrench
 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
@@ -28,6 +29,8 @@ import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerp
 import TabAlertes from './compte/TabAlertes'
 import TabCompteDonnees from './compte/TabCompteDonnees'
 import TabMesFavoris from './compte/TabMesFavoris'
+import InstallAppPanel from './compte/InstallAppPanel'
+import Services from './Services'
 // ⏸️ Notifications désactivées — le client ne recommande plus cet onglet
 // import TabNotif from './compte/TabNotif'
 import { useRealtime } from '../lib/realtime'
@@ -538,6 +541,16 @@ export default function Compte() {
       icon: Settings
     },
     {
+      id: 'services',
+      label: t('servicesTab'),
+      icon: Wrench
+    },
+    {
+      id: 'installer',
+      label: t('installAppTab'),
+      icon: Smartphone
+    },
+    {
       id: 'secu',
       label: t('accountAndData'),
       icon: ShieldCheck
@@ -998,6 +1011,8 @@ export default function Compte() {
             {/* ⏸️ Notifications désactivées — le client ne recommande plus cet onglet */}
             {/* {tab === 'notifications' && <TabNotif />} */}
             {tab === 'notif' && <TabPreference idUtilisateur={currentUserId ?? 0} />}
+            {tab === 'services' && <Services embedded />}
+            {tab === 'installer' && <InstallAppPanel />}
             {tab === 'paiements' && <TabMessagesV2 />}
             {tab === 'secu' && <TabCompteDonnees onAccountDeleted={handleAccountDeleted} />}
           </div>

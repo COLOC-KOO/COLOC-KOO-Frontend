@@ -83,6 +83,29 @@
     "title": "Propriétaire ou agence ?",
     "subtitle": "Publie ton annonce et gère tes colocataires en toute simplicité.",
     "deposer": "Déposer une annonce",
-    "partenaire": "Devenir partenaire"
+    "partenaire": "Devenir partenaire",
+    "installApp": "Installer l'application"
+  },
+  "popup": {
+    "advertising": "Publicité",
+    "close": "Fermer la publicité",
+    "later": "Plus tard",
+    "ads": {
+      "partners": {
+        "title": "Découvrez nos partenaires",
+        "description": "Profitez de services utiles pour votre installation, votre déménagement et votre nouvelle colocation.",
+        "label": "Voir les partenaires"
+      },
+      "services": {
+        "title": "Simplifiez votre installation",
+        "description": "Retrouvez les services Coloc-KOO pensés pour vous accompagner dans votre quotidien.",
+        "label": "Découvrir les services"
+      },
+      "listings": {
+        "title": "Votre futur logement vous attend",
+        "description": "Parcourez les nouvelles annonces et trouvez une colocation adaptée à vos besoins.",
+        "label": "Voir les annonces"
+      }
+    }
   }
 }

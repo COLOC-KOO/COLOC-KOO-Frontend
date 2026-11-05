@@ -105,12 +105,18 @@
     "locationLabel": "Toerana misy ilay trano ",
     "refineLabel": "Farito tsara ny misy azy",
     "refineHint": "Arakarakin'ny toerana misy azy dia mety hanintona olona bebe kokoa ilay trano. Noho izany, farito mazava tsara ",
-    "addressPlaceholder": "Adiresy na fokontany — ohatra : Ankadifotsy, Antananarivo",
+    "cityLabel": "Tanàna",
+    "cityPlaceholder": "Misafidiana tanàna",
+    "neighborhoodLabel": "Faritra",
+    "neighborhoodPlaceholder": "Ohatra: Isoraka",
+    "addressLabel": "Adiresy na toerana akaiky (tsy voatery)",
+    "addressPlaceholder": "Ohatra: akaikin'ny oniversite",
     "privacyNote": "Noho ny antony fiarovana, raha toa ka faritinao ny adiresinao dia tsy mipoitra amin'ilay fampilazana izany. Ny manodidina ihany no hipoitra eo. ",
     "mapRequiredHint": "Tsy maintsy apetrakao eo amin'ny sarintany ilay trano, na dia efa nampiditra adiresy aza ianao.",
     "mapDragHint": "Asosao raha hihetsika eo amin'ny sarintany - “molette” raha hanalehibeazana, tsindrio raha hametraka ilay trano ",
     "errors": {
       "locationRequired": "Apetraho eo amin'ny sarintany ny fanananao (tsy maintsy atao).",
+      "citiesLoad": "Tsy afaka nampiditra ny lisitry ny tanàna.",
       "fieldsRequired": "Fenoy ny saha rehetra takiana (*) alohan'ny hanohizana."
     }
   },
