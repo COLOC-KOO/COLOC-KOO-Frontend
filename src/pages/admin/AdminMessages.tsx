@@ -70,6 +70,9 @@ export default function AdminMessages() {
         }))
         setThreads(mappedThreads)
         if (contactResult.status === 'fulfilled') setContactMessages(contactResult.value)
+        else setError(contactResult.reason instanceof Error
+          ? contactResult.reason.message
+          : 'Impossible de charger les messages de contact.')
         if (mappedThreads.length) setActiveThread(mappedThreads[0].threadKey)
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Impossible de charger les conversations.'))

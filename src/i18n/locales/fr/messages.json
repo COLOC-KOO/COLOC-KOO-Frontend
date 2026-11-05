@@ -2,6 +2,8 @@
   "title": "Messages",
   "search_placeholder": "Rechercher par annonce ou interlocuteur",
   "loading_conversations": "Chargement des conversations...",
+  "load_conversations_error": "Impossible de charger les conversations.",
+  "load_messages_error": "Impossible de charger les messages.",
   "no_conversations_found": "Aucune conversation trouvée.",
   "no_conversations_yet": "Aucune conversation pour le moment.",
   "new_discussion": "Nouvelle discussion",

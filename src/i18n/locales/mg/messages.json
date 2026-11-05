@@ -2,6 +2,8 @@
   "title": "Hafatra",
   "search_placeholder": "Hikaroka amin'ny alalan'ny filazana na olona",
   "loading_conversations": "Ahitana ireo resaka...",
+  "load_conversations_error": "Tsy afaka naka ny resaka.",
+  "load_messages_error": "Tsy afaka naka ny hafatra.",
   "no_conversations_found": "Tsy misy resaka hita.",
   "no_conversations_yet": "Mbolatsy misy resaka aloha.",
   "new_discussion": "Resaka vaovao",

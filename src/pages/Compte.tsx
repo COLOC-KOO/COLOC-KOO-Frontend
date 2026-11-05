@@ -24,7 +24,6 @@ import TabProfil from './compte/TabProfil'
 import TabMesAnnonces from './compte/TabMesAnnonces'
 import TabPreference from './compte/TabPreference'
 import TabMessagesV2 from './compte/TabMessagesV2'
-import ConversationsPage from './compte/ConversationsPage'
 import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerprint, Lock, RefreshCw, Download, Trash } from 'lucide-react'
 import TabAlertes from './compte/TabAlertes'
 import TabCompteDonnees from './compte/TabCompteDonnees'
@@ -734,7 +733,7 @@ export default function Compte() {
     // ⏸️ Notifications désactivées
     // if (id === 'notifications') return counters.notifications
     if (id === 'notif') return counters.notifications
-    if (id === 'paiements') return counters.messages
+    if (id === 'paiements' || id === 'conversations') return counters.messages
     if (id === 'alertes') return alertCount
     return 0
   }
@@ -1004,7 +1003,7 @@ export default function Compte() {
           {/* Contenu */}
           <div className={tab === 'paiements' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-4 sm:p-6 shadow-sm'}>
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
-            {tab === 'conversations' && <ConversationsPage />}
+            {tab === 'conversations' && <TabMessagesV2 />}
             {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}

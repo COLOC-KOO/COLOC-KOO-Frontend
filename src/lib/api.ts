@@ -228,6 +228,8 @@ export interface ApiMembreEquipe {
 export interface Campagne {
     id_campagne: number
     id_partenaire: number
+    id_ville?: number | null
+    ville_nom?: string | null
     titre: string
     description: string | null
     emplacement: 'carte' | 'fil_annonces' | 'bandeau_regional' | 'page_partenaire'
@@ -245,6 +247,7 @@ export interface ApiPartenaire {
     nom: string
     secteur?: string | null
     niveau: 'Bronze' | 'Argent' | 'Or' | 'Diamant'
+    montant?: number | string | null
     remise?: string | null
     engagement?: string | null
     logo?: string | null
@@ -255,6 +258,8 @@ export interface ApiPartenaire {
 export interface ApiPartenaireCampagne {
     id_campagne: number
     id_partenaire: number
+    id_ville?: number | null
+    ville_nom?: string | null
     titre: string
     description: string | null
     emplacement: 'carte' | 'fil_annonces' | 'bandeau_regional' | 'page_partenaire'
@@ -711,6 +716,12 @@ async function requestWithFallback<T>(primaryPath: string, fallbackPath: string,
 export const api = {
     siteStatus() {
         return request<{ maintenanceMode: boolean }>('/meta/site-status')
+    },
+    setMaintenanceMode(maintenanceMode: boolean) {
+        return request<{ maintenanceMode: boolean; message: string }>('/backoffice/maintenance-mode', {
+            method: 'PATCH',
+            body: JSON.stringify({ maintenanceMode }),
+        })
     },
     login(payload: { email: string; mot_de_passe: string }) {
         return request<{ user: AuthUser; token: string }>('/auth/login', {
@@ -1611,6 +1622,15 @@ export const api = {
     backofficePartenaires() {
         return request<ApiPartenaire[]>('/backoffice/partenaires')
     },
+    backofficePartnerPricing() {
+        return request<Record<'Bronze' | 'Argent' | 'Or' | 'Diamant', number>>('/backoffice/partenaires/tarifs')
+    },
+    saveBackofficePartnerPricing(tarifs: Record<'Bronze' | 'Argent' | 'Or' | 'Diamant', number>) {
+        return request<{ message: string }>('/backoffice/partenaires/tarifs', {
+            method: 'PUT',
+            body: JSON.stringify({ tarifs }),
+        })
+    },
     uploadPartenaireLogo(file: File) {
         const formData = new FormData()
         formData.append('logo', file)
@@ -1681,6 +1701,7 @@ export const api = {
         nom: string;
         secteur?: string;
         niveau?: string;
+        montant?: number;
         remise?: string;
         engagement?: string;
         logo?: string;
@@ -1695,6 +1716,7 @@ export const api = {
         nom: string;
         secteur: string;
         niveau: string;
+        montant: number;
         remise: string;
         engagement: string;
         logo: string;
@@ -1779,6 +1801,7 @@ export const api = {
 
     createCampagne(payload: {
         id_partenaire: number
+        id_ville?: number | null
         titre: string
         description?: string | null
         emplacement: string
@@ -1795,6 +1818,7 @@ export const api = {
 
     updateCampagne(id: string | number, payload: Partial<{
         id_partenaire: number
+        id_ville: number | null
         titre: string
         description: string | null
         emplacement: string

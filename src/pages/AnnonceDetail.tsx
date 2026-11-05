@@ -1162,7 +1162,9 @@ export default function AnnonceDetail() {
           <div className="font-semibold text-brand-cyan-dark">
             {t('annonceDetail:user.connected', { name: user.prenom || user.name || user.email })}
           </div>
-          <div className="text-muted-foreground mt-1">{t('annonceDetail:user.connectedDesc')}</div>
+          {Number(listing?.owner?.id) !== Number(user.id) && (
+            <div className="text-muted-foreground mt-1">{t('annonceDetail:user.connectedDesc')}</div>
+          )}
         </div>
       ) : null}
 

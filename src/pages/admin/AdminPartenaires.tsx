@@ -41,11 +41,21 @@ import {
   FileText   // ← AJOUTER SI UTILISÉ AUSSI
 } from 'lucide-react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
-import { api, type ApiPartenaireRequest } from '../../lib/api'
+import { api, type ApiPartenaireRequest, type Ville } from '../../lib/api'
 import { useDialog } from '../../components/ui/Dialog'
+import { useAuth } from '../../lib/auth'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+const PARTNER_LEVELS = ['Bronze', 'Argent', 'Or', 'Diamant'] as const
+type PartnerLevel = typeof PARTNER_LEVELS[number]
+type PartnerPricing = Record<PartnerLevel, number>
+const DEFAULT_PARTNER_PRICING: PartnerPricing = {
+  Bronze: 0,
+  Argent: 0,
+  Or: 0,
+  Diamant: 0,
+}
 
 function normalizeCampaignImageUrl(value: string | null | undefined) {
   if (!value) return ''
@@ -64,6 +74,7 @@ interface Partenaire {
   nom: string
   secteur: string
   niveau: string
+  montant?: number
   remise: string
   engagement: string
   logo: string
@@ -101,6 +112,8 @@ interface PartenaireContactDirectoryEntry {
 interface Campagne {
   id_campagne: number
   id_partenaire: number
+  id_ville?: number | null
+  ville_nom?: string | null
   titre: string
   description: string | null
   emplacement: 'carte' | 'fil_annonces' | 'bandeau_regional' | 'page_partenaire'
@@ -118,6 +131,7 @@ interface ApiPartenaire {
   nom: string
   secteur?: string | null
   niveau?: string | null
+  montant?: number | string | null
   remise?: string | null
   engagement?: string | null
   logo?: string | null
@@ -299,6 +313,7 @@ function mapPartenaire(row: ApiPartenaire): Partenaire {
     nom: row.nom,
     secteur: row.secteur || 'Non renseigné',
     niveau: row.niveau || 'Standard',
+    montant: Number(row.montant) || 0,
     remise: row.remise || 'Aucune',
     engagement: row.engagement || 'Aucun',
     logo: row.logo || '',
@@ -325,17 +340,19 @@ function mapPartenaireComplet(row: ApiPartenaire): PartenaireComplet {
   }
 }
 
-function mapCampagne(row: any): Campagne {
+function mapCampagne(row: Campagne & { statut_calcule?: Campagne['statut'] }): Campagne {
   return {
     id_campagne: row.id_campagne,
     id_partenaire: row.id_partenaire,
+    id_ville: row.id_ville ? Number(row.id_ville) : null,
+    ville_nom: row.ville_nom || null,
     titre: row.titre,
     description: row.description || null,
     emplacement: row.emplacement || 'fil_annonces',
     visuel: normalizeCampaignImageUrl(row.visuel || null) || null,
-    date_debut: row.date_debut,
-    date_fin: row.date_fin || null,
-    statut: row.statut || 'programmee',
+    date_debut: row.date_debut.slice(0, 10),
+    date_fin: row.date_fin ? row.date_fin.slice(0, 10) : null,
+    statut: row.statut_calcule || row.statut || 'programmee',
     date_creation: row.date_creation,
     partenaire_nom: row.partenaire_nom,
     partenaire_niveau: row.partenaire_niveau,
@@ -415,16 +432,21 @@ const PartenaireStatutBadge = ({ statut }: { statut: PartenaireComplet['statut']
 // ===== MODALE PARTENAIRE (GESTION) =====
 function PartnerModal({
   partner,
+  pricing,
   onClose,
   onSave,
 }: {
   partner?: Partenaire | null
+  pricing: PartnerPricing
   onClose: () => void
   onSave: (payload: Omit<Partenaire, 'id' | 'dateCreation'> & { logoFile?: File | null }) => Promise<boolean>
 }) {
   const [nom, setNom] = useState(partner?.nom || '')
   const [secteur, setSecteur] = useState(partner?.secteur || '')
-  const [niveau, setNiveau] = useState(partner?.niveau || '')
+  const [niveau, setNiveau] = useState<PartnerLevel>(() =>
+    PARTNER_LEVELS.find((level) => level === partner?.niveau) || 'Bronze'
+  )
+  const montant = pricing[niveau]
   const [remise, setRemise] = useState(partner?.remise || '')
   const [engagement, setEngagement] = useState(partner?.engagement || '')
   const [logo, setLogo] = useState(partner?.logo || '')
@@ -449,6 +471,7 @@ function PartnerModal({
         nom: nom.trim(), 
         secteur: secteur.trim(), 
         niveau: niveau.trim(), 
+        montant,
         remise: remise.trim(), 
         engagement: engagement.trim(), 
         logo: logo.trim(), 
@@ -486,18 +509,27 @@ function PartnerModal({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-white/40 uppercase">Niveau</label>
+              <label className="text-xs text-white/40 uppercase">Niveau *</label>
               <select
+                required
                 value={niveau}
-                onChange={(e) => setNiveau(e.target.value)}
-                className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
+                onChange={(e) => setNiveau(e.target.value as PartnerLevel)}
+                className="mt-2 w-full bg-white/5 text-white border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
               >
-                <option value="">Sélectionnez un niveau</option>
-                <option value="Bronze">Bronze</option>
-                <option value="Argent">Argent</option>
-                <option value="Or">Or</option>
-                <option value="Diamant">Diamant</option>
+                <option value="" className="bg-[#242526] text-white">Sélectionnez un niveau</option>
+                {PARTNER_LEVELS.map((level) => (
+                  <option key={level} value={level} className="bg-[#242526] text-white">
+                    {level}
+                  </option>
+                ))}
               </select>
+            </div>
+            <div>
+              <label className="text-xs text-white/40 uppercase">Montant automatique du partenariat (MGA)</label>
+              <output className="mt-2 block w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
+                {montant.toLocaleString('fr-FR')} MGA
+              </output>
+              <p className="mt-1 text-xs text-white/40">Le montant est défini par le tarif du niveau choisi.</p>
             </div>
             <div>
               <label className="text-xs text-white/40 uppercase">Remise</label>
@@ -555,16 +587,19 @@ function PartnerModal({
 function CampagneModal({
   campagne,
   partenaires,
+  villes,
   onClose,
   onSave,
 }: {
   campagne?: Campagne | null
   partenaires: Partenaire[]
+  villes: Ville[]
   onClose: () => void
   onSave: (payload: Omit<Campagne, 'id_campagne' | 'date_creation' | 'partenaire_nom' | 'partenaire_niveau'> & { visuelFile?: File | null }) => Promise<void>
 }) {
   const dialog = useDialog()
   const [idPartenaire, setIdPartenaire] = useState(campagne?.id_partenaire || 0)
+  const [idVille, setIdVille] = useState(campagne?.id_ville || 0)
   const [titre, setTitre] = useState(campagne?.titre || '')
   const [description, setDescription] = useState(campagne?.description || '')
   const [emplacement, setEmplacement] = useState<Campagne['emplacement']>(campagne?.emplacement || 'fil_annonces')
@@ -573,7 +608,7 @@ function CampagneModal({
   const [preview, setPreview] = useState(() => normalizeCampaignImageUrl(campagne?.visuel || ''))
   const [dateDebut, setDateDebut] = useState(campagne?.date_debut || '')
   const [dateFin, setDateFin] = useState(campagne?.date_fin || '')
-  const [statut, setStatut] = useState<Campagne['statut']>(campagne?.statut || 'programmee')
+  const [suspendue, setSuspendue] = useState(campagne?.statut === 'suspendue')
   const [submitting, setSubmitting] = useState(false)
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -593,17 +628,34 @@ function CampagneModal({
       })
       return
     }
+    if (dateFin && dateFin < dateDebut) {
+      void dialog.alert({
+        tone: 'warning',
+        title: 'Période invalide',
+        message: 'La date de fin doit être égale ou postérieure à la date de début.',
+      })
+      return
+    }
+    if (emplacement === 'bandeau_regional' && !idVille) {
+      void dialog.alert({
+        tone: 'warning',
+        title: 'Ville manquante',
+        message: 'Sélectionnez la ville où le bandeau régional doit apparaître.',
+      })
+      return
+    }
     setSubmitting(true)
     try {
       await onSave({ 
         id_partenaire: idPartenaire,
+        id_ville: emplacement === 'bandeau_regional' ? idVille : null,
         titre: titre.trim(),
         description: description.trim() || null,
         emplacement,
         visuel: visuel.trim() || null,
         date_debut: dateDebut,
         date_fin: dateFin || null,
-        statut,
+        statut: suspendue ? 'suspendue' : 'active',
         visuelFile
       })
     } finally {
@@ -651,9 +703,13 @@ function CampagneModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-white/40 uppercase">Emplacement *</label>
-              <select 
+              <select
                 value={emplacement} 
-                onChange={(e) => setEmplacement(e.target.value as Campagne['emplacement'])}
+                onChange={(e) => {
+                  const nextPlacement = e.target.value as Campagne['emplacement']
+                  setEmplacement(nextPlacement)
+                  if (nextPlacement !== 'bandeau_regional') setIdVille(0)
+                }}
                 className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
               >
                 <option value="carte" className="bg-[oklch(0.22_0.005_260)]">Carte</option>
@@ -662,19 +718,38 @@ function CampagneModal({
                 <option value="page_partenaire" className="bg-[oklch(0.22_0.005_260)]">Page partenaire</option>
               </select>
             </div>
-            <div>
-              <label className="text-xs text-white/40 uppercase">Statut</label>
-              <select 
-                value={statut} 
-                onChange={(e) => setStatut(e.target.value as Campagne['statut'])}
-                className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
-              >
-                <option value="programmee" className="bg-[oklch(0.22_0.005_260)]">Programmée</option>
-                <option value="active" className="bg-[oklch(0.22_0.005_260)]">Active</option>
-                <option value="suspendue" className="bg-[oklch(0.22_0.005_260)]">Suspendue</option>
-                <option value="terminee" className="bg-[oklch(0.22_0.005_260)]">Terminée</option>
-              </select>
-            </div>
+            {emplacement === 'bandeau_regional' && (
+              <div>
+                <label className="text-xs text-white/40 uppercase">Ville ciblée *</label>
+                <select
+                  required
+                  value={idVille}
+                  onChange={(e) => setIdVille(Number(e.target.value) || 0)}
+                  className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50"
+                >
+                  <option value="0" className="bg-[oklch(0.22_0.005_260)]">Sélectionner une ville</option>
+                  {villes.map((ville) => (
+                    <option key={ville.id_ville} value={ville.id_ville} className="bg-[oklch(0.22_0.005_260)]">
+                      {ville.nom_ville} — {ville.nom_region}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <label className="flex items-start gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
+              <input
+                type="checkbox"
+                checked={suspendue}
+                onChange={(event) => setSuspendue(event.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Suspendre la campagne
+                <span className="mt-1 block text-xs text-white/40">
+                  Le statut Programmée, Active ou Terminée est calculé à partir des dates.
+                </span>
+              </span>
+            </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -729,10 +804,21 @@ function CampagneModal({
 // ===== COMPOSANT PRINCIPAL =====
 export default function AdminPartenaires() {
   const dialog = useDialog()
+  const { user } = useAuth()
+  const isSuperAdmin = user?.poste === 'superadmin'
   const [activeTab, setActiveTab] = useState<'gestion' | 'comptes' | 'campagnes'>('gestion')
   const [partenaires, setPartenaires] = useState<Partenaire[]>([])
+  const [partnerPricing, setPartnerPricing] = useState<PartnerPricing>(DEFAULT_PARTNER_PRICING)
+  const [partnerPricingDraft, setPartnerPricingDraft] = useState<Record<PartnerLevel, string>>({
+    Bronze: '0',
+    Argent: '0',
+    Or: '0',
+    Diamant: '0',
+  })
+  const [savingPartnerPricing, setSavingPartnerPricing] = useState(false)
   const [comptes, setComptes] = useState<PartenaireComplet[]>([])
   const [campagnes, setCampagnes] = useState<Campagne[]>([])
+  const [villes, setVilles] = useState<Ville[]>([])
   const [partnerRequests, setPartnerRequests] = useState<ApiPartenaireRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -828,15 +914,25 @@ export default function AdminPartenaires() {
     setLoading(true)
     setError(null)
     try {
-      const [partenairesData, campagnesData, requestsData] = await Promise.all([
+      const [partenairesData, campagnesData, requestsData, villesData, pricingData] = await Promise.all([
         api.backofficePartenaires(),
         api.campagnes ? api.campagnes() : Promise.resolve([]),
-        api.backofficePartenaireRequests()
+        api.backofficePartenaireRequests(),
+        api.villes(),
+        api.backofficePartnerPricing(),
       ])
       setPartenaires(partenairesData.map(mapPartenaire))
       setComptes(partenairesData.map(mapPartenaireComplet))
       setCampagnes((campagnesData || []).map(mapCampagne))
       setPartnerRequests(requestsData || [])
+      setVilles(villesData)
+      setPartnerPricing(pricingData)
+      setPartnerPricingDraft({
+        Bronze: String(pricingData.Bronze),
+        Argent: String(pricingData.Argent),
+        Or: String(pricingData.Or),
+        Diamant: String(pricingData.Diamant),
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de charger les données')
     } finally {
@@ -846,7 +942,34 @@ export default function AdminPartenaires() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [isSuperAdmin])
+
+  const handleSavePartnerPricing = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const tarifs = {} as PartnerPricing
+    for (const level of PARTNER_LEVELS) {
+      const amount = Number(partnerPricingDraft[level])
+      if (!Number.isFinite(amount) || amount < 0) {
+        setError(`Le tarif ${level} doit être un nombre positif ou nul.`)
+        return
+      }
+      tarifs[level] = amount
+    }
+
+    setSavingPartnerPricing(true)
+    setError(null)
+    try {
+      await api.saveBackofficePartnerPricing(tarifs)
+      setPartnerPricing(tarifs)
+      setSuccessMessage('Grille tarifaire enregistrée et montants des partenaires recalculés')
+      await loadData()
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible d’enregistrer la grille tarifaire')
+    } finally {
+      setSavingPartnerPricing(false)
+    }
+  }
 
   // Gestion des partenaires
   const handleOpenAddPartner = () => {
@@ -868,6 +991,7 @@ export default function AdminPartenaires() {
         nom: (requestItem.nom_entreprise || requestItem.nom_contact || 'Partenaire').trim(),
         secteur: requestItem.secteur || '',
         niveau: requestItem.niveau_souhaite || 'Bronze',
+        montant: 0,
         remise: '',
         engagement: requestItem.message || '',
         logo: '',
@@ -921,6 +1045,7 @@ export default function AdminPartenaires() {
           nom: payload.nom,
           secteur: payload.secteur,
           niveau: payload.niveau,
+          montant: payload.montant ?? 0,
           remise: payload.remise,
           engagement: payload.engagement,
           logo: logoValue,
@@ -932,6 +1057,7 @@ export default function AdminPartenaires() {
           nom: payload.nom,
           secteur: payload.secteur,
           niveau: payload.niveau,
+          montant: payload.montant ?? 0,
           remise: payload.remise,
           engagement: payload.engagement,
           logo: logoValue,
@@ -996,6 +1122,7 @@ export default function AdminPartenaires() {
 
       const data = {
         id_partenaire: payload.id_partenaire,
+        id_ville: payload.id_ville,
         titre: payload.titre,
         description: payload.description,
         emplacement: payload.emplacement,
@@ -1131,6 +1258,47 @@ export default function AdminPartenaires() {
         {/* ===== ONGLET GESTION PARTENAIRES (EXISTANT) ===== */}
         {activeTab === 'gestion' && (
           <>
+            {isSuperAdmin && (
+              <form
+                onSubmit={handleSavePartnerPricing}
+                className="rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)] p-4 sm:p-5"
+              >
+                <div className="mb-4">
+                  <h2 className="font-semibold">Tarifs automatiques par type de partenariat</h2>
+                  <p className="mt-1 text-xs text-white/50">
+                    Les nouveaux partenaires reprennent le tarif de leur niveau. En enregistrant, les montants des partenaires existants sont recalculés aussi.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  {PARTNER_LEVELS.map((level) => (
+                    <label key={level} className="text-xs text-white/50">
+                      {level} (MGA)
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        required
+                        value={partnerPricingDraft[level]}
+                        onChange={(event) => setPartnerPricingDraft((current) => ({
+                          ...current,
+                          [level]: event.target.value,
+                        }))}
+                        className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-cyan/50"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={savingPartnerPricing || loading}
+                    className="rounded-lg bg-brand-cyan px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50"
+                  >
+                    {savingPartnerPricing ? 'Enregistrement...' : 'Enregistrer les tarifs'}
+                  </button>
+                </div>
+              </form>
+            )}
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
@@ -1306,6 +1474,7 @@ export default function AdminPartenaires() {
 
                   <div className="grid gap-2 text-sm text-white/60">
                     <div><span className="text-white/40">Niveau:</span> {partner.niveau}</div>
+                    <div><span className="text-white/40">Montant:</span> {(partner.montant ?? 0).toLocaleString('fr-FR')} MGA</div>
                     <div><span className="text-white/40">Remise:</span> {partner.remise}</div>
                     <div><span className="text-white/40">Engagement:</span> {partner.engagement}</div>
                     <div><span className="text-white/40">Créé le:</span> {partner.dateCreation}</div>
@@ -1779,6 +1948,9 @@ export default function AdminPartenaires() {
                           </td>
                           <td className="p-3">
                             <EmplacementBadge emplacement={campagne.emplacement} />
+                            {campagne.emplacement === 'bandeau_regional' && campagne.ville_nom && (
+                              <div className="mt-1 text-xs text-white/40">{campagne.ville_nom}</div>
+                            )}
                           </td>
                           <td className="p-3">
                             <div className="text-sm">
@@ -1832,6 +2004,7 @@ export default function AdminPartenaires() {
       {showPartnerModal && (
         <PartnerModal
           partner={editingPartner}
+          pricing={partnerPricing}
           onClose={() => setShowPartnerModal(false)}
           onSave={handleSavePartner}
         />
@@ -1842,6 +2015,7 @@ export default function AdminPartenaires() {
         <CampagneModal
           campagne={editingCampagne}
           partenaires={partenaires}
+          villes={villes}
           onClose={() => setShowCampagneModal(false)}
           onSave={handleSaveCampagne}
         />

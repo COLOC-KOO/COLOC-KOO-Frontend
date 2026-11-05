@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { api } from '../../lib/api'
+import { useAuth } from '../../lib/auth'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import {
   Settings,
@@ -110,9 +111,13 @@ const ToggleSwitch = ({
 
 // ===== COMPOSANT PRINCIPAL =====
 export default function AdminConfiguration() {
+  const { user } = useAuth()
+  const isSuperAdmin = user?.poste === 'superadmin'
   const [flags, setFlags] = useState<FlagConfig[]>([])
   const [constantes, setConstantes] = useState<Constante[]>([])
   const [langues, setLangues] = useState<Langue[]>([])
+  const [maintenanceMode, setMaintenanceMode] = useState<boolean | null>(null)
+  const [maintenanceSaving, setMaintenanceSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('tous')
   const [activeTab, setActiveTab] = useState<'flags' | 'constantes' | 'langues'>('flags')
@@ -476,6 +481,39 @@ export default function AdminConfiguration() {
     loadConfiguration()
   }, [])
 
+  useEffect(() => {
+    let active = true
+    api.siteStatus()
+      .then(({ maintenanceMode: enabled }) => {
+        if (active) setMaintenanceMode(enabled)
+      })
+      .catch((err: unknown) => {
+        if (active) {
+          setError(err instanceof Error ? err.message : 'Impossible de charger le statut du site')
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const toggleMaintenanceMode = async () => {
+    if (maintenanceMode === null || maintenanceSaving) return
+    const nextMode = !maintenanceMode
+    setMaintenanceSaving(true)
+    setError(null)
+    try {
+      const result = await api.setMaintenanceMode(nextMode)
+      setMaintenanceMode(result.maintenanceMode)
+      setSuccessMessage(result.message)
+      window.setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de modifier le mode maintenance')
+    } finally {
+      setMaintenanceSaving(false)
+    }
+  }
+
   // ===== RENDU =====
   return (
     <AdminLayout>
@@ -507,6 +545,46 @@ export default function AdminConfiguration() {
           <div className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-2 rounded-lg text-sm">
             {error}
           </div>
+        )}
+
+        {isSuperAdmin && (
+          <section className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)] p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Mode maintenance</h2>
+              <p className="mt-1 max-w-2xl text-sm text-white/60">
+                {maintenanceMode === null
+                  ? 'Chargement du statut du site...'
+                  : maintenanceMode
+                    ? 'Activé : le site public est suspendu. Seule l’équipe peut se connecter.'
+                    : 'Désactivé : le site est accessible aux visiteurs et aux membres.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={maintenanceMode === true}
+              disabled={maintenanceMode === null || maintenanceSaving}
+              onClick={toggleMaintenanceMode}
+              className={`inline-flex min-w-48 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                maintenanceMode
+                  ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25'
+                  : 'bg-brand-green/15 text-brand-green hover:bg-brand-green/25'
+              }`}
+            >
+              {maintenanceSaving ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : maintenanceMode ? (
+                <XCircle className="h-4 w-4" />
+              ) : (
+                <CheckCircle className="h-4 w-4" />
+              )}
+              {maintenanceSaving
+                ? 'Enregistrement...'
+                : maintenanceMode
+                  ? 'Désactiver la maintenance'
+                  : 'Activer la maintenance'}
+            </button>
+          </section>
         )}
 
         {/* Onglets */}

@@ -66,7 +66,8 @@ export default function PartenairesTous() {
           return
         }
 
-        const deduped = data.filter((item, index, array) => {
+        const partnerPageCampaigns = data.filter((item) => item.emplacement !== 'bandeau_regional')
+        const deduped = partnerPageCampaigns.filter((item, index, array) => {
           const firstIndex = array.findIndex((candidate) => candidate.id_partenaire === item.id_partenaire)
           return firstIndex === index
         })

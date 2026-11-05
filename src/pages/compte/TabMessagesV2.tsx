@@ -37,6 +37,8 @@ export default function TabMessagesV2() {
   const [active, setActive] = useState<any | null>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [conversationLoadError, setConversationLoadError] = useState('')
+  const [messageLoadError, setMessageLoadError] = useState('')
   const [msgLoading, setMsgLoading] = useState(false)
   const [reply, setReply] = useState('')
   const [conversationSearch, setConversationSearch] = useState('')
@@ -194,8 +196,8 @@ export default function TabMessagesV2() {
   // 1. Regroupement dynamique par Déposition / Annonce
   const loadConversations = async (refreshProfilePictures = false) => {
     const [directThreads, groups] = await Promise.all([
-      api.messagesThreads().catch(() => []),
-      api.groupThreads().catch(() => []),
+      api.messagesThreads(),
+      api.groupThreads(),
     ])
 
     // IMPORTANT : lors de l'entrée dans la messagerie, on enrichit les
@@ -304,8 +306,15 @@ export default function TabMessagesV2() {
     return merged
   }
 
+  const refreshConversations = () => {
+    void loadConversations().catch((err) => {
+      setConversationLoadError(err instanceof Error ? err.message : t('load_conversations_error'))
+    })
+  }
+
   useEffect(() => {
     setLoading(true)
+    setConversationLoadError('')
     loadConversations(true)
       .then((items) => {
         // Ouverture directe d'une conversation depuis un lien
@@ -323,6 +332,9 @@ export default function TabMessagesV2() {
 
         setActive(cible || items[0] || null)
         if (typeof window !== 'undefined') setIsSidebarOpen(window.innerWidth >= 1024)
+      })
+      .catch((err) => {
+        setConversationLoadError(err instanceof Error ? err.message : t('load_conversations_error'))
       })
       .finally(() => setLoading(false))
   }, [])
@@ -417,16 +429,18 @@ export default function TabMessagesV2() {
     if (!active) {
       setAllMessages([])
       setMessages([])
+      setMessageLoadError('')
       return
     }
     setMsgLoading(true)
+    setMessageLoadError('')
 
     // Une conversation correspond à UN seul fil : soit un groupe, soit un
     // échange privé. On ne charge donc que celui-ci, ce qui garantit qu'aucun
     // message privé ne fuite dans une discussion de groupe et inversement.
     const loader = (
       active.type === 'group' ? api.groupMessages(active.id) : api.messagesThread(active.id)
-    ).catch(() => [])
+    )
 
     loader.then((data) => {
       if (!mounted) return
@@ -438,10 +452,9 @@ export default function TabMessagesV2() {
       setDisplayCount(Math.min(30, items.length))
       setMessages(items.slice(-Math.min(30, items.length)))
       setTimeout(() => { const el = containerRef.current; if (el) el.scrollTop = el.scrollHeight }, 50)
-    }).catch(() => {
+    }).catch((err) => {
       if (!mounted) return
-      setAllMessages([])
-      setMessages([])
+      setMessageLoadError(err instanceof Error ? err.message : t('load_messages_error'))
     }).finally(() => { if (mounted) setMsgLoading(false) })
 
     return () => { mounted = false }
@@ -488,7 +501,7 @@ useEffect(() => {
         appendMessage(payload.message)
         setTypingUsers((prev) => prev.filter((id) => id !== Number(otherId)))
       }
-      void loadConversations()
+      refreshConversations()
     }
 
     if (payload.type === 'group_message' && payload.message) {
@@ -496,11 +509,11 @@ useEffect(() => {
         appendMessage(payload.message)
         setTypingUsers((prev) => prev.filter((id) => id !== Number(payload.message.id_expediteur)))
       }
-      void loadConversations()
+      refreshConversations()
     }
 
     if (payload.type === 'group_created') {
-      void loadConversations()
+      refreshConversations()
       window.dispatchEvent(new Event('colockoo:counters-refresh'))
     }
 
@@ -525,7 +538,7 @@ useEffect(() => {
     }
 
     if (payload.type === 'notification') {
-      void loadConversations()
+      refreshConversations()
       window.dispatchEvent(new Event('colockoo:counters-refresh'))
     }
   })
@@ -581,7 +594,7 @@ const emitTyping = (isTyping: boolean) => {
         ? await api.sendGroupMessage(active.id, contenu)
         : await api.sendMessage({ id_destinataire: active.id, contenu, id_annonce: active.annonce?.id })
       appendMessage(sent as any)
-      void loadConversations()
+      refreshConversations()
       window.dispatchEvent(new Event('colockoo:counters-refresh'))
     } catch (err) {
       setReply(contenu)
@@ -847,7 +860,9 @@ const emitTyping = (isTyping: boolean) => {
           {conversationSearch && <button type="button" onClick={() => setConversationSearch('')} aria-label="Effacer la recherche" className="rounded-full px-1 text-xs hover:bg-background">×</button>}
         </label>
         <div className="flex-1 overflow-y-auto px-2 pb-4 sm:px-3">
-          {loading ? <div className="p-5 text-sm text-muted-foreground">{t('loading_conversations')}</div> : filteredConversations.length === 0 ? (
+          {conversationLoadError ? (
+            <div role="alert" className="p-5 text-sm text-red-600">{conversationLoadError}</div>
+          ) : loading ? <div className="p-5 text-sm text-muted-foreground">{t('loading_conversations')}</div> : filteredConversations.length === 0 ? (
             <div className="px-5 py-12 text-center text-sm text-muted-foreground">{conversationSearch ? t('no_conversations_found') : t('no_conversations_yet')}</div>
           ) : (
             <div className="space-y-1">
@@ -1013,6 +1028,8 @@ const emitTyping = (isTyping: boolean) => {
             </div>
           ) : msgLoading ? (
             <div className="p-5 text-center text-sm text-muted-foreground">{t('loading_messages')}</div>
+          ) : messageLoadError ? (
+            <div role="alert" className="p-5 text-center text-sm text-red-600">{messageLoadError}</div>
           ) : (
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-2">
               {loadingOlder ? <div className="text-center text-sm text-muted-foreground">{t('loading_older')}</div> : null}
