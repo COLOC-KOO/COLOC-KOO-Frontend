@@ -717,6 +717,12 @@ export const api = {
     siteStatus() {
         return request<{ maintenanceMode: boolean }>('/meta/site-status')
     },
+    setMaintenanceMode(maintenanceMode: boolean) {
+        return request<{ maintenanceMode: boolean; message: string }>('/backoffice/maintenance-mode', {
+            method: 'PATCH',
+            body: JSON.stringify({ maintenanceMode }),
+        })
+    },
     login(payload: { email: string; mot_de_passe: string }) {
         return request<{ user: AuthUser; token: string }>('/auth/login', {
             method: 'POST',

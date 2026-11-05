@@ -463,12 +463,12 @@ export function SiteHeader() {
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <Link to="/auth">
+              <Link to="/auth?mode=signin">
                 <Button variant="outline" size="sm" className="h-8 px-2 sm:h-9 sm:px-3 rounded-lg border-border hover:bg-muted transition-colors">
                   {t('signin', { ns: 'header' })}
                 </Button>
               </Link>
-              <Link to="/auth" className="hidden sm:block">
+              <Link to="/auth?mode=signup" className="hidden sm:block">
                 <Button size="sm" className="rounded-lg bg-brand-cyan hover:bg-brand-cyan-dark text-white transition-colors">
                   <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
                 </Button>
@@ -586,12 +586,12 @@ export function SiteHeader() {
                   </React.Fragment>
                 ) : (
                   <React.Fragment>
-                    <Link to="/auth" className="w-full block" onClick={() => setOpen(false)}>
+                    <Link to="/auth?mode=signin" className="w-full block" onClick={() => setOpen(false)}>
                       <Button variant="outline" className="w-full rounded-xl border-2" size="sm">
                         {t('signin', { ns: 'header' })}
                       </Button>
                     </Link>
-                    <Link to="/compte?tab=dossier" className="w-full block" onClick={() => setOpen(false)}>
+                    <Link to="/auth?mode=signup" className="w-full block" onClick={() => setOpen(false)}>
                       <Button className="w-full rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green hover:from-brand-cyan-dark hover:to-brand-green-dark text-white shadow-md hover:shadow-lg transition-all duration-200" size="sm">
                         <User className="w-4 h-4 mr-1" /> {t('signup', { ns: 'header' })}
                       </Button>

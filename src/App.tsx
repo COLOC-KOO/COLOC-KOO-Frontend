@@ -81,20 +81,26 @@ function SiteAccess() {
 
   useEffect(() => {
     let active = true
-    api.siteStatus()
-      .then(({ maintenanceMode: enabled }) => {
-        if (active) {
-          setMaintenanceMode(enabled)
-          setStatusError(null)
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setStatusError(error instanceof Error ? error.message : 'Impossible de vérifier le statut du site.')
-        }
-      })
+    const refreshSiteStatus = () => {
+      api.siteStatus()
+        .then(({ maintenanceMode: enabled }) => {
+          if (active) {
+            setMaintenanceMode(enabled)
+            setStatusError(null)
+          }
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            setStatusError(error instanceof Error ? error.message : 'Impossible de vérifier le statut du site.')
+          }
+        })
+    }
+    refreshSiteStatus()
+    const interval = window.setInterval(refreshSiteStatus, 15000)
+
     return () => {
       active = false
+      window.clearInterval(interval)
     }
   }, [retry])
 

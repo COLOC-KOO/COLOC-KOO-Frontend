@@ -53,7 +53,7 @@ function destinationFor(connected: AuthUser, redirect: string | null) {
 export default function Auth({ maintenanceMode = false }: { maintenanceMode?: boolean }) {
   const { t } = useTranslation("auth");
   const [params] = useSearchParams();
-  const [mode, setMode] = useState<"signin" | "signup">(
+  const [mode, setMode] = useState<"signin" | "signup">(() =>
     !maintenanceMode && params.get("mode") === "signup" ? "signup" : "signin",
   );
   const [form, setForm] = useState<AuthForm>({
@@ -85,6 +85,11 @@ export default function Auth({ maintenanceMode = false }: { maintenanceMode?: bo
   useEffect(() => {
     if (maintenanceMode) setMode("signin");
   }, [maintenanceMode]);
+
+  useEffect(() => {
+    if (maintenanceMode) return;
+    setMode(params.get("mode") === "signup" ? "signup" : "signin");
+  }, [maintenanceMode, params]);
 
   useEffect(() => {
     if (!user || verificationToken) return;
@@ -238,7 +243,7 @@ export default function Auth({ maintenanceMode = false }: { maintenanceMode?: bo
           className="md:hidden absolute top-4 left-4 z-10 flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium bg-white/80 hover:bg-white backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-gray-200/50"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="hidden xs:inline">{t(" ")}</span>
+          <span className="hidden xs:inline">{t("back")}</span>
         </Link>
 
         <div className="w-full max-w-md rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-[0_20px_80px_-20px_rgba(15,23,42,0.35)] backdrop-blur-xl sm:p-8">
@@ -260,7 +265,18 @@ export default function Auth({ maintenanceMode = false }: { maintenanceMode?: bo
               <button type="button" disabled={resending} onClick={() => resendVerification(createdEmail)} className="mt-4 text-sm font-semibold text-brand-cyan-dark underline disabled:opacity-50">
                 {resending ? t("processing") : t("resendVerification")}
               </button>
-              <Link to="/auth?mode=signin" className="mt-4 block text-sm font-semibold text-brand-green-dark">{t("backToSignin")}</Link>
+              <Link
+                to="/auth?mode=signin"
+                onClick={() => {
+                  setMode("signin")
+                  setCreatedEmail("")
+                  setVerificationMessage("")
+                  setError("")
+                }}
+                className="mt-4 block text-sm font-semibold text-brand-green-dark"
+              >
+                {t("backToSignin")}
+              </Link>
             </div>
           ) : (
           <>
