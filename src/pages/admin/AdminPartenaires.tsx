@@ -420,7 +420,7 @@ function PartnerModal({
 }: {
   partner?: Partenaire | null
   onClose: () => void
-  onSave: (payload: Omit<Partenaire, 'id' | 'dateCreation'> & { logoFile?: File | null }) => Promise<void>
+  onSave: (payload: Omit<Partenaire, 'id' | 'dateCreation'> & { logoFile?: File | null }) => Promise<boolean>
 }) {
   const [nom, setNom] = useState(partner?.nom || '')
   const [secteur, setSecteur] = useState(partner?.secteur || '')
@@ -445,7 +445,7 @@ function PartnerModal({
     if (!nom.trim()) return
     setSubmitting(true)
     try {
-      await onSave({ 
+      const saved = await onSave({ 
         nom: nom.trim(), 
         secteur: secteur.trim(), 
         niveau: niveau.trim(), 
@@ -455,6 +455,7 @@ function PartnerModal({
         actif,
         logoFile
       })
+      if (!saved) setSubmitting(false)
     } finally {
       setSubmitting(false)
     }
@@ -905,7 +906,7 @@ export default function AdminPartenaires() {
     }
   }
 
-  const handleSavePartner = async (payload: Omit<Partenaire, 'id' | 'dateCreation'> & { logoFile?: File | null }) => {
+  const handleSavePartner = async (payload: Omit<Partenaire, 'id' | 'dateCreation'> & { logoFile?: File | null }): Promise<boolean> => {
     setLoading(true)
     setError(null)
     try {
@@ -941,8 +942,10 @@ export default function AdminPartenaires() {
       setShowPartnerModal(false)
       await loadData()
       window.setTimeout(() => setSuccessMessage(null), 3000)
+      return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de sauvegarder le partenaire')
+      return false
     } finally {
       setLoading(false)
     }
@@ -1509,14 +1512,22 @@ export default function AdminPartenaires() {
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button
+                                type="button"
+                                onClick={() => handleEditPartner(compte)}
+                                disabled={loading}
                                 className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition"
                                 title="Modifier"
+                                aria-label={`Modifier le compte partenaire ${compte.nom}`}
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
+                                type="button"
+                                onClick={() => handleDeletePartner(compte.id)}
+                                disabled={loading}
                                 className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition"
                                 title="Supprimer"
+                                aria-label={`Supprimer le compte partenaire ${compte.nom}`}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
