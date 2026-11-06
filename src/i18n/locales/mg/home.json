@@ -1,4 +1,9 @@
 {
+  "stats": {
+    "activeListings": "Fampilazana voahangona",
+    "coveredCities": "Tanan-dehibe voarakotra",
+    "roommates": "Mpiara mipetraka"
+  },
   "hero": {
     "badge": "Fiarahamonina vaovao",
     "title": " Mitadiava trano hifampizarana, na aiza na aiza eto Madagasikara ",
@@ -10,7 +15,7 @@
     "room": "Efitra",
     "apartment": "Trano",
     "house": "Trano fonenana",
-    "verified": "Fanambarana voamarina",
+    "verified": "Fampilazana voamarina",
     "colocataires": "1 400+ mpiara-monina",
     "satisfaction": "4,8/5 fahafaham-po"
   },
@@ -22,22 +27,22 @@
     "map": "Sarintany",
     "verified": "Voamarina",
     "pricePerMonth": "/volana",
-    "empty": "Tsy misy fanambarana misy",
-    "emptySub": "Miverena rehefa afaka kelikely hahitana fanambarana vaovao"
+    "empty": "Tsy misy fampilazana misy",
+    "emptySub": "Miverena rehefa afaka kelikely hahitana fampilazana vaovao"
   },
   "cities": {
     "title": "Hijery araka ny tanàna",
-    "subtitle": "tanàna voarakotra, fanambarana voamarina",
-    "annonce": "fanambarana",
-    "annonces": "fanambarana",
-    "viewAll": "Fanambarana rehetra",
+    "subtitle": "tanàna voarakotra, fampilazana voamarina",
+    "annonce": "fampilazana",
+    "annonces": "fampilazana",
+    "viewAll": "Fampilazana rehetra",
     "explore": "Hijery",
     "empty": "Tsy misy tanàna misy"
   },
   "howItWorks": {
     "title": "Ny fomba fiasany ",
     "subtitle": "Dingana 3 tsotra hahitana mpiara-mipetraka ",
-    "viewAll": "Hijery ny fanambarana",
+    "viewAll": "Hijery ny fampilazana",
     "startSearch": "Hanomboka ny fikarohana",
     "steps": [
       {
@@ -55,8 +60,7 @@
         "title": "Mifandraisa mivantana",
         "description": "Mandefasa hafatra voaaro. Tsy misy saram-pandraharahana, maimaim-poana 100%."
       }
-    ]
-    ,
+    ],
     "baseline": {
       "title": " SEHATRA NATERAKY NY MPIARA-MIPETRAKA, HO AN'NY MPIARAMIPETRAKA REHETRA",
       "desc": " Maimaim-poana ny serivisy ho an'ny mpiara-mipetraka rehetra. Voamarina ny fampilazana izay avoaka mba hiantohana ny fiarovana ny tsirairay. ",
@@ -81,8 +85,8 @@
   },
   "cta": {
     "title": "Tompon-trano na masoivoho ?",
-    "subtitle": "Avoahy ny fanambaranao ary karakarao ny mpiara-monina aminao mora foana.",
-    "deposer": "Hametraka fanambarana",
+    "subtitle": "Avoahy ny fampilazanao ary karakarao ny mpiara-monina aminao mora foana.",
+    "deposer": "Hametraka fampilazana",
     "partenaire": "Ho mpiara-miara",
     "installApp": "Hametraka ny rindranasa"
   },
@@ -103,8 +107,8 @@
       },
       "listings": {
         "title": "Miandry anao ny trano fonenanao manaraka",
-        "description": "Jereo ireo fanambarana vaovao ary tadiavo ny trano iarahana mifanaraka amin'ny filanao.",
-        "label": "Hijery ny fanambarana"
+        "description": "Jereo ireo fampilazana vaovao ary tadiavo ny trano iarahana mifanaraka amin'ny filanao.",
+        "label": "Hijery ny fampilazana"
       }
     }
   }

@@ -76,7 +76,7 @@
       "benefit1": "Tafiditra ao ny tolotra rehetra teo aloha, miampy :",
       "benefit2": "Antontan'isa isan-taona manerantany",
       "benefit3": "Filaharana manana laharam-pahamehana + fampisehoana andalana 3",
-      "benefit4": "Doka voajanahary ao amin'ny filaharan'ny fanambarana",
+      "benefit4": "Doka voajanahary ao amin'ny filaharan'ny fampilazana",
       "benefit5": "Fiverenan'ny antontan'isa isan-taona",
       "benefit6": "Logo tafiditra amin'ny fampielezam-peo"
     },
@@ -95,21 +95,21 @@
       "name": "Mahaleo tena",
       "launch": "Maimaim-poana amin'ny fanombohana",
       "arg": "Tsy misy risika : 4 volana fahitana, trano fiarahamonina iray ihany no mahavita mamerina ny vidiny.",
-      "benefit1": "Fanambarana 1 ho an'ny varotra",
+      "benefit1": "Fampilazana 1 ho an'ny varotra",
       "benefit2": "Manan-kery 4 volana",
       "benefit3": "Ny mpiara-monina dia misoratra anarana avy eo manamafy"
     },
     "agency": {
       "name": "Masoinody",
-      "launch": "Fanambarana omena",
+      "launch": "Fampilazana omena",
       "arg": "Fomba fahazoana mpanjifa mahomby, leads mahafeno fepetra ary sata mpiara-miara ho an'ny biraonao.",
-      "benefit1": "Kaonty masoinody 1 + fanambarana 12 isan-taona",
+      "benefit1": "Kaonty masoinody 1 + fampilazana 12 isan-taona",
       "benefit2": "Logo + pejy « Mpiara-miara »",
       "benefit3": "Gazety 1 isan-taona + mari-pamantarana"
     },
     "network": {
       "name": "Tambajotram-pananana",
-      "launch": "Fanambarana omena",
+      "launch": "Fampilazana omena",
       "arg": "Tolotra ambony indrindra ho an'ny tambajotra : fandrakofana nasionaly sy fahafahana manokana isam-paritra.",
       "benefit1": "Fampidirana ny tambajotra manontolo",
       "benefit2": "Famoahana tsy misy fetra",

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Edit, Trash, Image as ImageIcon, Eye, Archive } from 'lucide-react'
+import { Edit, Trash, Image as ImageIcon, Eye, Archive, Plus } from 'lucide-react'
 import { api, ApiAnnonce } from '../../lib/api'
 import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
 import { useDialog } from '../../components/ui/Dialog'
@@ -209,10 +209,20 @@ export default function TabMesAnnonces() {
 
   return (
     <div>
-      <h2 className="bebas text-2xl">{t('myAnnouncements')}</h2>
-      <p className="text-sm text-muted-foreground mt-1">
-        {t('allAnnouncementsDesc')}
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="bebas text-2xl">{t('myAnnouncements')}</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t('allAnnouncementsDesc')}
+          </p>
+        </div>
+        <Link
+          to="/depot_annonce"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-green px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition"
+        >
+          <Plus className="w-4 h-4" /> {t('newAnnouncement')}
+        </Link>
+      </div>
 
       {loading ? (
         <p className="mt-5 text-sm text-muted-foreground">{t('loading')}</p>

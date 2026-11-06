@@ -160,5 +160,9 @@
   "selectedCity": "Selected city:",
   "updatingPhoto": "Uploading photo…",
   "photoUpdated": "Profile picture updated",
-  "photoUpdateError": "Unable to update the picture. Please try again."
+  "photoUpdateError": "Unable to update the picture. Please try again.",
+  "newAnnouncement": "Post a new listing",
+  "removePhoto": "Remove photo",
+  "removingPhoto": "Removing photo...",
+  "photoRemoved": "Photo removed"
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { CheckCircle, ChevronLeft, ChevronRight, Eye, Pencil, RefreshCw, Search, Save, Trash2, X, XCircle, Home, Users, Ruler, Bed, Wifi, Car, Dog, Shield } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminLayout } from '../../components/admin/AdminLayout'
-import { ApiAnnonce, api } from '../../lib/api'
+import { ApiAnnonce, Ville, api } from '../../lib/api'
 import { formatAr } from '../../lib/utils'
 import { useAuth } from '../../lib/auth'
 
@@ -46,7 +46,9 @@ export default function AdminAnnonces() {
      smokers_allowed: false,
      women_only: false,
      men_only: false,
+     id_ville: 0,
    })
+  const [villes, setVilles] = useState<Ville[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -61,6 +63,10 @@ export default function AdminAnnonces() {
   }
 
   useEffect(loadAnnonces, [])
+
+  useEffect(() => {
+    api.villes().then(setVilles).catch(() => setVilles([]))
+  }, [])
 
   useEffect(() => {
     const annonceId = Number(searchParams.get('annonceId'))
@@ -162,6 +168,7 @@ export default function AdminAnnonces() {
        smokers_allowed: Boolean(annonce.smokers_allowed),
        women_only: Boolean(annonce.women_only),
        men_only: Boolean(annonce.men_only),
+       id_ville: Number(annonce.id_ville) || 0,
      })
      setShowEditModal(true)
    }
@@ -187,8 +194,12 @@ export default function AdminAnnonces() {
        smokers_allowed: editForm.smokers_allowed,
        women_only: editForm.women_only,
        men_only: editForm.men_only,
+       ...(editForm.id_ville ? { id_ville: editForm.id_ville } : {}),
      })
-     setAnnonces((current) => current.map((item) => (item.id === selectedAnnonce.id ? updated : item)))
+     const nouvelleVille = villes.find((v) => v.id_ville === editForm.id_ville)
+     setAnnonces((current) => current.map((item) => (item.id === selectedAnnonce.id
+       ? { ...updated, id_ville: nouvelleVille ? nouvelleVille.id_ville : item.id_ville, ville: nouvelleVille ? nouvelleVille.nom_ville : item.ville }
+       : item)))
      setShowEditModal(false)
      setSelectedAnnonce(null)
    }
@@ -384,6 +395,7 @@ export default function AdminAnnonces() {
                )}
              </div>
              <Info label="Ref" value={selectedAnnonce.reference} />
+             <Info label="Pièces" value={selectedAnnonce.nombre_pieces != null ? String(selectedAnnonce.nombre_pieces) : '-'} />
              <Info label="Meublé" value={formatFurnished(selectedAnnonce.chambre?.est_meuble)} />
            </div>
            {selectedAnnonce.amenities && selectedAnnonce.amenities.length > 0 && (
@@ -509,6 +521,19 @@ export default function AdminAnnonces() {
              <div>
                <label className="block text-sm text-white/60 mb-1">Description</label>
                <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none text-white" rows={3} />
+             </div>
+             <div>
+               <label className="block text-sm text-white/60 mb-1">Ville</label>
+               <select
+                 value={editForm.id_ville || ''}
+                 onChange={(e) => setEditForm({ ...editForm, id_ville: Number(e.target.value) || 0 })}
+                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none text-white"
+               >
+                 <option value="">— Conserver la ville actuelle ({selectedAnnonce.ville}) —</option>
+                 {villes.map((v) => (
+                   <option key={v.id_ville} value={v.id_ville}>{v.nom_ville}</option>
+                 ))}
+               </select>
              </div>
              <div className="grid grid-cols-2 gap-3">
                <EditInput label="Type de bien" value={editForm.type_propriete} onChange={(value) => setEditForm({ ...editForm, type_propriete: value })} />

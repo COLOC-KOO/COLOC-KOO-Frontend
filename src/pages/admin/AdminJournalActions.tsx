@@ -18,6 +18,7 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
+  Download,
   Trash2
 } from 'lucide-react'
 
@@ -80,6 +81,9 @@ function formatJournalDetail(details: unknown): string {
     refused: 'Refusé',
     approved: 'Validé',
     validated: 'Validé',
+    a_verifier: 'À vérifier',
+    conforme: 'Vérifié',
+    non_conforme: 'Refusé',
   }
   const keyLabels: Record<string, string> = {
     ancien_statut: 'Ancien statut',
@@ -100,9 +104,15 @@ function formatJournalDetail(details: unknown): string {
     return details.join(' · ')
   }
   if (typeof details === 'object') {
-    return Object.entries(details)
+    const obj = details as Record<string, unknown>
+    // Valeurs avant/après regroupées : « Statut: En attente → Validé »
+    const hasPair = obj.ancien_statut !== undefined && obj.ancien_statut !== null && obj.statut !== undefined && obj.statut !== null
+    const pretty = (value: unknown) => (typeof value === 'string' ? statusLabels[value] || value : String(value))
+    return Object.entries(obj)
       .filter(([, value]) => value !== null && value !== undefined && value !== '')
+      .filter(([key]) => !(hasPair && key === 'ancien_statut'))
       .map(([key, value]) => {
+        if (hasPair && key === 'statut') return `Statut: ${pretty(obj.ancien_statut)} → ${pretty(value)}`
         const label = keyLabels[key] || key.replace(/_/g, ' ')
         const displayValue = typeof value === 'string'
           ? statusLabels[value] || value
@@ -171,6 +181,7 @@ export default function AdminJournalActions() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<string>('tous')
   const [filterActeur, setFilterActeur] = useState<string>('tous')
+  const [filterCible, setFilterCible] = useState<string>('tous')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [expandedLog, setExpandedLog] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -204,6 +215,12 @@ export default function AdminJournalActions() {
     return ['tous', ...Array.from(unique)]
   }, [logs])
 
+  // Cibles uniques pour le filtre
+  const cibles = useMemo(() => {
+    const unique = new Set(logs.map(log => log.cible))
+    return ['tous', ...Array.from(unique).sort((a, b) => a.localeCompare(b))]
+  }, [logs])
+
   // Filtrer et trier les logs
   const filteredLogs = useMemo(() => {
       let filtered = [...logs]
@@ -227,6 +244,11 @@ export default function AdminJournalActions() {
       filtered = filtered.filter(log => log.acteur === filterActeur)
     }
 
+    // Filtre par cible
+    if (filterCible !== 'tous') {
+      filtered = filtered.filter(log => log.cible === filterCible)
+    }
+
     // Tri par date
     filtered = filtered.sort((a, b) => {
       const dateA = new Date(a.timestamp).getTime()
@@ -235,7 +257,7 @@ export default function AdminJournalActions() {
     })
 
     return filtered
-  }, [logs, searchQuery, filterType, filterActeur, sortOrder])
+  }, [logs, searchQuery, filterType, filterActeur, filterCible, sortOrder])
 
   // Statistiques
   const stats = useMemo(() => {
@@ -249,6 +271,21 @@ export default function AdminJournalActions() {
       suspension: logs.filter(log => log.type === 'suspension').length
     }
   }, [logs])
+
+  function exportCsv() {
+    const header = ['Date', 'Heure', 'Acteur', 'Rôle', 'Action', 'Cible', 'Détail']
+    const rows = filteredLogs.map(log => [log.date, log.time, log.acteur, log.role, log.action, log.cible, log.detail])
+    const csv = [header, ...rows]
+      .map(cells => cells.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(';'))
+      .join('\r\n')
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `journal-actions-${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   // Toggle expansion d'un log
   const toggleExpand = (id: string) => {
@@ -343,6 +380,18 @@ export default function AdminJournalActions() {
                   ))}
                 </select>
 
+                <select
+                  value={filterCible}
+                  onChange={(e) => setFilterCible(e.target.value)}
+                  className="max-w-52 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand-cyan/50"
+                >
+                  {cibles.map(cible => (
+                    <option key={cible} value={cible} className="bg-[oklch(0.22_0.005_260)]">
+                      {cible === 'tous' ? 'Toutes les cibles' : cible}
+                    </option>
+                  ))}
+                </select>
+
                 <button
                   onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
                   className="flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm hover:bg-white/10 transition"
@@ -350,6 +399,14 @@ export default function AdminJournalActions() {
                   <Calendar className="w-4 h-4" />
                   {sortOrder === 'desc' ? 'Plus récent' : 'Plus ancien'}
                   {sortOrder === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+                </button>
+
+                <button
+                  onClick={exportCsv}
+                  disabled={filteredLogs.length === 0}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm hover:bg-white/10 transition disabled:opacity-40"
+                >
+                  <Download className="w-4 h-4" /> Exporter CSV
                 </button>
               </div>
             </div>

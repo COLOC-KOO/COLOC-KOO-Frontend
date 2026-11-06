@@ -13,10 +13,10 @@
  "catalogue": {
   "title": "Tolotra misy",
   "subtitle": "Misafidiana serivisy iray na maromaro, avy eo alefaso ny fangatahanao.",
-  "defaultDesc": "Tolotra misy eto Antananarivo ihany aloha hatreto",
+  "defaultDesc": "Tolotra Coloc'KOO miseho amin'ny tanàna rehetra",
   "empty": "Tsy misy tolotra misy amin'izao fotoana izao.",
-  "onlyAntananarivo": "Ny tolotra Coloc'KOO dia azo atao ao Antananarivo ihany aloha hatreto.",
-  "availability": "Tolotra misy ao Antananarivo (anisan'izany ny fokontany) aloha hatreto.",
+  "availability": "Misy amin'ny tanàna rehetra ny tolotra.",
+  "unavailableInCity": "Tsy misy ao an-tanànao",
   "perDay": "isan'andro",
   "dayDiscount": "Fihenam-bidy: {{fourDays}}% manomboka amin'ny 4 andro · {{fiveDays}}% manomboka amin'ny 5 andro",
   "numberOfDays": "Isan'ny andro",
@@ -65,7 +65,7 @@
   },
   "confirmation": {
     "title": "Fangatahana alefa !",
-    "subtitle": "Mpanolo-tsaina Coloc'KOO hiverina aminao hamaranana ny fifanarahana.",
+    "subtitle": "Voaalefa ny fangatahanao, hiverina aminao ny ekipa Coloc'KOO hamamarina azy. Ny fandoavam-bola dia hatao rehefa voamarina amin'ny ekipa Coloc'KOO ihany.",
     "reference": "Fanamarihana",
     "total": "Tombantombana",
     "ok": "Tsara"

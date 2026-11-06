@@ -33,17 +33,6 @@ import heroImage from '../assets/partenaires-hero.jpg'
 import { LITE_HERO_GRADIENT } from '../components/ui/LazyBackgroundImage'
 import { useLiteMode } from '../lib/useLiteMode'
 
-// Villes où l'offre de services Coloc'KOO est disponible.
-const VILLES_SERVICES_CKOO = ['antananarivo', 'tananarive', 'tana']
-
-function normaliseVille(value: unknown) {
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-}
-
 const UNITE_LABEL: Record<string, string> = {
   heure: '/ heure',
   forfait: 'forfait',
@@ -52,6 +41,16 @@ const UNITE_LABEL: Record<string, string> = {
   mois: '/ mois',
   an: '/ an',
   stere: '/ stère',
+}
+
+// Nom de ville → minuscules, sans accents, trimé : sert à comparer la ville du
+// profil utilisateur aux zones desservies par un service (comparaison tolérante).
+function normaliseVille(value: unknown) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim()
 }
 
 function formatAr(n: number) {
@@ -121,11 +120,6 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const liteMode = useLiteMode()
-
-  // L'offre de services Coloc'KOO n'est proposée qu'à Antananarivo : si la ville
-  // du profil est renseignée et se trouve ailleurs, on l'indique clairement.
-  const villeProfil = normaliseVille(user?.villeActuelle || user?.ville || user?.villeOrigine)
-  const horsZoneServices = Boolean(villeProfil) && !VILLES_SERVICES_CKOO.includes(villeProfil)
 
   const [catalogue, setCatalogue] = useState<ServiceCatalogueItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -215,12 +209,25 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
     [catalogue],
   )
 
-  const toggle = (id: number) =>
+  // Ville du profil (nom) comparée aux zones desservies par chaque service.
+  const villeUser = normaliseVille(user?.villeActuelle || user?.ville || user?.villeOrigine)
+  // Un service limité à des villes n'est commandable que si la ville connue du
+  // profil en fait partie. Ville inconnue (non connecté / profil vide) : on
+  // n'empêche pas la commande (fail-open), seul le cas « hors zone » grille.
+  const serviceIndisponible = (s: ServiceCatalogueItem) =>
+    s.visibilite === 'zones' &&
+    villeUser !== '' &&
+    !(s.zones || []).map(normaliseVille).includes(villeUser)
+
+  const toggle = (id: number) => {
+    const item = catalogue.find((c) => c.id === id)
+    if (item && serviceIndisponible(item)) return
     setSelected((prev) => {
       const next = new Map(prev)
       next.has(id) ? next.delete(id) : next.set(id, 1)
       return next
     })
+  }
   const setServiceQuantity = (id: number, quantity: number) =>
     setSelected((prev) => new Map(prev).set(id, quantity))
   const clearCart = () => setSelected(new Map())
@@ -492,10 +499,6 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
               </div>
             ) : error && !catalogue.length ? (
               <p className="text-red-600">{error}</p>
-            ) : horsZoneServices ? (
-              <div className="rounded-2xl border border-border/60 bg-white p-8 text-center text-muted-foreground">
-                {t('services:catalogue.onlyAntananarivo')}
-              </div>
             ) : catalogue.length === 0 ? (
               <div className="rounded-2xl border border-border/60 bg-white p-8 text-center text-muted-foreground">
                 {t('services:catalogue.empty')}
@@ -505,6 +508,7 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
                 {catalogue.map((s, i) => {
                   const active = selected.has(s.id)
                   const quantity = selected.get(s.id) || 1
+                  const indisponible = serviceIndisponible(s)
                   const Icon = getServiceIcon(s.nom)
                   const hasDayDiscount = s.unite === 'jour' &&
                     (Number(s.reduction_4_jours || 0) > 0 || Number(s.reduction_5_jours || 0) > 0)
@@ -519,15 +523,23 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
                         type="button"
                         onClick={() => toggle(s.id)}
                         aria-pressed={active}
+                        disabled={indisponible}
+                        title={indisponible ? t('services:catalogue.unavailableInCity') : undefined}
                         className={cn(
-                          'group w-full text-left rounded-2xl border bg-white p-4 flex items-center gap-4 transition-all duration-200 hover:shadow-md',
-                          active
+                          'group w-full text-left rounded-2xl border bg-white p-4 flex items-center gap-4 transition-all duration-200',
+                          indisponible
+                            ? 'opacity-55 cursor-not-allowed border-border/40'
+                            : 'hover:shadow-md',
+                          !indisponible && active
                             ? 'border-brand-cyan ring-2 ring-brand-cyan/25 shadow-sm'
-                            : 'border-border/60 hover:border-brand-cyan/40',
+                            : !indisponible && 'border-border/60 hover:border-brand-cyan/40',
                         )}
                       >
-                        <div className="w-9 h-9 rounded-xl bg-brand-cyan/10 flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-4 h-4 text-brand-cyan-dark" />
+                        <div className={cn(
+                          'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0',
+                          indisponible ? 'bg-muted text-muted-foreground' : 'bg-brand-cyan/10',
+                        )}>
+                          <Icon className={cn('w-4 h-4', indisponible ? 'text-muted-foreground' : 'text-brand-cyan-dark')} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-foreground leading-snug truncate">
@@ -536,7 +548,11 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
                           <p className="text-sm text-muted-foreground line-clamp-1">
                             {serviceDesc(s.cle, s.description || t('services:catalogue.defaultDesc'))}
                           </p>
-                          {hasDayDiscount && (
+                          {indisponible ? (
+                            <p className="mt-1 text-xs font-semibold text-amber-600">
+                              {t('services:catalogue.unavailableInCity')}
+                            </p>
+                          ) : hasDayDiscount && (
                             <p className="mt-1 text-xs font-semibold text-brand-green-dark">
                               {t('services:catalogue.dayDiscount', {
                                 fourDays: s.reduction_4_jours,

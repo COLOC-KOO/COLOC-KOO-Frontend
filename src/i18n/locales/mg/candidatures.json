@@ -33,11 +33,11 @@
   "realPanel": {
     "title": "Fangatahana noraisina",
     "apply": "Mangataka amin'ity fiarahamonina ity",
-    "viewMine": "Jereo ny fangatahako",
+    "viewMine": "Hijery ny fangatahako",
     "notApplied": "Mbola tsy nangataka tamin'ity dokambarotra ity ianao.",
     "notAppliedHint": "Mangataha amin'ny fitsindrona ny bokotra \"Mangataka amin'ity fiarahamonina ity\" etsy ambony.",
     "alreadyApplied": "Efa nangataka tamin'ity dokambarotra ity ianao.",
-    "alreadyAppliedHint": "Tsindrio \"Jereo ny fangatahako\" mba hahitana ny fangatahana rehetra.",
+    "alreadyAppliedHint": "Tsindrio \"Hijery ny fangatahako\" mba hahitana ny fangatahana rehetra.",
     "empty": "Mbola tsy misy mpangataka. Ianao ve no voalohany hangataka!",
     "candidate_one": "mpangataka {{count}}",
     "candidate_other": "mpangataka {{count}}",
@@ -138,7 +138,7 @@
   },
   "actions": {
     "postuler": "Mangataka",
-    "voirMaCandidature": "Jereo ny fangatahako",
+    "voirMaCandidature": "Hijery ny fangatahako",
     "accepter": "Ekena",
     "refuser": "Lavina",
     "discuter": "Miresaka",

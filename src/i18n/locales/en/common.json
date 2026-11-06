@@ -35,7 +35,9 @@
     "next": "Next",
     "submit": "Submit",
     "success": "Operation successful",
-    "login": "Sign in"
+    "login": "Sign in",
+    "understood": "Got it",
+    "fieldRequired": "This field is required."
   },
   "footer": {
     "title": "SARINTANY'COLOC",

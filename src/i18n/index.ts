@@ -161,6 +161,8 @@ i18n
   .init({
     resources,
     fallbackLng: 'fr',
+    lowerCaseLng: true, // 'FR'/'fr-FR' stocknes par SiteHeader ou le navigator doivent matcher les clés 'fr'/'mg'/'en'
+    cleanCode: true,
     debug: import.meta.env.DEV,
     interpolation: {
       escapeValue: false,

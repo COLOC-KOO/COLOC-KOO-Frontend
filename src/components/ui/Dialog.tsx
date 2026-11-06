@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Check, CheckCircle2, HelpCircle, Info, X, XCircle } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
@@ -140,6 +141,7 @@ export function useDialog() {
 }
 
 function DialogCard({ dialog, onClose }: { dialog: ActiveDialog; onClose: () => void }) {
+  const { t } = useTranslation('common')
   const { options } = dialog
   const tone = options.tone ?? 'info'
   const styles = TONE_STYLES[tone]
@@ -269,7 +271,7 @@ function DialogCard({ dialog, onClose }: { dialog: ActiveDialog; onClose: () => 
                 />
               )}
               {touched && requiredMissing && (
-                <p className="mt-1.5 text-xs font-medium text-red-600">Ce champ est obligatoire.</p>
+                <p className="mt-1.5 text-xs font-medium text-red-600">{t('common.fieldRequired')}</p>
               )}
             </div>
           )}
@@ -281,7 +283,7 @@ function DialogCard({ dialog, onClose }: { dialog: ActiveDialog; onClose: () => 
                 onClick={cancel}
                 className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
               >
-                {(dialog.options as ConfirmOptions).cancelLabel ?? 'Annuler'}
+                {(dialog.options as ConfirmOptions).cancelLabel ?? t('common.cancel')}
               </button>
             )}
             <button
@@ -293,7 +295,7 @@ function DialogCard({ dialog, onClose }: { dialog: ActiveDialog; onClose: () => 
                 styles.confirm,
               )}
             >
-              {options.confirmLabel ?? (dialog.kind === 'alert' ? 'J’ai compris' : 'Confirmer')}
+              {options.confirmLabel ?? (dialog.kind === 'alert' ? t('common.understood') : t('common.confirm'))}
             </button>
           </div>
         </div>

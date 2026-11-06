@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
   FileText,
@@ -301,6 +302,17 @@ export default function AdminDashboard() {
           />
         </div>
 
+        {Boolean(stats?.signalements) && (
+          <button
+            type="button"
+            onClick={() => navigate('/admin/signalements-conversations')}
+            className="flex w-full items-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-left text-sm font-medium text-red-400 hover:bg-red-500/20"
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            {`${stats?.signalements} signalement${(stats?.signalements ?? 0) > 1 ? 's' : ''} ouvert${(stats?.signalements ?? 0) > 1 ? 's' : ''} à traiter`}
+          </button>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl p-6">
             <h2 className="bebas text-xl text-white mb-4">Candidatures récentes par annonce et par mois</h2>
@@ -539,7 +551,12 @@ export default function AdminDashboard() {
                 <ul className="mt-2 space-y-2">
                   {selectedTeam?.membres.map((member) => (
                     <li key={member.id_utilisateur} className="flex items-center justify-between gap-3 text-sm text-white/80">
-                      <span>{member.prenom} {member.nom} · {member.statut}</span>
+                      <span>
+                        {member.prenom} {member.nom} · {member.statut}
+                        {Number(member.id_utilisateur) === Number(selectedCandidature.id_utilisateur) && (
+                          <span className="ml-2 text-[10px] font-semibold text-brand-cyan">(a déposé la candidature)</span>
+                        )}
+                      </span>
                       <button
                         type="button"
                         onClick={() => {

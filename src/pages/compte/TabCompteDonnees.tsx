@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-import { api } from '../../lib/api'
+import { api, AppareilConnecte } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 
 // AJOUT : prop pour rediriger après suppression du compte
@@ -48,18 +48,7 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
   )
 }
 
-interface AppareilConnecte {
-  id: string
-  type: 'mobile' | 'desktop'
-  label: string
-  lieu: string
-  courant?: boolean
-}
-
-const APPAREILS_MOCK: AppareilConnecte[] = [
-  { id: '1', type: 'mobile', label: 'Android', lieu: 'Antananarivo', courant: true },
-  { id: '2', type: 'desktop', label: 'Chrome / Windows', lieu: 'il y a 3 jours' },
-]
+// Les appareils proviennent de la table sessions (backend /auth/me/sessions).
 
 // Onglet principal regroupant la sécurité du compte et la gestion des données personnelles
 export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesProps) {
@@ -96,7 +85,23 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
     }
   }
 
-  const [appareils, setAppareils] = useState<AppareilConnecte[]>(APPAREILS_MOCK)
+  const [appareils, setAppareils] = useState<AppareilConnecte[]>([])
+
+  // Charge le vrai historique des appareils connectés (sessions en base)
+  useEffect(() => {
+    let cancelled = false
+    api
+      .listSessions()
+      .then((sessions) => {
+        if (!cancelled) setAppareils(sessions)
+      })
+      .catch(() => {
+        if (!cancelled) setAppareils([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
   const [disconnecting, setDisconnecting] = useState(false)
 
   // Déconnecte tous les appareils sauf l'appareil courant
@@ -384,7 +389,7 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
                 <span className="text-muted-foreground">
                   ·{' '}
                   {a.courant
-                    ? `${a.lieu} · ${t('security.devices.currentDevice')}`
+                    ? `${a.lieu ? `${a.lieu} · ` : ''}${t('security.devices.currentDevice')}`
                     : a.lieu}
                 </span>
               </li>

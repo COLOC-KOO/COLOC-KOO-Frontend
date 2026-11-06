@@ -35,7 +35,9 @@
     "next": "Suivant",
     "submit": "Envoyer",
     "success": "Opération réussie",
-    "login": "Se connecter"
+    "login": "Se connecter",
+    "understood": "J’ai compris",
+    "fieldRequired": "Ce champ est obligatoire."
   },
   "footer": {
     "title": "SARINTANY'COLOC",

@@ -13,10 +13,10 @@
   "catalogue": {
   "title": "Available services",
   "subtitle": "Choose one or more services, then send your request.",
-  "defaultDesc": "Services currently available in Antananarivo only",
+  "defaultDesc": "Coloc'KOO services available nationwide",
   "empty": "No services available at the moment.",
-  "onlyAntananarivo": "Coloc'KOO services are currently available in Antananarivo only.",
-  "availability": "Services available in Antananarivo (including its districts) for now.",
+  "availability": "Services available in all cities.",
+  "unavailableInCity": "Not available in your city",
   "perDay": "per day",
   "dayDiscount": "Discount: {{fourDays}}% from 4 days · {{fiveDays}}% from 5 days",
   "numberOfDays": "Number of days",
@@ -65,7 +65,7 @@
   },
   "confirmation": {
     "title": "Request sent!",
-    "subtitle": "A Coloc'KOO advisor will contact you to finalize the quote.",
+    "subtitle": "Your request has been sent. The Coloc'KOO team will get back to you to confirm it. Payment will only be requested after confirmation by the Coloc'KOO team.",
     "reference": "Reference",
     "total": "Estimated total",
     "ok": "Perfect"

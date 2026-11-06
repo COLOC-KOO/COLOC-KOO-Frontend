@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Ban, CheckCircle, Loader2, RefreshCw, Search, Shield, X, XCircle } from 'lucide-react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
-import { api, BackofficeMember } from '../../lib/api'
+import { api, BackofficeMember, BackofficeMemberDetails } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { useDialog } from '../../components/ui/Dialog'
 
@@ -39,6 +40,38 @@ export default function AdminUtilisateurs() {
   const [error, setError] = useState('')
   // Identifiant de la ligne dont l'action est en cours (bouton en attente)
   const [pendingId, setPendingId] = useState<string | number | null>(null)
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [details, setDetails] = useState<BackofficeMemberDetails | null>(null)
+  const [detailsLoading, setDetailsLoading] = useState(false)
+  const [detailsError, setDetailsError] = useState('')
+
+  function openFiche(id: string | number) {
+    setSelectedId(String(id))
+    setDetails(null)
+    setDetailsError('')
+    setDetailsLoading(true)
+    api
+      .backofficeMemberDetails(id)
+      .then(setDetails)
+      .catch((err) => setDetailsError(err instanceof Error ? err.message : 'Chargement impossible'))
+      .finally(() => setDetailsLoading(false))
+  }
+
+  function closeFiche() {
+    setSelectedId(null)
+    setDetails(null)
+    searchParams.delete('userId')
+    setSearchParams(searchParams, { replace: true })
+  }
+
+  // Liens profonds depuis le tableau de bord, les annonces et le journal
+  useEffect(() => {
+    const userId = searchParams.get('userId')
+    if (userId) openFiche(userId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const loadUsers = () => {
     setLoading(true)
@@ -120,6 +153,7 @@ export default function AdminUtilisateurs() {
             suspensionActor: statut === STATUT_SUSPENDU ? user?.name || null : null,
           }
         : item)))
+      if (selectedId === String(member.id)) openFiche(member.id)
       dialog.toast(
         statut === STATUT_SUSPENDU
           ? `Compte de ${member.name || member.email} suspendu`
@@ -163,6 +197,7 @@ export default function AdminUtilisateurs() {
             verificationReason: statut === 'non_conforme' ? raison || null : null,
           }
         : item))
+      if (selectedId === String(member.id)) openFiche(member.id)
       dialog.toast(result.changed ? 'Vérification du profil mise à jour' : 'Le statut était déjà à jour')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Mise à jour impossible'
@@ -293,7 +328,11 @@ export default function AdminUtilisateurs() {
                   const pending = pendingId === u.id
                   const self = isSelf(u)
                   return (
-                    <tr key={u.id} className="border-b border-white/5 hover:bg-white/5">
+                    <tr
+                      key={u.id}
+                      onClick={() => openFiche(u.id)}
+                      className="border-b border-white/5 hover:bg-white/5 cursor-pointer"
+                    >
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-[oklch(0.15_0_0)] text-xs font-bold">
@@ -332,14 +371,18 @@ export default function AdminUtilisateurs() {
                       </td>
                       <td className="text-white/60">{u.annoncesCount}</td>
                       <td className="text-white/60">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-sm">
-                          <Shield className="w-3.5 h-3.5 text-brand-magenta" />
+                        <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-sm ${
+                          Number(u.signalementsCount) > 0
+                            ? 'border-red-500/40 bg-red-500/10 text-red-400'
+                            : 'border-white/10 bg-white/5 text-white/60'
+                        }`}>
+                          <Shield className="w-3.5 h-3.5" />
                           {u.signalementsCount ?? 0}
                         </span>
                       </td>
                       <td className="text-white/60">{u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '-'}</td>
                       <td className="p-4 text-right">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end gap-1" onClick={(event) => event.stopPropagation()}>
                           {pending ? (
                             <span className="p-1.5 text-white/60">
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -419,6 +462,10 @@ export default function AdminUtilisateurs() {
             </table>
           </div>
         </div>
+
+        {selectedId && (
+          <MemberDetailPanel details={details} loading={detailsLoading} error={detailsError} onClose={closeFiche} />
+        )}
       </div>
     </AdminLayout>
   )
@@ -457,6 +504,184 @@ function VerificationBadge({ status, reason }: { status: string; reason?: string
         <Shield className="w-3 h-3" /> {config.label}
       </span>
       {status === 'non_conforme' && reason && <span className="max-w-40 text-[10px] text-white/50">{reason}</span>}
+    </div>
+  )
+}
+
+function fmtDate(value?: string | null) {
+  return value ? new Date(value).toLocaleDateString('fr-FR') : '-'
+}
+
+function InfoRow({ label, value }: { label: string; value?: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 text-sm">
+      <span className="text-white/40">{label}</span>
+      <span className="text-white/80 text-right">{value || '-'}</span>
+    </div>
+  )
+}
+
+function DetailSection({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
+  return (
+    <section>
+      <h3 className="text-xs uppercase tracking-wide text-white/40 mb-2">
+        {title} <span className="text-white/30">({count})</span>
+      </h3>
+      {count === 0 ? <p className="text-sm text-white/30">Aucun élément.</p> : <ul className="space-y-2">{children}</ul>}
+    </section>
+  )
+}
+
+function MemberDetailPanel({ details, loading, error, onClose }: {
+  details: BackofficeMemberDetails | null
+  loading: boolean
+  error: string
+  onClose: () => void
+}) {
+  const navigate = useNavigate()
+  const member = details?.member
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <button type="button" aria-label="Fermer la fiche" onClick={onClose} className="flex-1 bg-black/60" />
+      <aside className="w-full max-w-lg h-full overflow-y-auto bg-[oklch(0.18_0.008_260)] border-l border-white/10 p-5">
+        {loading && (
+          <div className="flex items-center gap-2 text-white/50 text-sm py-8">
+            <Loader2 className="w-4 h-4 animate-spin" /> Chargement de la fiche...
+          </div>
+        )}
+        {!loading && error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-200">{error}</div>
+        )}
+        {!loading && !error && member && (
+          <div className="space-y-6">
+            <header className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-[oklch(0.15_0_0)] text-sm font-bold shrink-0">
+                  {member.initials || member.name?.[0] || 'U'}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white leading-tight">
+                    {member.name || `${member.prenom} ${member.nom}`}
+                  </h2>
+                  <p className="text-xs text-white/50">{member.email}</p>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className="text-[10px] text-white/60 border border-white/15 rounded-full px-2 py-0.5">
+                      {roleLabels[member.poste] || member.poste}
+                    </span>
+                    <StatusBadge statut={member.statut} />
+                    <VerificationBadge
+                      status={member.verificationStatus || (member.verification ? 'conforme' : 'a_verifier')}
+                      reason={member.verificationReason}
+                    />
+                  </div>
+                </div>
+              </div>
+              <button type="button" onClick={onClose} className="p-1.5 hover:bg-white/10 rounded text-white/60" aria-label="Fermer">
+                <X className="w-5 h-5" />
+              </button>
+            </header>
+
+            {member.statut === STATUT_SUSPENDU && (member.suspensionReason || member.suspensionDate) && (
+              <div className="bg-brand-magenta/10 border border-brand-magenta/30 rounded-lg p-3 text-xs text-brand-magenta space-y-1">
+                <p className="font-semibold">Compte suspendu</p>
+                <p>Motif : {member.suspensionReason || 'non renseigné'}</p>
+                <p>
+                  Le {fmtDate(member.suspensionDate)}
+                  {member.suspensionActor ? ` par ${member.suspensionActor}` : ''}
+                </p>
+              </div>
+            )}
+
+            <section className="space-y-2 bg-white/5 border border-white/10 rounded-lg p-4">
+              <InfoRow label="Téléphone" value={member.telephone} />
+              <InfoRow label="Inscription" value={fmtDate(member.date_inscription || member.createdAt)} />
+              <InfoRow label="Annonces" value={details.annonces.length} />
+              <InfoRow label="Candidatures" value={details.candidatures.length} />
+            </section>
+
+            <DetailSection title="Annonces" count={details.annonces.length}>
+              {details.annonces.map((a) => (
+                <li key={a.id_annonce} className="bg-white/5 border border-white/10 rounded-lg p-3 text-sm">
+                  <button
+                    type="button"
+                    className="text-brand-cyan hover:underline text-left"
+                    onClick={() => navigate(`/admin/annonces?annonceId=${a.id_annonce}`)}
+                  >
+                    {a.titre}
+                  </button>
+                  <div className="text-xs text-white/40 mt-1">
+                    {a.statut}
+                    {a.nom_ville ? ` · ${a.nom_ville}` : ''}
+                    {` · ${fmtDate(a.date_publication || a.date_creation)}`}
+                  </div>
+                </li>
+              ))}
+            </DetailSection>
+
+            <DetailSection title="Candidatures" count={details.candidatures.length}>
+              {details.candidatures.map((c) => (
+                <li key={c.id_candidature} className="bg-white/5 border border-white/10 rounded-lg p-3 text-sm">
+                  <div className="text-white/80">{c.titre || `Annonce #${c.id_annonce}`}</div>
+                  <div className="text-xs text-white/40 mt-1">
+                    {c.statut} · {fmtDate(c.date_creation)}
+                  </div>
+                </li>
+              ))}
+            </DetailSection>
+
+            <DetailSection title="Équipes" count={details.equipes.length}>
+              {details.equipes.map((e) => (
+                <li key={e.id_equipe} className="bg-white/5 border border-white/10 rounded-lg p-3 text-sm">
+                  <div className="text-white/80">{e.nom}</div>
+                  <div className="text-xs text-white/40 mt-1">
+                    {e.annonce_titre ? `Équipe constituée sur « ${e.annonce_titre} »` : 'Équipe sans annonce liée'}
+                    {` · ${e.statut} · ${fmtDate(e.date_creation)}`}
+                  </div>
+                </li>
+              ))}
+            </DetailSection>
+
+            <DetailSection title="Historique" count={details.historique.length}>
+              {details.historique.map((h) => (
+                <li key={h.id_action} className="flex items-start justify-between gap-3 text-sm border-b border-white/5 pb-2">
+                  <div>
+                    <div className="text-white/80">{h.action}</div>
+                    <div className="text-xs text-white/40">
+                      {[h.acteur_prenom, h.acteur_nom].filter(Boolean).join(' ') || 'Système'}
+                      {h.cible_type ? ` · ${h.cible_type}${h.cible_id ? ` #${h.cible_id}` : ''}` : ''}
+                    </div>
+                  </div>
+                  <span className="text-xs text-white/40 whitespace-nowrap">{fmtDate(h.date_action)}</span>
+                </li>
+              ))}
+            </DetailSection>
+
+            <DetailSection title="Signalements" count={details.signalements.length}>
+              {details.signalements.map((s) => (
+                <li key={s.id_signalement} className="bg-white/5 border border-white/10 rounded-lg p-3 text-sm">
+                  <div className="text-white/80">{s.raison}</div>
+                  <div className="text-xs text-white/40 mt-1">
+                    {[
+                      [s.signaleur_prenom, s.signaleur_nom].filter(Boolean).join(' ') ? `Par ${[s.signaleur_prenom, s.signaleur_nom].filter(Boolean).join(' ')}` : null,
+                      s.annonce_titre ? `« ${s.annonce_titre} »` : null,
+                      `${s.statut} · ${fmtDate(s.date_signalement)}`,
+                    ].filter(Boolean).join(' · ')}
+                  </div>
+                </li>
+              ))}
+            </DetailSection>
+          </div>
+        )}
+      </aside>
     </div>
   )
 }
