@@ -11,10 +11,8 @@ import {
   X,
 } from 'lucide-react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
-import { candidatureStatusMeta } from '../../data/mockData'
-import { api, ApiAnnonce, ApiCandidature, BackofficeDashboard } from '../../lib/api'
+import { api, ApiAnnonce, ApiCandidature, ApiEquipe, BackofficeDashboard } from '../../lib/api'
 import { formatAr } from '../../lib/utils'
-import { CandidatureStatus } from '../../types'
 
 function localDateInput(date: Date) {
   const year = date.getFullYear()
@@ -90,11 +88,23 @@ type CandidatureGroup = {
   candidatures: ApiCandidature[]
 }
 
+function candidatureStatusLabel(status: string) {
+  const normalized = String(status || '').toLowerCase()
+  if (['acceptee', 'accepted', 'validee', 'validated'].includes(normalized)) return 'Validée'
+  if (['refusee', 'rejected', 'refused'].includes(normalized)) return 'Refusée'
+  return 'Envoyée'
+}
+
+function isAwaitingOwner(status: string) {
+  return !['acceptee', 'accepted', 'validee', 'validated', 'refusee', 'rejected', 'refused'].includes(String(status || '').toLowerCase())
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const [stats, setStats] = useState<BackofficeDashboard | null>(null)
   const [annonces, setAnnonces] = useState<ApiAnnonce[]>([])
   const [candidatures, setCandidatures] = useState<ApiCandidature[]>([])
+  const [allCandidatures, setAllCandidatures] = useState<ApiCandidature[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const dateRange = useMemo(initialDateRange, [])
@@ -102,6 +112,8 @@ export default function AdminDashboard() {
   const [endDate, setEndDate] = useState(dateRange.end)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
   const [selectedCandidature, setSelectedCandidature] = useState<ApiCandidature | null>(null)
+  const [selectedAnnonceCandidatures, setSelectedAnnonceCandidatures] = useState<number | null>(null)
+  const [selectedTeam, setSelectedTeam] = useState<ApiEquipe | null>(null)
 
   useEffect(() => {
     if (!startDate || !endDate) {
@@ -122,12 +134,14 @@ export default function AdminDashboard() {
       api.backofficeDashboard(startDate, endDate),
       api.annonces({ statut: 'all', startDate, endDate }),
       api.adminCandidatures(startDate, endDate),
+      api.adminCandidatures(),
     ])
-      .then(([dashboard, annoncesRows, candidaturesRows]) => {
+      .then(([dashboard, annoncesRows, candidaturesRows, allCandidatureRows]) => {
         if (cancelled) return
         setStats(dashboard)
         setAnnonces(annoncesRows)
         setCandidatures(candidaturesRows)
+        setAllCandidatures(allCandidatureRows)
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Chargement du dashboard impossible')
@@ -150,6 +164,33 @@ export default function AdminDashboard() {
     () => candidatures.filter((candidature) => isWithinRange(candidature.date_creation, startDate, endDate)),
     [candidatures, endDate, startDate],
   )
+  const candidaturesByAnnonce = useMemo(() => {
+    const groups = new Map<number, ApiCandidature[]>()
+    for (const candidature of allCandidatures) {
+      const current = groups.get(candidature.id_annonce) || []
+      current.push(candidature)
+      groups.set(candidature.id_annonce, current)
+    }
+    return groups
+  }, [allCandidatures])
+
+  useEffect(() => {
+    if (!selectedCandidature?.equipe_id) {
+      setSelectedTeam(null)
+      return
+    }
+    let cancelled = false
+    api.getEquipe(selectedCandidature.equipe_id)
+      .then((team) => {
+        if (!cancelled) setSelectedTeam(team)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Impossible de charger les membres de l’équipe')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedCandidature?.equipe_id])
 
   const groupedCandidatures = useMemo(() => {
     const groups = new Map<string, CandidatureGroup>()
@@ -283,8 +324,12 @@ export default function AdminDashboard() {
                   {expandedGroup === group.key && (
                     <div className="px-3 pb-3 space-y-1">
                       {group.candidatures.map((candidature) => {
-                        const status = (candidature.statut as CandidatureStatus) || 'envoyee'
-                        const meta = candidatureStatusMeta[status] || candidatureStatusMeta.envoyee
+                        const status = candidatureStatusLabel(candidature.statut)
+                        const statusClass = status === 'Validée'
+                          ? 'text-brand-green border-brand-green/30 bg-brand-green/10'
+                          : status === 'Refusée'
+                            ? 'text-brand-magenta border-brand-magenta/30 bg-brand-magenta/10'
+                            : 'text-brand-yellow border-brand-yellow/30 bg-brand-yellow/10'
                         const name = [candidature.prenom, candidature.nom].filter(Boolean).join(' ') || `Utilisateur #${candidature.id_utilisateur}`
                         return (
                           <button
@@ -293,14 +338,24 @@ export default function AdminDashboard() {
                             onClick={() => setSelectedCandidature(candidature)}
                             className="w-full flex items-center justify-between gap-3 rounded-md bg-white/5 p-2 text-left hover:bg-white/10"
                           >
-                            <span className="min-w-0">
-                              <span className="block text-sm truncate">{name}</span>
+                            <span className="flex min-w-0 items-center gap-2">
+                              {candidature.profile_picture ? (
+                                <img src={candidature.profile_picture} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
+                              ) : (
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
+                                  {(candidature.prenom || candidature.nom || 'U')[0]}
+                                </span>
+                              )}
+                              <span className="min-w-0">
+                                <span className="block text-sm truncate">{name}</span>
+                                {candidature.equipe_nom && <span className="block text-xs text-brand-cyan/80 truncate">{candidature.equipe_nom}</span>}
                               <span className="block text-xs text-white/40">
                                 {new Date(candidature.date_creation).toLocaleDateString('fr-FR')} · #{candidature.id_candidature}
                               </span>
+                              </span>
                             </span>
-                            <span className={`inline-flex shrink-0 text-[10px] font-bold px-2 py-1 rounded-full border ${meta.className}`}>
-                              {meta.label}
+                            <span className={`inline-flex shrink-0 text-[10px] font-bold px-2 py-1 rounded-full border ${statusClass}`}>
+                              {status}
                             </span>
                           </button>
                         )
@@ -346,6 +401,8 @@ export default function AdminDashboard() {
                   <th className="text-left font-medium">Ville</th>
                   <th className="text-left font-medium">Propriétaire</th>
                   <th className="text-left font-medium">Date de publication</th>
+                  <th className="text-left font-medium">Candidatures</th>
+                  <th className="text-left font-medium">Vues</th>
                   <th className="text-left font-medium">Prix</th>
                   <th className="text-left font-medium">Statut</th>
                 </tr>
@@ -369,6 +426,24 @@ export default function AdminDashboard() {
                         ? new Date(annonce.date_publication).toLocaleDateString('fr-FR')
                         : '-'}
                     </td>
+                    <td className="text-white/60">
+                      {(() => {
+                        const candidates = candidaturesByAnnonce.get(annonce.id) || []
+                        const waiting = candidates.filter((candidate) => isAwaitingOwner(candidate.statut)).length
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedAnnonceCandidatures(annonce.id)}
+                            className="text-left text-brand-cyan hover:underline"
+                          >
+                            {candidates.length} ({waiting} en attente)
+                          </button>
+                        )
+                      })()}
+                    </td>
+                    <td className="text-xs text-white/40" title="Le nombre de consultations de chaque annonce n’est pas encore mesuré.">
+                      Non suivi
+                    </td>
                     <td className="text-white/60">{formatAr(Number(annonce.chambre?.prix_loyer || 0))}</td>
                     <td>
                       <span className="text-[10px] font-bold text-brand-green px-2 py-1 rounded-full border border-brand-green/30 bg-brand-green/10">
@@ -379,7 +454,7 @@ export default function AdminDashboard() {
                 ))}
                 {!loading && periodAnnonces.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center text-white/40">Aucune annonce sur cette période.</td>
+                    <td colSpan={8} className="py-6 text-center text-white/40">Aucune annonce sur cette période.</td>
                   </tr>
                 )}
               </tbody>
@@ -421,15 +496,26 @@ export default function AdminDashboard() {
                   {[selectedCandidature.prenom, selectedCandidature.nom].filter(Boolean).join(' ') || `Utilisateur #${selectedCandidature.id_utilisateur}`}
                 </div>
                 <div className="text-xs text-white/50">{selectedCandidature.email || 'Coordonnées non disponibles'}</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCandidature(null)
+                    navigate(`/admin/utilisateurs?userId=${selectedCandidature.id_utilisateur}`)
+                  }}
+                  className="mt-1 text-xs text-brand-cyan hover:underline"
+                >
+                  Ouvrir le profil du candidat
+                </button>
               </div>
             </div>
             <dl className="mt-5 grid gap-4 sm:grid-cols-2">
               <Detail label="Annonce" value={selectedCandidature.titre || `Annonce #${selectedCandidature.id_annonce}`} />
               <Detail label="Candidature" value={`#${selectedCandidature.id_candidature}`} />
               <Detail label="Date" value={new Date(selectedCandidature.date_creation).toLocaleString('fr-FR')} />
-              <Detail label="Statut" value={selectedCandidature.statut} />
+              <Detail label="Statut" value={candidatureStatusLabel(selectedCandidature.statut)} />
               <Detail label="Téléphone" value={selectedCandidature.telephone || '-'} />
               <Detail label="Quartier" value={selectedCandidature.quartier || '-'} />
+              {selectedCandidature.equipe_nom && <Detail label="Équipe" value={selectedCandidature.equipe_nom} />}
             </dl>
             <div className="mt-5">
               <h3 className="text-xs font-semibold uppercase text-white/40">Message</h3>
@@ -447,6 +533,99 @@ export default function AdminDashboard() {
                 </ul>
               </div>
             )}
+            {Boolean(selectedTeam?.membres.length) && (
+              <div className="mt-5">
+                <h3 className="text-xs font-semibold uppercase text-white/40">Membres de l’équipe</h3>
+                <ul className="mt-2 space-y-2">
+                  {selectedTeam?.membres.map((member) => (
+                    <li key={member.id_utilisateur} className="flex items-center justify-between gap-3 text-sm text-white/80">
+                      <span>{member.prenom} {member.nom} · {member.statut}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCandidature(null)
+                          navigate(`/admin/utilisateurs?userId=${member.id_utilisateur}`)
+                        }}
+                        className="text-xs text-brand-cyan hover:underline"
+                      >
+                        Profil
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {selectedAnnonceCandidatures !== null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="annonce-candidatures-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedAnnonceCandidatures(null)
+          }}
+        >
+          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)] p-6">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h2 id="annonce-candidatures-title" className="text-xl font-semibold text-white">Candidatures</h2>
+                <p className="mt-1 text-sm text-white/50">
+                  {annonces.find((annonce) => annonce.id === selectedAnnonceCandidatures)?.titre || `Annonce #${selectedAnnonceCandidatures}`}
+                </p>
+              </div>
+              <button type="button" onClick={() => setSelectedAnnonceCandidatures(null)} aria-label="Fermer" className="rounded p-1 text-white/60 hover:bg-white/10">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {(candidaturesByAnnonce.get(selectedAnnonceCandidatures) || []).map((candidature) => (
+                <div key={candidature.id_candidature} className="flex items-center gap-3 rounded-lg bg-white/5 p-3">
+                  {candidature.profile_picture ? (
+                    <img src={candidature.profile_picture} alt="" className="h-10 w-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-cyan/10 font-semibold text-brand-cyan">
+                      {(candidature.prenom || candidature.nom || 'U')[0]}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-white">
+                      {[candidature.prenom, candidature.nom].filter(Boolean).join(' ') || `Utilisateur #${candidature.id_utilisateur}`}
+                    </div>
+                    <div className="text-xs text-white/45">
+                      {candidature.equipe_nom ? `${candidature.equipe_nom} · ` : ''}
+                      {new Date(candidature.date_creation).toLocaleDateString('fr-FR')}
+                    </div>
+                  </div>
+                  <span className="text-xs text-white/60">{candidatureStatusLabel(candidature.statut)}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedAnnonceCandidatures(null)
+                      setSelectedCandidature(candidature)
+                    }}
+                    className="text-xs text-brand-cyan hover:underline"
+                  >
+                    Détail
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedAnnonceCandidatures(null)
+                      navigate(`/admin/utilisateurs?userId=${candidature.id_utilisateur}`)
+                    }}
+                    className="text-xs text-brand-cyan hover:underline"
+                  >
+                    Profil
+                  </button>
+                </div>
+              ))}
+              {(candidaturesByAnnonce.get(selectedAnnonceCandidatures) || []).length === 0 && (
+                <p className="py-8 text-center text-sm text-white/50">Aucune candidature pour cette annonce.</p>
+              )}
+            </div>
           </div>
         </div>
       )}

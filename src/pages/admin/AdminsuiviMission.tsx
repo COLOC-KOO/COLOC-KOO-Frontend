@@ -14,7 +14,6 @@ import {
   Calendar as CalendarIcon,
   RefreshCw,
   ArrowUpDown,
-  Info,
   Target,
   AlertCircle,
   User,
@@ -93,6 +92,8 @@ interface MissionStats {
   edlPlanifies: number
   versementsAVerifier: number
   partenairesActifs: number
+  caPartenaires: number
+  nouveauxPartenairesMois: number
   demandes: ServiceDemande[]
   contratsRecents: Contrat[]
 }
@@ -181,6 +182,8 @@ export default function AdminSuiviMissions() {
     edlPlanifies: 0,
     versementsAVerifier: 0,
     partenairesActifs: 0,
+    caPartenaires: 0,
+    nouveauxPartenairesMois: 0,
     demandes: [],
     contratsRecents: []
   })
@@ -203,8 +206,11 @@ export default function AdminSuiviMissions() {
       // Charger les paiements
       const paiements = await api.backofficePaiements() || []
       
-      // Charger les partenaires
-      const partenaires = await api.partenaires() || []
+      // Charger les partenaires + grille tarifaire utilisée pour le CA
+      const [partenaires, pricing] = await Promise.all([
+        api.partenaires() || [],
+        api.backofficePartnerPricing().catch(() => ({ Bronze: 0, Argent: 0, Or: 0, Diamant: 0 }))
+      ])
 
       // Transformer les données
       const demandes = demandesData.map((d: any) => ({
@@ -230,7 +236,21 @@ export default function AdminSuiviMissions() {
 
       const edlPlanifies = contrats?.filter((c: any) => c.type === 'edl' && c.statut === 'a-planifier').length || 0
       const versementsAVerifier = paiements?.filter((p: any) => p.statut === 'a-verifier').length || 0
-      const partenairesActifs = partenaires?.filter((p: any) => p.actif === 1).length || 0
+
+      const partenairesActifs = partenaires?.filter((p: any) => Number(p.actif) === 1).length || 0
+      const pricingByLevel = pricing as Record<string, number>
+      const caPartenaires = partenaires
+        ?.filter((p: any) => Number(p.actif) === 1)
+        .reduce((total: number, p: any) => {
+          const niveau = p.niveau || 'Bronze'
+          const montant = Number(p.montant ?? pricingByLevel[niveau] ?? 0)
+          return total + (Number.isFinite(montant) ? montant : 0)
+        }, 0) || 0
+      const nouveauxPartenairesMois = partenaires?.filter((p: any) => {
+        const date = p.date_creation ? new Date(p.date_creation) : null
+        if (!date || Number.isNaN(date.getTime())) return false
+        return date.getMonth() === moisCourant && date.getFullYear() === anneeCourante
+      }).length || 0
 
       const contratsRecents = contrats?.slice(0, 5) || []
 
@@ -243,6 +263,8 @@ export default function AdminSuiviMissions() {
         edlPlanifies,
         versementsAVerifier,
         partenairesActifs,
+        caPartenaires,
+        nouveauxPartenairesMois,
         demandes: demandes || [],
         contratsRecents
       })
@@ -451,12 +473,12 @@ export default function AdminSuiviMissions() {
           <div className="p-4 border-t border-white/10 flex items-center justify-between text-xs text-white/40">
             <span>{filteredDemandes.length} rendez-vous</span>
             <span>
-              Les rendez-vous sont programmés depuis l'onglet Services Coloc'KOO
+              Les demandes sont programmées depuis l'onglet Services Coloc'KOO
             </span>
           </div>
         </div>
 
-        {/* ===== Partenaires B2B (comme dans le HTML) ===== */}
+        {/* ===== Partenaires B2B ===== */}
         <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -475,7 +497,7 @@ export default function AdminSuiviMissions() {
               Voir tous →
             </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
             <div 
               className="bg-white/5 rounded-lg p-3 text-center cursor-pointer hover:bg-white/10 transition"
               onClick={() => navigate('/admin/partenaires')}
@@ -487,33 +509,17 @@ export default function AdminSuiviMissions() {
               className="bg-white/5 rounded-lg p-3 text-center cursor-pointer hover:bg-white/10 transition"
               onClick={() => navigate('/admin/partenaires')}
             >
-              <div className="text-lg font-bold text-amber-400">3</div>
-              <div className="text-xs text-white/40">Réseaux immobiliers</div>
-            </div>
-            <div 
-              className="bg-white/5 rounded-lg p-3 text-center cursor-pointer hover:bg-white/10 transition"
-              onClick={() => navigate('/admin/partenaires')}
-            >
-              <div className="text-lg font-bold text-brand-cyan">— MGA</div>
+              <div className="text-lg font-bold text-brand-cyan">
+                {new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(stats.caPartenaires)} MGA
+              </div>
               <div className="text-xs text-white/40">CA partenaires</div>
             </div>
             <div 
               className="bg-white/5 rounded-lg p-3 text-center cursor-pointer hover:bg-white/10 transition"
               onClick={() => navigate('/admin/partenaires')}
             >
-              <div className="text-lg font-bold text-green-400">4</div>
-              <div className="text-xs text-white/40">Nouveaux (mois)</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Note d'information */}
-        <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <Info className="w-4 h-4 text-white/40 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-white/40">
-              Les rendez-vous sont programmés depuis l'onglet <b>Services Coloc'KOO</b> (prise de contact prospect). 
-              Cliquez un RDV pour ouvrir la demande associée.
+              <div className="text-lg font-bold text-green-400">{stats.nouveauxPartenairesMois}</div>
+              <div className="text-xs text-white/40">Nouveaux partenaires signés</div>
             </div>
           </div>
         </div>

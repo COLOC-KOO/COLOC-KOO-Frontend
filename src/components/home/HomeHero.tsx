@@ -80,7 +80,7 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
         className={liteMode ? 'absolute inset-0' : 'absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/30'}
         style={liteMode ? { background: LITE_HERO_GRADIENT } : undefined}
       />
-      <div className="relative z-10 flex flex-col items-center px-4 py-8 pb-7 text-center">
+      <div className="relative z-[60] flex flex-col items-center px-4 py-8 pb-7 text-center">
         <h1 className="bebas mb-1.5 px-4 text-[40px] leading-tight tracking-wide text-white">
           {titleBefore}
           <span className="text-brand-green">{titleHighlight}</span>
@@ -112,7 +112,7 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
             </div>
           </form>
           {showSuggestions && filteredSuggestions.length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-gray-100 bg-white text-left shadow-xl">
+            <div className="absolute left-0 right-0 top-full z-[100] mt-1 overflow-hidden rounded-xl border border-gray-100 bg-white text-left shadow-xl">
               {filteredSuggestions.map((city) => (
                 <button
                   key={city}
@@ -131,7 +131,18 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
         <div className="mt-4">
           <InstallAppPanel compact buttonLabel={t('home:cta.installApp')} />
         </div>
-        <div className="mt-5 flex gap-4 rounded-xl bg-white/10 px-5 py-2.5">{[['120', 'annonces actives'], ['12', 'villes couvertes'], ['850', 'colocataires']].map(([number, label], index) => <div key={label} className={`text-center ${index > 0 ? 'border-l border-white/15 pl-4' : ''}`}><div className="bebas text-2xl tracking-wide text-white">{number}</div><div className="mt-0.5 text-[10px] text-white/50">{label}</div></div>)}</div>
+        <div className="mt-5 flex gap-4 rounded-xl bg-white/10 px-5 py-2.5">
+          {[
+            ['120', t('home:stats.activeListings')],
+            ['12', t('home:stats.coveredCities')],
+            ['850', t('home:stats.roommates')],
+          ].map(([number, label], index) => (
+            <div key={label} className={`text-center ${index > 0 ? 'border-l border-white/15 pl-4' : ''}`}>
+              <div className="bebas text-2xl tracking-wide text-white">{number}</div>
+              <div className="mt-0.5 text-[10px] text-white/50">{label}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   )

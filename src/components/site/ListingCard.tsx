@@ -28,10 +28,6 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
 
   const imgs: string[] = (l.gallery && l.gallery.length > 0) ? l.gallery : [l.image || FALLBACK_IMAGE]
   const hasFallbackImage = imgs.every(isLogoPlaceholder)
-  const fallbackColor = Number.parseInt(String(l.id).replace(/\D/g, '').slice(-1), 10) % 2 === 0
-    ? 'from-brand-cyan to-brand-cyan-dark'
-    : 'from-brand-green to-brand-green-dark'
-
   const handleCardClick = () => {
     navigate(`/annonces/${l.id}`)
   }
@@ -49,7 +45,7 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
       } ${compact ? 'flex flex-row h-28' : ''}`}
     >
       {/* Image area (carousel) */}
-      <div className={`relative overflow-hidden ${hasFallbackImage ? `bg-gradient-to-br ${fallbackColor}` : 'bg-gray-100'} ${compact ? 'w-[120px] min-w-[120px] h-28 flex-shrink-0 rounded-l-xl' : 'h-44'}`}>
+      <div className={`relative overflow-hidden ${hasFallbackImage ? 'bg-gradient-to-br from-brand-cyan to-brand-green' : 'bg-gray-100'} ${compact ? 'w-[120px] min-w-[120px] h-28 flex-shrink-0 rounded-l-xl' : 'h-44'}`}>
         <div className="flex h-full transition-transform duration-300" style={{ transform: `translateX(-${imgIdx * 100}%)` }}>
           {imgs.map((src, i) => (
             <LazyImage
