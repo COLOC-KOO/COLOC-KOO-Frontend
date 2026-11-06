@@ -1,7 +1,7 @@
 {
   "nav": {
     "home": "Fandraisana",
-    "annonces": "Fanambarana",
+    "annonces": "Fampilazana",
     "deposer": "Hametraka",
     "partenaires": "Mpiara-miara",
     "contact": "Ifandraisana",
@@ -35,7 +35,9 @@
     "next": "Manaraka",
     "submit": "Alefa",
     "success": "Vita soa aman-tsara",
-    "login": "Hiditra"
+    "login": "Hiditra",
+    "understood": "Zefa ity",
+    "fieldRequired": "Tsy maintsy feno ity saha."
   },
   "footer": {
     "title": "SARINTANY'COLOC",

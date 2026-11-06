@@ -12,6 +12,7 @@ import {
   Ban,
 } from 'lucide-react'
 import { api } from '../../lib/api'
+import { useDialog } from '../../components/ui/Dialog'
 
 interface Message {
   sender: 'A' | 'B'
@@ -277,6 +278,7 @@ export default function AdminSignalements() {
   const [selectedSignalement, setSelectedSignalement] = useState<ConversationSignalement | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('tous')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const dialog = useDialog()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -384,12 +386,37 @@ export default function AdminSignalements() {
     const selected = signalements.find((s) => s.id === id)
     if (!selected?.rawId) return
 
+    // Le journal doit conserver un motif saisi par le modérateur, pas une valeur en dur.
+    const motifTitles: Record<string, string> = {
+      resolve: 'Motif de la résolution',
+      dismiss: 'Motif du classement',
+      open: 'Motif de la remise en traitement',
+      suspend: 'Motif de la suspension',
+      deactivate: 'Motif de la désactivation',
+    }
+    let raison = 'Avertissement envoyé'
+    if (motifTitles[action]) {
+      const response = await dialog.prompt({
+        tone: action === 'resolve' ? 'info' : 'warning',
+        title: motifTitles[action],
+        message: 'Ce motif est obligatoire et sera conservé dans le journal des actions.',
+        label: 'Motif',
+        placeholder: 'Expliquez la décision prise sur ce signalement',
+        required: true,
+        multiline: true,
+        confirmLabel: 'Valider',
+      })
+      if (response === null) return
+      raison = response.trim()
+      if (!raison) return
+    }
+
     try {
       // Admin moderation: suspendre -> supprimer le membre; deactivate -> supprimer as well per request
       if ((action === 'suspend' || action === 'deactivate') && membre) {
         await api.deleteBackofficeMember(membre)
         // Mark signalement as resolved after deletion
-        await api.updateBackofficeSignalement(selected.rawId, { statut: 'resolved', action, raison: `Membre ${membre} ${action}` })
+        await api.updateBackofficeSignalement(selected.rawId, { statut: 'resolved', action, raison })
         setSignalements((current) => current.map((item) => (item.rawId === selected.rawId ? { ...item, status: 'resolved' } : item)))
         setSuccessMessage(action === 'suspend' ? 'Membre supprime' : 'Membre supprime')
         setTimeout(() => setSuccessMessage(null), 3000)
@@ -409,7 +436,7 @@ export default function AdminSignalements() {
       await api.updateBackofficeSignalement(selected.rawId, {
         statut: action === 'resolve' ? 'resolved' : action === 'dismiss' ? 'dismissed' : 'in_progress',
         action,
-        raison: action === 'warn' ? 'Avertissement envoyé' : 'Traitement admin',
+        raison,
       })
 
       setSignalements((current) =>

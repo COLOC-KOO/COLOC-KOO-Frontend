@@ -81,6 +81,7 @@ export interface ApiAnnonce {
     type_bail?: 'individuel' | 'collectif' | null
     clause_solidarite?: 'avec' | 'sans' | null
     total_colocataires: number | null
+    nombre_pieces?: string | number | null
     bedrooms_count?: number | null
     candidature_count?: number
     surface_totale: number | null

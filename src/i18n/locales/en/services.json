@@ -65,7 +65,7 @@
   },
   "confirmation": {
     "title": "Request sent!",
-    "subtitle": "A Coloc'KOO advisor will contact you to finalize the quote.",
+    "subtitle": "Your request has been sent. The Coloc'KOO team will get back to you to confirm it. Payment will only be requested after confirmation by the Coloc'KOO team.",
     "reference": "Reference",
     "total": "Estimated total",
     "ok": "Perfect"

@@ -93,7 +93,7 @@ interface PartenaireComplet extends Partenaire {
   famille: string
   tier: string
   visibilite: number
-  statut: 'actif' | 'attente' | 'suspendu'
+  statut: 'actif' | 'attente' | 'suspendu' | 'inactif'
 }
 
 interface PartenaireContactDirectoryEntry {
@@ -140,7 +140,9 @@ interface ApiPartenaire {
   famille?: string | null
   tier?: string | null
   visibilite?: number | null
-  statut?: 'actif' | 'attente' | 'suspendu' | null
+  statut?: 'actif' | 'attente' | 'suspendu' | 'inactif' | null
+  /** Nombre de campagnes en cours — pilote le statut affiché (SC-066). */
+  campagnes_en_cours?: number
   contact_ref?: string | null
   contact_fonction?: string | null
   contact_telephone?: string | null
@@ -336,7 +338,8 @@ function mapPartenaireComplet(row: ApiPartenaire): PartenaireComplet {
     famille: row.famille || 'Entreprise générale',
     tier: row.tier || base.niveau,
     visibilite: row.visibilite || 0,
-    statut: row.statut || 'actif',
+    // Statut automatique : actif si le partenaire a au moins une campagne en cours.
+    statut: Number(row.campagnes_en_cours) > 0 ? 'actif' : 'inactif',
   }
 }
 
@@ -419,6 +422,7 @@ const PartenaireStatutBadge = ({ statut }: { statut: PartenaireComplet['statut']
     'actif': { label: 'Actif', className: 'bg-green-500/15 text-green-400 border-green-500/30' },
     'attente': { label: 'En attente', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
     'suspendu': { label: 'Suspendu', className: 'bg-red-500/15 text-red-400 border-red-500/30' },
+    'inactif': { label: 'Inactif', className: 'bg-white/5 text-white/50 border-white/15' },
   }
   const { label, className } = config[statut]
   

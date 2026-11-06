@@ -65,7 +65,7 @@
   },
   "confirmation": {
     "title": "Demande envoyée !",
-    "subtitle": "Un conseiller Coloc'KOO vous recontacte pour finaliser le devis.",
+    "subtitle": "Ta demande a été envoyée, l'équipe Coloc'KOO te revient pour confirmer ta demande. Le paiement sera demandé uniquement après confirmation de l'équipe Coloc'KOO.",
     "reference": "Référence",
     "total": "Total estimé",
     "ok": "Parfait"

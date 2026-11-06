@@ -22,7 +22,7 @@
     "publier": "Hizara "
   },
   "status": {
-    "part": "Ampahany 1",
+    "part": "Dingana 1",
     "title": "Ny satan'ao",
     "subtitle": "Inona no fifandraisanao amin'ity trano ity ? Izany no handamina ny ambin'ny taratasy famenoana",
     "whoLabel": "Ianao dia...",
@@ -51,7 +51,7 @@
     }
   },
   "esprit": {
-    "part": "Ampahany 2",
+    "part": "Dingana 2",
     "title": "Ny Fanahin'ilay fiaraha-mipetraka ",
     "subtitleMember": "Mipetraka amin'ilay trano miaraka amin'ny mpiaramipetraka hafa ianao. Manao ahoana ny fifandraisana tadiavinao ao amin’ilay trano ? ",
     "subtitleOther": "Fantatrao ny mombamomba ny fanananao, ny distrika sy ny mpiara-monina manodidina azy. Toe-javatra manao ahoana no heverinao ho mety indrindra?",
@@ -186,7 +186,7 @@
     }
   },
   "regles": {
-    "part": "Ampahany 6",
+    "part": "Dingana 6",
     "title": "Ny fitsipiky ny fiarahamonina",
     "subtitle": "Lazao ny fepetra amin'ny fiaraha-monina.",
     "options": ["Vehivavy ihany", "Lehilahy ihany", "Azo entina ny biby fiompy", "Azo entina ny fianakaviana / ankizy"]
@@ -197,7 +197,7 @@
     "subtitle": "Ampio sary : ireo fampilazana misy sary dia manintona bebe kokoa",
     "label": "Sarin'ilay trano/efitra ",
     "info": "Ny tatitra misy sary dia jerena 7 heny bebe kokoa amin'ny salaharatra.",
-    "cover": "Fonony",
+    "cover": "Sary rakotra",
     "photoN": "Sary {{n}}",
     "recommendation": "Habehan'ny sary : 1200 x 900 px. Sary 3 farafahabetsany ho an'ny tolotra maimaim-poana (3 Mo/sary farafahabetsany) "
   },

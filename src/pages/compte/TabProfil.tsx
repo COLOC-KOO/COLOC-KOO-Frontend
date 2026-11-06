@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, Check, CircleUserRound, Info, Lock, Store, Upload } from 'lucide-react'
+import { ArrowRight, Check, CircleUserRound, Info, Lock, Store, Trash2, Upload } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { api, Langue, Ville } from '../../lib/api'
 
@@ -96,6 +96,22 @@ export default function TabProfil({
       setPhotoMessage(t('photoUpdateError'))
     } finally {
       setPhotoPreview(null)
+      setUploadingProfile(false)
+    }
+  }
+
+  const handleRemoveProfilePicture = async () => {
+    if (!form.profilePicture && !photoPreview) return
+    setUploadingProfile(true)
+    setPhotoMessage(t('removingPhoto'))
+    try {
+      setForm((prev) => ({ ...prev, profilePicture: '' }))
+      setPhotoPreview(null)
+      await onSave({ profile_picture: null })
+      setPhotoMessage(t('photoRemoved'))
+    } catch {
+      setPhotoMessage(t('photoUpdateError'))
+    } finally {
       setUploadingProfile(false)
     }
   }
@@ -486,6 +502,17 @@ export default function TabProfil({
                 >
                   <Upload className="mr-2 h-4 w-4" /> {t('chooseImageBtn')}
                 </Button>
+                {form.profilePicture && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={uploadingProfile}
+                    onClick={handleRemoveProfilePicture}
+                    className="ml-2 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> {t('removePhoto')}
+                  </Button>
+                )}
               </div>
             </div>
           </div>

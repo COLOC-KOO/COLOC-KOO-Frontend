@@ -562,11 +562,7 @@ export default function Compte() {
 
     if (!requestedTab) return 'profil'
 
-    if (requestedTab === 'paiements' || requestedTab === 'messages') {
-      return 'paiements'
-    }
-
-    if (requestedTab === 'conversations') {
+    if (requestedTab === 'paiements' || requestedTab === 'messages' || requestedTab === 'conversations') {
       return 'conversations'
     }
 
@@ -733,7 +729,7 @@ export default function Compte() {
     // ⏸️ Notifications désactivées
     // if (id === 'notifications') return counters.notifications
     if (id === 'notif') return counters.notifications
-    if (id === 'paiements' || id === 'conversations') return counters.messages
+    if (id === 'conversations') return counters.messages
     if (id === 'alertes') return alertCount
     return 0
   }
@@ -1001,7 +997,7 @@ export default function Compte() {
           </nav>
 
           {/* Contenu */}
-          <div className={tab === 'paiements' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-4 sm:p-6 shadow-sm'}>
+          <div className={tab === 'conversations' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-4 sm:p-6 shadow-sm'}>
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
             {tab === 'conversations' && <TabMessagesV2 />}
             {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
@@ -1012,7 +1008,6 @@ export default function Compte() {
             {tab === 'notif' && <TabPreference idUtilisateur={currentUserId ?? 0} />}
             {tab === 'services' && <Services embedded />}
             {tab === 'installer' && <InstallAppPanel />}
-            {tab === 'paiements' && <TabMessagesV2 />}
             {tab === 'secu' && <TabCompteDonnees onAccountDeleted={handleAccountDeleted} />}
           </div>
 
