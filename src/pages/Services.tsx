@@ -147,7 +147,7 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
   const [message, setMessage] = useState('')
   const [telephone, setTelephone] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [confirmation, setConfirmation] = useState<{ reference: string; total: number } | null>(null)
+  const [confirmation, setConfirmation] = useState<{ reference: string; total: number; message?: string } | null>(null)
 
   const [history, setHistory] = useState<DemandeServiceGroup[]>([])
 
@@ -265,7 +265,7 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
         message: message.trim() || undefined,
         telephone: telephone.trim() || undefined,
       })
-      setConfirmation({ reference: res.reference, total: res.total })
+      setConfirmation({ reference: res.reference, total: res.total, message: res.message || undefined })
       clearCart()
       setMessage('')
     } catch (e) {
@@ -785,7 +785,7 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
               </div>
               <h3 className="text-xl font-bold text-foreground mb-1">{t('services:confirmation.title')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {t('services:confirmation.subtitle')}
+                {confirmation.message || t('services:confirmation.subtitle')}
               </p>
               <div className="rounded-2xl bg-muted/60 px-4 py-3 mb-6">
                 <p className="text-xs text-muted-foreground">{t('services:confirmation.reference')}</p>
