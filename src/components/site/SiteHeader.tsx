@@ -63,15 +63,19 @@ export function SiteHeader() {
 
   const availableLanguages = useMemo(() => languageOptions, [])
 
+  // i18next peut renvoyer 'fr', 'FR' ou 'fr-FR' selon la source (stockage,
+  // navigator, changement manuel) : tout comparer sur les 2 lettres majuscules.
+  const currentLangCode = (i18n.language || 'fr').slice(0, 2).toUpperCase()
+
   useEffect(() => {
-    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as 'FR' | 'MG' | 'EN' | null
+    const stored = (localStorage.getItem(LANGUAGE_STORAGE_KEY) || '').toUpperCase() as 'FR' | 'MG' | 'EN'
     if (stored && availableLanguages.some((item) => item.code === stored)) {
       setSelectedLanguage(stored)
       i18n.changeLanguage(stored.toLowerCase())
       return
     }
 
-    const code = i18n.language.toUpperCase() as 'FR' | 'MG' | 'EN'
+    const code = currentLangCode as 'FR' | 'MG' | 'EN'
     if (availableLanguages.some((item) => item.code === code)) {
       setSelectedLanguage(code)
       return
@@ -80,7 +84,7 @@ export function SiteHeader() {
     const defaultLang = availableLanguages[0]?.code ?? 'FR'
     setSelectedLanguage(defaultLang)
     i18n.changeLanguage(defaultLang.toLowerCase())
-  }, [availableLanguages, i18n])
+  }, [availableLanguages, i18n]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const stored = localStorage.getItem(LITE_MODE_STORAGE_KEY)
@@ -168,7 +172,7 @@ export function SiteHeader() {
   }
 
   const currentLanguage = availableLanguages.find(
-    (item) => item.code.toLowerCase() === i18n.language
+    (item) => item.code === currentLangCode
   ) ?? availableLanguages[0]
 
   const selectedLanguageOption = currentLanguage
@@ -296,7 +300,7 @@ export function SiteHeader() {
                       onClick={() => handleLanguageChange(language.code)}
                       className={cn(
                         'w-full text-left px-3.5 py-2.5 text-sm transition-colors flex items-center gap-3 hover:bg-muted',
-                        language.code.toLowerCase() === i18n.language
+                        language.code === currentLangCode
                           ? 'bg-brand-cyan/10 text-brand-cyan-dark font-semibold'
                           : 'text-foreground/80 hover:text-foreground'
                       )}
@@ -306,7 +310,7 @@ export function SiteHeader() {
                         size="md"
                         className={cn(
                           'transition-transform duration-200',
-                          language.code.toLowerCase() === i18n.language && 'scale-110'
+                          language.code === currentLangCode && 'scale-110'
                         )}
                       />
                       <span className="flex-1">
@@ -315,7 +319,7 @@ export function SiteHeader() {
                           {language.nativeName}
                         </span>
                       </span>
-                      {language.code.toLowerCase() === i18n.language && (
+                      {language.code === currentLangCode && (
                         <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan" />
                       )}
                     </button>
@@ -540,7 +544,7 @@ export function SiteHeader() {
                     }}
                     className={cn(
                       'flex flex-col items-center justify-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all duration-150',
-                      language.code.toLowerCase() === i18n.language
+                      language.code === currentLangCode
                         ? 'border-brand-cyan bg-brand-cyan/10 shadow-sm'
                         : 'border-border/50 bg-white text-foreground/70 hover:border-brand-cyan/30 hover:bg-muted'
                     )}

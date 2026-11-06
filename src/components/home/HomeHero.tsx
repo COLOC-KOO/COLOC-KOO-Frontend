@@ -64,7 +64,9 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
   }
 
   return (
-    <section className="relative min-h-[300px] overflow-visible bg-gray-900">
+    // z-0 cree un stacking context : le z-[60] du contenu reste local au hero
+    // et ne passe plus au-dessus du SiteHeader (z-50), ce qui volait ses clics.
+    <section className="relative z-0 min-h-[300px] overflow-visible bg-gray-900">
       {/* Image : object-cover + object-center par défaut, mais on évite le zoom excessif
           en fixant object-position et en n'utilisant pas de scale sur mobile.
           En mode Lite, aucune image : uniquement le dégradé noir > vert gris. */}
