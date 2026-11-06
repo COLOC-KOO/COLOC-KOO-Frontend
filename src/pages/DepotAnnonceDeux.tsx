@@ -223,8 +223,11 @@ function deriveVilleFromAddress(addr: string): string {
 async function geocodeMadagascar(query: string): Promise<[number, number] | null> {
   try {
     const base = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1'
+    const normalizedQuery = query.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    const isToliaraQuery = /\b(toliara|tulear|toliary)\b/.test(normalizedQuery)
     const urls = [
       `${base}&countrycodes=mg&q=${encodeURIComponent(query)}`,
+      ...(isToliaraQuery ? [`${base}&countrycodes=mg&q=${encodeURIComponent('Toliara, Madagascar')}`] : []),
       `${base}&q=${encodeURIComponent(`${query}, Madagascar`)}`,
     ]
     for (const url of urls) {
@@ -294,7 +297,7 @@ function InteractiveMap({
   attributionText: string
 }) {
   return (
-    <div className="realmap">
+    <div id="required-map-pin" className="realmap" tabIndex={-1}>
       <MapContainer
         center={pin ? [pin.x, pin.y] : DEFAULT_CENTER}
         zoom={14}
@@ -514,6 +517,7 @@ const steps = stepsForRole(role)
   const [locVille, setLocVille] = useState('')
   const [locQuartier, setLocQuartier] = useState('')
   const [cityOptions, setCityOptions] = useState<string[]>([])
+  const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>([])
   const [cityLoadError, setCityLoadError] = useState('')
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null)
   const [focus, setFocus] = useState<[number, number] | null>(null)
@@ -529,6 +533,27 @@ const steps = stepsForRole(role)
       })
     return () => { cancelled = true }
   }, [t])
+
+  useEffect(() => {
+    let cancelled = false
+    if (!locVille) {
+      setNeighborhoodOptions([])
+      return
+    }
+
+    api.annonces({ ville: locVille, statut: 'active' })
+      .then((annonces) => {
+        if (cancelled) return
+        setNeighborhoodOptions(
+          [...new Set(annonces.map((annonce) => annonce.quartier?.trim()).filter((value): value is string => Boolean(value)))]
+            .sort((a, b) => a.localeCompare(b, 'fr')),
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setNeighborhoodOptions([])
+      })
+    return () => { cancelled = true }
+  }, [locVille])
 
   // Distingue le positionnement AUTOMATIQUE (géocodage) du geste UTILISATEUR.
   // Le pin devient opaque seulement quand :
@@ -853,9 +878,21 @@ const steps = stepsForRole(role)
   function validateCurrentStep(): boolean {
     setStepErr(null)
     const key = steps[cur]?.key
+    const focusMissingField = (fieldId: string) => {
+      window.requestAnimationFrame(() => {
+        const field = document.getElementById(fieldId)
+        if (!field) return
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        const focusTarget = field.matches('input, select, textarea, button, [tabindex]')
+          ? field
+          : field.querySelector<HTMLElement>('input, select, textarea, button, [tabindex]')
+        focusTarget?.focus({ preventScroll: true })
+      })
+    }
     if (key === 'statut') {
       if (!role) {
         setStepErr(t('depot:status.errors.required'))
+        focusMissingField('required-status')
         return false
       }
       if (role === 'membre' && blockedExistingListing) {
@@ -866,43 +903,48 @@ const steps = stepsForRole(role)
     if (key === 'esprit' && role === 'membre') {
       if (nbColocTotal === '' || nbColoc === '') {
         setStepErr(t('depot:esprit.errors.required'))
+        focusMissingField(nbColocTotal === '' ? 'required-total-coloc' : 'required-wanted-coloc')
         return false
       }
     }
     if (key === 'logement') {
-      const locOk = pin !== null
-      const ok =
-        (role === 'membre' || (typeAnnonce !== '' && nbColocTotal !== '')) &&
-        typeLogement !== '' &&
-        nbPieces.trim() !== '' &&
-        locVille.trim() !== '' &&
-        locOk
-      if (!ok) {
+      const missingField =
+        !typeLogement ? 'required-property-type' :
+        role !== 'membre' && nbColocTotal === '' ? 'required-total-coloc' :
+        !nbPieces.trim() ? 'required-room-count' :
+        !locVille.trim() ? 'listing-city' :
+        pin === null ? 'required-map-pin' : ''
+      if (missingField) {
         setStepErr(
-          !locOk || !locVille.trim()
+          missingField === 'listing-city' || missingField === 'required-map-pin'
             ? t('depot:logement.errors.locationRequired')
             : t('depot:logement.errors.fieldsRequired'),
         )
+        focusMissingField(missingField)
         return false
       }
     }
     if (key === 'services' && !internet) {
       setStepErr(t('depot:services.errors.internetRequired'))
+      focusMissingField('required-internet')
       return false
     }
     if (key === 'chambre') {
       const loyerDigits = loyer.replace(/\D/g, '')
       if (!dispoDate || !loyerDigits || meublee.length === 0) {
         setStepErr(t('depot:chambre.errors.required'))
+        focusMissingField(!dispoDate ? 'required-available-date' : !loyerDigits ? 'required-rent' : 'required-furnished')
         return false
       }
       if (dispoDate < todayIso()) {
         setStepErr(t('depot:chambre.errors.pastDate'))
+        focusMissingField('required-available-date')
         return false
       }
     }
     if (key === 'publier' && role === 'pro' && !proEngageChecked) {
       setStepErr(t('depot:publish.errors.engagementRequired'))
+      focusMissingField('required-pro-engagement')
       return false
     }
     return true
@@ -1124,7 +1166,7 @@ const steps = stepsForRole(role)
   const isLast = cur === steps.length - 1
   const recapDurationValue = isPaidRole ? '4 mois' : '2 mois'
   const currentAmountLabel = role === 'pro' && offer === 'immo' ? '50 000 Ar' : '20 000 Ar'
-  const connectedAccountLabel = user?.email || user?.telephone || t('depot:publish.defaultAccount')
+  const connectedAccountLabel = user?.name || [user?.prenom, user?.nom].filter(Boolean).join(' ').trim() || t('depot:publish.defaultAccount')
 
   return (
     <SiteLayout>
@@ -1196,7 +1238,7 @@ const steps = stepsForRole(role)
             <section className="step on">
               <div className="s-title bb"><UserCheck size={22} /> <span className="s-part">{t('depot:status.part')}</span> — {t('depot:status.title')}</div>
               <div className="s-sub">{t('depot:status.subtitle')}</div>
-              <div className="grp">
+              <div id="required-status" className="grp" tabIndex={-1}>
                 <label className="lbl">{t('depot:status.whoLabel')}<span className="req">*</span></label>
                 <div className="opts" style={{ flexDirection: 'column' }}>
                   <OptCard
@@ -1255,7 +1297,7 @@ const steps = stepsForRole(role)
                 {role === 'membre' ? t('depot:esprit.subtitleMember') : t('depot:esprit.subtitleOther')}
               </div>
 
-              <div className="grp">
+              <div id="required-total-coloc" className="grp" tabIndex={-1}>
                 <label className="lbl">{t('depot:esprit.modeLabel')}</label>
                 {mode === 'flux' ? (
                   <div className="mc on">
@@ -1292,7 +1334,7 @@ const steps = stepsForRole(role)
               </div>
 
               {role === 'membre' && (
-                <div className="grp">
+                <div id="required-wanted-coloc" className="grp" tabIndex={-1}>
                   <label className="lbl">{t('depot:esprit.totalColocLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     {['2', '3', '4', '5', '6+'].map((n) => (
@@ -1303,7 +1345,7 @@ const steps = stepsForRole(role)
               )}
 
               {role === 'membre' && (
-                <div className="grp">
+                <div id="required-property-type" className="grp" tabIndex={-1}>
                   <label className="lbl">{t('depot:esprit.wantedColocLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     {['1', '2', '3', '4+'].map((n) => (
@@ -1314,7 +1356,7 @@ const steps = stepsForRole(role)
               )}
 
               {role !== 'membre' && (
-                <div className="grp">
+                <div id="required-total-coloc" className="grp" tabIndex={-1}>
                   <label className="lbl">{t('depot:esprit.typeAnnonceLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     <Pill label={t('depot:esprit.existingColoc')} on={typeAnnonce === 'existante'} onClick={() => setTypeAnnonce('existante')} />
@@ -1323,7 +1365,7 @@ const steps = stepsForRole(role)
                 </div>
               )}
 
-              <div className="grp">
+              <div id="required-room-count" className="grp" tabIndex={-1}>
                 <label className="lbl">
                   {t('depot:esprit.ambianceLabel')} <span className="opt">{t('depot:esprit.recommended')}</span>
                 </label>
@@ -1447,7 +1489,12 @@ const steps = stepsForRole(role)
                   onChange={(e) => setLocQuartier(e.target.value)}
                 />
                 <datalist id="quartiers-suggestions">
-                  {['Analamahitsy', 'Ankadifotsy', 'Ankadimbahoaka', 'Ankadivato', 'Ankatso', 'Andohalo', 'Anosy', 'Antaninarenina', 'Isoraka', 'Mahamasina', 'Tsaralalana'].map((quartier) => <option key={quartier} value={quartier} />)}
+                  {(neighborhoodOptions.length
+                    ? neighborhoodOptions
+                    : /antananarivo|tananarive|tana/i.test(locVille)
+                      ? ['Analamahitsy', 'Ankadifotsy', 'Ankadimbahoaka', 'Ankadivato', 'Ankatso', 'Andohalo', 'Anosy', 'Antaninarenina', 'Isoraka', 'Mahamasina', 'Tsaralalana']
+                      : []
+                  ).map((quartier) => <option key={quartier} value={quartier} />)}
                 </datalist>
 
                 <label className="lbl" htmlFor="listing-address">{t('depot:logement.addressLabel')}</label>
@@ -1506,7 +1553,7 @@ const steps = stepsForRole(role)
                 </div>
               </div>
 
-              <div className="grp">
+              <div id="required-internet" className="grp" tabIndex={-1}>
                 <div className="grp-t">{t('depot:services.internetTitle')}<span className="req">*</span></div>
                 <div className="pills">
                   {(t('depot:services.internetOptions', { returnObjects: true }) as string[]).map((v) => (
@@ -1643,14 +1690,14 @@ const steps = stepsForRole(role)
               <div className="s-sub">{t('depot:chambre.subtitle')}</div>
 
               <div className="row2">
-                <div className="grp">
+                <div id="required-available-date" className="grp" tabIndex={-1}>
                   <label className="lbl">{t('depot:chambre.dispoLabel')}<span className="req">*</span></label>
                   <input className="inp" type="date" min={todayIso()} value={dispoDate} onChange={(e) => setDispoDate(e.target.value)} />
                 </div>
               </div>
 
               <div className="row2">
-                <div className="grp">
+                <div id="required-rent" className="grp" tabIndex={-1}>
                   <label className="lbl">{t('depot:chambre.loyerLabel')} <span className="opt">{t('depot:chambre.loyerSub')}</span><span className="req">*</span></label>
                   <MoneyInput value={loyer} onChange={setLoyer} placeholder={t('depot:chambre.loyerPlaceholder')} />
                 </div>
@@ -1681,7 +1728,7 @@ const steps = stepsForRole(role)
                 )}
               </div>
 
-              <div className="grp">
+              <div id="required-furnished" className="grp" tabIndex={-1}>
                 <label className="lbl">
                   {t('depot:chambre.furnishedLabel')}<span className="req">*</span>{' '}
                   <span className="opt">{t('depot:chambre.furnishedSub')}</span>
@@ -1818,7 +1865,7 @@ const steps = stepsForRole(role)
                       </div>
                     </div>
                   </div>
-                  <label className="check" style={{ marginTop: 10 }}>
+                  <label id="required-pro-engagement" className="check" style={{ marginTop: 10 }} tabIndex={-1}>
                     <input type="checkbox" checked={proEngageChecked} onChange={(e) => setProEngageChecked(e.target.checked)} />{' '}
                     {t('depot:publish.engagement.checkbox')}
                   </label>

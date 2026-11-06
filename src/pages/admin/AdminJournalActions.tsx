@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api, ApiJournalEntry } from '../../lib/api'
 import { useDialog } from '../../components/ui/Dialog'
+import { roleLevel, useAuth } from '../../lib/auth'
 import {
   Search,
   Clock,
@@ -29,6 +31,7 @@ interface LogEntry {
   role: string
   action: string
   cible: string
+  targetPath: string | null
   detail: string
   type: 'validation' | 'rejet' | 'correction' | 'suspension' | 'message' | 'auto-validation' | 'autre'
 }
@@ -66,6 +69,25 @@ function normalizeJournalActionType(action: string): LogEntry['type'] {
 }
 
 function formatJournalDetail(details: unknown): string {
+  const statusLabels: Record<string, string> = {
+    pending: 'En attente',
+    in_progress: 'En cours',
+    resolved: 'Résolu',
+    dismissed: 'Classé sans suite',
+    active: 'Actif',
+    suspended: 'Suspendu',
+    rejected: 'Refusé',
+    refused: 'Refusé',
+    approved: 'Validé',
+    validated: 'Validé',
+  }
+  const keyLabels: Record<string, string> = {
+    ancien_statut: 'Ancien statut',
+    statut: 'Statut',
+    raison: 'Motif',
+    operation: 'Opération',
+    cle: 'Paramètre',
+  }
   if (!details) return ''
   if (typeof details === 'string') {
     try {
@@ -80,7 +102,15 @@ function formatJournalDetail(details: unknown): string {
   if (typeof details === 'object') {
     return Object.entries(details)
       .filter(([, value]) => value !== null && value !== undefined && value !== '')
-      .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+      .map(([key, value]) => {
+        const label = keyLabels[key] || key.replace(/_/g, ' ')
+        const displayValue = typeof value === 'string'
+          ? statusLabels[value] || value
+          : typeof value === 'object'
+            ? JSON.stringify(value)
+            : String(value)
+        return `${label}: ${displayValue}`
+      })
       .join(' · ')
   }
   return String(details)
@@ -91,11 +121,28 @@ function normalizeJournalRow(row: ApiJournalEntry): LogEntry {
   const dateString = isNaN(date.getTime()) ? row.date_action : date.toLocaleDateString('fr-FR')
   const timeString = isNaN(date.getTime()) ? '' : date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
   const actorName = [row.prenom, row.nom].filter(Boolean).join(' ') || 'Système'
-  const cible = row.cible_type
+  const cible = row.cible_libelle || (row.cible_type
     ? row.cible_id != null
       ? `${row.cible_type} ${row.cible_id}`
       : row.cible_type
-    : '-'
+    : '-')
+  const targetType = String(row.cible_type || '').toLowerCase()
+  const targetPath = row.cible_id == null
+    ? null
+    : ['annonce', 'annonces'].includes(targetType)
+      ? `/admin/annonces?annonceId=${row.cible_id}`
+      : ['profil', 'utilisateur'].includes(targetType)
+        ? `/admin/utilisateurs?userId=${row.cible_id}`
+        : targetType === 'signalement'
+          ? '/admin/signalements-conversations'
+          : null
+  const roleLabels: Record<string, string> = {
+    moderator: 'Modérateur',
+    moderateur: 'Modérateur',
+    admin: 'Admin',
+    super_admin: 'Super admin',
+    superadmin: 'Super admin',
+  }
 
   return {
     id: String(row.id_action),
@@ -103,9 +150,10 @@ function normalizeJournalRow(row: ApiJournalEntry): LogEntry {
     date: dateString,
     time: timeString,
     acteur: actorName,
-    role: row.id_utilisateur ? 'Utilisateur' : 'Automatique',
+    role: row.nom_role ? roleLabels[row.nom_role] || row.nom_role : row.id_utilisateur ? 'Rôle inconnu' : 'Automatique',
     action: row.action || 'Action',
     cible,
+    targetPath,
     detail: formatJournalDetail(row.details),
     type: normalizeJournalActionType(row.action),
   }
@@ -114,6 +162,9 @@ function normalizeJournalRow(row: ApiJournalEntry): LogEntry {
 // Composant principal
 export default function AdminJournalActions() {
   const dialog = useDialog()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const canDelete = roleLevel(user?.poste) >= 3
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -343,7 +394,6 @@ export default function AdminJournalActions() {
                         <span className="text-xs text-white/40">{log.date}</span>
                         <span className="text-xs text-white/40">{log.time}</span>
                         <ActionBadge type={log.type} />
-                        <span className="text-sm font-medium">{log.action}</span>
                       </div>
                       
                       <div className="flex items-center gap-4 mt-1.5 text-xs text-white/60">
@@ -353,7 +403,20 @@ export default function AdminJournalActions() {
                           <span className="text-white/30">({log.role})</span>
                         </span>
                         <span>→</span>
-                        <span className="font-medium text-white/80">{log.cible}</span>
+                        {log.targetPath ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              navigate(log.targetPath!)
+                            }}
+                            className="font-medium text-brand-cyan hover:underline"
+                          >
+                            {log.cible}
+                          </button>
+                        ) : (
+                          <span className="font-medium text-white/80">{log.cible}</span>
+                        )}
                       </div>
 
                       {/* Détail */}
@@ -399,7 +462,7 @@ export default function AdminJournalActions() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button
+                      {canDelete && <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
@@ -411,7 +474,7 @@ export default function AdminJournalActions() {
                         title="Supprimer cette entrée"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </button>}
 
                       <button className="text-white/30 hover:text-white/60 transition">
                         {expandedLog === log.id ? 

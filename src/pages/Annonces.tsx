@@ -1076,9 +1076,9 @@ export default function Annonces() {
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <a
                       href={`/profils-recherche-logement?ville=${encodeURIComponent(searchedCityLabel)}`}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 border border-sc-bd text-sm font-medium text-sc-dark hover:bg-sc-bd/30 transition-colors rounded-xl"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green text-sm font-medium text-white hover:bg-brand-green-dark transition-colors rounded-xl shadow-md"
                     >
-                      <Users className="w-4 h-4 text-sc-cy" />
+                      <Users className="w-4 h-4 text-white" />
                       Voir les profils qui recherchent aussi à {searchedCityLabel}
                     </a>
                     <a

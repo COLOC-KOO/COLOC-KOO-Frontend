@@ -157,6 +157,8 @@ export interface ApiCandidature {
     prix_looyer?: number | null
     prix_loyer?: number | null
     statut_original?: string
+    equipe_id?: number | null
+    equipe_nom?: string | null
     nom?: string
     prenom?: string
     email?: string
@@ -396,6 +398,8 @@ export interface ApiJournalEntry {
     nom: string | null
     prenom: string | null
     email: string | null
+    nom_role: string | null
+    cible_libelle: string | null
 }
 
 export interface ServiceCatalogueItem {
@@ -644,8 +648,60 @@ export interface BackofficeMember extends AuthUser {
     annoncesCount?: number
     candidaturesCount?: number
     signalementsCount?: number
+    suspensionDate?: string | null
+    suspensionReason?: string | null
+    suspensionActor?: string | null
 }
 
+export interface BackofficeMemberDetails {
+    member: BackofficeMember
+    annonces: Array<{
+        id_annonce: number
+        titre: string
+        statut: string
+        date_creation: string
+        date_publication?: string | null
+        nom_ville?: string | null
+    }>
+    candidatures: Array<{
+        id_candidature: number
+        id_annonce: number
+        statut: string
+        date_creation: string
+        titre?: string | null
+    }>
+    equipes: Array<{
+        id_equipe: number
+        nom: string
+        statut: string
+        date_creation: string
+        id_annonce: number
+        annonce_titre?: string | null
+    }>
+    historique: Array<{
+        id_action: number
+        action: string
+        cible_type: string | null
+        cible_id: number | null
+        details: string | Record<string, unknown> | null
+        date_action: string
+        acteur_nom?: string | null
+        acteur_prenom?: string | null
+    }>
+    signalements: Array<{
+        id_signalement: number
+        statut: string
+        raison: string
+        description?: string | null
+        date_signalement: string
+        id_utilisateur_signalant: number
+        id_utilisateur_cible?: number | null
+        id_annonce?: number | null
+        signaleur_nom?: string | null
+        signaleur_prenom?: string | null
+        annonce_titre?: string | null
+    }>
+}
 export function getToken() {
     return localStorage.getItem(TOKEN_KEY)
 }
@@ -1192,10 +1248,10 @@ export const api = {
             body: JSON.stringify(payload),
         })
     },
-    updateAnnonceStatus(id: string | number, statut: string) {
+    updateAnnonceStatus(id: string | number, statut: string, raison?: string) {
         return requestWithFallback<ApiAnnonce>(`/depot-annonce/${id}/status`, `/annonces/${id}/status`, {
             method: 'PATCH',
-            body: JSON.stringify({statut}),
+            body: JSON.stringify({ statut, ...(raison ? { raison } : {}) }),
         })
     },
     deleteAnnonce(id: string | number) {
@@ -1467,6 +1523,9 @@ export const api = {
         })
         const query = search.toString()
         return request<BackofficeMember[]>(`/backoffice/membres${query ? `?${query}` : ''}`)
+    },
+    backofficeMemberDetails(id: string | number) {
+        return request<BackofficeMemberDetails>(`/backoffice/membres/${id}/details`)
     },
     createBackofficeMember(payload: {
         nom: string;

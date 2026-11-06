@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { CheckCircle, ChevronLeft, ChevronRight, Eye, Pencil, RefreshCw, Search, Save, Trash2, X, XCircle, Home, Users, Ruler, Bed, Wifi, Car, Dog, Shield } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { ApiAnnonce, api } from '../../lib/api'
 import { formatAr } from '../../lib/utils'
+import { useAuth } from '../../lib/auth'
 
 const filters = [
   { label: 'Toutes', value: 'all' },
@@ -13,6 +14,9 @@ const filters = [
 ]
 
 export default function AdminAnnonces() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const isModerator = user?.poste === 'moderateur'
   const [searchParams, setSearchParams] = useSearchParams()
   const [active, setActive] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -125,12 +129,18 @@ export default function AdminAnnonces() {
     })
   }, [active, annonces, searchTerm])
 
-  async function changeStatus(annonce: ApiAnnonce, statut: 'active' | 'pending' | 'rejected') {
-    const updated = await api.updateAnnonceStatus(annonce.id, statut)
-    setAnnonces((current) => current.map((item) => (item.id === annonce.id ? updated : item)))
-    setShowRejectionModal(false)
-    setSelectedAnnonce(null)
-    setRejectionReason('')
+  async function changeStatus(annonce: ApiAnnonce, statut: 'active' | 'pending' | 'rejected', raison?: string) {
+    setError('')
+    try {
+      const updated = await api.updateAnnonceStatus(annonce.id, statut, raison)
+      setAnnonces((current) => current.map((item) => (item.id === annonce.id ? updated : item)))
+      setShowRejectionModal(false)
+      setShowViewModal(false)
+      setSelectedAnnonce(null)
+      setRejectionReason('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Mise à jour impossible')
+    }
   }
 
    function openEdit(annonce: ApiAnnonce) {
@@ -309,7 +319,7 @@ export default function AdminAnnonces() {
                              </button>
                            </>
                          )}
-                         {annonce.statut === 'active' && (
+                         {annonce.statut === 'active' && !isModerator && (
                            <button onClick={() => openEdit(annonce)} className="p-1.5 hover:bg-white/10 rounded text-brand-cyan" title="Modifier">
                              <Pencil className="w-4 h-4" />
                            </button>
@@ -359,9 +369,22 @@ export default function AdminAnnonces() {
              <Info label="Surface" value={selectedAnnonce.surface_totale ? `${selectedAnnonce.surface_totale} m²` : '-'} />
              <Info label="Colocataires" value={String(selectedAnnonce.total_colocataires || '-')} />
              <Info label="Prix" value={formatAr(Number(selectedAnnonce.chambre?.prix_loyer || 0))} />
-             <Info label="Proprietaire" value={selectedAnnonce.auteur || '-'} />
+             <div>
+               <label className="text-white/40 text-xs">Propriétaire</label>
+               {selectedAnnonce.id_utilisateur ? (
+                 <button
+                   type="button"
+                   onClick={() => navigate(`/admin/utilisateurs?userId=${selectedAnnonce.id_utilisateur}`)}
+                   className="block text-left text-sm text-brand-cyan hover:underline"
+                 >
+                   {selectedAnnonce.auteur || '-'}
+                 </button>
+               ) : (
+                 <div className="text-sm text-white">{selectedAnnonce.auteur || '-'}</div>
+               )}
+             </div>
              <Info label="Ref" value={selectedAnnonce.reference} />
-             <Info label="Meuble" value={selectedAnnonce.chambre?.est_meuble != null ? String(selectedAnnonce.chambre.est_meuble) : '-'} />
+             <Info label="Meublé" value={formatFurnished(selectedAnnonce.chambre?.est_meuble)} />
            </div>
            {selectedAnnonce.amenities && selectedAnnonce.amenities.length > 0 && (
              <div className="mt-4">
@@ -369,6 +392,16 @@ export default function AdminAnnonces() {
                <div className="flex flex-wrap gap-1 mt-1">
                  {selectedAnnonce.amenities.map((a, i) => (
                    <span key={i} className="text-xs bg-brand-cyan/10 text-brand-cyan px-2 py-0.5 rounded-full">{a}</span>
+                 ))}
+               </div>
+             </div>
+           )}
+           {selectedAnnonce.services && selectedAnnonce.services.length > 0 && (
+             <div className="mt-4">
+               <label className="text-white/40 text-xs">Services inclus</label>
+               <div className="flex flex-wrap gap-1 mt-1">
+                 {selectedAnnonce.services.map((service, index) => (
+                   <span key={`${service}-${index}`} className="text-xs bg-brand-green/10 text-brand-green px-2 py-0.5 rounded-full">{service}</span>
                  ))}
                </div>
              </div>
@@ -393,6 +426,24 @@ export default function AdminAnnonces() {
              {selectedAnnonce.ghg_class && <span className="text-xs bg-white/5 text-white/70 px-2 py-1 rounded-full">GHG: {selectedAnnonce.ghg_class}</span>}
            </div>
            <p className="mt-4 text-sm text-white/70">{selectedAnnonce.description || 'Aucune description.'}</p>
+           {selectedAnnonce.statut === 'pending' && (
+             <div className="mt-6 flex justify-end gap-3 border-t border-white/10 pt-4">
+               <button
+                 type="button"
+                 onClick={() => setShowRejectionModal(true)}
+                 className="inline-flex items-center gap-2 rounded-lg bg-brand-magenta px-4 py-2 text-sm font-semibold text-white"
+               >
+                 <XCircle className="h-4 w-4" /> Refuser
+               </button>
+               <button
+                 type="button"
+                 onClick={() => changeStatus(selectedAnnonce, 'active')}
+                 className="inline-flex items-center gap-2 rounded-lg bg-brand-green px-4 py-2 text-sm font-semibold text-white"
+               >
+                 <CheckCircle className="h-4 w-4" /> Valider
+               </button>
+             </div>
+           )}
          </Modal>
        )}
 
@@ -432,6 +483,7 @@ export default function AdminAnnonces() {
           <p className="text-white/60 text-sm mb-4">{selectedAnnonce.titre}</p>
           <label className="block text-sm text-white/60 mb-2">Motif du rejet</label>
           <textarea
+            required
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-brand-magenta transition resize-none text-white"
@@ -439,7 +491,13 @@ export default function AdminAnnonces() {
           />
           <div className="flex gap-3 mt-4">
             <button onClick={() => setShowRejectionModal(false)} className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white/80">Annuler</button>
-            <button onClick={() => changeStatus(selectedAnnonce, 'rejected')} className="flex-1 px-4 py-2 bg-brand-magenta text-white rounded-lg text-sm font-semibold">Refuser</button>
+            <button
+              onClick={() => changeStatus(selectedAnnonce, 'rejected', rejectionReason.trim())}
+              disabled={!rejectionReason.trim()}
+              className="flex-1 px-4 py-2 bg-brand-magenta text-white rounded-lg text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Refuser
+            </button>
           </div>
         </Modal>
       )}
@@ -552,6 +610,13 @@ function Info({ label, value }: { label: string; value: string }) {
       <p className="font-medium text-white">{value}</p>
     </div>
   )
+}
+
+function formatFurnished(value: string | number | null | undefined) {
+  if (value === 1 || value === '1' || String(value).toLowerCase() === 'oui' || String(value).toLowerCase() === 'meuble') return 'Oui'
+  if (value === 0 || value === '0' || String(value).toLowerCase() === 'non' || String(value).toLowerCase() === 'non meuble') return 'Non'
+  if (String(value).toLowerCase() === 'partiel' || String(value).toLowerCase() === 'partiellement') return 'Partiellement'
+  return value == null || value === '' ? '-' : String(value)
 }
 
 function PhotoGallery({

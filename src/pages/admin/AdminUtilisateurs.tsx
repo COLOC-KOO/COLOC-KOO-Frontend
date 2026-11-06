@@ -29,6 +29,7 @@ export default function AdminUtilisateurs() {
   const { user } = useAuth()
   const dialog = useDialog()
   const [active, setActive] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [verificationFilter, setVerificationFilter] = useState('all')
   const [search, setSearch] = useState('')
   // Terme réellement envoyé au serveur (saisie temporisée de 350 ms)
@@ -43,13 +44,18 @@ export default function AdminUtilisateurs() {
     setLoading(true)
     setError('')
     api
-      .backofficeMembers({ role: active, q: searchQuery || undefined })
+      .backofficeMembers({
+        role: active,
+        q: searchQuery || undefined,
+        statut: statusFilter === 'active' || statusFilter === 'suspended' ? statusFilter : undefined,
+        verification: statusFilter === 'a_verifier' ? 'a_verifier' : undefined,
+      })
       .then(setUsers)
       .catch((err) => setError(err instanceof Error ? err.message : 'Chargement impossible'))
       .finally(() => setLoading(false))
   }
 
-  useEffect(loadUsers, [active, searchQuery])
+  useEffect(loadUsers, [active, searchQuery, statusFilter])
 
   // La recherche interroge le serveur (et plus seulement la page courante),
   // sans lancer une requête à chaque frappe.
@@ -80,20 +86,40 @@ export default function AdminUtilisateurs() {
       return
     }
     if (statut === STATUT_SUSPENDU) {
-      const confirmed = await dialog.confirm({
+      const response = await dialog.prompt({
         tone: 'danger',
-        title: 'Suspendre ce compte ?',
+        title: 'Motif de suspension',
         message: `${member.name || member.email} ne pourra plus publier ni contacter d'autres membres tant que le compte reste suspendu.`,
+        label: 'Motif obligatoire',
+        placeholder: 'Expliquez la raison de la suspension',
+        required: true,
+        multiline: true,
         confirmLabel: 'Suspendre',
       })
-      if (!confirmed) return
+      if (response === null) return
+      const raison = response.trim()
+      if (!raison) return
+      await submitStatus(member, statut, raison)
+      return
     }
 
+    await submitStatus(member, statut)
+  }
+
+  async function submitStatus(member: BackofficeMember, statut: string, raison?: string) {
     setPendingId(member.id)
     setError('')
     try {
-      await api.updateMemberStatus(member.id, { statut })
-      setUsers((current) => current.map((item) => (item.id === member.id ? { ...item, statut } : item)))
+      await api.updateMemberStatus(member.id, { statut, raison })
+      setUsers((current) => current.map((item) => (item.id === member.id
+        ? {
+            ...item,
+            statut,
+            suspensionDate: statut === STATUT_SUSPENDU ? new Date().toISOString() : null,
+            suspensionReason: statut === STATUT_SUSPENDU ? raison || null : null,
+            suspensionActor: statut === STATUT_SUSPENDU ? user?.name || null : null,
+          }
+        : item)))
       dialog.toast(
         statut === STATUT_SUSPENDU
           ? `Compte de ${member.name || member.email} suspendu`
@@ -207,7 +233,27 @@ export default function AdminUtilisateurs() {
               ))}
             </div>
           </div>
-          <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
+              <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-white/40">Statut du compte :</span>
+                {[
+                  { label: 'Tous', value: 'all' },
+                  { label: 'Actif', value: 'active' },
+                  { label: 'Suspendu', value: 'suspended' },
+                  { label: 'À vérifier', value: 'a_verifier' },
+                ].map((filter) => (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() => setStatusFilter(filter.value)}
+                    className={`px-2.5 py-1 text-xs rounded-lg ${
+                      statusFilter === filter.value ? 'bg-brand-cyan text-[oklch(0.15_0_0)] font-semibold' : 'text-white/60 hover:bg-white/5'
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+              <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
             <span className="text-xs text-white/40">Vérification des profils :</span>
             {[
               { label: 'Tous', value: 'all' },
@@ -264,7 +310,19 @@ export default function AdminUtilisateurs() {
                       </td>
                       <td className="text-white/70">{roleLabels[u.poste] || u.poste}</td>
                       <td>
-                        <StatusBadge statut={u.statut} />
+                        <div className="flex flex-col items-start gap-1">
+                          <StatusBadge statut={u.statut} />
+                          {suspended && (u.suspensionReason || u.suspensionDate || u.suspensionActor) && (
+                            <span
+                              className="max-w-52 text-[10px] text-white/45"
+                              title={[u.suspensionReason, u.suspensionActor, u.suspensionDate ? new Date(u.suspensionDate).toLocaleString('fr-FR') : ''].filter(Boolean).join(' · ')}
+                            >
+                              {u.suspensionReason || 'Motif non renseigné'}
+                              {u.suspensionDate && ` · ${new Date(u.suspensionDate).toLocaleDateString('fr-FR')}`}
+                              {u.suspensionActor && ` · ${u.suspensionActor}`}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <VerificationBadge

@@ -194,9 +194,9 @@
   "photos": {
     "part": "Partie 7",
     "title": "Les photos",
-    "subtitle": "Ajoute des photos : les annonces avec photos sont bien plus consultées.",
+    "subtitle": "Ajoute des photos",
     "label": "Photos du logement",
-    "info": "Les annonces avec photos sont en moyenne 7× plus consultées.",
+    "info": "Les annonces avec photos sont bien plus consultées.",
     "cover": "Couverture",
     "photoN": "Photo {{n}}",
     "recommendation": "Dimensions recommandées : 1200 × 900 px. 3 photos maximum en version gratuite (max 3 Mo / photo)."
