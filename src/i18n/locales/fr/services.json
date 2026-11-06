@@ -13,10 +13,10 @@
   "catalogue": {
   "title": "Services disponibles",
   "subtitle": "Sélectionne un ou plusieurs services, puis envoie ta demande.",
-  "defaultDesc": "Services disponibles uniquement à Antananarivo pour le moment",
+  "defaultDesc": "Services Coloc'KOO disponibles partout à Madagascar",
   "empty": "Aucun service disponible pour le moment.",
-  "onlyAntananarivo": "Les services Coloc'KOO sont pour l'instant disponibles uniquement à Antananarivo.",
-  "availability": "Services disponibles à Antananarivo (quartiers inclus) pour le moment.",
+  "availability": "Services disponibles dans toutes les villes.",
+  "unavailableInCity": "Non disponible dans votre ville",
   "perDay": "par jour",
   "dayDiscount": "Réduction : {{fourDays}} % dès 4 jours · {{fiveDays}} % dès 5 jours",
   "numberOfDays": "Nombre de jours",

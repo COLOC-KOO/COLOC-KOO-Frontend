@@ -13,10 +13,10 @@
  "catalogue": {
   "title": "Tolotra misy",
   "subtitle": "Misafidiana serivisy iray na maromaro, avy eo alefaso ny fangatahanao.",
-  "defaultDesc": "Tolotra misy eto Antananarivo ihany aloha hatreto",
+  "defaultDesc": "Tolotra Coloc'KOO miseho amin'ny tanàna rehetra",
   "empty": "Tsy misy tolotra misy amin'izao fotoana izao.",
-  "onlyAntananarivo": "Ny tolotra Coloc'KOO dia azo atao ao Antananarivo ihany aloha hatreto.",
-  "availability": "Tolotra misy ao Antananarivo (anisan'izany ny fokontany) aloha hatreto.",
+  "availability": "Misy amin'ny tanàna rehetra ny tolotra.",
+  "unavailableInCity": "Tsy misy ao an-tanànao",
   "perDay": "isan'andro",
   "dayDiscount": "Fihenam-bidy: {{fourDays}}% manomboka amin'ny 4 andro · {{fiveDays}}% manomboka amin'ny 5 andro",
   "numberOfDays": "Isan'ny andro",

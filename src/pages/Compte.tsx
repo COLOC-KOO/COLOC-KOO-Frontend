@@ -591,6 +591,14 @@ export default function Compte() {
       return 'profil'
     }
 
+    if (requestedTab === 'services') {
+      return 'services'
+    }
+
+    if (requestedTab === 'installer') {
+      return 'installer'
+    }
+
     return 'profil'
   }
 

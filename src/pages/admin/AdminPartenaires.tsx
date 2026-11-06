@@ -79,6 +79,9 @@ interface Partenaire {
   engagement: string
   logo: string
   actif: boolean
+  // colonne `actif` de la base = visibilite choisie par l'admin ; le statut
+  // actif/inactif des deux onglets est derive des campagnes en cours (SC-066).
+  visible?: boolean
   dateCreation: string
 }
 
@@ -319,7 +322,10 @@ function mapPartenaire(row: ApiPartenaire): Partenaire {
     remise: row.remise || 'Aucune',
     engagement: row.engagement || 'Aucun',
     logo: row.logo || '',
-    actif: row.actif === 1,
+    visible: row.actif === 1,
+    actif: row.campagnes_en_cours != null
+      ? Number(row.campagnes_en_cours) > 0
+      : row.actif === 1,
     dateCreation: row.date_creation ? new Date(row.date_creation).toLocaleDateString('fr-FR') : '-',
   }
 }
@@ -456,7 +462,7 @@ function PartnerModal({
   const [logo, setLogo] = useState(partner?.logo || '')
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [preview, setPreview] = useState(partner?.logo || '')
-  const [actif, setActif] = useState(partner?.actif ?? true)
+  const [actif, setActif] = useState(partner?.visible ?? true)
   const [submitting, setSubmitting] = useState(false)
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -567,11 +573,12 @@ function PartnerModal({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-1">
             <label className="inline-flex items-center gap-2 text-sm text-white/70">
               <input type="checkbox" checked={actif} onChange={(e) => setActif(e.target.checked)} className="rounded border-white/20 bg-white/5 text-brand-cyan" />
-              Partenaire actif
+              Visible sur le site
             </label>
+            <span className="text-xs text-white/40">Le statut Actif/Inactif est automatique : actif dès qu'une campagne est en cours.</span>
           </div>
           <div className="flex justify-end gap-3 pt-2 border-t border-white/10">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm">
@@ -1601,31 +1608,14 @@ export default function AdminPartenaires() {
                       <th className="p-2">
                         <input 
                           placeholder="Rechercher..." 
+                          value={searchQuery}
                           className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
                           onChange={(e) => setSearchQuery(e.target.value)}
                         />
                       </th>
-                      <th className="p-2">
-                        <input 
-                          placeholder="Famille..." 
-                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
-                          onChange={(e) => setFilterFamille(e.target.value)}
-                        />
-                      </th>
-                      <th className="p-2">
-                        <input 
-                          placeholder="Statut..." 
-                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
-                          onChange={(e) => setFilterStatut(e.target.value)}
-                        />
-                      </th>
-                      <th className="p-2">
-                        <input 
-                          placeholder="Visibilité..." 
-                          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-brand-cyan/50"
-                          onChange={(e) => setFilterVisibilite(e.target.value)}
-                        />
-                      </th>
+                      <th className="p-2"></th>
+                      <th className="p-2"></th>
+                      <th className="p-2"></th>
                       <th className="p-2"></th>
                       <th className="p-2"></th>
                     </tr>
@@ -1642,7 +1632,25 @@ export default function AdminPartenaires() {
                       <tr>
                         <td colSpan={6} className="text-center py-12 text-white/40">
                           <Building2 className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                          <p>Aucun compte trouvé</p>
+                          {comptes.length > 0 ? (
+                            <>
+                              <p>Aucun compte ne correspond aux filtres sélectionnés</p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSearchQuery('')
+                                  setFilterFamille('tous')
+                                  setFilterStatut('tous')
+                                  setFilterVisibilite('tous')
+                                }}
+                                className="mt-3 rounded-lg border border-brand-cyan/30 bg-brand-cyan/10 px-3 py-1.5 text-xs font-medium text-brand-cyan hover:bg-brand-cyan/20"
+                              >
+                                Réinitialiser les filtres
+                              </button>
+                            </>
+                          ) : (
+                            <p>Aucun compte trouvé</p>
+                          )}
                         </td>
                       </tr>
                     ) : (

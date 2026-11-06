@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react'
 import {AdminLayout} from '../../components/admin/AdminLayout'
-import {api, type DemandeServiceStaffItem} from '../../lib/api'
+import {api, type DemandeServiceStaffItem, type Ville} from '../../lib/api'
 import {useDialog} from '../../components/ui/Dialog'
 import {
     Search,
@@ -69,6 +69,8 @@ interface ApiServiceCkooRow {
     est_actif: 0 | 1
     reduction_4_jours?: number | string | null
     reduction_5_jours?: number | string | null
+    visibilite?: 'toutes' | 'zones' | null
+    villes_ids?: number[] | null
 }
 
 interface OffreService {
@@ -81,6 +83,8 @@ interface OffreService {
     unite: string
     description?: string
     actif: boolean
+    visibilite: 'toutes' | 'zones'
+    villesIds: number[]
 }
 
 // ============================================================================
@@ -134,6 +138,8 @@ function mapServiceCkooRow(service: ApiServiceCkooRow): OffreService | null {
         unite: service.unite || 'heure',
         description: service.description || undefined,
         actif: Boolean(service.est_actif),
+        visibilite: service.visibilite === 'toutes' ? 'toutes' : 'zones',
+        villesIds: Array.isArray(service.villes_ids) ? service.villes_ids.map(Number) : [],
     }
 }
 
@@ -315,10 +321,12 @@ const OffreModal = ({
                         onClose,
                         onSave,
                         offre,
+                        villes,
                     }: {
     onClose: () => void
     onSave: (offre: Omit<OffreService, 'id' | 'cle'>) => Promise<boolean>
     offre?: OffreService | null
+    villes: Ville[]
 }) => {
     const dialog = useDialog()
     const [nom, setNom] = useState(offre?.nom || '')
@@ -327,6 +335,11 @@ const OffreModal = ({
     const [reduction5Jours, setReduction5Jours] = useState(offre?.reduction5Jours ?? 15)
     const [unite, setUnite] = useState(offre?.unite || 'heure')
     const [description, setDescription] = useState(offre?.description || '')
+    const [visibilite, setVisibilite] = useState<'toutes' | 'zones'>(offre?.visibilite ?? 'zones')
+    const [villesIds, setVillesIds] = useState<number[]>(offre?.villesIds ?? [])
+
+    const toggleVille = (id: number) =>
+        setVillesIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]))
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -354,6 +367,14 @@ const OffreModal = ({
             })
             return
         }
+        if (visibilite === 'zones' && villesIds.length === 0) {
+            void dialog.alert({
+                tone: 'warning',
+                title: 'Aucune zone sélectionnée',
+                message: 'Choisis au moins une ville, ou sélectionne « Toutes les zones ».',
+            })
+            return
+        }
         if (await onSave({
             nom: nom.trim(),
             prixParJour,
@@ -361,7 +382,9 @@ const OffreModal = ({
             reduction5Jours: unite === 'jour' ? reduction5Jours : 0,
             unite,
             description: description.trim() || undefined,
-            actif: offre?.actif ?? true
+            actif: offre?.actif ?? true,
+            visibilite,
+            villesIds: visibilite === 'zones' ? villesIds : [],
         })) {
             onClose()
         }
@@ -454,6 +477,58 @@ const OffreModal = ({
                             placeholder="Description de l'offre..."
                         />
                     </div>
+                    <div>
+                        <label className="block text-sm text-white/60 mb-2">Portée (zones desservies)</label>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setVisibilite('toutes')}
+                                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                                    visibilite === 'toutes'
+                                        ? 'border-brand-cyan bg-brand-cyan/15 text-white'
+                                        : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
+                                }`}
+                            >
+                                Toutes les zones
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setVisibilite('zones')}
+                                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                                    visibilite === 'zones'
+                                        ? 'border-brand-cyan bg-brand-cyan/15 text-white'
+                                        : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
+                                }`}
+                            >
+                                Zones sélectionnées
+                            </button>
+                        </div>
+                        {visibilite === 'zones' && (
+                            <div className="mt-3">
+                                <div className="mb-1 text-xs text-white/50">
+                                    {villesIds.length === 0
+                                        ? 'Aucune ville sélectionnée'
+                                        : `${villesIds.length} ville(s) sélectionnée(s)`}
+                                </div>
+                                <div className="max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-2 grid grid-cols-2 gap-1">
+                                    {villes.map((ville) => (
+                                        <label
+                                            key={ville.id_ville}
+                                            className="flex items-center gap-2 rounded px-2 py-1 text-sm text-white/80 hover:bg-white/10 cursor-pointer"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={villesIds.includes(ville.id_ville)}
+                                                onChange={() => toggleVille(ville.id_ville)}
+                                                className="accent-brand-cyan"
+                                            />
+                                            <span className="truncate">{ville.nom_ville}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <div className="flex gap-3 pt-2">
                         <button type="submit"
                                 className="flex-1 bg-brand-cyan text-[oklch(0.15_0_0)] font-bold px-4 py-2 rounded-lg hover:opacity-80 transition">
@@ -479,6 +554,7 @@ export default function AdminServicesColockoo() {
     const dialog = useDialog()
     const [demandes, setDemandes] = useState<ServiceDemande[]>([])
     const [offres, setOffres] = useState<OffreService[]>([])
+    const [villes, setVilles] = useState<Ville[]>([])
     const [searchQuery, setSearchQuery] = useState('')
     const [filterStatut, setFilterStatut] = useState<string>('tous')
     const [showOffreModal, setShowOffreModal] = useState(false)
@@ -499,14 +575,16 @@ export default function AdminServicesColockoo() {
         setLoading(true)
         setError(null)
         try {
-            const [demandesData, services] = await Promise.all([
+            const [demandesData, services, villesData] = await Promise.all([
                 api.backofficeDemandesService(),
                 api.backofficeServicesCkoo(),
+                api.villes(),
             ])
 
             console.log('📊 Données reçues:', demandesData)
 
             setDemandes((demandesData || []).map(mapDemandeService))
+            setVilles(villesData || [])
 
             const filteredServices = (services || [])
                 .map(mapServiceCkooRow)
@@ -776,6 +854,8 @@ export default function AdminServicesColockoo() {
                 reduction_5_jours: offre.reduction5Jours,
                 unite: offre.unite || 'heure',
                 est_actif: offre.actif ? 1 : 0,
+                visibilite: offre.visibilite,
+                villes_ids: offre.villesIds,
             })
             await loadAdminServiceData()
             setSuccessMessage(`Offre "${offre.nom}" ajoutée avec succès`)
@@ -801,6 +881,8 @@ export default function AdminServicesColockoo() {
                 reduction_4_jours: offre.reduction4Jours,
                 reduction_5_jours: offre.reduction5Jours,
                 unite: offre.unite,
+                visibilite: offre.visibilite,
+                villes_ids: offre.villesIds,
             })
             await loadAdminServiceData()
             setSuccessMessage(`Offre "${offre.nom}" modifiée avec succès`)
@@ -1330,6 +1412,21 @@ export default function AdminServicesColockoo() {
                                                 {offre.description && (
                                                     <div className="text-xs text-white/40">{offre.description}</div>
                                                 )}
+                                                <div className="mt-1">
+                                                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                                                        offre.visibilite === 'toutes'
+                                                            ? 'bg-brand-cyan/15 text-brand-cyan border-brand-cyan/30'
+                                                            : offre.villesIds.length > 0
+                                                                ? 'bg-white/10 text-white/70 border-white/15'
+                                                                : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                                                    }`}>
+                                                        {offre.visibilite === 'toutes'
+                                                            ? 'Toutes zones'
+                                                            : offre.villesIds.length > 0
+                                                                ? `${offre.villesIds.length} zone(s)`
+                                                                : 'Zones à définir'}
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td className="p-3 text-right font-bold text-brand-cyan">
                                                 {offre.prixParJour.toLocaleString('fr-FR')} MGA
@@ -1466,6 +1563,7 @@ export default function AdminServicesColockoo() {
                 <OffreModal
                     key={editingOffre?.id ?? 'new'}
                     offre={editingOffre}
+                    villes={villes}
                     onClose={() => {
                         setShowOffreModal(false)
                         setEditingOffre(null)

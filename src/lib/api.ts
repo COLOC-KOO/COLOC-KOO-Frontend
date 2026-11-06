@@ -412,6 +412,9 @@ export interface ServiceCatalogueItem {
     unite: 'heure' | 'forfait' | 'jour' | 'mois' | 'an' | 'stere' | string
     reduction_4_jours?: number
     reduction_5_jours?: number
+    visibilite?: 'toutes' | 'zones'
+    /** Noms des villes desservies quand visibilite = 'zones' (vide = aucune zone). */
+    zones?: string[]
 }
 
 export interface DemandeServiceGroup {
@@ -477,6 +480,9 @@ export interface ApiServiceCkoo {
     reduction_4_jours?: number
     reduction_5_jours?: number
     duree?: number | null
+    visibilite?: 'toutes' | 'zones'
+    /** ids des villes desservies quand visibilite = 'zones' (parsé côté serveur). */
+    villes_ids?: number[]
 }
 
 export type BoosterUnite = 'heure' | 'jour' | 'semaine' | 'mois'
@@ -1651,7 +1657,9 @@ export const api = {
         reduction_4_jours?: number;
         reduction_5_jours?: number;
         est_actif?: 0 | 1;
-        duree?: number | null
+        duree?: number | null;
+        visibilite?: 'toutes' | 'zones';
+        villes_ids?: number[]
     }) {
         return request<{ id_service: number }>('/backoffice/services-ckoo', {
             method: 'POST',
@@ -1667,7 +1675,9 @@ export const api = {
         reduction_4_jours: number;
         reduction_5_jours: number;
         est_actif: 0 | 1;
-        duree: number | null
+        duree: number | null;
+        visibilite: 'toutes' | 'zones';
+        villes_ids: number[]
     }>) {
         return request<{ message: string }>(`/backoffice/services-ckoo/${id}`, {
             method: 'PATCH',
