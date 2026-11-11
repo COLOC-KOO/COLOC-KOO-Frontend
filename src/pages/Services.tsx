@@ -363,6 +363,16 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
           )}
         </motion.div>
 
+        <motion.div {...fadeInUp} className="mb-8 flex flex-col gap-3 rounded-2xl border border-brand-cyan/25 bg-brand-cyan-light/40 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="bebas text-xl text-brand-dark">Contrats &amp; états des lieux</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Prépare un document adapté à ton profil, vérifie son aperçu et règle par Mobile Money.</p>
+          </div>
+          <Link to="/contrats-edl" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-cyan px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-cyan-dark">
+            Créer un document <ArrowRight className="h-4 w-4" />
+          </Link>
+        </motion.div>
+
         {/* ===== BOOSTER UNE ANNONCE (données réelles services_ckoo) =====
             Le bloc n'apparaît que si des offres de boost sont réellement
             configurées : sinon il n'affichait que « Aucune offre disponible ». */}

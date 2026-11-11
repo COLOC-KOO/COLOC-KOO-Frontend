@@ -61,6 +61,26 @@ export interface AuthUser {
     createdAt?: string
 }
 
+export interface ContractDocumentRequest {
+    id_demande: number
+    reference: string
+    type_document: 'contrat' | 'edl'
+    profil_demandeur: 'locataire' | 'proprietaire' | 'professionnel'
+    donnees: Record<string, string>
+    clauses_ids: number[]
+    clauses?: Array<{ id_clause: number; titre: string; description: string | null }>
+    montant: number
+    statut: 'brouillon' | 'a-verifier' | 'en-cours' | 'valide' | 'refuse'
+    statut_paiement: 'en-attente' | 'a-verifier' | 'conforme' | 'non-conforme'
+    moyen_paiement?: string | null
+    reference_operateur?: string | null
+    has_payment_proof?: boolean
+    date_creation: string
+    nom?: string
+    prenom?: string
+    email?: string
+}
+
 export interface Langue {
     id_langue: number
     code_langue: string
@@ -771,6 +791,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     })
 
     const text = await response.text()
+    if (response.ok && response.headers.get('content-type')?.includes('text/html')) {
+        return text as T
+    }
     const data = text ? JSON.parse(text) : null
     if (!response.ok) {
         if (data?.code === 'ACCOUNT_SUSPENDED' && typeof window !== 'undefined') {
@@ -781,6 +804,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
         throw new ApiError(data?.message || 'Erreur API', data?.code)
     }
     return data as T
+}
+
+async function requestText(path: string, options: RequestInit = {}): Promise<string> {
+    return request<string>(path, options)
 }
 
 async function requestWithFallback<T>(primaryPath: string, fallbackPath: string, options: RequestInit = {}): Promise<T> {
@@ -1432,7 +1459,7 @@ export const api = {
             tiers: { maxLoyer: number | null; prix: number }[]
             edlPrix: number
             mobileMoney: { nom: string; numero: string; couleur: string; hint: string }[]
-            clauses: { titre: string; description: string }[]
+            clauses: { id_clause: number; titre: string; description: string }[]
             offer: { titre: string; texte: string }
             body: { titre: string; intro: string; corps: string }
             bail: { cle: string; titre: string; description: string }[]
@@ -1441,6 +1468,87 @@ export const api = {
             contratOffers: { id: number; nom: string; description: string | null; prix: number }[]
             edlOffers: { id: number; nom: string; description: string | null; prix: number }[]
         }>(`/meta/contract-config`)
+    },
+    createContractDocumentRequest(payload: {
+        type_document: 'contrat' | 'edl'
+        profil_demandeur: 'locataire' | 'proprietaire' | 'professionnel'
+        donnees: Record<string, string>
+        clauses_ids: number[]
+    }) {
+        return request<{ id: number; reference: string; montant: number }>('/documents-contractuels', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
+    previewContractDocument(payload: {
+        type_document: 'contrat' | 'edl'
+        profil_demandeur: 'locataire' | 'proprietaire' | 'professionnel'
+        donnees: Record<string, string>
+        clauses_ids: number[]
+    }) {
+        return requestText('/documents-contractuels/preview', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
+    myContractDocumentRequests() {
+        return request<ContractDocumentRequest[]>('/documents-contractuels/mine')
+    },
+    submitContractDocumentPayment(id: number, payload: { moyen_paiement: string; reference_operateur: string; preuve: File | null }) {
+        const body = new FormData()
+        body.set('moyen_paiement', payload.moyen_paiement)
+        body.set('reference_operateur', payload.reference_operateur)
+        if (payload.preuve) body.set('preuve', payload.preuve)
+        return request<{ message: string; reference: string; montant: number }>(`/documents-contractuels/${id}/payment`, {
+            method: 'POST',
+            body,
+        })
+    },
+    getContractDocumentRequestDocument(id: number) {
+        return requestText(`/documents-contractuels/${id}/document`)
+    },
+    backofficeContractDocumentRequests() {
+        return request<ContractDocumentRequest[]>('/backoffice/documents-contractuels')
+    },
+    async getBackofficeContractPaymentProof(id: number) {
+        const token = getToken()
+        const response = await fetch(`${API_URL}/backoffice/documents-contractuels/${id}/payment-proof`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (!response.ok) {
+            const text = await response.text()
+            let message = 'Impossible de charger la capture de paiement.'
+            if (text) {
+                try {
+                    message = JSON.parse(text).message || message
+                } catch {
+                    message = text
+                }
+            }
+            throw new ApiError(message)
+        }
+        return response.blob()
+    },
+    backofficeContractClauses() {
+        return request<Array<{ id_clause: number; titre: string; description: string | null; ordre: number; est_actif: number }>>('/backoffice/documents-contractuels/clauses')
+    },
+    createBackofficeContractClause(payload: { titre: string; description: string; ordre: number }) {
+        return request<{ id_clause: number }>('/backoffice/documents-contractuels/clauses', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
+    updateBackofficeContractClause(id: number, payload: { titre: string; description: string; ordre: number; est_actif: boolean }) {
+        return request<{ ok: boolean }>(`/backoffice/documents-contractuels/clauses/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        })
+    },
+    updateBackofficeContractDocumentRequest(id: number, statut: 'en-cours' | 'valide' | 'refuse') {
+        return request<{ ok: boolean }>(`/backoffice/documents-contractuels/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ statut }),
+        })
     },
     lancerColocationOfficielle(annonceId: string | number) {
         return requestWithFallback<{ message: string; statut: string }>(`/candidatures/depot-annonce/${annonceId}/lancer-officiel`, `/candidatures/annonce/${annonceId}/lancer-officiel`, {

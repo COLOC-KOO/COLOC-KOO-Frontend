@@ -12,6 +12,7 @@ import PartenairesTous from './pages/PartenairesTous'
 import Contact from './pages/Contact'
 import CGU from './pages/CGU'
 import Services from './pages/Services'
+import ContratsEDL from './pages/ContratsEDL'
 import ProfilsRechercheLogement from './pages/ProfilsRechercheLogement'
 import Auth from './pages/Auth'
 import Compte from './pages/Compte'
@@ -174,6 +175,7 @@ function AppRoutes() {
       <Route path="/contact" element={<Contact />} />
       <Route path="/cgu" element={<CGU />} />
       <Route path="/services" element={<Services />} />
+      <Route path="/contrats-edl" element={<ContratsEDL />} />
       <Route path="/profils-recherche-logement" element={<ProfilsRechercheLogement />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/compte" element={<Compte />} />

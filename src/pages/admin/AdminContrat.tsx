@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
-import { api } from "../../lib/api";
+import { api, ContractDocumentRequest } from "../../lib/api";
+import AdminContractDocumentRequests from "./AdminContractDocumentRequests";
 import { useDialog } from "../../components/ui/Dialog";
 import {
   FileText,
@@ -887,8 +888,9 @@ const DocumentDetailsModal = ({
 // ===== COMPOSANT PRINCIPAL =====
 export default function AdminContratsEDL() {
   const dialog = useDialog();
-  const [activeTab, setActiveTab] = useState<"demandes" | "offres">("demandes");
+  const [activeTab, setActiveTab] = useState<"demandes" | "nouvelles-demandes" | "offres">("demandes");
   const [documents, setDocuments] = useState<DocumentDemande[]>([]);
+  const [newDocumentRequests, setNewDocumentRequests] = useState<ContractDocumentRequest[]>([]);
   const [offres, setOffres] = useState<OffreCommerciale[]>([]);
   const [versements, setVersements] = useState<Versement[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -982,6 +984,7 @@ export default function AdminContratsEDL() {
 
   useEffect(() => {
     loadDocuments();
+    loadNewDocumentRequests();
     loadOffres();
     loadVersements();
   }, []);
@@ -989,8 +992,11 @@ export default function AdminContratsEDL() {
   // Statistiques
   const stats = useMemo(() => {
     const total = documents.length;
-    const contrats = documents.filter((d) => d.type === "contrat").length;
-    const edl = documents.filter((d) => d.type === "edl").length;
+    const submittedNewRequests = newDocumentRequests.filter((request) => request.statut !== "brouillon");
+    const contrats = documents.filter((d) => d.type === "contrat").length +
+      submittedNewRequests.filter((request) => request.type_document === "contrat").length;
+    const edl = documents.filter((d) => d.type === "edl").length +
+      submittedNewRequests.filter((request) => request.type_document === "edl").length;
     const aEmettre = documents.filter((d) => d.statut === "a-emettre").length;
     const aPlanifier = documents.filter(
       (d) => d.statut === "a-planifier",
@@ -999,20 +1005,42 @@ export default function AdminContratsEDL() {
     const signe = documents.filter((d) => d.statut === "signe").length;
     const enAttente = documents.filter((d) => d.statut === "en-attente").length;
 
-    const totalMontant = documents.reduce((sum, d) => sum + d.montant, 0);
+    const newRequestsToProcess = submittedNewRequests.filter((request) =>
+      request.statut === "a-verifier" || request.statut === "en-cours"
+    ).length;
+    const totalMontant = documents.reduce((sum, d) => sum + d.montant, 0) +
+      submittedNewRequests.reduce((sum, request) => sum + Number(request.montant || 0), 0);
 
     return {
-      total,
+      total: total + submittedNewRequests.length,
       contrats,
       edl,
       aEmettre,
       aPlanifier,
+      newRequestsToProcess,
       emis,
       signe,
       enAttente,
       totalMontant,
     };
-  }, [documents]);
+  }, [documents, newDocumentRequests]);
+
+  const submittedNewRequests = useMemo(
+    () => newDocumentRequests.filter((request) => request.statut !== "brouillon"),
+    [newDocumentRequests],
+  );
+
+  const loadNewDocumentRequests = async () => {
+    try {
+      setNewDocumentRequests(await api.backofficeContractDocumentRequests());
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de charger les nouvelles demandes",
+      );
+    }
+  };
 
   // Charger les documents
   const loadDocuments = async () => {
@@ -1205,6 +1233,7 @@ export default function AdminContratsEDL() {
   const handleRefresh = async () => {
     await Promise.all([
       loadDocuments(),
+      loadNewDocumentRequests(),
       loadOffres(),
       loadVersements()
     ]);
@@ -1338,8 +1367,8 @@ export default function AdminContratsEDL() {
               Contrats &amp; états des lieux
             </h1>
             <p className="text-white/50 text-sm">
-              {stats.total} documents · {stats.contrats} contrats · {stats.edl}{" "}
-              EDL · {stats.aEmettre} à émettre
+              {stats.total} demandes au total · {stats.contrats} contrats · {stats.edl}{" "}
+              EDL · {stats.newRequestsToProcess + stats.aEmettre + stats.aPlanifier} à traiter
             </p>
           </div>
           <button
@@ -1351,19 +1380,15 @@ export default function AdminContratsEDL() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-4">
+        <div className="rounded-xl border border-brand-cyan/25 bg-brand-cyan/10 p-4">
           <div className="flex items-start gap-3">
-            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />
             <div>
-              <h2 className="text-sm font-semibold text-amber-200">
-                Point de cadrage à organiser avec le client
+              <h2 className="text-sm font-semibold text-brand-cyan">
+                Parcours Contrats &amp; EDL disponible
               </h2>
               <p className="mt-1 text-xs leading-relaxed text-white/60">
-                Définir l’intégration d’offres de documents pour les locataires,
-                propriétaires et professionnels : saisie des champs, choix des
-                clauses, aperçu des premières pages, paiement Mobile Money et
-                PDF final non modifiable. Les EDL devront être communs aux trois
-                profils.
+                Les clients peuvent maintenant compléter un parcours guidé, sélectionner les clauses du catalogue, consulter les deux premières pages et soumettre leur paiement Mobile Money. Le PDF final est débloqué après validation du paiement.
               </p>
             </div>
           </div>
@@ -1404,8 +1429,27 @@ export default function AdminContratsEDL() {
             >
               Offres commerciales
             </button>
+            <button
+              onClick={() => setActiveTab("nouvelles-demandes")}
+              className={`px-4 py-2 text-sm font-medium transition ${
+                activeTab === "nouvelles-demandes"
+                  ? "text-brand-cyan border-b-2 border-brand-cyan"
+                  : "text-white/40 hover:text-white/60"
+              }`}
+            >
+              Nouvelles demandes
+              {newDocumentRequests.filter((request) => request.statut !== "brouillon").length > 0 && (
+                <span className="ml-2 rounded-full bg-brand-cyan/20 px-2 py-0.5 text-xs text-brand-cyan">
+                  {newDocumentRequests.filter((request) => request.statut !== "brouillon").length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
+
+        {activeTab === "nouvelles-demandes" && (
+          <AdminContractDocumentRequests onRequestsChanged={() => void loadNewDocumentRequests()} />
+        )}
 
         {/* ===== ONGLET DEMANDES ===== */}
         {activeTab === "demandes" && (
@@ -1432,7 +1476,7 @@ export default function AdminContratsEDL() {
               </div>
               <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-amber-400">
-                  {stats.aEmettre + stats.aPlanifier}
+                  {stats.aEmettre + stats.aPlanifier + stats.newRequestsToProcess}
                 </div>
                 <div className="text-xs text-white/40">À traiter</div>
               </div>
@@ -1449,6 +1493,71 @@ export default function AdminContratsEDL() {
                 <div className="text-xs text-white/40">Montant total</div>
               </div>
             </div>
+
+            {submittedNewRequests.length > 0 && (
+              <section className="overflow-hidden rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)]">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+                  <div>
+                    <h2 className="font-semibold text-white">Demandes du parcours guidé</h2>
+                    <p className="mt-0.5 text-xs text-white/40">
+                      Contrats et états des lieux créés depuis le nouveau parcours.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-brand-cyan/15 px-2.5 py-1 text-xs font-semibold text-brand-cyan">
+                    {submittedNewRequests.length} demande(s)
+                  </span>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {submittedNewRequests.map((request) => (
+                    <article key={request.id_demande} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-white">{request.reference}</span>
+                          <span className="text-xs text-white/50">
+                            {request.type_document === "edl" ? "État des lieux" : "Contrat"}
+                          </span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            request.statut === "valide"
+                              ? "bg-green-500/15 text-green-300"
+                              : request.statut === "refuse"
+                                ? "bg-red-500/15 text-red-300"
+                                : "bg-amber-500/15 text-amber-300"
+                          }`}>
+                            {request.statut === "valide"
+                              ? "Validée"
+                              : request.statut === "refuse"
+                                ? "Refusée"
+                                : request.statut === "en-cours"
+                                  ? "En traitement"
+                                  : "Paiement à vérifier"}
+                          </span>
+                        </div>
+                        <p className="mt-1 truncate text-xs text-white/50">
+                          {request.donnees.nom_demandeur || request.email || "Demandeur"} · {request.profil_demandeur}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="text-sm font-semibold text-brand-cyan">
+                            {Number(request.montant || 0).toLocaleString("fr-FR")} MGA
+                          </div>
+                          <div className="text-[10px] text-white/40">
+                            Paiement : {request.statut_paiement.replace(/-/g, " ")}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("nouvelles-demandes")}
+                          className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5"
+                        >
+                          Ouvrir
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Filtres et recherche */}
             <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
@@ -1554,7 +1663,7 @@ export default function AdminContratsEDL() {
                 ) : filteredDocuments.length === 0 ? (
                   <div className="text-center py-12 text-white/40">
                     <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p>Aucun document trouvé</p>
+                    <p>Aucun document de l’ancien parcours trouvé</p>
                   </div>
                 ) : (
                   filteredDocuments.map((doc) => (
@@ -1646,40 +1755,6 @@ export default function AdminContratsEDL() {
                 )}
               </div>
 
-              {/* Pied de tableau */}
-              <div className="p-4 border-t border-white/10 flex flex-wrap items-center gap-4 text-xs text-white/40">
-                <span>{filteredDocuments.length} documents</span>
-                <span>·</span>
-                <span className="text-purple-400">
-                  {filteredDocuments.filter((d) => d.type === "contrat").length}{" "}
-                  contrats
-                </span>
-                <span>·</span>
-                <span className="text-green-400">
-                  {filteredDocuments.filter((d) => d.type === "edl").length} EDL
-                </span>
-                <span>·</span>
-                <span className="text-amber-400">
-                  {
-                    filteredDocuments.filter(
-                      (d) =>
-                        d.statut === "a-emettre" || d.statut === "a-planifier",
-                    ).length
-                  }{" "}
-                  à traiter
-                </span>
-                <span>·</span>
-                <span className="text-brand-green">
-                  {filteredDocuments.filter((d) => d.statut === "signe").length}{" "}
-                  signés
-                </span>
-                <span className="ml-auto">
-                  Montant total:{" "}
-                  <b className="text-brand-cyan">
-                    {stats.totalMontant.toLocaleString("fr-FR")} MGA
-                  </b>
-                </span>
-              </div>
             </div>
 
             {/* Note */}

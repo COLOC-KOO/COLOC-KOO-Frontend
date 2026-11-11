@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell, Heart } from 'lucide-react'
+import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell, Heart, FileText } from 'lucide-react'
 import { Logo, LogoMark, LogoName } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
@@ -20,7 +20,8 @@ const navItems = [
   { to: '/depot_annonce', label: 'post', icon: Plus },
   { to: '/partenaires', label: 'partners', icon: Users },
   { to: '/contact', label: 'contact', icon: Phone },
-  { to: '/services', label: 'services', icon: Bell }
+  { to: '/services', label: 'services', icon: Bell },
+  { to: '/contrats-edl', label: 'documents', icon: FileText }
 ]
 
 const languageOptions = [
