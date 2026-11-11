@@ -17,7 +17,7 @@ export default function CGU() {
 
   return (
     <SiteLayout>
-      <section className="max-w-4xl mx-auto px-6 py-16 text-slate-900">
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16 text-slate-900">
         <div className="mb-10">
           <p className="text-sm uppercase tracking-[0.25em] text-slate-500 mb-3">{t('pageSubtitle')}</p>
           <h1 className="bebas text-4xl md:text-5xl text-slate-900 leading-tight">{t('pageTitle')}</h1>

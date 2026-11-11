@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { ApiPartenaireCampagne } from "../../lib/api";
 import { useTranslation } from "react-i18next";
+import { LOGO_PLACEHOLDER } from "../../lib/placeholders";
 
 type PartnersSectionProps = {
   partners: ApiPartenaireCampagne[];
@@ -95,7 +96,7 @@ export function PartnersSection({ partners, loading }: PartnersSectionProps) {
                 >
                   <div className="flex h-full flex-col items-center justify-between gap-2 text-center">
                     <div className="flex w-full flex-col items-center justify-center gap-2">
-                      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white/90 shadow-sm">
+                      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-[--brand-cyan-light] shadow-sm">
                         {(partner.visuel || partner.logo) && (/^(https?:\/\/|\/|uploads\/)/i.test((partner.visuel || partner.logo || "").trim())) ? (
                           <img
                             src={normalizeImageUrl(partner.visuel || partner.logo)}
@@ -104,7 +105,7 @@ export function PartnersSection({ partners, loading }: PartnersSectionProps) {
                             loading="lazy"
                           />
                         ) : (
-                          <span className="text-base font-semibold text-slate-700">{(partner.partenaire_nom || partner.titre || "P").charAt(0)}</span>
+                          <img src={LOGO_PLACEHOLDER} alt="" className="h-full w-full object-contain p-1" loading="lazy" />
                         )}
                       </div>
                       {levelLabel && (

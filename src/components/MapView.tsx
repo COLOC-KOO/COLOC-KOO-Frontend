@@ -4,6 +4,7 @@ import { Icon, LatLngExpression, LatLngBounds } from 'leaflet';
 import { Listing } from '../types';
 import { geocodeAddress } from '../lib/geocoding';
 import { formatAr } from '../lib/utils';
+import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../lib/placeholders';
 import { MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
@@ -335,9 +336,11 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
             >
               <Tooltip direction="top" offset={[0, -10]} sticky className="max-w-xs">
                 <div className="w-56 p-2 bg-white rounded-lg shadow-md border border-gray-200">
-                  {listing.image && (
-                    <img src={listing.image} alt={listing.title} className="w-full h-28 object-cover rounded-md mb-2" />
-                  )}
+                  <img
+                    src={listing.image || LOGO_PLACEHOLDER}
+                    alt={listing.title}
+                    className={`w-full h-28 rounded-md mb-2 ${isLogoPlaceholder(listing.image || LOGO_PLACEHOLDER) ? 'object-contain bg-[--brand-cyan-light] p-4' : 'object-cover'}`}
+                  />
                   <div>
                     <h4 className="font-semibold text-sm leading-tight">{listing.title}</h4>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -354,13 +357,11 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
               </Tooltip>
               <Popup>
                 <div className="p-1">
-                  {listing.image && (
-                    <img 
-                      src={listing.image} 
-                      alt={listing.title} 
-                      className="w-full h-32 object-cover rounded-lg mb-3"
-                    />
-                  )}
+                  <img
+                    src={listing.image || LOGO_PLACEHOLDER}
+                    alt={listing.title}
+                    className={`w-full h-32 rounded-lg mb-3 ${isLogoPlaceholder(listing.image || LOGO_PLACEHOLDER) ? 'object-contain bg-[--brand-cyan-light] p-5' : 'object-cover'}`}
+                  />
                   <h3 className="font-semibold text-base">{listing.title}</h3>
                   <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
@@ -386,7 +387,7 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
       
       {/* Carte d'information flottante - toujours visible */}
       {activeListing && (
-        <div className="absolute right-4 top-4 z-20 w-72 rounded-2xl bg-white/95 backdrop-blur-sm border border-gray-200 shadow-xl p-4 text-sm transition-all duration-300">
+        <div className="absolute right-4 top-4 z-20 w-72 max-w-[calc(100vw-2rem)] rounded-2xl bg-white/95 backdrop-blur-sm border border-gray-200 shadow-xl p-4 text-sm transition-all duration-300">
           <p className="text-xs uppercase tracking-[0.25em] text-gray-500 mb-2">Annonce sélectionnée</p>
           <h3 className="font-semibold text-base leading-tight mb-1">{activeListing.title}</h3>
           <p className="text-xs text-gray-500 mb-2">
@@ -409,4 +410,3 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
     </div>
   );
 }
-

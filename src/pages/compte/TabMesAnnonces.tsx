@@ -209,7 +209,7 @@ export default function TabMesAnnonces() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="bebas text-2xl">{t('myAnnouncements')}</h2>
           <p className="text-sm text-muted-foreground mt-1">

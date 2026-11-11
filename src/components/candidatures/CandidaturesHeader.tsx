@@ -82,13 +82,13 @@ export function CandidaturesHeader({
   const { t } = useTranslation(["candidatures"]);
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-3xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-cyan-light px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-brand-cyan-dark">
             {t("candidatures:header.badge")}
           </span>
-          <h1 className="bebas mt-4 text-4xl leading-tight">
+          <h1 className="bebas mt-4 text-3xl leading-tight sm:text-4xl">
             {t("candidatures:header.title")}
           </h1>
           <p className="mt-3 max-w-xl text-muted-foreground">

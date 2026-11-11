@@ -1086,17 +1086,17 @@ const emitTyping = (isTyping: boolean) => {
 
       {viewedProfile && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4"
           role="dialog"
           aria-modal="true"
           aria-label={t('profile')}
           onClick={closeProfile}
         >
           <div
-            className="grid w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl sm:rounded-3xl md:grid-cols-[42%_58%]"
+            className="grid w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl sm:rounded-3xl md:overflow-hidden md:grid-cols-[42%_58%]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="relative min-h-[320px] bg-[#f1f3f5] md:min-h-[620px]">
+            <div className="relative min-h-[240px] bg-[#f1f3f5] sm:min-h-[320px] md:min-h-[620px]">
               {viewedProfile.profilePicture ? (
                 <img
                   key={`${viewedProfile.id}-${viewedProfile.profilePicture}-${viewedProfile.profilePictureVersion || ''}`}
@@ -1112,7 +1112,7 @@ const emitTyping = (isTyping: boolean) => {
               </div>
             </div>
 
-            <div className="relative max-h-[90vh] overflow-y-auto p-7 sm:p-10">
+            <div className="relative p-5 sm:p-7 md:max-h-[90vh] md:overflow-y-auto md:p-10">
               <button
                 type="button"
                 aria-label="Fermer"

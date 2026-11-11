@@ -363,6 +363,16 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
           )}
         </motion.div>
 
+        <motion.div {...fadeInUp} className="mb-8 flex flex-col gap-3 rounded-2xl border border-brand-cyan/25 bg-brand-cyan-light/40 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="bebas text-xl text-brand-dark">Contrats &amp; états des lieux</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Prépare un document adapté à ton profil, vérifie son aperçu et règle par Mobile Money.</p>
+          </div>
+          <Link to="/contrats-edl" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-cyan px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-cyan-dark">
+            Créer un document <ArrowRight className="h-4 w-4" />
+          </Link>
+        </motion.div>
+
         {/* ===== BOOSTER UNE ANNONCE (données réelles services_ckoo) =====
             Le bloc n'apparaît que si des offres de boost sont réellement
             configurées : sinon il n'affichait que « Aucune offre disponible ». */}
@@ -428,7 +438,7 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
                           <label
                             key={item.id_booster}
                             className={cn(
-                              'flex items-center gap-3 rounded-lg px-4 py-4 cursor-pointer transition-colors',
+                              'flex flex-col items-start gap-3 rounded-lg px-4 py-4 cursor-pointer transition-colors sm:flex-row sm:items-center',
                               active ? 'bg-brand-cyan/15 ring-1 ring-brand-cyan/40' : 'bg-muted/70 hover:bg-brand-cyan/10',
                             )}
                           >
@@ -438,13 +448,13 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
                               checked={active}
                               onChange={() => toggleBoost(item.id_booster)}
                             />
-                            <span className="text-sm text-foreground flex-1">
+                            <span className="min-w-0 self-stretch text-sm text-foreground flex-1 sm:self-auto">
                               {item.nom}
                               {item.description && (
                                 <span className="block text-xs text-muted-foreground">{item.description}</span>
                               )}
                             </span>
-                            <span className="text-sm font-extrabold text-foreground whitespace-nowrap">
+                            <span className="self-end text-sm font-extrabold text-foreground whitespace-nowrap sm:self-auto">
                               {formatAr(Number(item.prix))}{dureeLabel ? ` / ${dureeLabel}` : uniteLabel ? ` ${uniteLabel}` : ''}
                             </span>
                           </label>

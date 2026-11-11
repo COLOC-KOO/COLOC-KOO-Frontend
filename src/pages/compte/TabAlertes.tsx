@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Bell, BellPlus, Check, Trash, X, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
-
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
-const API = BASE.endsWith('/api') ? BASE.slice(0, -4) : BASE
+import { api, Alerte } from '../../lib/api'
 
 const VILLES = [
   { id: 1, nom: 'Antananarivo' },
@@ -20,6 +18,7 @@ interface AlerteForm {
   quartier: string
   prixMax: string
   typeBien: string[]
+  typeAnnonce: string[]
   reglesColoc: string[]
   notifPush: boolean
   notifEmail: boolean
@@ -30,22 +29,10 @@ const EMPTY_FORM: AlerteForm = {
   quartier: '',
   prixMax: '',
   typeBien: [],
+  typeAnnonce: [],
   reglesColoc: [],
   notifPush: true,
   notifEmail: true,
-}
-
-/* Ligne renvoyée par l'API (table recherches_sauvegardees) */
-interface Alerte {
-  id: number
-  nom_ville: string | null
-  quartier: string | null
-  prix_max: number | null
-  type_propriete: string | null
-  type_annonce: string | null
-  regles: string | null
-  notif_push: number
-  notif_email: number
 }
 
 function toggleInArray(arr: string[], value: string) {
@@ -68,10 +55,17 @@ function Checkbox({ label, checked, onChange }: { label: string; checked: boolea
   )
 }
 
-export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number }) {
+export default function TabAlertes({
+  idUtilisateur,
+  canFilterAnnouncementType,
+}: {
+  idUtilisateur: number
+  canFilterAnnouncementType: boolean
+}) {
   const { t } = useTranslation('alertes')
   const location = useLocation()
   const [alertes, setAlertes] = useState<Alerte[]>([])
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<AlerteForm>(EMPTY_FORM)
   const [currentStep, setCurrentStep] = useState(0)
@@ -87,6 +81,11 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
     { key: 'Animaux acceptés', label: t('options.petsAllowed') },
   ]
 
+  const TYPES_ANNONCE = [
+    { key: 'existante', label: t('options.existingColoc') },
+    { key: 'creation', label: t('options.colocCreation') },
+  ]
+
   const steps = [
     { id: 'localisation', label: t('stepLocalisation') },
     { id: 'criteria', label: t('stepCriteria') },
@@ -95,10 +94,11 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
 
   const charger = async () => {
     try {
-      const res = await fetch(`${API}/api/alertes/${idUtilisateur}`)
-      if (res.ok) setAlertes(await res.json())
+      setErrorMsg(null)
+      setAlertes(await api.getAlertes(idUtilisateur))
     } catch (err) {
       console.error('Erreur chargement des alertes :', err)
+      setErrorMsg('Impossible de charger vos alertes.')
     }
   }
 
@@ -110,8 +110,13 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
   }, [location.search])
 
   const removeAlerte = async (id: number) => {
-    await fetch(`${API}/api/alertes/${id}`, { method: 'DELETE' })
-    setAlertes((prev) => prev.filter((a) => a.id !== id))
+    try {
+      await api.deleteAlerte(id)
+      setAlertes((prev) => prev.filter((a) => a.id !== id))
+    } catch (err) {
+      console.error('Erreur suppression alerte :', err)
+      setErrorMsg('Impossible de supprimer cette alerte.')
+    }
   }
 
   /* Toggle push/email sur une alerte existante -> persiste en DB (1/0) */
@@ -121,13 +126,11 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
       prev.map((a) => (a.id === id ? { ...a, [champ]: nouvelleValeur } : a))
     )
     try {
-      await fetch(`${API}/api/alertes/${id}/notifications`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [champ]: !!nouvelleValeur }),
-      })
+      setErrorMsg(null)
+      await api.updateAlerteNotifications(id, { [champ]: !!nouvelleValeur })
     } catch (err) {
       console.error('Erreur mise à jour notification :', err)
+      setErrorMsg('Impossible de modifier les notifications de cette alerte.')
       setAlertes((prev) =>
         prev.map((a) => (a.id === id ? { ...a, [champ]: valeurActuelle } : a))
       )
@@ -141,27 +144,30 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
   }
 
   const handleSubmit = async () => {
-    await fetch(`${API}/api/alertes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      setErrorMsg(null)
+      await api.createAlerte({
         id_utilisateur: idUtilisateur,
         id_ville: form.idVille ? Number(form.idVille) : null,
         quartier: form.quartier || null,
         prix_max: form.prixMax ? Number(form.prixMax) : null,
         types_bien: form.typeBien,
+        types_annonce: canFilterAnnouncementType ? form.typeAnnonce : [],
         regles: form.reglesColoc,
         notif_push: form.notifPush,
         notif_email: form.notifEmail,
-      }),
-    })
-    closeModal()
-    charger()
+      })
+      closeModal()
+      await charger()
+    } catch (err) {
+      console.error('Erreur création alerte :', err)
+      setErrorMsg('Impossible de créer cette alerte.')
+    }
   }
 
   const buildTitre = (a: Alerte): string => {
     const ville = a.nom_ville ?? t('allCities')
-    const suite = a.quartier ?? (a.type_annonce ? a.type_annonce.split(',')[0] : t('colocation'))
+    const suite = a.quartier ?? t('colocation')
     return `${ville} · ${suite}`
   }
 
@@ -172,7 +178,15 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
     if (a.regles) {
       try { criteres.push(...(JSON.parse(a.regles) as string[])) } catch { /* ignore */ }
     }
-    if (a.type_annonce) criteres.push(...a.type_annonce.split(',').filter(Boolean))
+    if (canFilterAnnouncementType && a.type_annonce) {
+      criteres.push(
+        ...a.type_annonce.split(',').filter(Boolean).map((type) => {
+          if (type === 'existante' || type === 'Colocation existante') return t('options.existingColoc')
+          if (type === 'creation' || type === "Création d'une colocation") return t('options.colocCreation')
+          return type
+        })
+      )
+    }
     return criteres
   }
 
@@ -189,7 +203,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
       case 0: // Localisation
         return !!form.idVille
       case 1: // Critères
-        return form.typeBien.length > 0 || form.reglesColoc.length > 0 || !!form.prixMax
+        return form.typeBien.length > 0 || form.typeAnnonce.length > 0 || form.reglesColoc.length > 0 || !!form.prixMax
       case 2: // Notifications
         return true
       default:
@@ -202,7 +216,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
       case 0:
         return (
           <>
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="grid grid-cols-1 gap-3 mb-3 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-semibold mb-1">
                   {t('city')} <span className="text-red-500">*</span>
@@ -254,7 +268,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
           <>
             <div className="mb-4">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('propertyType')}</div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {TYPES_BIEN.map((item) => (
                   <Checkbox
                     key={item.key}
@@ -268,7 +282,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
 
             <div className="mb-4">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('colocRules')}</div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {REGLES_COLOC.map((item) => (
                   <Checkbox
                     key={item.key}
@@ -280,6 +294,22 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
               </div>
             </div>
 
+            {canFilterAnnouncementType && (
+              <div className="mb-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('announcementType')}</div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {TYPES_ANNONCE.map((item) => (
+                    <Checkbox
+                      key={item.key}
+                      label={item.label}
+                      checked={form.typeAnnonce.includes(item.key)}
+                      onChange={() => setForm((prev) => ({ ...prev, typeAnnonce: toggleInArray(prev.typeAnnonce, item.key) }))}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
           </>
         )
 
@@ -287,7 +317,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
         return (
           <div className="mb-5">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('notification')}</div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Checkbox
                 label={t('push')}
                 checked={form.notifPush}
@@ -316,6 +346,10 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
       <p className="text-sm text-muted-foreground mb-5">
         {t('subtitle')}
       </p>
+
+      {errorMsg && (
+        <p role="alert" className="text-sm text-red-600 mb-4">{errorMsg}</p>
+      )}
 
       {alertes.length === 0 ? (
         <div className="text-center py-10 text-muted-foreground">
@@ -371,7 +405,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 py-8 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 relative">
+          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 relative">
             <button onClick={closeModal} className="absolute top-4 right-4 p-1.5 rounded-full bg-muted hover:bg-muted/70">
               <X className="w-4 h-4" />
             </button>

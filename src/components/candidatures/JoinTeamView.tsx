@@ -33,7 +33,7 @@ export function JoinTeamView({
 
   if (!selectedTeam) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-6 text-center text-muted-foreground">
+      <div className="rounded-2xl border border-border bg-card p-4 text-center text-muted-foreground sm:p-6">
         {t("join.empty")}
       </div>
     );
@@ -43,7 +43,7 @@ export function JoinTeamView({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -51,7 +51,7 @@ export function JoinTeamView({
             </div>
             <h2 className="bebas mt-3 text-2xl">{selectedTeam.title}</h2>
           </div>
-          <div className="text-right">
+          <div className="text-left md:text-right">
             <div className="text-sm text-muted-foreground">
               {t("join.members", { current: selectedTeam.members.length, target })}
             </div>

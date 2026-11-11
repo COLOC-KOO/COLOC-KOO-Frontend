@@ -37,7 +37,11 @@
     "success": "Opération réussie",
     "login": "Se connecter",
     "understood": "J’ai compris",
-    "fieldRequired": "Ce champ est obligatoire."
+    "fieldRequired": "Ce champ est obligatoire.",
+    "accountSuspended": "Votre compte est suspendu",
+    "accountSuspendedReadOnly": "Vous pouvez consulter les annonces et candidatures existantes, mais vous ne pouvez pas effectuer de nouvelles actions ni modifier votre compte.",
+    "suspensionReason": "Motif de suspension :",
+    "suspensionReasonMissing": "Aucun motif n’a été communiqué."
   },
   "footer": {
     "title": "SARINTANY'COLOC",

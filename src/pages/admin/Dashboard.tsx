@@ -405,8 +405,8 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="bebas text-xl text-white">Dernières annonces publiées</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Dernières annonces publiées" tabIndex={0}>
+            <table className="w-full min-w-[860px] text-sm break-words">
               <thead className="text-xs uppercase text-white/40 border-b border-white/10">
                 <tr>
                   <th className="text-left py-2 font-medium">Titre</th>
@@ -472,6 +472,7 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+          <p className="pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes.</p>
         </div>
       </div>
 
@@ -485,7 +486,7 @@ export default function AdminDashboard() {
             if (event.target === event.currentTarget) setSelectedCandidature(null)
           }}
         >
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)] p-6">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)] p-4 sm:p-6">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 id="candidature-detail-title" className="text-xl font-semibold text-white">Détail de la candidature</h2>
@@ -585,7 +586,7 @@ export default function AdminDashboard() {
             if (event.target === event.currentTarget) setSelectedAnnonceCandidatures(null)
           }}
         >
-          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)] p-6">
+          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)] p-4 sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <h2 id="annonce-candidatures-title" className="text-xl font-semibold text-white">Candidatures</h2>
@@ -599,7 +600,7 @@ export default function AdminDashboard() {
             </div>
             <div className="space-y-2">
               {(candidaturesByAnnonce.get(selectedAnnonceCandidatures) || []).map((candidature) => (
-                <div key={candidature.id_candidature} className="flex items-center gap-3 rounded-lg bg-white/5 p-3">
+                <div key={candidature.id_candidature} className="flex flex-wrap items-center gap-3 rounded-lg bg-white/5 p-3">
                   {candidature.profile_picture ? (
                     <img src={candidature.profile_picture} alt="" className="h-10 w-10 rounded-full object-cover" />
                   ) : (

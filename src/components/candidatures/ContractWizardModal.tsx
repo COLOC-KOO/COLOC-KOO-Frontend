@@ -352,7 +352,7 @@ export function ContractWizardModal({
                 </span>
               </label>
             )}
-            <div className={`flex items-center justify-between rounded-xl px-4 py-3.5 ${isEdlOnly ? "border-2 border-brand-dark bg-muted/20" : "bg-gradient-to-r from-muted/60 to-muted/30 border border-border"}`}>
+            <div className={`flex flex-wrap items-center justify-between gap-x-3 rounded-xl px-4 py-3.5 ${isEdlOnly ? "border-2 border-brand-dark bg-muted/20" : "bg-gradient-to-r from-muted/60 to-muted/30 border border-border"}`}>
               <span className="text-sm font-bold text-brand-dark">
                 {isEdlOnly ? "État des lieux (forfait)" : contractMode === "both" ? "Total (contrat + état des lieux)" : "Création du contrat (forfait)"}
               </span>
@@ -428,7 +428,7 @@ export function ContractWizardModal({
               <div className="mb-2 text-center text-[11px] font-medium text-brand-magenta">Les frais de l'opérateur sont à la charge de l'acheteur.</div>
               <input className="input text-center font-mono font-bold tracking-wider" value={payRef} onChange={(event) => onPayRefChange(event.target.value)} placeholder="Ex : MP240607.1234.A56789" autoComplete="off" />
             </div>
-            <div className="flex items-center justify-between rounded-xl border border-border bg-gradient-to-r from-muted/50 to-muted/20 px-4 py-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 rounded-xl border border-border bg-gradient-to-r from-muted/50 to-muted/20 px-4 py-3.5">
               <span className="text-sm font-bold text-brand-dark">{myShare != null && myShare > 0 ? "Ta part à régler" : priceLabel}</span>
               <span className="bebas text-2xl font-bold tracking-wide text-brand-magenta">{fmtAr(displayedAmount)} Ar</span>
             </div>
@@ -634,7 +634,7 @@ function QrPreview({
 
       {isOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm"
           onClick={(e) => {
             e.stopPropagation();
             setIsOpen(false);
@@ -643,7 +643,7 @@ function QrPreview({
           aria-modal="true"
         >
           <div
-            className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl text-center"
+            className="relative my-auto max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 text-center shadow-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <button

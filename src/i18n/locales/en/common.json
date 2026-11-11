@@ -37,7 +37,11 @@
     "success": "Operation successful",
     "login": "Sign in",
     "understood": "Got it",
-    "fieldRequired": "This field is required."
+    "fieldRequired": "This field is required.",
+    "accountSuspended": "Your account is suspended",
+    "accountSuspendedReadOnly": "You can view existing listings and applications, but you cannot take new actions or make changes to your account.",
+    "suspensionReason": "Reason for suspension:",
+    "suspensionReasonMissing": "No reason was provided."
   },
   "footer": {
     "title": "SARINTANY'COLOC",

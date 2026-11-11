@@ -45,7 +45,7 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
       } ${compact ? 'flex flex-row h-28' : ''}`}
     >
       {/* Image area (carousel) */}
-      <div className={`relative overflow-hidden ${hasFallbackImage ? 'bg-gradient-to-br from-brand-cyan to-brand-green' : 'bg-gray-100'} ${compact ? 'w-[120px] min-w-[120px] h-28 flex-shrink-0 rounded-l-xl' : 'h-44'}`}>
+      <div className={`relative overflow-hidden ${hasFallbackImage ? 'bg-[--brand-cyan-light]' : 'bg-gray-100'} ${compact ? 'w-[120px] min-w-[120px] h-28 flex-shrink-0 rounded-l-xl' : 'h-44'}`}>
         <div className="flex h-full transition-transform duration-300" style={{ transform: `translateX(-${imgIdx * 100}%)` }}>
           {imgs.map((src, i) => (
             <LazyImage
@@ -145,7 +145,7 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
         )}
 
         <p className={`flex items-center gap-1 text-gray-500 ${compact ? 'text-[10px]' : 'text-[12px]'} mb-1.5`}>
-          <MapPin className="w-4 h-4 text-cyan-600" /> {l.district}, {l.city}
+          <MapPin className="w-4 h-4 shrink-0 text-cyan-600" /> <span className="min-w-0 truncate">{l.district}, {l.city}</span>
         </p>
 
         {!compact && (

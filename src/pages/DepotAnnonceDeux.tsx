@@ -45,10 +45,11 @@ import 'leaflet/dist/leaflet.css'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import { SiteLayout } from '../components/site/SiteLayout'
-import { api, type ApiAnnonce } from '../lib/api'
+import { api, type ApiAnnonce, type Ville } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { geocodeAddress } from '../lib/geocoding'
 import { cn } from '../lib/utils'
+import { LOGO_PLACEHOLDER } from '../lib/placeholders'
 
 /* ============================================================================
  * DepotAnnonceDeux.tsx
@@ -353,21 +354,21 @@ function OptCard({
   onClick: () => void
 }) {
   return (
-    <div className={cn('opt-card', on && 'on')} onClick={onClick}>
+    <button type="button" aria-pressed={on} className={cn('opt-card', on && 'on')} onClick={onClick}>
       <div className="oc-ico"><Icon size={18} /></div>
       <div>
         <div className="oc-t">{title}</div>
         <div className="oc-d">{desc}</div>
       </div>
-    </div>
+    </button>
   )
 }
 
 function Pill({ label, on, onClick }: { label: React.ReactNode; on: boolean; onClick: () => void }) {
   return (
-    <div className={cn('pill-opt', on && 'on')} onClick={onClick}>
+    <button type="button" aria-pressed={on} className={cn('pill-opt', on && 'on')} onClick={onClick}>
       {label}
-    </div>
+    </button>
   )
 }
 
@@ -420,7 +421,7 @@ function MoneyInput({
 
 function ErrBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="err show">
+    <div className="err show" role="alert">
       <AlertCircle size={13} /> {children}
     </div>
   )
@@ -516,7 +517,7 @@ const steps = stepsForRole(role)
   const [locAddr, setLocAddr] = useState('')
   const [locVille, setLocVille] = useState('')
   const [locQuartier, setLocQuartier] = useState('')
-  const [cityOptions, setCityOptions] = useState<string[]>([])
+  const [cityOptions, setCityOptions] = useState<Ville[]>([])
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>([])
   const [cityLoadError, setCityLoadError] = useState('')
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null)
@@ -526,7 +527,7 @@ const steps = stepsForRole(role)
     let cancelled = false
     api.villes()
       .then((villes) => {
-        if (!cancelled) setCityOptions(villes.map((ville) => ville.nom_ville))
+        if (!cancelled) setCityOptions(villes)
       })
       .catch((error) => {
         if (!cancelled) setCityLoadError(error instanceof Error ? error.message : t('depot:logement.errors.citiesLoad'))
@@ -883,9 +884,11 @@ const steps = stepsForRole(role)
         const field = document.getElementById(fieldId)
         if (!field) return
         field.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        const focusTarget = field.matches('input, select, textarea, button, [tabindex]')
+        const focusTarget = field.querySelector<HTMLElement>(
+          'input:not([type="hidden"]), select, textarea, button, [role="button"], [tabindex]:not([tabindex="-1"])',
+        ) ?? (field.matches('input, select, textarea, button, [tabindex]')
           ? field
-          : field.querySelector<HTMLElement>('input, select, textarea, button, [tabindex]')
+          : null)
         focusTarget?.focus({ preventScroll: true })
       })
     }
@@ -912,7 +915,7 @@ const steps = stepsForRole(role)
         !typeLogement ? 'required-property-type' :
         role !== 'membre' && nbColocTotal === '' ? 'required-total-coloc' :
         !nbPieces.trim() ? 'required-room-count' :
-        !locVille.trim() ? 'listing-city' :
+        !cityOptions.some((ville) => ville.nom_ville === locVille) ? 'listing-city' :
         pin === null ? 'required-map-pin' : ''
       if (missingField) {
         setStepErr(
@@ -1024,6 +1027,8 @@ const steps = stepsForRole(role)
 
   async function handlePublish() {
     if (!validateCurrentStep()) return
+    const selectedCity = cityOptions.find((city) => city.nom_ville === locVille)
+    if (!selectedCity) return
     if (!user) {
       await persistDraftAndRedirect()
       return
@@ -1068,6 +1073,7 @@ const steps = stepsForRole(role)
 
       const response = await api.createDepotAnnonce({
         adresse: locAddr,
+        id_ville: selectedCity.id_ville,
         ville,
         quartier,
         latitude,
@@ -1297,7 +1303,7 @@ const steps = stepsForRole(role)
                 {role === 'membre' ? t('depot:esprit.subtitleMember') : t('depot:esprit.subtitleOther')}
               </div>
 
-              <div id="required-total-coloc" className="grp" tabIndex={-1}>
+              <div className="grp">
                 <label className="lbl">{t('depot:esprit.modeLabel')}</label>
                 {mode === 'flux' ? (
                   <div className="mc on">
@@ -1334,7 +1340,7 @@ const steps = stepsForRole(role)
               </div>
 
               {role === 'membre' && (
-                <div id="required-wanted-coloc" className="grp" tabIndex={-1}>
+                <div id="required-total-coloc" className="grp" tabIndex={-1}>
                   <label className="lbl">{t('depot:esprit.totalColocLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     {['2', '3', '4', '5', '6+'].map((n) => (
@@ -1345,7 +1351,7 @@ const steps = stepsForRole(role)
               )}
 
               {role === 'membre' && (
-                <div id="required-property-type" className="grp" tabIndex={-1}>
+                <div id="required-wanted-coloc" className="grp" tabIndex={-1}>
                   <label className="lbl">{t('depot:esprit.wantedColocLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     {['1', '2', '3', '4+'].map((n) => (
@@ -1365,7 +1371,7 @@ const steps = stepsForRole(role)
                 </div>
               )}
 
-              <div id="required-room-count" className="grp" tabIndex={-1}>
+              <div className="grp">
                 <label className="lbl">
                   {t('depot:esprit.ambianceLabel')} <span className="opt">{t('depot:esprit.recommended')}</span>
                 </label>
@@ -1403,6 +1409,7 @@ const steps = stepsForRole(role)
                 />
                 <div className={cn('charcount', presentation.length >= 1000 && 'over')}>{presentation.length} {t('depot:esprit.charLimit')}</div>
               </div>
+              {stepErr && <ErrBox>{stepErr}</ErrBox>}
             </section>
           )}
 
@@ -1412,7 +1419,7 @@ const steps = stepsForRole(role)
               <div className="s-title bb"><Home size={22} /> <span className="s-part">{t('depot:logement.part')}</span> — {t('depot:logement.title')}</div>
               <div className="s-sub">{t('depot:logement.subtitle')}</div>
 
-              <div className="grp">
+              <div id="required-property-type" className="grp" tabIndex={-1}>
                 <label className="lbl">{t('depot:logement.typeLabel')}<span className="req">*</span></label>
                 <div className="pills">
                   {(t('depot:logement.typeOptions', { returnObjects: true }) as string[]).map((v) => (
@@ -1422,7 +1429,7 @@ const steps = stepsForRole(role)
               </div>
 
               {role !== 'membre' && (
-                <div className="grp">
+                <div id="required-total-coloc" className="grp" tabIndex={-1}>
                   <label className="lbl">{t('depot:logement.totalColocLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     {['2', '3', '4', '5', '6+'].map((v) => (
@@ -1433,7 +1440,7 @@ const steps = stepsForRole(role)
                 </div>
               )}
 
-              <div className="grp">
+              <div id="required-room-count" className="grp" tabIndex={-1}>
                 <label className="lbl">{t('depot:logement.piecesLabel')} <span className="opt">{t('depot:logement.piecesSub')}</span><span className="req">*</span></label>
                 <div className="inp-suffix" style={{ maxWidth: 200 }}>
                   <input
@@ -1473,7 +1480,7 @@ const steps = stepsForRole(role)
                   required
                 >
                   <option value="">{t('depot:logement.cityPlaceholder')}</option>
-                  {cityOptions.map((ville) => <option key={ville} value={ville}>{ville}</option>)}
+                  {cityOptions.map((ville) => <option key={ville.id_ville} value={ville.nom_ville}>{ville.nom_ville}</option>)}
                 </select>
                 {cityLoadError && <p className="mb-2 text-sm text-red-600">{t('depot:logement.errors.citiesLoad')} {cityLoadError}</p>}
 
@@ -1806,7 +1813,10 @@ const steps = stepsForRole(role)
                         style={{ display: 'none' }}
                         onChange={(e) => onPhotoPick(i, e.target.files?.[0] ?? null)}
                       />
-                      {!photoPreviews[i] && (
+                      {!photoPreviews[i] && i === 0 && (
+                        <img src={LOGO_PLACEHOLDER} alt="" className="photo-default" />
+                      )}
+                      {!photoPreviews[i] && i !== 0 && (
                         <span className="ps-ph" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
                           <Camera size={22} />
                           <span className="ps-t">{i === 0 ? t('depot:photos.cover') : t('depot:photos.photoN', { n: i + 1 })}</span>
@@ -2111,6 +2121,8 @@ const depotAnnonceDeuxCss = `
 @media(max-width:520px){.row2{grid-template-columns:1fr;}}
 .opts{display:flex;flex-wrap:wrap;gap:9px;}
 .opt-card{flex:1;min-width:120px;border:1.5px solid #e2e2e2;border-radius:11px;padding:12px;cursor:pointer;transition:all .15s;background:#fff;display:flex;align-items:center;gap:10px;}
+.opt-card,.pill-opt{appearance:none;font-family:inherit;line-height:inherit;}
+.opt-card{text-align:left;color:inherit;}
 .opt-card:hover{border-color:var(--cy);}
 .opt-card.on{border-color:var(--cy);background:var(--cy-lt);}
 .opt-card .oc-ico{width:34px;height:34px;border-radius:9px;background:#f3f5ee;display:flex;align-items:center;justify-content:center;color:var(--gr1);flex-shrink:0;}
@@ -2156,6 +2168,7 @@ const depotAnnonceDeuxCss = `
 .photo-slot .ps-t{font-size:11px;font-weight:700;}
 .photo-slot.cover:after{content:"Couverture";position:absolute;top:6px;left:6px;background:var(--cy);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;}
 .photo-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.photo-slot .photo-default{object-fit:contain;background:var(--cy-lt);padding:14px;}
 .photo-slot .ps-del{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:none;display:none;align-items:center;justify-content:center;cursor:pointer;font-size:13px;z-index:2;}
 .photo-slot.filled .ps-del{display:flex;}
 .charcount{font-size:11px;color:var(--gr2);text-align:right;margin-top:5px;}

@@ -1,12 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Settings, Smartphone, Check } from 'lucide-react'
 import { useTranslation, Trans } from 'react-i18next'
-
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
-const API = BASE.endsWith('/api') ? BASE.slice(0, -4) : BASE
-
-// Doit correspondre à la clé utilisée dans src/lib/api.ts (TOKEN_KEY)
-const TOKEN_KEY = 'colockoo_token'
+import { api } from '../../lib/api'
 
 export interface EventPreference {
   id: string
@@ -45,15 +40,6 @@ function getUserIdFromStorage(): number | string | undefined {
   } catch (e) {
     console.error('[TabPreference] impossible de parser colockoo_user depuis localStorage', e)
     return undefined
-  }
-}
-
-function authHeaders(): HeadersInit {
-  const token = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
-  console.log('[TabPreference] token trouvé dans localStorage ?', token ? 'OUI (' + token.slice(0, 12) + '...)' : 'NON')
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }
 }
 
@@ -131,19 +117,13 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
     }
 
     const myRequestId = ++requestIdRef.current
-    const url = `${API}/api/preferences/${resolvedId}`
-    console.log('[TabPreference] GET vers', url, '(requestId =', myRequestId, ')')
+    console.log('[TabPreference] chargement des préférences (requestId =', myRequestId, ')')
 
     try {
       setLoading(true)
       setErrorMsg(null)
 
-      const res = await fetch(url, { headers: authHeaders() })
-      console.log('[TabPreference] GET réponse status =', res.status, res.ok ? 'OK' : 'ERREUR')
-
-      if (!res.ok) throw new Error('Erreur au chargement des préférences')
-
-      const data = await res.json()
+      const data = await api.getPreferences(resolvedId)
       console.log('[TabPreference] GET body reçu =', data)
 
       if (myRequestId !== requestIdRef.current) {
@@ -240,32 +220,19 @@ export default function TabPreference({ idUtilisateur }: TabPreferenceProps) {
       return
     }
 
-    const url = `${API}/api/preferences/${resolvedId}`
     const payload = {
       mode_defaut: defaultMode,
       mode_allege: modeAllege,
       disponibilite_hors_ligne: horsLigne,
       evenements: events,
     }
-    console.log('[TabPreference] PUT vers', url)
     console.log('[TabPreference] payload envoyé =', payload)
 
     try {
       setSaving(true)
       setErrorMsg(null)
 
-      const res = await fetch(url, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify(payload),
-      })
-
-      console.log('[TabPreference] PUT réponse status =', res.status, res.ok ? 'OK' : 'ERREUR')
-
-      const responseBody = await res.clone().json().catch(() => null)
-      console.log('[TabPreference] PUT body reçu =', responseBody)
-
-      if (!res.ok) throw new Error('Erreur lors de la sauvegarde')
+      await api.updatePreferences(resolvedId, payload)
 
       dirtyRef.current = false
       console.log('[TabPreference] sauvegarde OK, dirty remis à false')

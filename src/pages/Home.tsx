@@ -6,6 +6,7 @@ import { Button } from "../components/ui/Button";
 import { api, annonceToListing, type ApiPartenaireCampagne, type Ville } from "../lib/api";
 import { CityInfo, Listing } from "../types";
 import { useAuth } from "../lib/auth";
+import { LOGO_PLACEHOLDER } from "../lib/placeholders";
 import { HomeHero } from "../components/home/HomeHero";
 import { FeaturedListingsSection } from "../components/home/FeaturedListingsSection";
 import { CitiesExploreSection } from "../components/home/CitiesExploreSection";
@@ -301,7 +302,7 @@ export default function Home() {
   return (
     <SiteLayout>
       {favoriteMessage && (
-        <div className="fixed bottom-5 right-5 z-[80] rounded-xl border border-[var(--brand-cyan-dark)]/20 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-2xl">
+        <div className="fixed bottom-5 right-5 z-[80] max-w-[calc(100vw-2.5rem)] rounded-xl border border-[var(--brand-cyan-dark)]/20 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-2xl">
           {favoriteMessage}
         </div>
       )}
@@ -347,14 +348,12 @@ export default function Home() {
                   key={campaign.id_campagne}
                   className="flex min-h-24 items-center gap-4 overflow-hidden rounded-2xl border border-cyan-100 bg-white p-3 shadow-sm"
                 >
-                  {campaign.visuel && (
-                    <img
-                      src={normalizeCampaignImageUrl(campaign.visuel)}
-                      alt=""
-                      className="h-20 w-24 shrink-0 rounded-xl object-cover"
-                      loading="lazy"
-                    />
-                  )}
+                  <img
+                    src={campaign.visuel ? normalizeCampaignImageUrl(campaign.visuel) : LOGO_PLACEHOLDER}
+                    alt=""
+                    className={`h-20 w-24 shrink-0 rounded-xl ${campaign.visuel ? "object-cover" : "object-contain bg-[--brand-cyan-light] p-3"}`}
+                    loading="lazy"
+                  />
                   <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wide text-cyan-700">
                       {campaign.partenaire_nom || "Partenaire local"}
@@ -373,7 +372,6 @@ export default function Home() {
 
       <FeaturedListingsSection
         featuredListings={featuredListings}
-        campaigns={campaigns}
         loading={loading}
         hoveredListingId={hoveredListingId}
         setHoveredListingId={setHoveredListingId}

@@ -121,10 +121,10 @@ const BoosterModal = ({
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full"
+        className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+        <div className="p-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Rocket className="w-5 h-5 text-brand-cyan" />
             <h3 className="text-xl font-bold">
@@ -377,7 +377,7 @@ function BoosterSection({
         {/* Barre de recherche */}
         <div className="p-4 border-b border-white/10">
           <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs min-w-0">
               <Search className="w-4 h-4 text-white/40" />
               <input
                 placeholder="Rechercher une offre..."
@@ -395,7 +395,7 @@ function BoosterSection({
               )}
             </div>
 
-            <div className="flex gap-2 ml-auto">
+            <div className="flex gap-2 flex-wrap ml-auto">
               <select
                 value={filterActif}
                 onChange={(e) => setFilterActif(e.target.value)}
@@ -430,8 +430,9 @@ function BoosterSection({
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <>
+            <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Offres booster" tabIndex={0}>
+              <table className="w-full min-w-[760px] text-sm break-words">
               <thead className="bg-white/5">
                 <tr>
                   <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
@@ -469,7 +470,7 @@ function BoosterSection({
                     <td className="p-3 text-right font-bold text-brand-cyan tabular-nums">
                       {booster.prix.toLocaleString('fr-FR')}
                     </td>
-                    <td className="p-3 text-center">
+                    <td className="p-3 text-center whitespace-nowrap">
                       <span className="text-xs font-semibold text-white">{booster.duree}</span>
                     </td>
                     <td className="p-3 text-center">
@@ -524,8 +525,10 @@ function BoosterSection({
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+            <p className="pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes et les actions.</p>
+          </>
         )}
 
         {/* Pied de tableau */}
@@ -807,4 +810,3 @@ export default function AdminBooster() {
     </AdminLayout>
   )
 }
-

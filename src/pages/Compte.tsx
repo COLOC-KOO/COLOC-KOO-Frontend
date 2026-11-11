@@ -24,7 +24,7 @@ import TabProfil from './compte/TabProfil'
 import TabMesAnnonces from './compte/TabMesAnnonces'
 import TabPreference from './compte/TabPreference'
 import TabMessagesV2 from './compte/TabMessagesV2'
-import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerprint, Lock, RefreshCw, Download, Trash } from 'lucide-react'
+import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerprint, Lock, RefreshCw, Download, Trash, Trash2 } from 'lucide-react'
 import TabAlertes from './compte/TabAlertes'
 import TabCompteDonnees from './compte/TabCompteDonnees'
 import TabMesFavoris from './compte/TabMesFavoris'
@@ -238,7 +238,7 @@ function TabSecu() {
 
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 relative">
+          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 relative">
             <button
               onClick={() => setShowPasswordModal(false)}
               className="absolute top-4 right-4 p-1.5 rounded-full bg-muted hover:bg-muted/70"
@@ -374,7 +374,7 @@ function TabSecu() {
         <p className="text-sm text-muted-foreground mb-4 max-w-lg">
           Optionnelle. Une fois confirmée, un badge <strong>« Identité confirmée »</strong> rassure tes futurs colocataires. La vérification se fera via ton opérateur mobile (USSD : Telma / Orange / Airtel), sans frais de SMS.
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button disabled className="inline-flex items-center gap-2 text-sm font-semibold border border-border rounded-lg px-4 py-2 text-foreground/60 opacity-70 cursor-not-allowed">
             <ShieldOff className="w-4 h-4" /> Identité non confirmée
           </button>
@@ -441,7 +441,7 @@ function TabSecu() {
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 relative text-center">
+          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 relative text-center">
             <button
               onClick={() => setShowDeleteModal(false)}
               className="absolute top-4 right-4 p-1.5 rounded-full bg-muted hover:bg-muted/70"
@@ -687,16 +687,11 @@ export default function Compte() {
 
     if (!userId) return
 
-    const API = 'http://localhost:4000'
-
-    fetch(`${API}/api/alertes/${userId}`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) =>
-        setAlertCount(
-          Array.isArray(data) ? data.length : 0
-        )
-      )
-      .catch(() => setAlertCount(0))
+    api.getAlertes(userId)
+      .then((data) => setAlertCount(data.length))
+      .catch((err) => {
+        console.error('Erreur chargement du compteur des alertes :', err)
+      })
   }, [user])
 
   const initials = (
@@ -722,15 +717,15 @@ export default function Compte() {
         ? t('colocataire')
         : user?.poste || t('member')
 
-  const membreDepuis = user?.date_inscription
-    ? new Date(user.date_inscription).toLocaleDateString(
-        'fr-FR',
-        {
+  const dateInscription = user?.date_inscription || user?.createdAt
+  const dateInscriptionDate = dateInscription ? new Date(dateInscription) : null
+  const membreDepuis =
+    dateInscriptionDate && !Number.isNaN(dateInscriptionDate.getTime())
+      ? dateInscriptionDate.toLocaleDateString('fr-FR', {
           month: 'long',
           year: 'numeric'
-        }
-      )
-    : 'mars 2026'
+        })
+      : null
 
   const badgeCountFor = (id: string) => {
     if (id === 'favoris') return counters.favoris
@@ -774,6 +769,22 @@ export default function Compte() {
     }
   }
 
+  const handleProfileImageRemove = async () => {
+    if (!profileImageUrl) return
+
+    setAvatarUpdating(true)
+    setAvatarMessage(t('removingPhoto', { ns: 'compte' }))
+
+    try {
+      await updateProfile({ profile_picture: null })
+      setAvatarMessage(t('photoRemoved', { ns: 'compte' }))
+    } catch {
+      setAvatarMessage(t('photoUpdateError'))
+    } finally {
+      setAvatarUpdating(false)
+    }
+  }
+
   const currentUserId = (user as any)?.id_utilisateur ?? (user as any)?.id ?? null
 
   const handleAccountDeleted = () => {
@@ -786,7 +797,7 @@ export default function Compte() {
 
       {/* HEADER SOMBRE */}
       <div className="bg-gradient-to-r from-[#2C2C2C] to-[#3a3a3a] text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 flex flex-wrap items-center gap-4">
 
           <div className="relative shrink-0">
 
@@ -806,7 +817,7 @@ export default function Compte() {
 
             </div>
 
-            <label className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-brand-cyan border-2 border-[#2C2C2C] flex items-center justify-center cursor-pointer hover:bg-brand-cyan-dark transition-colors">
+            <label className={`absolute bottom-1 right-1 w-9 h-9 rounded-full bg-brand-cyan border-2 border-[#2C2C2C] flex items-center justify-center transition-colors ${avatarUpdating ? 'pointer-events-none opacity-60' : 'cursor-pointer hover:bg-brand-cyan-dark'}`}>
 
               <Camera className="w-4 h-4 text-white" />
 
@@ -814,10 +825,24 @@ export default function Compte() {
                 type="file"
                 accept="image/*"
                 className="hidden"
+                disabled={avatarUpdating}
                 onChange={handleProfileImageChange}
               />
 
             </label>
+
+            {profileImageUrl && (
+              <button
+                type="button"
+                onClick={handleProfileImageRemove}
+                disabled={avatarUpdating}
+                aria-label={t('removePhoto', { ns: 'compte' })}
+                title={t('removePhoto', { ns: 'compte' })}
+                className="absolute bottom-1 left-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#2C2C2C] bg-red-600 text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
 
           </div>
 
@@ -858,12 +883,14 @@ export default function Compte() {
 
               </button>
 
-              <span className="flex items-center gap-1 text-white/60">
-                <Calendar className="w-3.5 h-3.5" />
-                {t('memberSince', {
-                  date: membreDepuis
-                })}
-              </span>
+              {membreDepuis && (
+                <span className="flex items-center gap-1 text-white/60">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {t('memberSince', {
+                    date: membreDepuis
+                  })}
+                </span>
+              )}
 
               {user?.ville && (
                 <span className="flex items-center gap-1 text-white/60">
@@ -890,7 +917,7 @@ export default function Compte() {
 
           </div>
 
-          <div className="ml-auto hidden md:flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto">
 
             {user && isAdmin && (
               <Button
@@ -927,7 +954,7 @@ export default function Compte() {
         <div className="grid md:grid-cols-[220px_1fr] gap-6 items-start">
 
           {/* Sidebar desktop */}
-          <aside className="hidden md:flex md:flex-col gap-1 bg-white rounded-2xl border border-border p-2 sticky top-20">
+          <aside className="hidden md:flex md:flex-col gap-1 bg-white rounded-2xl border border-border p-2 sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto">
 
             {tabs.map((tItem) => {
 
@@ -981,7 +1008,7 @@ export default function Compte() {
                   onClick={() =>
                     navigate(`/compte?tab=${tItem.id}`)
                   }
-                  className={`shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                  className={`shrink-0 whitespace-nowrap flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
                     isActive
                       ? 'bg-brand-cyan-light text-brand-cyan-dark border-brand-cyan/30'
                       : 'bg-white text-foreground/70 border-border'
@@ -1008,7 +1035,12 @@ export default function Compte() {
           <div className={tab === 'conversations' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-4 sm:p-6 shadow-sm'}>
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
             {tab === 'conversations' && <TabMessagesV2 />}
-            {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
+            {tab === 'alertes' && currentUserId && (
+              <TabAlertes
+                idUtilisateur={currentUserId}
+                canFilterAnnouncementType={Boolean(user && user.poste !== 'colocataire')}
+              />
+            )}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
             {/* ⏸️ Notifications désactivées — le client ne recommande plus cet onglet */}
@@ -1037,7 +1069,7 @@ export default function Compte() {
             'profil',
             'conversations',
             'alertes',
-            'notif',       // ⏸️ Notifications désactivées
+            'services',
             'secu'
           ].map((id) => {
 

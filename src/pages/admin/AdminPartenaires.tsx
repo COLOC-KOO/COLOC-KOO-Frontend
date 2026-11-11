@@ -44,9 +44,9 @@ import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api, type ApiPartenaireRequest, type Ville } from '../../lib/api'
 import { useDialog } from '../../components/ui/Dialog'
 import { useAuth } from '../../lib/auth'
+import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
 const PARTNER_LEVELS = ['Bronze', 'Argent', 'Or', 'Diamant'] as const
 type PartnerLevel = typeof PARTNER_LEVELS[number]
 type PartnerPricing = Record<PartnerLevel, number>
@@ -66,6 +66,13 @@ function normalizeCampaignImageUrl(value: string | null | undefined) {
   if (trimmed.startsWith('uploads/')) return `${API_BASE_URL}/${trimmed}`
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
   return `${API_BASE_URL}/${trimmed}`
+}
+
+function formatCampaignDate(value: string) {
+  const date = value.slice(0, 10)
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC' }).format(
+    new Date(`${date}T00:00:00Z`)
+  )
 }
 
 // ===== TYPES =====
@@ -496,7 +503,7 @@ function PartnerModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-3xl w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-5 border-b border-white/10 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold">{partner ? 'Modifier un partenaire' : 'Ajouter un partenaire'}</h2>
@@ -747,20 +754,6 @@ function CampagneModal({
                 </select>
               </div>
             )}
-            <label className="flex items-start gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
-              <input
-                type="checkbox"
-                checked={suspendue}
-                onChange={(event) => setSuspendue(event.target.checked)}
-                className="mt-0.5"
-              />
-              <span>
-                Suspendre la campagne
-                <span className="mt-1 block text-xs text-white/40">
-                  Le statut Programmée, Active ou Terminée est calculé à partir des dates.
-                </span>
-              </span>
-            </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -772,6 +765,24 @@ function CampagneModal({
               <label className="text-xs text-white/40 uppercase">Date de fin</label>
               <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
             </div>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+            <p className="text-xs text-white/40 uppercase">Diffusion</p>
+            <label className="mt-2 flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={suspendue}
+                onChange={(event) => setSuspendue(event.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Suspendre cette campagne
+                <span className="mt-1 block text-xs text-white/40">
+                  Si cette case est cochée, la campagne est masquée. Sinon, son statut est calculé selon les dates.
+                </span>
+              </span>
+            </label>
           </div>
 
           <div>
@@ -790,12 +801,16 @@ function CampagneModal({
                 <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
               </label>
             </div>
-            {(preview || visuel) && (
-              <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-2">
-                <img src={preview || visuel} alt="Prévisualisation" className="h-16 w-16 rounded object-cover" />
-                <span className="text-xs text-white/50">Visuel prêt à être enregistré</span>
-              </div>
-            )}
+            <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-2">
+              <img
+                src={preview || visuel || LOGO_PLACEHOLDER}
+                alt="Prévisualisation"
+                className={`h-16 w-16 rounded ${isLogoPlaceholder(preview || visuel || LOGO_PLACEHOLDER) ? 'object-contain bg-[--brand-cyan-light] p-2' : 'object-cover'}`}
+              />
+              <span className="text-xs text-white/50">
+                {preview || visuel ? 'Visuel prêt à être enregistré' : 'Logo Coloc’KOO affiché par défaut si aucun visuel n’est ajouté'}
+              </span>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2 border-t border-white/10">
@@ -1232,7 +1247,7 @@ export default function AdminPartenaires() {
 
         {/* Onglets */}
         <div className="border-b border-white/10">
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             <button
               onClick={() => setActiveTab('gestion')}
               className={`px-4 py-2 text-sm font-medium transition ${
@@ -1334,7 +1349,7 @@ export default function AdminPartenaires() {
 
             {/* Recherche et bouton ajout */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 min-w-0">
                 <Search className="w-4 h-4 text-white/40" />
                 <input
                   placeholder="Rechercher un partenaire..."
@@ -1358,7 +1373,7 @@ export default function AdminPartenaires() {
 
             {/* Demandes de partenariat */}
             <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <div className="p-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="font-semibold text-white flex items-center gap-2">
                     <Mail className="w-4 h-4 text-brand-cyan" />
@@ -1371,8 +1386,8 @@ export default function AdminPartenaires() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Tableau des demandes de partenariat" tabIndex={0}>
+                <table className="w-full min-w-[860px] text-sm break-words">
                   <thead className="bg-white/5">
                     <tr>
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Structure / contact</th>
@@ -1458,10 +1473,11 @@ export default function AdminPartenaires() {
                   </tbody>
                 </table>
               </div>
+              <p className="pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes et les actions.</p>
             </div>
 
             {/* Liste des partenaires */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {partenaires.map((partner) => (
                 <div key={partner.id} className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl p-5 flex flex-col gap-4">
                   <div className="flex items-start justify-between gap-3">
@@ -1539,7 +1555,7 @@ export default function AdminPartenaires() {
             <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-white/10">
                 <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs min-w-0">
                     <Search className="w-4 h-4 text-white/40" />
                     <input
                       placeholder="Rechercher un partenaire..."
@@ -1594,7 +1610,7 @@ export default function AdminPartenaires() {
 
               {/* Tableau des comptes */}
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[860px]">
                   <thead className="bg-white/5">
                     <tr>
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Partenaire</th>
@@ -1690,7 +1706,7 @@ export default function AdminPartenaires() {
                               <div className="text-white/40 text-[10px]">{compte.contact.telephone}</div>
                             </div>
                           </td>
-                          <td className="p-3 text-center">
+                          <td className="p-3 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 type="button"
@@ -1739,7 +1755,7 @@ export default function AdminPartenaires() {
 
             {/* Répertoire de contacts */}
             <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <div className="p-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="font-semibold flex items-center gap-2">
                     <Users className="w-4 h-4 text-pink-400" />
@@ -1750,7 +1766,7 @@ export default function AdminPartenaires() {
                 <Lock className="w-4 h-4 text-white/40" />
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[700px] text-sm">
                   <thead className="bg-white/5">
                     <tr>
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">Partenaire</th>
@@ -1823,7 +1839,7 @@ export default function AdminPartenaires() {
 
             {/* Filtres et recherche */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 min-w-0">
                 <Search className="w-4 h-4 text-white/40" />
                 <input
                   placeholder="Rechercher une campagne..."
@@ -1849,8 +1865,8 @@ export default function AdminPartenaires() {
 
             {/* Tableau des campagnes */}
             <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+              <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Tableau des campagnes" tabIndex={0}>
+                <table className="w-full min-w-[900px] table-fixed break-words">
                   <thead className="bg-white/5">
                     <tr>
                       <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider w-[32%]">Campagne</th>
@@ -1920,24 +1936,12 @@ export default function AdminPartenaires() {
                           <td className="p-3">
                             <div className="flex items-start gap-3">
                               <div className="h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                                {campagne.visuel ? (
-                                  <img
-                                    src={normalizeCampaignImageUrl(campagne.visuel) || FALLBACK_IMAGE}
-                                    alt={campagne.titre}
-                                    className="h-full w-full object-cover"
-                                    loading="lazy"
-                                    onError={(event) => {
-                                      const target = event.currentTarget as HTMLImageElement
-                                      if (target.src !== FALLBACK_IMAGE) {
-                                        target.src = FALLBACK_IMAGE
-                                      }
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center bg-brand-cyan/10 text-brand-cyan">
-                                    <Image className="w-5 h-5" />
-                                  </div>
-                                )}
+                                <img
+                                  src={campagne.visuel ? normalizeCampaignImageUrl(campagne.visuel) : LOGO_PLACEHOLDER}
+                                  alt={campagne.titre}
+                                  className={`h-full w-full ${campagne.visuel ? 'object-cover' : 'object-contain bg-[--brand-cyan-light] p-3'}`}
+                                  loading="lazy"
+                                />
                               </div>
                               <div className="min-w-0">
                                 <div className="font-medium text-white break-words">{campagne.titre}</div>
@@ -1966,16 +1970,16 @@ export default function AdminPartenaires() {
                           </td>
                           <td className="p-3">
                             <div className="text-sm">
-                              {new Date(campagne.date_debut).toLocaleDateString('fr-FR')}
+                              {formatCampaignDate(campagne.date_debut)}
                               {campagne.date_fin && (
-                                <> → {new Date(campagne.date_fin).toLocaleDateString('fr-FR')}</>
+                                <> → {formatCampaignDate(campagne.date_fin)}</>
                               )}
                             </div>
                           </td>
                           <td className="p-3">
                             <CampagneStatusBadge statut={campagne.statut} />
                           </td>
-                          <td className="p-3 text-center">
+                          <td className="p-3 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={() => handleEditCampagne(campagne)}
@@ -1999,8 +2003,9 @@ export default function AdminPartenaires() {
                   </tbody>
                 </table>
               </div>
+              <p className="pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes et les actions.</p>
 
-              <div className="p-4 border-t border-white/10 flex items-center justify-between text-xs text-white/40">
+              <div className="p-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-white/40">
                 <span>{filteredCampagnes.length} campagne(s)</span>
                 <span className="flex items-center gap-1">
                   <Info className="w-3 h-3" />
@@ -2025,6 +2030,7 @@ export default function AdminPartenaires() {
       {/* Modale Campagne */}
       {showCampagneModal && (
         <CampagneModal
+          key={editingCampagne?.id_campagne ?? 'nouvelle'}
           campagne={editingCampagne}
           partenaires={partenaires}
           villes={villes}

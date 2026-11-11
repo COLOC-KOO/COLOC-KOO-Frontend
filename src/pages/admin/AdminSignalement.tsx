@@ -104,7 +104,7 @@ const ConversationView = ({
           </button>
         </div>
 
-        <div className="px-4 py-3 border-b border-white/10 flex gap-6 text-sm">
+        <div className="px-4 py-3 border-b border-white/10 flex flex-wrap gap-6 text-sm">
           {signalement.participants.map((p, i) => (
             <div key={p.id} className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-cyan to-brand-green flex items-center justify-center text-[oklch(0.15_0_0)] text-xs font-bold">
@@ -166,7 +166,7 @@ const ConversationView = ({
           ) : (
             <div className="w-full max-w-2xl bg-white/5 p-3 rounded-lg">
               <div className="mb-2 text-xs text-white/70">Envoyer un avertissement à</div>
-              <div className="flex gap-2 mb-2">
+              <div className="flex flex-wrap gap-2 mb-2">
                 <button
                   className={`px-3 py-1.5 text-xs rounded-lg ${warnRecipient === 'A' ? 'bg-white/10' : 'bg-transparent'}`}
                   onClick={() => setWarnRecipient('A')}
@@ -492,7 +492,7 @@ export default function AdminSignalements() {
         {!loading && (
           <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl">
             <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row gap-3">
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs min-w-0">
                 <Search className="w-4 h-4 text-white/40" />
                 <input
                   placeholder="Rechercher un signalement..."
@@ -567,7 +567,7 @@ export default function AdminSignalements() {
                           <span className="text-white/50 text-sm">{s.date}</span>
                         </div>
                         <p className="text-sm text-white/80 mt-0.5">{s.motif}</p>
-                        <div className="flex items-center gap-4 mt-1.5 text-xs text-white/40">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-white/40">
                           <span>Signalé par {s.signaler}</span>
                           <span>·</span>
                           <span>{s.participants.map((p) => p.name).join(' vs ')}</span>
@@ -604,7 +604,7 @@ export default function AdminSignalements() {
             </div>
 
             {/* Pied de tableau */}
-            <div className="p-4 border-t border-white/10 flex gap-6 text-xs text-white/40">
+            <div className="p-4 border-t border-white/10 flex flex-wrap gap-6 text-xs text-white/40">
               <span>Total: {filteredSignalements.length}</span>
               <span>Nouveaux: {filteredSignalements.filter((s) => s.status === 'new').length}</span>
               <span>En cours: {filteredSignalements.filter((s) => s.status === 'in_progress').length}</span>

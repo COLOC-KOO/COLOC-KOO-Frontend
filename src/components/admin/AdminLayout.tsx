@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Logo } from "../Logo";
 import { roleLevel, useAuth } from "../../lib/auth";
+import { AccountSuspensionNotice } from "../site/AccountSuspensionNotice";
 import {
   api,
   type ApiPartenaireRequest,
@@ -419,27 +420,28 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[oklch(0.18_0.005_260)] text-white/90">
-      <div className="bg-black border-b border-white/10 px-4 py-2 flex items-center gap-4 flex-wrap text-xs sticky top-0 z-50">
+      <div className="bg-black border-b border-white/10 px-3 sm:px-4 py-2 flex items-center gap-2 sm:gap-4 text-xs sticky top-0 z-50">
         <span className="font-bold text-brand-olive tracking-wider">
           BACK-OFFICE
         </span>
-        <span className="px-3 py-1 rounded border text-[11px] uppercase tracking-wider font-semibold bg-brand-cyan border-brand-cyan text-[oklch(0.15_0_0)]">
+        <span className="px-2 sm:px-3 py-1 rounded border text-[11px] uppercase tracking-wider font-semibold bg-brand-cyan border-brand-cyan text-[oklch(0.15_0_0)]">
           {user?.poste || "admin"}
         </span>
-        <span className="ml-auto text-white/50">
+        <span className="ml-auto text-white/50 hidden sm:inline">
           Connecte : <b className="text-white">{user?.name}</b>
         </span>
-        <Link to="/" className="text-white/60 hover:text-white transition">
-          ← Retour site public
+        <Link to="/" className="text-white/60 hover:text-white transition whitespace-nowrap">
+          <span className="hidden sm:inline">← Retour </span>site public
         </Link>
       </div>
 
       <div className="flex">
         {/* Sidebar - comme dans la maquette */}
         <aside
+          id="admin-sidebar"
           className={`${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 fixed lg:sticky top-[41px] left-0 h-[calc(100vh-41px)] w-64 bg-[oklch(0.22_0.005_260)] border-r border-white/10 z-50 transition-transform flex flex-col overflow-y-auto`}
+          } lg:translate-x-0 fixed lg:sticky top-[41px] left-0 h-[calc(100vh-41px)] w-[min(16rem,calc(100vw_-_2.5rem))] lg:w-64 bg-[oklch(0.22_0.005_260)] border-r border-white/10 z-50 transition-transform flex flex-col overflow-y-auto`}
         >
           {/* Brand - comme dans la maquette */}
           <div className="p-4 border-b border-white/10">
@@ -511,8 +513,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Contenu principal */}
         <div className="flex-1 min-w-0">
           {/* Header - comme dans la maquette */}
-          <header className="h-14 border-b border-white/10 bg-[oklch(0.22_0.005_260)] flex items-center px-4 gap-3 sticky top-[41px] z-30">
+          <header className="h-14 border-b border-white/10 bg-[oklch(0.22_0.005_260)] flex items-center px-3 sm:px-4 gap-2 sm:gap-3 sticky top-[41px] z-30">
             <button
+              type="button"
+              aria-label={sidebarOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-controls="admin-sidebar"
+              aria-expanded={sidebarOpen}
               className="lg:hidden p-1 rounded hover:bg-white/5 transition"
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
@@ -529,7 +535,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </h1>
 
             {/* Barre de recherche - comme dans la maquette */}
-            <div className="relative flex-1 max-w-md ml-auto">
+            <div className="relative flex-1 min-w-0 max-w-md ml-auto">
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
                 <Search className="w-4 h-4 text-white/40 flex-shrink-0" />
                 <input
@@ -540,7 +546,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     window.setTimeout(() => setSearchOpen(false), 150)
                   }
                   placeholder="Rechercher un utilisateur..."
-                  className="flex-1 bg-transparent outline-none text-sm placeholder:text-white/40"
+                  className="min-w-0 flex-1 bg-transparent outline-none text-sm placeholder:text-white/40"
                 />
                 {searchQuery && (
                   <button
@@ -615,7 +621,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </button>
 
               {notificationOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-white/10 bg-[oklch(0.20_0.005_260)] shadow-2xl z-40 overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-[oklch(0.20_0.005_260)] shadow-2xl z-40 overflow-hidden">
                   <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-white">
@@ -812,7 +818,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </header>
 
           {/* Children */}
-          <main className="p-6">{children}</main>
+          <main className="p-3 sm:p-4 lg:p-6">
+            <AccountSuspensionNotice />
+            {children}
+          </main>
         </div>
       </div>
 

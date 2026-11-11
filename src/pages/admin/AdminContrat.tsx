@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
-import { api } from "../../lib/api";
+import { api, ContractDocumentRequest } from "../../lib/api";
+import AdminContractDocumentRequests from "./AdminContractDocumentRequests";
 import { useDialog } from "../../components/ui/Dialog";
 import {
   FileText,
@@ -135,38 +136,6 @@ interface ApiBackofficeContratDetails extends ApiBackofficeContratRow {
     commentaire?: string | null;
   }>;
 }
-
-// ===== DONNÉES MOCKÉES POUR LES OFFRES =====
-const MOCK_OFFRES: OffreCommerciale[] = [
-  {
-    id: "offre-1",
-    nom: "Contrat de colocation",
-    prix: 120000,
-    type: "contrat",
-    description: "Contrat standard conforme à la législation",
-  },
-  {
-    id: "offre-2",
-    nom: "État des lieux d'entrée",
-    prix: 80000,
-    type: "edl",
-    description: "Constat contradictoire à l'entrée",
-  },
-  {
-    id: "offre-3",
-    nom: "État des lieux de sortie",
-    prix: 80000,
-    type: "edl",
-    description: "Constat contradictoire à la sortie",
-  },
-  {
-    id: "offre-4",
-    nom: "Avenant au contrat",
-    prix: 50000,
-    type: "contrat",
-    description: "Modification du contrat existant",
-  },
-];
 
 // ===== DONNÉES MOCKÉES POUR LES VERSEMENTS =====
 const MOCK_VERSEMENTS: Versement[] = [
@@ -600,8 +569,8 @@ const DocumentDetailsModal = ({
             <div className="text-white/40 text-xs uppercase tracking-wider mb-2">
               Parties
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Parties au contrat" tabIndex={0}>
+              <table className="w-full min-w-[700px] text-sm break-words">
                 <thead className="bg-white/5">
                   <tr>
                     <th className="text-left p-2 text-white/40 font-medium text-xs">
@@ -663,6 +632,7 @@ const DocumentDetailsModal = ({
                 </tbody>
               </table>
             </div>
+            <p className="pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes.</p>
 
             {estComplet ? (
               <div className="mt-2 text-xs text-green-400 flex items-center gap-1">
@@ -691,8 +661,9 @@ const DocumentDetailsModal = ({
                 Aucun versement enregistré pour cette demande
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <>
+                <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Versements associés au contrat" tabIndex={0}>
+                  <table className="w-full min-w-[820px] text-sm break-words">
                   <thead className="bg-white/5">
                     <tr>
                       <th className="text-left p-2 text-white/40 font-medium text-xs">
@@ -744,7 +715,7 @@ const DocumentDetailsModal = ({
                           <td className="p-2">
                             <VersementStatusBadge statut={v.statut} />
                           </td>
-                          <td className="p-2 text-center">
+                          <td className="p-2 text-center whitespace-nowrap">
                             {v.statut === "a-verifier" && (
                               <div className="flex items-center justify-center gap-1">
                                 <button
@@ -790,8 +761,10 @@ const DocumentDetailsModal = ({
                       <td colSpan={2} className="p-2"></td>
                     </tr>
                   </tfoot>
-                </table>
-              </div>
+                  </table>
+                </div>
+                <p className="pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes et les actions.</p>
+              </>
             )}
           </div>
 
@@ -919,8 +892,9 @@ const DocumentDetailsModal = ({
 // ===== COMPOSANT PRINCIPAL =====
 export default function AdminContratsEDL() {
   const dialog = useDialog();
-  const [activeTab, setActiveTab] = useState<"demandes" | "offres">("demandes");
+  const [activeTab, setActiveTab] = useState<"demandes" | "nouvelles-demandes" | "offres">("demandes");
   const [documents, setDocuments] = useState<DocumentDemande[]>([]);
+  const [newDocumentRequests, setNewDocumentRequests] = useState<ContractDocumentRequest[]>([]);
   const [offres, setOffres] = useState<OffreCommerciale[]>([]);
   const [versements, setVersements] = useState<Versement[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1014,6 +988,7 @@ export default function AdminContratsEDL() {
 
   useEffect(() => {
     loadDocuments();
+    loadNewDocumentRequests();
     loadOffres();
     loadVersements();
   }, []);
@@ -1021,8 +996,11 @@ export default function AdminContratsEDL() {
   // Statistiques
   const stats = useMemo(() => {
     const total = documents.length;
-    const contrats = documents.filter((d) => d.type === "contrat").length;
-    const edl = documents.filter((d) => d.type === "edl").length;
+    const submittedNewRequests = newDocumentRequests.filter((request) => request.statut !== "brouillon");
+    const contrats = documents.filter((d) => d.type === "contrat").length +
+      submittedNewRequests.filter((request) => request.type_document === "contrat").length;
+    const edl = documents.filter((d) => d.type === "edl").length +
+      submittedNewRequests.filter((request) => request.type_document === "edl").length;
     const aEmettre = documents.filter((d) => d.statut === "a-emettre").length;
     const aPlanifier = documents.filter(
       (d) => d.statut === "a-planifier",
@@ -1031,20 +1009,42 @@ export default function AdminContratsEDL() {
     const signe = documents.filter((d) => d.statut === "signe").length;
     const enAttente = documents.filter((d) => d.statut === "en-attente").length;
 
-    const totalMontant = documents.reduce((sum, d) => sum + d.montant, 0);
+    const newRequestsToProcess = submittedNewRequests.filter((request) =>
+      request.statut === "a-verifier" || request.statut === "en-cours"
+    ).length;
+    const totalMontant = documents.reduce((sum, d) => sum + d.montant, 0) +
+      submittedNewRequests.reduce((sum, request) => sum + Number(request.montant || 0), 0);
 
     return {
-      total,
+      total: total + submittedNewRequests.length,
       contrats,
       edl,
       aEmettre,
       aPlanifier,
+      newRequestsToProcess,
       emis,
       signe,
       enAttente,
       totalMontant,
     };
-  }, [documents]);
+  }, [documents, newDocumentRequests]);
+
+  const submittedNewRequests = useMemo(
+    () => newDocumentRequests.filter((request) => request.statut !== "brouillon"),
+    [newDocumentRequests],
+  );
+
+  const loadNewDocumentRequests = async () => {
+    try {
+      setNewDocumentRequests(await api.backofficeContractDocumentRequests());
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de charger les nouvelles demandes",
+      );
+    }
+  };
 
   // Charger les documents
   const loadDocuments = async () => {
@@ -1069,34 +1069,40 @@ export default function AdminContratsEDL() {
     try {
       const services = await api.backofficeServicesCkoo();
       const offresData = services
-        .filter(
-          (s: any) =>
-            s.cle_service?.startsWith("contrat_") ||
-            s.cle_service?.startsWith("edl_"),
-        )
-        .map((s: any) => ({
-          id: String(s.id_service),
-          nom: s.nom,
-          prix: s.prix,
-          type: s.cle_service?.startsWith("contrat_") ? "contrat" : "edl",
-          description: s.description || undefined,
-        }));
+        .flatMap((service) => {
+          const cleService = service.cle_service?.trim() || "";
+          const cleServiceNormalisee = cleService.toLowerCase();
+          if (
+            !cleServiceNormalisee.startsWith("contrat") &&
+            !cleServiceNormalisee.startsWith("edl")
+          ) {
+            return [];
+          }
+          return [{
+            id: String(service.id_service),
+            nom: service.nom,
+            prix: Number(service.prix),
+            type: cleServiceNormalisee.startsWith("contrat") ? "contrat" as const : "edl" as const,
+            description: service.description || undefined,
+          }];
+        });
 
       const typedOffres: OffreCommerciale[] = offresData.map((item) => ({
         id: item.id,
         nom: item.nom,
         prix: item.prix,
-        type: item.type as "contrat" | "edl",
+        type: item.type,
         description: item.description,
       }));
 
-      if (typedOffres.length > 0) {
-        setOffres(typedOffres);
-      } else {
-        setOffres(MOCK_OFFRES);
-      }
+      setOffres(typedOffres);
     } catch (err) {
-      setOffres(MOCK_OFFRES);
+      setOffres([]);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de charger les offres commerciales",
+      );
     }
   };
 
@@ -1231,6 +1237,7 @@ export default function AdminContratsEDL() {
   const handleRefresh = async () => {
     await Promise.all([
       loadDocuments(),
+      loadNewDocumentRequests(),
       loadOffres(),
       loadVersements()
     ]);
@@ -1278,21 +1285,9 @@ export default function AdminContratsEDL() {
       setSuccessMessage("Offre ajoutée avec succès");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      const newOffre: OffreCommerciale = {
-        id: `offre-${Date.now()}`,
-        nom: newOffreNom.trim(),
-        prix: prix,
-        type: newOffreType,
-        description: newOffreDescription.trim() || undefined,
-      };
-      setOffres([...offres, newOffre]);
-      setShowAddOffre(false);
-      setNewOffreNom("");
-      setNewOffrePrix("");
-      setNewOffreType("contrat");
-      setNewOffreDescription("");
-      setSuccessMessage("Offre ajoutée localement");
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setError(
+        err instanceof Error ? err.message : "Impossible d'ajouter l'offre",
+      );
     }
   };
 
@@ -1312,9 +1307,9 @@ export default function AdminContratsEDL() {
       setSuccessMessage("Offre supprimée avec succès");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      setOffres(offres.filter((o) => o.id !== id));
-      setSuccessMessage("Offre supprimée localement");
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setError(
+        err instanceof Error ? err.message : "Impossible de supprimer l'offre",
+      );
     }
   };
 
@@ -1375,9 +1370,9 @@ export default function AdminContratsEDL() {
             <h1 className="bebas text-3xl text-white">
               Contrats &amp; états des lieux
             </h1>
-            <p className="text-white/50 text-sm">
-              {stats.total} documents · {stats.contrats} contrats · {stats.edl}{" "}
-              EDL · {stats.aEmettre} à émettre
+            <p className="break-words text-white/50 text-sm">
+              {stats.total} demandes au total · {stats.contrats} contrats · {stats.edl}{" "}
+              EDL · {stats.newRequestsToProcess + stats.aEmettre + stats.aPlanifier} à traiter
             </p>
           </div>
           <button
@@ -1389,19 +1384,15 @@ export default function AdminContratsEDL() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-4">
+        <div className="rounded-xl border border-brand-cyan/25 bg-brand-cyan/10 p-4">
           <div className="flex items-start gap-3">
-            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />
             <div>
-              <h2 className="text-sm font-semibold text-amber-200">
-                Point de cadrage à organiser avec le client
+              <h2 className="text-sm font-semibold text-brand-cyan">
+                Parcours Contrats &amp; EDL disponible
               </h2>
               <p className="mt-1 text-xs leading-relaxed text-white/60">
-                Définir l’intégration d’offres de documents pour les locataires,
-                propriétaires et professionnels : saisie des champs, choix des
-                clauses, aperçu des premières pages, paiement Mobile Money et
-                PDF final non modifiable. Les EDL devront être communs aux trois
-                profils.
+                Les clients peuvent maintenant compléter un parcours guidé, sélectionner les clauses du catalogue, consulter les deux premières pages et soumettre leur paiement Mobile Money. Le PDF final est débloqué après validation du paiement.
               </p>
             </div>
           </div>
@@ -1421,10 +1412,10 @@ export default function AdminContratsEDL() {
 
         {/* Onglets */}
         <div className="border-b border-white/10">
-          <div className="flex gap-1">
+          <div className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap">
             <button
               onClick={() => setActiveTab("demandes")}
-              className={`px-4 py-2 text-sm font-medium transition ${
+              className={`min-w-0 px-3 py-2 text-center text-xs font-medium leading-tight transition sm:px-4 sm:text-sm ${
                 activeTab === "demandes"
                   ? "text-brand-cyan border-b-2 border-brand-cyan"
                   : "text-white/40 hover:text-white/60"
@@ -1434,7 +1425,7 @@ export default function AdminContratsEDL() {
             </button>
             <button
               onClick={() => setActiveTab("offres")}
-              className={`px-4 py-2 text-sm font-medium transition ${
+              className={`min-w-0 px-3 py-2 text-center text-xs font-medium leading-tight transition sm:px-4 sm:text-sm ${
                 activeTab === "offres"
                   ? "text-brand-cyan border-b-2 border-brand-cyan"
                   : "text-white/40 hover:text-white/60"
@@ -1442,8 +1433,27 @@ export default function AdminContratsEDL() {
             >
               Offres commerciales
             </button>
+            <button
+              onClick={() => setActiveTab("nouvelles-demandes")}
+              className={`min-w-0 px-3 py-2 text-center text-xs font-medium leading-tight transition sm:px-4 sm:text-sm ${
+                activeTab === "nouvelles-demandes"
+                  ? "text-brand-cyan border-b-2 border-brand-cyan"
+                  : "text-white/40 hover:text-white/60"
+              }`}
+            >
+              Nouvelles demandes
+              {newDocumentRequests.filter((request) => request.statut !== "brouillon").length > 0 && (
+                <span className="ml-2 rounded-full bg-brand-cyan/20 px-2 py-0.5 text-xs text-brand-cyan">
+                  {newDocumentRequests.filter((request) => request.statut !== "brouillon").length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
+
+        {activeTab === "nouvelles-demandes" && (
+          <AdminContractDocumentRequests onRequestsChanged={() => void loadNewDocumentRequests()} />
+        )}
 
         {/* ===== ONGLET DEMANDES ===== */}
         {activeTab === "demandes" && (
@@ -1470,7 +1480,7 @@ export default function AdminContratsEDL() {
               </div>
               <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-amber-400">
-                  {stats.aEmettre + stats.aPlanifier}
+                  {stats.aEmettre + stats.aPlanifier + stats.newRequestsToProcess}
                 </div>
                 <div className="text-xs text-white/40">À traiter</div>
               </div>
@@ -1481,18 +1491,83 @@ export default function AdminContratsEDL() {
                 <div className="text-xs text-white/40">Signés</div>
               </div>
               <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-brand-cyan">
+                <div className="text-2xl font-bold text-brand-cyan break-words">
                   {stats.totalMontant.toLocaleString("fr-FR")}
                 </div>
                 <div className="text-xs text-white/40">Montant total</div>
               </div>
             </div>
 
+            {submittedNewRequests.length > 0 && (
+              <section className="overflow-hidden rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)]">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+                  <div>
+                    <h2 className="font-semibold text-white">Demandes du parcours guidé</h2>
+                    <p className="mt-0.5 text-xs text-white/40">
+                      Contrats et états des lieux créés depuis le nouveau parcours.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-brand-cyan/15 px-2.5 py-1 text-xs font-semibold text-brand-cyan">
+                    {submittedNewRequests.length} demande(s)
+                  </span>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {submittedNewRequests.map((request) => (
+                    <article key={request.id_demande} className="flex min-w-0 flex-col items-stretch justify-between gap-3 px-3 py-3 sm:flex-row sm:items-center sm:px-4">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="break-all font-semibold text-white">{request.reference}</span>
+                          <span className="text-xs text-white/50">
+                            {request.type_document === "edl" ? "État des lieux" : "Contrat"}
+                          </span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            request.statut === "valide"
+                              ? "bg-green-500/15 text-green-300"
+                              : request.statut === "refuse"
+                                ? "bg-red-500/15 text-red-300"
+                                : "bg-amber-500/15 text-amber-300"
+                          }`}>
+                            {request.statut === "valide"
+                              ? "Validée"
+                              : request.statut === "refuse"
+                                ? "Refusée"
+                                : request.statut === "en-cours"
+                                  ? "En traitement"
+                                  : "Paiement à vérifier"}
+                          </span>
+                        </div>
+                        <p className="mt-1 break-words text-xs text-white/50">
+                          {request.donnees.nom_demandeur || request.email || "Demandeur"} · {request.profil_demandeur}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+                        <div className="text-left sm:text-right">
+                          <div className="text-sm font-semibold text-brand-cyan">
+                            {Number(request.montant || 0).toLocaleString("fr-FR")} MGA
+                          </div>
+                          <div className="text-[10px] text-white/40">
+                            Paiement : {request.statut_paiement.replace(/-/g, " ")}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("nouvelles-demandes")}
+                          className="shrink-0 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5"
+                        >
+                          Ouvrir
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Filtres et recherche */}
             <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-white/10">
                 <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs min-w-0">
                     <Search className="w-4 h-4 text-white/40" />
                     <input
                       placeholder="Rechercher un document..."
@@ -1592,7 +1667,7 @@ export default function AdminContratsEDL() {
                 ) : filteredDocuments.length === 0 ? (
                   <div className="text-center py-12 text-white/40">
                     <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p>Aucun document trouvé</p>
+                    <p>Aucun document de l’ancien parcours trouvé</p>
                   </div>
                 ) : (
                   filteredDocuments.map((doc) => (
@@ -1684,40 +1759,6 @@ export default function AdminContratsEDL() {
                 )}
               </div>
 
-              {/* Pied de tableau */}
-              <div className="p-4 border-t border-white/10 flex flex-wrap items-center gap-4 text-xs text-white/40">
-                <span>{filteredDocuments.length} documents</span>
-                <span>·</span>
-                <span className="text-purple-400">
-                  {filteredDocuments.filter((d) => d.type === "contrat").length}{" "}
-                  contrats
-                </span>
-                <span>·</span>
-                <span className="text-green-400">
-                  {filteredDocuments.filter((d) => d.type === "edl").length} EDL
-                </span>
-                <span>·</span>
-                <span className="text-amber-400">
-                  {
-                    filteredDocuments.filter(
-                      (d) =>
-                        d.statut === "a-emettre" || d.statut === "a-planifier",
-                    ).length
-                  }{" "}
-                  à traiter
-                </span>
-                <span>·</span>
-                <span className="text-brand-green">
-                  {filteredDocuments.filter((d) => d.statut === "signe").length}{" "}
-                  signés
-                </span>
-                <span className="ml-auto">
-                  Montant total:{" "}
-                  <b className="text-brand-cyan">
-                    {stats.totalMontant.toLocaleString("fr-FR")} MGA
-                  </b>
-                </span>
-              </div>
             </div>
 
             {/* Note */}
@@ -1762,7 +1803,7 @@ export default function AdminContratsEDL() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[700px]">
                 <thead className="bg-white/5">
                   <tr>
                     <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
@@ -1783,59 +1824,67 @@ export default function AdminContratsEDL() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {offres.map((offre) => (
-                    <tr key={offre.id} className="hover:bg-white/5 transition">
-                      <td className="p-3 font-medium">{offre.nom}</td>
-                      <td className="p-3">
-                        <span
-                          className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full border ${
-                            offre.type === "contrat"
-                              ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
-                              : "bg-green-500/15 text-green-400 border-green-500/30"
-                          }`}
-                        >
-                          {offre.type === "contrat" ? (
-                            <FileSignature className="w-3 h-3" />
-                          ) : (
-                            <ClipboardCheck className="w-3 h-3" />
-                          )}
-                          {offre.type === "contrat" ? "Contrat" : "EDL"}
-                        </span>
-                      </td>
-                      <td className="p-3 text-white/60 text-sm">
-                        {offre.description || "—"}
-                      </td>
-                      <td className="p-3 text-right font-bold text-brand-cyan">
-                        {offre.prix.toLocaleString("fr-FR")} MGA
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => {
-                            setEditingOffre(offre);
-                            setNewOffreNom(offre.nom);
-                            setNewOffrePrix(String(offre.prix));
-                            setNewOffreType(offre.type);
-                            setNewOffreDescription(offre.description || "");
-                            setShowAddOffre(true);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-brand-cyan/20 text-brand-cyan transition"
-                          title="Modifier"
-                          aria-label={`Modifier l'offre ${offre.nom}`}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteOffre(offre.id)}
-                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        </div>
+                  {offres.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-6 text-center text-sm text-white/40">
+                        Aucune offre commerciale enregistrée.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    offres.map((offre) => (
+                      <tr key={offre.id} className="hover:bg-white/5 transition">
+                        <td className="p-3 font-medium">{offre.nom}</td>
+                        <td className="p-3">
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full border ${
+                              offre.type === "contrat"
+                                ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                                : "bg-green-500/15 text-green-400 border-green-500/30"
+                            }`}
+                          >
+                            {offre.type === "contrat" ? (
+                              <FileSignature className="w-3 h-3" />
+                            ) : (
+                              <ClipboardCheck className="w-3 h-3" />
+                            )}
+                            {offre.type === "contrat" ? "Contrat" : "EDL"}
+                          </span>
+                        </td>
+                        <td className="p-3 text-white/60 text-sm">
+                          {offre.description || "—"}
+                        </td>
+                        <td className="p-3 text-right font-bold text-brand-cyan">
+                          {offre.prix.toLocaleString("fr-FR")} MGA
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingOffre(offre);
+                                setNewOffreNom(offre.nom);
+                                setNewOffrePrix(String(offre.prix));
+                                setNewOffreType(offre.type);
+                                setNewOffreDescription(offre.description || "");
+                                setShowAddOffre(true);
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-brand-cyan/20 text-brand-cyan transition"
+                              title="Modifier"
+                              aria-label={`Modifier l'offre ${offre.nom}`}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteOffre(offre.id)}
+                              className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1858,7 +1907,7 @@ export default function AdminContratsEDL() {
           onClick={closeOffreModal}
         >
           <div
-            className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full p-6"
+            className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">

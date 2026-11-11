@@ -42,6 +42,7 @@
     "title": "Location",
     "subtitle": "Where is your accommodation?",
     "city": "City",
+    "cityPlaceholder": "Choose a city",
     "district": "District",
     "districtPlaceholder": "Ex: Isoraka, Analakely...",
     "address": "Exact address",

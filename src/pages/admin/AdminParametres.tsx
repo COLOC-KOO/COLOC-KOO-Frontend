@@ -12,7 +12,7 @@ export default function AdminParametres() {
         </div>
 
         {settingsSections.map((section) => (
-          <div key={section.title} className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl p-6">
+          <div key={section.title} className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl p-4 sm:p-6">
             <h2 className="bebas text-xl text-white mb-4">{section.title}</h2>
             <div className="grid md:grid-cols-2 gap-4">
               {section.fields.map(([label, value]) => (

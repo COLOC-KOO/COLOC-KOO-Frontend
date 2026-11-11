@@ -36,6 +36,7 @@
     "description": "Optional. Once confirmed, a <b>{{boldBadge}}</b> badge reassures your future flatmates. Verification will be done through your mobile operator (USSD: Telma / Orange / Airtel), with no SMS fees.",
     "badgeLabel": "“Identity Verified”",
     "notConfirmed": "Identity not verified",
+    "rejectedTitle": "Verification rejected — reason",
     "comingSoon": "Coming soon"
   },
   "privacy": {

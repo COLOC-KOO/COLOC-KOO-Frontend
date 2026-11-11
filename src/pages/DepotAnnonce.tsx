@@ -37,6 +37,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { geocodeAddress } from '../lib/geocoding'
 import { cn } from '../lib/utils'
+import { LOGO_PLACEHOLDER } from '../lib/placeholders'
 
 const markerIcon = new Icon({
   iconUrl: icon,
@@ -739,6 +740,11 @@ const response = await api.createDepotAnnonce({
                   ))}
                 </div>
               )}
+              {photoPreviews.length === 0 && (
+                <div className="mx-auto aspect-[4/3] w-full max-w-sm overflow-hidden rounded border border-gray-200 bg-[--brand-cyan-light] p-8">
+                  <img src={LOGO_PLACEHOLDER} alt="" className="h-full w-full object-contain" />
+                </div>
+              )}
             </div>
           </FormSection>
 
@@ -753,7 +759,7 @@ const response = await api.createDepotAnnonce({
               type="button"
               disabled={!canSubmit || submitting || processingPhotos}
               onClick={handleSubmit}
-              className="h-14 min-w-[320px] rounded-xl bg-[var(--brand-cyan-dark)] px-8 text-base font-extrabold text-white shadow-xl shadow-cyan-900/20 ring-2 ring-white hover:bg-[var(--brand-green-dark)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-14 w-full min-w-0 max-w-[400px] rounded-xl bg-[var(--brand-cyan-dark)] px-8 text-base font-extrabold text-white shadow-xl shadow-cyan-900/20 ring-2 ring-white hover:bg-[var(--brand-green-dark)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[320px]"
             >
               {submitting || processingPhotos ? <Loader2 className="mr-3 h-4 w-4 animate-spin" /> : <Pencil className="mr-3 h-4 w-4" />}
               {processingPhotos ? 'Préparation des photos...' : 'Publier votre annonce'}

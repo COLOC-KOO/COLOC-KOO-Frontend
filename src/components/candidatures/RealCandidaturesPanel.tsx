@@ -60,8 +60,8 @@ export function OwnerCandidaturesDashboard({
           </div>
           <div className="mt-2 space-y-2">
             {retained.length ? retained.map((candidate) => (
-              <div key={candidate.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
-                <div className="flex min-w-0 items-center gap-2"><span className={avatarClass}>{candidate.initials}</span><div className="min-w-0"><p className="truncate text-sm font-bold">{candidate.name}</p><p className="truncate text-[11px] text-muted-foreground">{candidate.subtitle}</p></div></div>
+              <div key={candidate.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2.5">
+                <div className="flex min-w-0 flex-1 items-center gap-2"><span className={avatarClass}>{candidate.initials}</span><div className="min-w-0"><p className="truncate text-sm font-bold">{candidate.name}</p><p className="truncate text-[11px] text-muted-foreground">{candidate.subtitle}</p></div></div>
                 <span className="rounded-full bg-brand-green-light px-2 py-0.5 text-[10px] font-semibold text-brand-green-dark">{t('dashboard.retained_badge')}</span>
               </div>
             )) : <p className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">{t('dashboard.retained_empty')}</p>}
@@ -72,8 +72,8 @@ export function OwnerCandidaturesDashboard({
           <div className="flex items-center gap-2"><h2 className="bebas text-base text-brand-dark">{t('dashboard.pending_title')}</h2><span className="rounded-full bg-brand-dark px-2 py-0.5 text-[10px] font-bold text-white">{pending.length}</span></div>
           <div className="mt-2 space-y-2">
             {pending.length ? pending.map((candidate) => (
-              <div key={candidate.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
-                <div className="flex min-w-0 items-center gap-2"><span className={avatarClass}>{candidate.initials}</span><div className="min-w-0"><p className="truncate text-sm font-bold">{candidate.name}</p><p className="truncate text-[11px] text-muted-foreground">{candidate.subtitle}</p></div></div>
+              <div key={candidate.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2.5">
+                <div className="flex min-w-0 flex-1 items-center gap-2"><span className={avatarClass}>{candidate.initials}</span><div className="min-w-0"><p className="truncate text-sm font-bold">{candidate.name}</p><p className="truncate text-[11px] text-muted-foreground">{candidate.subtitle}</p></div></div>
                 <div className="flex shrink-0 gap-1.5">
                   <button type="button" aria-label={`Discuter avec ${candidate.name}`} onClick={() => onDiscuss(candidate)} className="rounded-lg border border-brand-cyan bg-brand-cyan-light p-2 text-brand-cyan-dark hover:bg-brand-cyan hover:text-white"><MessageCircle className="h-4 w-4" /></button>
                   <button type="button" aria-label={`Accepter ${candidate.name}`} onClick={() => onAccept(candidate.id)} className="rounded-lg border border-brand-green bg-brand-green-light p-2 text-brand-green-dark hover:bg-brand-green hover:text-white"><Check className="h-4 w-4" /></button>
@@ -127,7 +127,7 @@ export function RealCandidaturesPanel({
   const { t } = useTranslation('candidaturesPanel');
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <h2 className="bebas text-2xl">{t('panel.title')}</h2>
         {!hasApplied && user && annonceId && (

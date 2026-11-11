@@ -1,25 +1,13 @@
-import { Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import type { MouseEvent } from "react";
 import { ArrowRight } from "lucide-react";
 
 import { Listing } from "../../types";
-import type { ApiPartenaireCampagne } from "../../lib/api";
 import { useTranslation } from "react-i18next";
 import { ListingCard } from "../site/ListingCard";
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:4000/api"
-).replace(/\/api\/?$/, "");
-
-function normalizeCampaignImageUrl(value: string) {
-  if (/^https?:\/\//i.test(value)) return value;
-  return `${API_BASE_URL}${value.startsWith("/") ? "" : "/"}${value}`;
-}
-
 type FeaturedListingsSectionProps = {
   featuredListings: Listing[];
-  campaigns: ApiPartenaireCampagne[];
   loading: boolean;
   hoveredListingId: string | null;
   setHoveredListingId: (id: string | null) => void;
@@ -30,7 +18,6 @@ type FeaturedListingsSectionProps = {
 
 export function FeaturedListingsSection({
   featuredListings,
-  campaigns,
   loading,
   hoveredListingId,
   setHoveredListingId,
@@ -40,22 +27,7 @@ export function FeaturedListingsSection({
 }: FeaturedListingsSectionProps) {
   const { t } = useTranslation(["home", "common"]);
   const navigate = useNavigate();
-  const feedCampaigns = campaigns.filter((campaign) => campaign.emplacement === "fil_annonces");
   const listingsToShow = featuredListings.slice(0, 5);
-  const feedItems: Array<
-    | { type: "listing"; listing: Listing }
-    | { type: "campaign"; campaign: ApiPartenaireCampagne }
-  > = [];
-  const campaignInsertionIndex = Math.min(1, listingsToShow.length - 1);
-  listingsToShow.forEach((listing, index) => {
-    feedItems.push({ type: "listing", listing });
-    if (index === campaignInsertionIndex) {
-      feedCampaigns.forEach((campaign) => feedItems.push({ type: "campaign", campaign }));
-    }
-  });
-  if (listingsToShow.length === 0) {
-    feedCampaigns.forEach((campaign) => feedItems.push({ type: "campaign", campaign }));
-  }
 
   return (
     <section className="bg-white border-b border-gray-100 py-10 w-full">
@@ -88,52 +60,22 @@ export function FeaturedListingsSection({
               </div>
             ))}
           </div>
-        ) : feedItems.length > 0 ? (
+        ) : listingsToShow.length > 0 ? (
           <>
             <div className="relative overflow-x-auto pb-4">
               <div className="flex gap-5 min-w-max py-2">
-                {feedItems.map((item) => item.type === "listing" ? (
-                  <div key={`listing-${item.listing.id}`} className="w-80 flex-shrink-0">
+                {listingsToShow.map((listing) => (
+                  <div key={`listing-${listing.id}`} className="w-80 flex-shrink-0">
                     <ListingCard
-                      l={item.listing}
-                      isFavorite={favoriteIds.has(String(item.listing.id))}
+                      l={listing}
+                      isFavorite={favoriteIds.has(String(listing.id))}
                       onFavoriteClick={
                         onFavoriteClick
-                          ? (event) => onFavoriteClick(event, item.listing.id)
+                          ? (event) => onFavoriteClick(event, listing.id)
                           : undefined
                       }
                     />
                   </div>
-                ) : (
-                  <article
-                    key={`campaign-${item.campaign.id_campagne}`}
-                    className="w-80 flex-shrink-0 overflow-hidden rounded-2xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white shadow-sm"
-                  >
-                    {item.campaign.visuel ? (
-                      <img
-                        src={normalizeCampaignImageUrl(item.campaign.visuel)}
-                        alt=""
-                        className="h-44 w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-44 items-center justify-center bg-cyan-100 text-4xl font-semibold text-cyan-800">
-                        {(item.campaign.partenaire_nom || item.campaign.titre || "P").charAt(0)}
-                      </div>
-                    )}
-                    <div className="space-y-2 p-4">
-                      <span className="inline-flex rounded-full bg-cyan-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-cyan-800">
-                        Partenaire
-                      </span>
-                      <h3 className="font-semibold text-slate-900">{item.campaign.titre}</h3>
-                      <p className="text-sm text-slate-600">
-                        {item.campaign.description || item.campaign.partenaire_nom}
-                      </p>
-                      <p className="text-xs font-medium text-slate-500">
-                        {item.campaign.partenaire_nom}
-                      </p>
-                    </div>
-                  </article>
                 ))}
               </div>
             </div>

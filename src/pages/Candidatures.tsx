@@ -103,12 +103,12 @@ function WelcomeBanner({
   return (
     <div className="mx-auto mt-3 max-w-6xl px-4 sm:px-6">
       <div className="rounded-2xl border border-brand-green/30 bg-brand-green-light/20 p-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-green text-white">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-green text-white">
               <Sparkles className="h-5 w-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-semibold text-brand-green-dark">
                 FÉLICITATIONS, {candidateName.toUpperCase()} !
               </h3>
@@ -1717,6 +1717,7 @@ export default function Candidatures() {
 
   return (
     <SiteLayout>
+      <div className="w-full overflow-x-clip">
       <div className="mx-auto min-h-[calc(100vh-120px)] max-w-2xl px-4 py-6 sm:px-6">
         <div
           className="sticky top-20 z-40 mb-3 w-screen border-b border-border bg-background pb-3 pt-2"
@@ -1796,7 +1797,7 @@ export default function Candidatures() {
             )}
             {/* ===== SECTION ÉQUIPES RÉELLES ===== */}
             {activeView === "cand" && (
-              <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+              <div className="rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
                 <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
                   <h2 className="bebas text-2xl">{t('cand.title')}</h2>
                   <div className="flex gap-2">
@@ -1841,7 +1842,7 @@ export default function Candidatures() {
                               : "border-border bg-card"
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-4">
+                          <div className="flex flex-wrap items-center justify-between gap-4">
                             <div>
                               <h3 className="bebas text-xl">{equipe.nom}</h3>
                               <div className="text-sm text-muted-foreground">
@@ -1977,9 +1978,9 @@ export default function Candidatures() {
 
                 {/* Modal de création d'équipe */}
                 {showCreateEquipe && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
-                      <div className="flex items-center justify-between mb-4">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+                    <div className="my-auto max-h-[85vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-6">
+                      <div className="mb-4 flex items-center justify-between">
                         <h3 className="text-xl font-semibold">
                           {t('cand.createModalTitle')}
                         </h3>
@@ -2025,7 +2026,7 @@ export default function Candidatures() {
                           />
                         </div>
 
-                        <div className="flex gap-3 mt-4">
+                        <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row">
                           <button
                             onClick={() => {
                               setShowCreateEquipe(false);
@@ -2058,7 +2059,7 @@ export default function Candidatures() {
                 const allPaid = myContracts.every(isContractPaid);
                 const isFinalized = annonceData?.statut === "terminee";
                 return (
-                  <div className="mb-6 rounded-3xl border border-brand-cyan/30 bg-white p-6 shadow-sm">
+                  <div className="mb-6 rounded-3xl border border-brand-cyan/30 bg-white p-4 shadow-sm sm:p-6">
                     <div className="bebas text-2xl text-brand-cyan-dark">
                       {t('contract.title')}
                     </div>
@@ -2079,7 +2080,7 @@ export default function Candidatures() {
                                 : t('contract.contractFlat')}{" "}
                               · réf {c.reference}
                             </span>
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-3">
                               <span
                                 className={
                                   done
@@ -2130,7 +2131,7 @@ export default function Candidatures() {
             {activeView === "cand" &&
               !isAnnonceOwner &&
               myContracts.filter((c) => c.peut_payer).length > 0 && (
-                <div className="mb-6 rounded-3xl border border-brand-cyan/40 bg-white p-6 shadow-sm">
+                <div className="mb-6 rounded-3xl border border-brand-cyan/40 bg-white p-4 shadow-sm sm:p-6">
                   <div className="bebas text-2xl text-brand-cyan-dark">
                     {t('cand.yourContractTitle')}
                   </div>
@@ -2156,7 +2157,7 @@ export default function Candidatures() {
                               {t('cand.yourShare', { amount: fmtAr(c.ma_part) })}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={() => openContractDocument(c.id_contrat)}
@@ -2221,7 +2222,7 @@ export default function Candidatures() {
             {/* ===== VUE TRACK ===== */}
             {activeView === "track" && (
               <div className="space-y-6">
-                <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-5">
+                <div className="rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6 space-y-5">
                   <div className="rounded-3xl bg-brand-green-light/40 p-4 text-brand-green-dark">
                     <div className="flex items-center gap-3 text-lg font-semibold">
                       <Scale className="h-5 w-5" />
@@ -2234,7 +2235,7 @@ export default function Candidatures() {
 
                   {completedMembers.length > 0 ? (
                     <div className="rounded-3xl border border-border bg-background p-5">
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="text-lg font-semibold text-brand-cyan-dark">
                           {t('track.membersValidatedTitle')}
                         </div>
@@ -2246,9 +2247,9 @@ export default function Candidatures() {
                         {completedMembers.map((member, index) => (
                           <div
                             key={`${member.nom}-${index}`}
-                            className="flex items-center justify-between rounded-2xl border border-border px-4 py-3"
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border px-4 py-3"
                           >
-                            <div className="flex items-center gap-3">
+                            <div className="flex min-w-0 flex-1 items-center gap-3">
                               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-cyan text-sm font-semibold text-white">
                                 {member.initiales ||
                                   member.nom.slice(0, 2).toUpperCase()}
@@ -2359,7 +2360,7 @@ export default function Candidatures() {
                           key={team.id}
                           className={`rounded-3xl border p-5 ${isWinner ? "border-brand-green bg-brand-green-light/30" : "border-border bg-card"}`}
                         >
-                          <div className="flex items-center justify-between gap-4">
+                          <div className="flex flex-wrap items-center justify-between gap-4">
                             <div>
                               <h3 className="bebas text-xl">{team.title}</h3>
                               <div className="text-sm text-muted-foreground">
@@ -2405,7 +2406,7 @@ export default function Candidatures() {
             {/* ===== VUE CAND ===== */}
             {activeView === "cand" && (
               <div className="space-y-6">
-                <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                <div className="rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                       <div
@@ -2469,8 +2470,8 @@ export default function Candidatures() {
                   </div>
                 )}
 
-                <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
+                <div className="rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <div className="text-lg font-semibold">
                         {t('cand.title')}
@@ -2627,8 +2628,8 @@ export default function Candidatures() {
                 </div>
 
                 {myTeamData && (
-                  <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                    <div className="flex items-center justify-between gap-4">
+                  <div className="rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
                       <div>
                         <div className="text-lg font-semibold">
                           {t('cand.title')}
@@ -2676,11 +2677,12 @@ export default function Candidatures() {
           </div>
         )}
       </div>
+      </div>
 
       {/* ===== POP-UP : colocataire validé / non retenu ===== */}
       {resultPopup && (
         <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 p-4"
+          className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-black/55 p-4"
           role="presentation"
           onClick={() => setResultPopup(null)}
         >
@@ -2688,7 +2690,7 @@ export default function Candidatures() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="candidature-result-title"
-            className="celebration-modal relative w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl sm:p-8"
+            className="celebration-modal relative my-auto max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5 text-center shadow-2xl sm:p-8"
             onClick={(e) => e.stopPropagation()}
           >
             <button

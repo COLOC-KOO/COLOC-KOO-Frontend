@@ -57,7 +57,28 @@ export interface AuthUser {
     /** Indique si la double authentification est activée pour ce compte. */
     two_fa_enabled?: boolean | number
     statut?: string
+    suspensionReason?: string | null
     createdAt?: string
+}
+
+export interface ContractDocumentRequest {
+    id_demande: number
+    reference: string
+    type_document: 'contrat' | 'edl'
+    profil_demandeur: 'locataire' | 'proprietaire' | 'professionnel'
+    donnees: Record<string, string>
+    clauses_ids: number[]
+    clauses?: Array<{ id_clause: number; titre: string; description: string | null }>
+    montant: number
+    statut: 'brouillon' | 'a-verifier' | 'en-cours' | 'valide' | 'refuse'
+    statut_paiement: 'en-attente' | 'a-verifier' | 'conforme' | 'non-conforme'
+    moyen_paiement?: string | null
+    reference_operateur?: string | null
+    has_payment_proof?: boolean
+    date_creation: string
+    nom?: string
+    prenom?: string
+    email?: string
 }
 
 export interface Langue {
@@ -355,7 +376,7 @@ export interface Ville {
 
 export interface CreateAlertePayload {
     id_utilisateur: number
-    id_ville: number
+    id_ville: number | null
     quartier?: string | null
     prix_max?: number | null
     types_bien?: string[]
@@ -363,6 +384,18 @@ export interface CreateAlertePayload {
     regles?: string[]
     notif_push?: boolean
     notif_email?: boolean
+}
+
+export interface Alerte {
+    id: number
+    nom_ville: string | null
+    quartier: string | null
+    prix_max: number | null
+    type_propriete: string | null
+    type_annonce: string | null
+    regles: string | null
+    notif_push: number
+    notif_email: number
 }
 
 export interface BackofficeDashboard {
@@ -530,6 +563,7 @@ export interface DepotAnnonceRoomPayload {
 }
 export interface CreateDepotAnnoncePayload {
   adresse: string
+  id_ville?: number
   ville?: string
   quartier?: string
   latitude?: number | null
@@ -757,11 +791,23 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     })
 
     const text = await response.text()
+    if (response.ok && response.headers.get('content-type')?.includes('text/html')) {
+        return text as T
+    }
     const data = text ? JSON.parse(text) : null
     if (!response.ok) {
+        if (data?.code === 'ACCOUNT_SUSPENDED' && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('colockoo:account-suspended', {
+                detail: { reason: data.suspensionReason },
+            }))
+        }
         throw new ApiError(data?.message || 'Erreur API', data?.code)
     }
     return data as T
+}
+
+async function requestText(path: string, options: RequestInit = {}): Promise<string> {
+    return request<string>(path, options)
 }
 
 async function requestWithFallback<T>(primaryPath: string, fallbackPath: string, options: RequestInit = {}): Promise<T> {
@@ -1101,6 +1147,27 @@ export const api = {
             body: JSON.stringify(payload),
         })
     },
+    getAlertes(idUtilisateur: number | string) {
+        return request<Alerte[]>(`/alertes/${idUtilisateur}`)
+    },
+    updateAlerteNotifications(id: number, payload: { notif_push?: boolean; notif_email?: boolean }) {
+        return request<{ ok: boolean }>(`/alertes/${id}/notifications`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        })
+    },
+    deleteAlerte(id: number) {
+        return request<{ ok: boolean }>(`/alertes/${id}`, { method: 'DELETE' })
+    },
+    getPreferences(idUtilisateur: number | string) {
+        return request<UserPreferencesPayload>(`/preferences/${idUtilisateur}`)
+    },
+    updatePreferences(idUtilisateur: number | string, preferences: UserPreferencesPayload) {
+        return request<{ ok: boolean }>(`/preferences/${idUtilisateur}`, {
+            method: 'PUT',
+            body: JSON.stringify(preferences),
+        })
+    },
     langues() {
         return request<Langue[]>('/meta/langues')
     },
@@ -1392,7 +1459,7 @@ export const api = {
             tiers: { maxLoyer: number | null; prix: number }[]
             edlPrix: number
             mobileMoney: { nom: string; numero: string; couleur: string; hint: string }[]
-            clauses: { titre: string; description: string }[]
+            clauses: { id_clause: number; titre: string; description: string }[]
             offer: { titre: string; texte: string }
             body: { titre: string; intro: string; corps: string }
             bail: { cle: string; titre: string; description: string }[]
@@ -1401,6 +1468,87 @@ export const api = {
             contratOffers: { id: number; nom: string; description: string | null; prix: number }[]
             edlOffers: { id: number; nom: string; description: string | null; prix: number }[]
         }>(`/meta/contract-config`)
+    },
+    createContractDocumentRequest(payload: {
+        type_document: 'contrat' | 'edl'
+        profil_demandeur: 'locataire' | 'proprietaire' | 'professionnel'
+        donnees: Record<string, string>
+        clauses_ids: number[]
+    }) {
+        return request<{ id: number; reference: string; montant: number }>('/documents-contractuels', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
+    previewContractDocument(payload: {
+        type_document: 'contrat' | 'edl'
+        profil_demandeur: 'locataire' | 'proprietaire' | 'professionnel'
+        donnees: Record<string, string>
+        clauses_ids: number[]
+    }) {
+        return requestText('/documents-contractuels/preview', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
+    myContractDocumentRequests() {
+        return request<ContractDocumentRequest[]>('/documents-contractuels/mine')
+    },
+    submitContractDocumentPayment(id: number, payload: { moyen_paiement: string; reference_operateur: string; preuve: File | null }) {
+        const body = new FormData()
+        body.set('moyen_paiement', payload.moyen_paiement)
+        body.set('reference_operateur', payload.reference_operateur)
+        if (payload.preuve) body.set('preuve', payload.preuve)
+        return request<{ message: string; reference: string; montant: number }>(`/documents-contractuels/${id}/payment`, {
+            method: 'POST',
+            body,
+        })
+    },
+    getContractDocumentRequestDocument(id: number) {
+        return requestText(`/documents-contractuels/${id}/document`)
+    },
+    backofficeContractDocumentRequests() {
+        return request<ContractDocumentRequest[]>('/backoffice/documents-contractuels')
+    },
+    async getBackofficeContractPaymentProof(id: number) {
+        const token = getToken()
+        const response = await fetch(`${API_URL}/backoffice/documents-contractuels/${id}/payment-proof`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (!response.ok) {
+            const text = await response.text()
+            let message = 'Impossible de charger la capture de paiement.'
+            if (text) {
+                try {
+                    message = JSON.parse(text).message || message
+                } catch {
+                    message = text
+                }
+            }
+            throw new ApiError(message)
+        }
+        return response.blob()
+    },
+    backofficeContractClauses() {
+        return request<Array<{ id_clause: number; titre: string; description: string | null; ordre: number; est_actif: number }>>('/backoffice/documents-contractuels/clauses')
+    },
+    createBackofficeContractClause(payload: { titre: string; description: string; ordre: number }) {
+        return request<{ id_clause: number }>('/backoffice/documents-contractuels/clauses', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
+    updateBackofficeContractClause(id: number, payload: { titre: string; description: string; ordre: number; est_actif: boolean }) {
+        return request<{ ok: boolean }>(`/backoffice/documents-contractuels/clauses/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        })
+    },
+    updateBackofficeContractDocumentRequest(id: number, statut: 'en-cours' | 'valide' | 'refuse') {
+        return request<{ ok: boolean }>(`/backoffice/documents-contractuels/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ statut }),
+        })
     },
     lancerColocationOfficielle(annonceId: string | number) {
         return requestWithFallback<{ message: string; statut: string }>(`/candidatures/depot-annonce/${annonceId}/lancer-officiel`, `/candidatures/annonce/${annonceId}/lancer-officiel`, {
@@ -2102,41 +2250,12 @@ export interface UserPreferencesPayload {
 export async function getUserPreferences(
   idUtilisateur: number | string
 ): Promise<UserPreferencesPayload> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-  const response = await fetch(`${API_BASE_URL}/api/preferences/${idUtilisateur}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Erreur lors de la récupération des préférences');
-  }
-
-  return await response.json();
+  return api.getPreferences(idUtilisateur)
 }
 
 export async function updateUserPreferences(
   idUtilisateur: number | string,
   preferences: UserPreferencesPayload
 ): Promise<{ ok: boolean }> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-  const response = await fetch(`${API_BASE_URL}/api/preferences/${idUtilisateur}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(preferences),
-  });
-
-  if (!response.ok) {
-    throw new Error('Erreur lors de la mise à jour des préférences');
-  }
-
-  return await response.json();
+  return api.updatePreferences(idUtilisateur, preferences)
 }

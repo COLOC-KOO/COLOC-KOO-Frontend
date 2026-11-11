@@ -229,10 +229,10 @@ const RdvModal = ({
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div
-                className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full"
+                className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                <div className="p-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
                     <h3 className="text-xl font-bold">Programmer un RDV téléphonique</h3>
                     <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-lg transition">
                         <X className="w-5 h-5"/>
@@ -393,10 +393,10 @@ const OffreModal = ({
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div
-                className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full"
+                className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                <div className="p-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
                     <h3 className="text-xl font-bold">
                         {offre ? 'Modifier une offre' : 'Ajouter une offre'}
                     </h3>
@@ -440,7 +440,7 @@ const OffreModal = ({
                         </select>
                     </div>
                     {unite === 'jour' && (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-sm text-white/60 mb-1">Réduction dès 4 jours (%)</label>
                                 <input
@@ -479,7 +479,7 @@ const OffreModal = ({
                     </div>
                     <div>
                         <label className="block text-sm text-white/60 mb-2">Portée (zones desservies)</label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             <button
                                 type="button"
                                 onClick={() => setVisibilite('toutes')}
@@ -510,7 +510,7 @@ const OffreModal = ({
                                         ? 'Aucune ville sélectionnée'
                                         : `${villesIds.length} ville(s) sélectionnée(s)`}
                                 </div>
-                                <div className="max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-2 grid grid-cols-2 gap-1">
+                                <div className="max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
                                     {villes.map((ville) => (
                                         <label
                                             key={ville.id_ville}
@@ -1184,8 +1184,8 @@ export default function AdminServicesColockoo() {
                                                                     className="px-4 pb-4 pt-3 border-t border-white/10 space-y-3">
                                                                     {/* Lignes de devis */}
                                                                     <div
-                                                                        className="rounded-lg border border-white/10 overflow-hidden">
-                                                                        <table className="w-full text-sm">
+                                                                        className="rounded-lg border border-white/10 overflow-x-auto">
+                                                                        <table className="w-full min-w-[480px] text-sm">
                                                                             <thead className="bg-white/5">
                                                                             <tr className="text-white/40 text-[11px] uppercase tracking-wider">
                                                                                 <th className="text-left p-2.5 font-medium">Service</th>
@@ -1363,7 +1363,7 @@ export default function AdminServicesColockoo() {
                     {/* TAB: Offres */}
                     {activeTab === 'offres' && (
                         <div>
-                            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                            <div className="p-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-sm text-white/40">
                   Catalogue des offres commerciales
                   <span className="ml-2 text-xs bg-white/10 px-2 py-0.5 rounded-full">{offres.length} offres</span>
@@ -1381,7 +1381,7 @@ export default function AdminServicesColockoo() {
                             </div>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                                <table className="w-full min-w-[700px] text-sm">
                                     <thead className="bg-white/5">
                                     <tr>
                                         <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">

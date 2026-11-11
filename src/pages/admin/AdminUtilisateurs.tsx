@@ -229,7 +229,7 @@ export default function AdminUtilisateurs() {
 
         <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl">
           <div className="p-4 border-b border-white/10 flex gap-2 flex-wrap">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs min-w-0">
               <Search className="w-4 h-4 text-white/40" />
               <input
                 value={search}
@@ -259,7 +259,7 @@ export default function AdminUtilisateurs() {
                 <button
                   key={f.value}
                   onClick={() => setActive(f.value)}
-                  className={`px-3 py-1.5 text-xs rounded-lg whitespace-nowrap ${
+                  className={`px-3 py-1.5 text-xs rounded-lg whitespace-nowrap shrink-0 ${
                     active === f.value ? 'bg-brand-cyan text-[oklch(0.15_0_0)] font-semibold' : 'text-white/60 hover:bg-white/5'
                   }`}
                 >
@@ -308,8 +308,8 @@ export default function AdminUtilisateurs() {
               </button>
             ))}
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Tableau des utilisateurs" tabIndex={0}>
+            <table className="w-full min-w-[900px] text-sm break-words">
               <thead className="text-xs uppercase text-white/40 border-b border-white/10">
                 <tr>
                   <th className="text-left p-4 font-medium">Utilisateur</th>
@@ -381,7 +381,7 @@ export default function AdminUtilisateurs() {
                         </span>
                       </td>
                       <td className="text-white/60">{u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '-'}</td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right whitespace-nowrap">
                         <div className="flex justify-end gap-1" onClick={(event) => event.stopPropagation()}>
                           {pending ? (
                             <span className="p-1.5 text-white/60">
@@ -461,6 +461,7 @@ export default function AdminUtilisateurs() {
               </tbody>
             </table>
           </div>
+          <p className="px-4 pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes et les actions.</p>
         </div>
 
         {selectedId && (
