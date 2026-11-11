@@ -530,6 +530,7 @@ export interface DepotAnnonceRoomPayload {
 }
 export interface CreateDepotAnnoncePayload {
   adresse: string
+  id_ville?: number
   ville?: string
   quartier?: string
   latitude?: number | null

@@ -1096,6 +1096,18 @@ export default function Annonces() {
           </Link>
         </div>
 
+        {searchedCityLabel && !loading && (
+          <div className="bg-white px-4 pb-4">
+            <Link
+              to={`/profils-recherche-logement?ville=${encodeURIComponent(searchedCityLabel)}`}
+              className="mx-auto inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-green-700"
+            >
+              <Users className="h-4 w-4 text-white" />
+              Voir les profils qui recherchent aussi à {searchedCityLabel}
+            </Link>
+          </div>
+        )}
+
         {viewMode === "map" && !loading && !error && visibleListings.length > 0 ? (
           <InteractiveListingsMap
             listings={visibleListings}
@@ -1117,22 +1129,13 @@ export default function Annonces() {
                 <h3 className="font-bebas text-xl text-sc-dark mb-2">{t("annonces:empty")}</h3>
                 <p className="text-sm text-sc-gr2 mb-4">{emptyMessage}</p>
                 {searchedCityLabel && (
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <a
-                      href={`/profils-recherche-logement?ville=${encodeURIComponent(searchedCityLabel)}`}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green text-sm font-medium text-white hover:bg-brand-green-dark transition-colors rounded-xl shadow-md"
-                    >
-                      <Users className="w-4 h-4 text-white" />
-                      Voir les profils qui recherchent aussi à {searchedCityLabel}
-                    </a>
-                    <a
-                      href={`/depot_annonce?ville=${encodeURIComponent(searchedCityLabel)}`}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-sc-cy text-white text-sm font-medium hover:bg-sc-cy-d transition-colors shadow-md rounded-xl"
-                    >
-                      <PlusCircle className="w-4 h-4" />
-                      Déposer une annonce
-                    </a>
-                  </div>
+                  <Link
+                    to={`/depot_annonce?ville=${encodeURIComponent(searchedCityLabel)}`}
+                    className="inline-flex items-center gap-2 rounded-xl bg-sc-cy px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-sc-cy-d"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Déposer une annonce
+                  </Link>
                 )}
               </div>
             )}

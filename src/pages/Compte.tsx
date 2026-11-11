@@ -1074,7 +1074,7 @@ export default function Compte() {
             'profil',
             'conversations',
             'alertes',
-            'notif',       // ⏸️ Notifications désactivées
+            'services',
             'secu'
           ].map((id) => {
 

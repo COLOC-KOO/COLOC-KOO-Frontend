@@ -45,7 +45,7 @@ import 'leaflet/dist/leaflet.css'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import { SiteLayout } from '../components/site/SiteLayout'
-import { api, type ApiAnnonce } from '../lib/api'
+import { api, type ApiAnnonce, type Ville } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { geocodeAddress } from '../lib/geocoding'
 import { cn } from '../lib/utils'
@@ -517,7 +517,7 @@ const steps = stepsForRole(role)
   const [locAddr, setLocAddr] = useState('')
   const [locVille, setLocVille] = useState('')
   const [locQuartier, setLocQuartier] = useState('')
-  const [cityOptions, setCityOptions] = useState<string[]>([])
+  const [cityOptions, setCityOptions] = useState<Ville[]>([])
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>([])
   const [cityLoadError, setCityLoadError] = useState('')
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null)
@@ -527,7 +527,7 @@ const steps = stepsForRole(role)
     let cancelled = false
     api.villes()
       .then((villes) => {
-        if (!cancelled) setCityOptions(villes.map((ville) => ville.nom_ville))
+        if (!cancelled) setCityOptions(villes)
       })
       .catch((error) => {
         if (!cancelled) setCityLoadError(error instanceof Error ? error.message : t('depot:logement.errors.citiesLoad'))
@@ -915,7 +915,7 @@ const steps = stepsForRole(role)
         !typeLogement ? 'required-property-type' :
         role !== 'membre' && nbColocTotal === '' ? 'required-total-coloc' :
         !nbPieces.trim() ? 'required-room-count' :
-        !locVille.trim() ? 'listing-city' :
+        !cityOptions.some((ville) => ville.nom_ville === locVille) ? 'listing-city' :
         pin === null ? 'required-map-pin' : ''
       if (missingField) {
         setStepErr(
@@ -1027,6 +1027,8 @@ const steps = stepsForRole(role)
 
   async function handlePublish() {
     if (!validateCurrentStep()) return
+    const selectedCity = cityOptions.find((city) => city.nom_ville === locVille)
+    if (!selectedCity) return
     if (!user) {
       await persistDraftAndRedirect()
       return
@@ -1071,6 +1073,7 @@ const steps = stepsForRole(role)
 
       const response = await api.createDepotAnnonce({
         adresse: locAddr,
+        id_ville: selectedCity.id_ville,
         ville,
         quartier,
         latitude,
@@ -1477,7 +1480,7 @@ const steps = stepsForRole(role)
                   required
                 >
                   <option value="">{t('depot:logement.cityPlaceholder')}</option>
-                  {cityOptions.map((ville) => <option key={ville} value={ville}>{ville}</option>)}
+                  {cityOptions.map((ville) => <option key={ville.id_ville} value={ville.nom_ville}>{ville.nom_ville}</option>)}
                 </select>
                 {cityLoadError && <p className="mb-2 text-sm text-red-600">{t('depot:logement.errors.citiesLoad')} {cityLoadError}</p>}
 

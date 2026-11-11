@@ -78,7 +78,7 @@ export default function Deposer() {
     clause_solidarite: 'sans',
     type_bailleur: 'membre',
     type_annonce_form: 'creation' as 'creation' | 'existante',
-    id_ville: 1,
+    id_ville: 0,
     quartier: '',
     adresse_exacte: '',
     nombre_pieces: '',
@@ -105,6 +105,7 @@ export default function Deposer() {
   })
 
   useEffect(() => {
+    let cancelled = false
     api.villes().then((rows) => {
       const uniqueCities = rows.reduce<Ville[]>((acc, city) => {
         const exists = acc.some((item) => item.nom_ville.toLowerCase() === city.nom_ville.toLowerCase())
@@ -113,9 +114,11 @@ export default function Deposer() {
         }
         return acc
       }, [])
-      setVilles(uniqueCities)
-      if (uniqueCities[0]) setForm((current) => ({ ...current, id_ville: uniqueCities[0].id_ville }))
+      if (!cancelled) setVilles(uniqueCities)
+    }).catch((loadError) => {
+      if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'Impossible de charger la liste des villes.')
     })
+    return () => { cancelled = true }
   }, [])
 
   const mapListing = useMemo(() => {
@@ -269,7 +272,7 @@ export default function Deposer() {
           clause_solidarite: 'sans',
           type_bailleur: 'membre',
           type_annonce_form: 'creation',
-          id_ville: form.id_ville,
+          id_ville: 0,
           quartier: '',
           adresse_exacte: '',
           nombre_pieces: '',
@@ -308,7 +311,7 @@ export default function Deposer() {
   const isStepValid = () => {
     switch(step) {
       case 1: return form.titre.trim().length > 0
-      case 2: return form.quartier.trim().length > 0
+      case 2: return villes.some((ville) => ville.id_ville === form.id_ville) && form.quartier.trim().length > 0
       case 3: return true
       case 4: return true
       case 5: return form.prix_loyer && form.date_disponibilite
@@ -557,7 +560,8 @@ export default function Deposer() {
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <Field label={t('deposer:step2.city')} required>
-                      <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.id_ville} onChange={(e) => update('id_ville', Number(e.target.value))}>
+                      <select className="w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all" value={form.id_ville} onChange={(e) => update('id_ville', Number(e.target.value))} required>
+                        <option value={0}>{t('deposer:step2.cityPlaceholder')}</option>
                         {villes.map((v) => (
                           <option key={v.id_ville} value={v.id_ville}>{v.nom_ville}</option>
                         ))}

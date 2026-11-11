@@ -42,6 +42,7 @@
     "title": "Localisation",
     "subtitle": "Où se trouve ton logement ?",
     "city": "Ville",
+    "cityPlaceholder": "Choisir une ville",
     "district": "Quartier",
     "districtPlaceholder": "Ex: Isoraka, Analakely...",
     "address": "Adresse exacte",
