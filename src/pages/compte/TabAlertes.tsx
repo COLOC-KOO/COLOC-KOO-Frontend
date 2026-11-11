@@ -20,6 +20,7 @@ interface AlerteForm {
   quartier: string
   prixMax: string
   typeBien: string[]
+  typeAnnonce: string[]
   reglesColoc: string[]
   notifPush: boolean
   notifEmail: boolean
@@ -30,6 +31,7 @@ const EMPTY_FORM: AlerteForm = {
   quartier: '',
   prixMax: '',
   typeBien: [],
+  typeAnnonce: [],
   reglesColoc: [],
   notifPush: true,
   notifEmail: true,
@@ -68,7 +70,13 @@ function Checkbox({ label, checked, onChange }: { label: string; checked: boolea
   )
 }
 
-export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number }) {
+export default function TabAlertes({
+  idUtilisateur,
+  canFilterAnnouncementType,
+}: {
+  idUtilisateur: number
+  canFilterAnnouncementType: boolean
+}) {
   const { t } = useTranslation('alertes')
   const location = useLocation()
   const [alertes, setAlertes] = useState<Alerte[]>([])
@@ -85,6 +93,11 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
     { key: 'Fille uniquement', label: t('options.girlsOnly') },
     { key: 'Garçon uniquement', label: t('options.boysOnly') },
     { key: 'Animaux acceptés', label: t('options.petsAllowed') },
+  ]
+
+  const TYPES_ANNONCE = [
+    { key: 'existante', label: t('options.existingColoc') },
+    { key: 'creation', label: t('options.colocCreation') },
   ]
 
   const steps = [
@@ -150,6 +163,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
         quartier: form.quartier || null,
         prix_max: form.prixMax ? Number(form.prixMax) : null,
         types_bien: form.typeBien,
+        types_annonce: canFilterAnnouncementType ? form.typeAnnonce : [],
         regles: form.reglesColoc,
         notif_push: form.notifPush,
         notif_email: form.notifEmail,
@@ -161,7 +175,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
 
   const buildTitre = (a: Alerte): string => {
     const ville = a.nom_ville ?? t('allCities')
-    const suite = a.quartier ?? (a.type_annonce ? a.type_annonce.split(',')[0] : t('colocation'))
+    const suite = a.quartier ?? t('colocation')
     return `${ville} · ${suite}`
   }
 
@@ -172,7 +186,15 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
     if (a.regles) {
       try { criteres.push(...(JSON.parse(a.regles) as string[])) } catch { /* ignore */ }
     }
-    if (a.type_annonce) criteres.push(...a.type_annonce.split(',').filter(Boolean))
+    if (canFilterAnnouncementType && a.type_annonce) {
+      criteres.push(
+        ...a.type_annonce.split(',').filter(Boolean).map((type) => {
+          if (type === 'existante' || type === 'Colocation existante') return t('options.existingColoc')
+          if (type === 'creation' || type === "Création d'une colocation") return t('options.colocCreation')
+          return type
+        })
+      )
+    }
     return criteres
   }
 
@@ -189,7 +211,7 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
       case 0: // Localisation
         return !!form.idVille
       case 1: // Critères
-        return form.typeBien.length > 0 || form.reglesColoc.length > 0 || !!form.prixMax
+        return form.typeBien.length > 0 || form.typeAnnonce.length > 0 || form.reglesColoc.length > 0 || !!form.prixMax
       case 2: // Notifications
         return true
       default:
@@ -279,6 +301,22 @@ export default function TabAlertes({ idUtilisateur }: { idUtilisateur: number })
                 ))}
               </div>
             </div>
+
+            {canFilterAnnouncementType && (
+              <div className="mb-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('announcementType')}</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {TYPES_ANNONCE.map((item) => (
+                    <Checkbox
+                      key={item.key}
+                      label={item.label}
+                      checked={form.typeAnnonce.includes(item.key)}
+                      onChange={() => setForm((prev) => ({ ...prev, typeAnnonce: toggleInArray(prev.typeAnnonce, item.key) }))}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
           </>
         )

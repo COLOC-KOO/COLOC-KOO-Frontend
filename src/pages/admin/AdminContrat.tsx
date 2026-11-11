@@ -136,38 +136,6 @@ interface ApiBackofficeContratDetails extends ApiBackofficeContratRow {
   }>;
 }
 
-// ===== DONNÉES MOCKÉES POUR LES OFFRES =====
-const MOCK_OFFRES: OffreCommerciale[] = [
-  {
-    id: "offre-1",
-    nom: "Contrat de colocation",
-    prix: 120000,
-    type: "contrat",
-    description: "Contrat standard conforme à la législation",
-  },
-  {
-    id: "offre-2",
-    nom: "État des lieux d'entrée",
-    prix: 80000,
-    type: "edl",
-    description: "Constat contradictoire à l'entrée",
-  },
-  {
-    id: "offre-3",
-    nom: "État des lieux de sortie",
-    prix: 80000,
-    type: "edl",
-    description: "Constat contradictoire à la sortie",
-  },
-  {
-    id: "offre-4",
-    nom: "Avenant au contrat",
-    prix: 50000,
-    type: "contrat",
-    description: "Modification du contrat existant",
-  },
-];
-
 // ===== DONNÉES MOCKÉES POUR LES VERSEMENTS =====
 const MOCK_VERSEMENTS: Versement[] = [
   {
@@ -1069,34 +1037,40 @@ export default function AdminContratsEDL() {
     try {
       const services = await api.backofficeServicesCkoo();
       const offresData = services
-        .filter(
-          (s: any) =>
-            s.cle_service?.startsWith("contrat_") ||
-            s.cle_service?.startsWith("edl_"),
-        )
-        .map((s: any) => ({
-          id: String(s.id_service),
-          nom: s.nom,
-          prix: s.prix,
-          type: s.cle_service?.startsWith("contrat_") ? "contrat" : "edl",
-          description: s.description || undefined,
-        }));
+        .flatMap((service) => {
+          const cleService = service.cle_service?.trim() || "";
+          const cleServiceNormalisee = cleService.toLowerCase();
+          if (
+            !cleServiceNormalisee.startsWith("contrat") &&
+            !cleServiceNormalisee.startsWith("edl")
+          ) {
+            return [];
+          }
+          return [{
+            id: String(service.id_service),
+            nom: service.nom,
+            prix: Number(service.prix),
+            type: cleServiceNormalisee.startsWith("contrat") ? "contrat" as const : "edl" as const,
+            description: service.description || undefined,
+          }];
+        });
 
       const typedOffres: OffreCommerciale[] = offresData.map((item) => ({
         id: item.id,
         nom: item.nom,
         prix: item.prix,
-        type: item.type as "contrat" | "edl",
+        type: item.type,
         description: item.description,
       }));
 
-      if (typedOffres.length > 0) {
-        setOffres(typedOffres);
-      } else {
-        setOffres(MOCK_OFFRES);
-      }
+      setOffres(typedOffres);
     } catch (err) {
-      setOffres(MOCK_OFFRES);
+      setOffres([]);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de charger les offres commerciales",
+      );
     }
   };
 
@@ -1278,21 +1252,9 @@ export default function AdminContratsEDL() {
       setSuccessMessage("Offre ajoutée avec succès");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      const newOffre: OffreCommerciale = {
-        id: `offre-${Date.now()}`,
-        nom: newOffreNom.trim(),
-        prix: prix,
-        type: newOffreType,
-        description: newOffreDescription.trim() || undefined,
-      };
-      setOffres([...offres, newOffre]);
-      setShowAddOffre(false);
-      setNewOffreNom("");
-      setNewOffrePrix("");
-      setNewOffreType("contrat");
-      setNewOffreDescription("");
-      setSuccessMessage("Offre ajoutée localement");
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setError(
+        err instanceof Error ? err.message : "Impossible d'ajouter l'offre",
+      );
     }
   };
 
@@ -1312,9 +1274,9 @@ export default function AdminContratsEDL() {
       setSuccessMessage("Offre supprimée avec succès");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      setOffres(offres.filter((o) => o.id !== id));
-      setSuccessMessage("Offre supprimée localement");
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setError(
+        err instanceof Error ? err.message : "Impossible de supprimer l'offre",
+      );
     }
   };
 
@@ -1783,59 +1745,67 @@ export default function AdminContratsEDL() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {offres.map((offre) => (
-                    <tr key={offre.id} className="hover:bg-white/5 transition">
-                      <td className="p-3 font-medium">{offre.nom}</td>
-                      <td className="p-3">
-                        <span
-                          className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full border ${
-                            offre.type === "contrat"
-                              ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
-                              : "bg-green-500/15 text-green-400 border-green-500/30"
-                          }`}
-                        >
-                          {offre.type === "contrat" ? (
-                            <FileSignature className="w-3 h-3" />
-                          ) : (
-                            <ClipboardCheck className="w-3 h-3" />
-                          )}
-                          {offre.type === "contrat" ? "Contrat" : "EDL"}
-                        </span>
-                      </td>
-                      <td className="p-3 text-white/60 text-sm">
-                        {offre.description || "—"}
-                      </td>
-                      <td className="p-3 text-right font-bold text-brand-cyan">
-                        {offre.prix.toLocaleString("fr-FR")} MGA
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => {
-                            setEditingOffre(offre);
-                            setNewOffreNom(offre.nom);
-                            setNewOffrePrix(String(offre.prix));
-                            setNewOffreType(offre.type);
-                            setNewOffreDescription(offre.description || "");
-                            setShowAddOffre(true);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-brand-cyan/20 text-brand-cyan transition"
-                          title="Modifier"
-                          aria-label={`Modifier l'offre ${offre.nom}`}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteOffre(offre.id)}
-                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        </div>
+                  {offres.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-6 text-center text-sm text-white/40">
+                        Aucune offre commerciale enregistrée.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    offres.map((offre) => (
+                      <tr key={offre.id} className="hover:bg-white/5 transition">
+                        <td className="p-3 font-medium">{offre.nom}</td>
+                        <td className="p-3">
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full border ${
+                              offre.type === "contrat"
+                                ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                                : "bg-green-500/15 text-green-400 border-green-500/30"
+                            }`}
+                          >
+                            {offre.type === "contrat" ? (
+                              <FileSignature className="w-3 h-3" />
+                            ) : (
+                              <ClipboardCheck className="w-3 h-3" />
+                            )}
+                            {offre.type === "contrat" ? "Contrat" : "EDL"}
+                          </span>
+                        </td>
+                        <td className="p-3 text-white/60 text-sm">
+                          {offre.description || "—"}
+                        </td>
+                        <td className="p-3 text-right font-bold text-brand-cyan">
+                          {offre.prix.toLocaleString("fr-FR")} MGA
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingOffre(offre);
+                                setNewOffreNom(offre.nom);
+                                setNewOffrePrix(String(offre.prix));
+                                setNewOffreType(offre.type);
+                                setNewOffreDescription(offre.description || "");
+                                setShowAddOffre(true);
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-brand-cyan/20 text-brand-cyan transition"
+                              title="Modifier"
+                              aria-label={`Modifier l'offre ${offre.nom}`}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteOffre(offre.id)}
+                              className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

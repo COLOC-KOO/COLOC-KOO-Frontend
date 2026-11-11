@@ -30,8 +30,7 @@
     "boysOnly": "Garçon uniquement",
     "petsAllowed": "Animaux acceptés",
     "existingColoc": "Colocation existante",
-    "colocCreation": "Création d'une colocation",
-    "potentialProperty": "Bien immobilier potentiel"
+    "colocCreation": "Création d'une colocation"
   },
   "stepLocalisation": "Localisation",
   "stepCriteria": "Critères",

@@ -30,8 +30,7 @@
     "boysOnly": "Boys only",
     "petsAllowed": "Pets allowed",
     "existingColoc": "Existing flatshare",
-    "colocCreation": "Flatshare creation",
-    "potentialProperty": "Potential property"
+    "colocCreation": "Flatshare creation"
   },
   "stepLocalisation": "Location",
   "stepCriteria": "Criteria",

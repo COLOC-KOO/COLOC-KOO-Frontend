@@ -105,9 +105,9 @@ export default function TabProfil({
     setUploadingProfile(true)
     setPhotoMessage(t('removingPhoto'))
     try {
+      await onSave({ profile_picture: null })
       setForm((prev) => ({ ...prev, profilePicture: '' }))
       setPhotoPreview(null)
-      await onSave({ profile_picture: null })
       setPhotoMessage(t('photoRemoved'))
     } catch {
       setPhotoMessage(t('photoUpdateError'))

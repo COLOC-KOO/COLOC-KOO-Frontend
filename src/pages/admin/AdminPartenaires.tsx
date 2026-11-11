@@ -68,6 +68,13 @@ function normalizeCampaignImageUrl(value: string | null | undefined) {
   return `${API_BASE_URL}/${trimmed}`
 }
 
+function formatCampaignDate(value: string) {
+  const date = value.slice(0, 10)
+  return new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC' }).format(
+    new Date(`${date}T00:00:00Z`)
+  )
+}
+
 // ===== TYPES =====
 interface Partenaire {
   id: string
@@ -747,20 +754,6 @@ function CampagneModal({
                 </select>
               </div>
             )}
-            <label className="flex items-start gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
-              <input
-                type="checkbox"
-                checked={suspendue}
-                onChange={(event) => setSuspendue(event.target.checked)}
-                className="mt-0.5"
-              />
-              <span>
-                Suspendre la campagne
-                <span className="mt-1 block text-xs text-white/40">
-                  Le statut Programmée, Active ou Terminée est calculé à partir des dates.
-                </span>
-              </span>
-            </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -772,6 +765,24 @@ function CampagneModal({
               <label className="text-xs text-white/40 uppercase">Date de fin</label>
               <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="mt-2 w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-cyan/50" />
             </div>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+            <p className="text-xs text-white/40 uppercase">Diffusion</p>
+            <label className="mt-2 flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={suspendue}
+                onChange={(event) => setSuspendue(event.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Suspendre cette campagne
+                <span className="mt-1 block text-xs text-white/40">
+                  Si cette case est cochée, la campagne est masquée. Sinon, son statut est calculé selon les dates.
+                </span>
+              </span>
+            </label>
           </div>
 
           <div>
@@ -1966,9 +1977,9 @@ export default function AdminPartenaires() {
                           </td>
                           <td className="p-3">
                             <div className="text-sm">
-                              {new Date(campagne.date_debut).toLocaleDateString('fr-FR')}
+                              {formatCampaignDate(campagne.date_debut)}
                               {campagne.date_fin && (
-                                <> → {new Date(campagne.date_fin).toLocaleDateString('fr-FR')}</>
+                                <> → {formatCampaignDate(campagne.date_fin)}</>
                               )}
                             </div>
                           </td>
@@ -2025,6 +2036,7 @@ export default function AdminPartenaires() {
       {/* Modale Campagne */}
       {showCampagneModal && (
         <CampagneModal
+          key={editingCampagne?.id_campagne ?? 'nouvelle'}
           campagne={editingCampagne}
           partenaires={partenaires}
           villes={villes}

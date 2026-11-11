@@ -24,7 +24,7 @@ import TabProfil from './compte/TabProfil'
 import TabMesAnnonces from './compte/TabMesAnnonces'
 import TabPreference from './compte/TabPreference'
 import TabMessagesV2 from './compte/TabMessagesV2'
-import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerprint, Lock, RefreshCw, Download, Trash } from 'lucide-react'
+import { Eye, EyeOff, X, AlertTriangle, Key, Smartphone, Laptop, LogOut, Fingerprint, Lock, RefreshCw, Download, Trash, Trash2 } from 'lucide-react'
 import TabAlertes from './compte/TabAlertes'
 import TabCompteDonnees from './compte/TabCompteDonnees'
 import TabMesFavoris from './compte/TabMesFavoris'
@@ -722,15 +722,15 @@ export default function Compte() {
         ? t('colocataire')
         : user?.poste || t('member')
 
-  const membreDepuis = user?.date_inscription
-    ? new Date(user.date_inscription).toLocaleDateString(
-        'fr-FR',
-        {
+  const dateInscription = user?.date_inscription || user?.createdAt
+  const dateInscriptionDate = dateInscription ? new Date(dateInscription) : null
+  const membreDepuis =
+    dateInscriptionDate && !Number.isNaN(dateInscriptionDate.getTime())
+      ? dateInscriptionDate.toLocaleDateString('fr-FR', {
           month: 'long',
           year: 'numeric'
-        }
-      )
-    : 'mars 2026'
+        })
+      : null
 
   const badgeCountFor = (id: string) => {
     if (id === 'favoris') return counters.favoris
@@ -774,6 +774,22 @@ export default function Compte() {
     }
   }
 
+  const handleProfileImageRemove = async () => {
+    if (!profileImageUrl) return
+
+    setAvatarUpdating(true)
+    setAvatarMessage(t('removingPhoto', { ns: 'compte' }))
+
+    try {
+      await updateProfile({ profile_picture: null })
+      setAvatarMessage(t('photoRemoved', { ns: 'compte' }))
+    } catch {
+      setAvatarMessage(t('photoUpdateError'))
+    } finally {
+      setAvatarUpdating(false)
+    }
+  }
+
   const currentUserId = (user as any)?.id_utilisateur ?? (user as any)?.id ?? null
 
   const handleAccountDeleted = () => {
@@ -806,7 +822,7 @@ export default function Compte() {
 
             </div>
 
-            <label className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-brand-cyan border-2 border-[#2C2C2C] flex items-center justify-center cursor-pointer hover:bg-brand-cyan-dark transition-colors">
+            <label className={`absolute bottom-1 right-1 w-9 h-9 rounded-full bg-brand-cyan border-2 border-[#2C2C2C] flex items-center justify-center transition-colors ${avatarUpdating ? 'pointer-events-none opacity-60' : 'cursor-pointer hover:bg-brand-cyan-dark'}`}>
 
               <Camera className="w-4 h-4 text-white" />
 
@@ -814,10 +830,24 @@ export default function Compte() {
                 type="file"
                 accept="image/*"
                 className="hidden"
+                disabled={avatarUpdating}
                 onChange={handleProfileImageChange}
               />
 
             </label>
+
+            {profileImageUrl && (
+              <button
+                type="button"
+                onClick={handleProfileImageRemove}
+                disabled={avatarUpdating}
+                aria-label={t('removePhoto', { ns: 'compte' })}
+                title={t('removePhoto', { ns: 'compte' })}
+                className="absolute bottom-1 left-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#2C2C2C] bg-red-600 text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
 
           </div>
 
@@ -858,12 +888,14 @@ export default function Compte() {
 
               </button>
 
-              <span className="flex items-center gap-1 text-white/60">
-                <Calendar className="w-3.5 h-3.5" />
-                {t('memberSince', {
-                  date: membreDepuis
-                })}
-              </span>
+              {membreDepuis && (
+                <span className="flex items-center gap-1 text-white/60">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {t('memberSince', {
+                    date: membreDepuis
+                  })}
+                </span>
+              )}
 
               {user?.ville && (
                 <span className="flex items-center gap-1 text-white/60">
@@ -1008,7 +1040,12 @@ export default function Compte() {
           <div className={tab === 'conversations' ? 'bg-white border border-border rounded-2xl shadow-sm overflow-hidden' : 'bg-white border border-border rounded-2xl p-4 sm:p-6 shadow-sm'}>
             {tab === 'profil' && <TabProfil user={user} onSave={updateProfile} />}
             {tab === 'conversations' && <TabMessagesV2 />}
-            {tab === 'alertes' && currentUserId && <TabAlertes idUtilisateur={currentUserId} />}
+            {tab === 'alertes' && currentUserId && (
+              <TabAlertes
+                idUtilisateur={currentUserId}
+                canFilterAnnouncementType={Boolean(user && user.poste !== 'colocataire')}
+              />
+            )}
             {tab === 'dossier' && <TabMesAnnonces />}
             {tab === 'favoris' && <TabMesFavoris />}
             {/* ⏸️ Notifications désactivées — le client ne recommande plus cet onglet */}
