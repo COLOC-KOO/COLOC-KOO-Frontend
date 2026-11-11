@@ -687,16 +687,11 @@ export default function Compte() {
 
     if (!userId) return
 
-    const API = 'http://localhost:4000'
-
-    fetch(`${API}/api/alertes/${userId}`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) =>
-        setAlertCount(
-          Array.isArray(data) ? data.length : 0
-        )
-      )
-      .catch(() => setAlertCount(0))
+    api.getAlertes(userId)
+      .then((data) => setAlertCount(data.length))
+      .catch((err) => {
+        console.error('Erreur chargement du compteur des alertes :', err)
+      })
   }, [user])
 
   const initials = (

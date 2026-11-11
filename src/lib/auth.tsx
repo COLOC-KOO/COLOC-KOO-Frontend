@@ -37,6 +37,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    const handleSuspension = (event: Event) => {
+      const reason = (event as CustomEvent<{ reason?: string | null }>).detail?.reason
+      setUser((currentUser) => {
+        if (!currentUser) return currentUser
+        const updatedUser = {
+          ...currentUser,
+          statut: 'suspended',
+          suspensionReason: reason || currentUser.suspensionReason || null,
+        }
+        localStorage.setItem('colockoo_user', JSON.stringify(updatedUser))
+        return updatedUser
+      })
+    }
+    window.addEventListener('colockoo:account-suspended', handleSuspension)
+    return () => window.removeEventListener('colockoo:account-suspended', handleSuspension)
+  }, [])
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,

@@ -37,7 +37,11 @@
     "success": "Vita soa aman-tsara",
     "login": "Hiditra",
     "understood": "Zefa ity",
-    "fieldRequired": "Tsy maintsy feno ity saha."
+    "fieldRequired": "Tsy maintsy feno ity saha.",
+    "accountSuspended": "Naato ny kaontinao",
+    "accountSuspendedReadOnly": "Afaka mijery ny filazana sy fangatahana efa misy ianao, saingy tsy afaka manao hetsika vaovao na manova ny kaontinao.",
+    "suspensionReason": "Antony nampampiatoana:",
+    "suspensionReasonMissing": "Tsy nisy antony nampitaina."
   },
   "footer": {
     "title": "SARINTANY'COLOC",

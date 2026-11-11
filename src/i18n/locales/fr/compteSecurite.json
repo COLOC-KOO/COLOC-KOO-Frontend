@@ -36,6 +36,7 @@
     "description": "Optionnelle. Une fois confirmée, un badge <b>{{boldBadge}}</b> rassure tes futurs colocataires. La vérification se fera via ton opérateur mobile (USSD : Telma / Orange / Airtel), sans frais de SMS.",
     "badgeLabel": "« Identité confirmée »",
     "notConfirmed": "Identité non confirmée",
+    "rejectedTitle": "Vérification refusée — motif",
     "comingSoon": "Bientôt disponible"
   },
   "privacy": {

@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Logo } from "../Logo";
 import { roleLevel, useAuth } from "../../lib/auth";
+import { AccountSuspensionNotice } from "../site/AccountSuspensionNotice";
 import {
   api,
   type ApiPartenaireRequest,
@@ -812,7 +813,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </header>
 
           {/* Children */}
-          <main className="p-6">{children}</main>
+          <main className="p-6">
+            <AccountSuspensionNotice />
+            {children}
+          </main>
         </div>
       </div>
 

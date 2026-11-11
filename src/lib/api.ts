@@ -57,6 +57,7 @@ export interface AuthUser {
     /** Indique si la double authentification est activée pour ce compte. */
     two_fa_enabled?: boolean | number
     statut?: string
+    suspensionReason?: string | null
     createdAt?: string
 }
 
@@ -355,7 +356,7 @@ export interface Ville {
 
 export interface CreateAlertePayload {
     id_utilisateur: number
-    id_ville: number
+    id_ville: number | null
     quartier?: string | null
     prix_max?: number | null
     types_bien?: string[]
@@ -363,6 +364,18 @@ export interface CreateAlertePayload {
     regles?: string[]
     notif_push?: boolean
     notif_email?: boolean
+}
+
+export interface Alerte {
+    id: number
+    nom_ville: string | null
+    quartier: string | null
+    prix_max: number | null
+    type_propriete: string | null
+    type_annonce: string | null
+    regles: string | null
+    notif_push: number
+    notif_email: number
 }
 
 export interface BackofficeDashboard {
@@ -760,6 +773,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const text = await response.text()
     const data = text ? JSON.parse(text) : null
     if (!response.ok) {
+        if (data?.code === 'ACCOUNT_SUSPENDED' && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('colockoo:account-suspended', {
+                detail: { reason: data.suspensionReason },
+            }))
+        }
         throw new ApiError(data?.message || 'Erreur API', data?.code)
     }
     return data as T
@@ -1100,6 +1118,27 @@ export const api = {
         return request<{ ok: boolean; id: number }>('/alertes', {
             method: 'POST',
             body: JSON.stringify(payload),
+        })
+    },
+    getAlertes(idUtilisateur: number | string) {
+        return request<Alerte[]>(`/alertes/${idUtilisateur}`)
+    },
+    updateAlerteNotifications(id: number, payload: { notif_push?: boolean; notif_email?: boolean }) {
+        return request<{ ok: boolean }>(`/alertes/${id}/notifications`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        })
+    },
+    deleteAlerte(id: number) {
+        return request<{ ok: boolean }>(`/alertes/${id}`, { method: 'DELETE' })
+    },
+    getPreferences(idUtilisateur: number | string) {
+        return request<UserPreferencesPayload>(`/preferences/${idUtilisateur}`)
+    },
+    updatePreferences(idUtilisateur: number | string, preferences: UserPreferencesPayload) {
+        return request<{ ok: boolean }>(`/preferences/${idUtilisateur}`, {
+            method: 'PUT',
+            body: JSON.stringify(preferences),
         })
     },
     langues() {
@@ -2103,41 +2142,12 @@ export interface UserPreferencesPayload {
 export async function getUserPreferences(
   idUtilisateur: number | string
 ): Promise<UserPreferencesPayload> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-  const response = await fetch(`${API_BASE_URL}/api/preferences/${idUtilisateur}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Erreur lors de la récupération des préférences');
-  }
-
-  return await response.json();
+  return api.getPreferences(idUtilisateur)
 }
 
 export async function updateUserPreferences(
   idUtilisateur: number | string,
   preferences: UserPreferencesPayload
 ): Promise<{ ok: boolean }> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-  const response = await fetch(`${API_BASE_URL}/api/preferences/${idUtilisateur}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(preferences),
-  });
-
-  if (!response.ok) {
-    throw new Error('Erreur lors de la mise à jour des préférences');
-  }
-
-  return await response.json();
+  return api.updatePreferences(idUtilisateur, preferences)
 }

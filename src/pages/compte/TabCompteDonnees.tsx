@@ -446,6 +446,19 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
             {t('identity.comingSoon')}
           </button>
         </div>
+
+        {user?.verificationStatus === 'non_conforme' && user.verificationReason?.trim() && (
+          <div
+            role="status"
+            className="mt-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900"
+          >
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+            <div>
+              <p className="font-semibold">{t('identity.rejectedTitle')}</p>
+              <p className="mt-1 whitespace-pre-line">{user.verificationReason.trim()}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Données personnelles */}

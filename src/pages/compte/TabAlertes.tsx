@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Bell, BellPlus, Check, Trash, X, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
-
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
-const API = BASE.endsWith('/api') ? BASE.slice(0, -4) : BASE
+import { api, Alerte } from '../../lib/api'
 
 const VILLES = [
   { id: 1, nom: 'Antananarivo' },
@@ -37,19 +35,6 @@ const EMPTY_FORM: AlerteForm = {
   notifEmail: true,
 }
 
-/* Ligne renvoyée par l'API (table recherches_sauvegardees) */
-interface Alerte {
-  id: number
-  nom_ville: string | null
-  quartier: string | null
-  prix_max: number | null
-  type_propriete: string | null
-  type_annonce: string | null
-  regles: string | null
-  notif_push: number
-  notif_email: number
-}
-
 function toggleInArray(arr: string[], value: string) {
   return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]
 }
@@ -80,6 +65,7 @@ export default function TabAlertes({
   const { t } = useTranslation('alertes')
   const location = useLocation()
   const [alertes, setAlertes] = useState<Alerte[]>([])
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<AlerteForm>(EMPTY_FORM)
   const [currentStep, setCurrentStep] = useState(0)
@@ -108,10 +94,11 @@ export default function TabAlertes({
 
   const charger = async () => {
     try {
-      const res = await fetch(`${API}/api/alertes/${idUtilisateur}`)
-      if (res.ok) setAlertes(await res.json())
+      setErrorMsg(null)
+      setAlertes(await api.getAlertes(idUtilisateur))
     } catch (err) {
       console.error('Erreur chargement des alertes :', err)
+      setErrorMsg('Impossible de charger vos alertes.')
     }
   }
 
@@ -123,8 +110,13 @@ export default function TabAlertes({
   }, [location.search])
 
   const removeAlerte = async (id: number) => {
-    await fetch(`${API}/api/alertes/${id}`, { method: 'DELETE' })
-    setAlertes((prev) => prev.filter((a) => a.id !== id))
+    try {
+      await api.deleteAlerte(id)
+      setAlertes((prev) => prev.filter((a) => a.id !== id))
+    } catch (err) {
+      console.error('Erreur suppression alerte :', err)
+      setErrorMsg('Impossible de supprimer cette alerte.')
+    }
   }
 
   /* Toggle push/email sur une alerte existante -> persiste en DB (1/0) */
@@ -134,13 +126,11 @@ export default function TabAlertes({
       prev.map((a) => (a.id === id ? { ...a, [champ]: nouvelleValeur } : a))
     )
     try {
-      await fetch(`${API}/api/alertes/${id}/notifications`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [champ]: !!nouvelleValeur }),
-      })
+      setErrorMsg(null)
+      await api.updateAlerteNotifications(id, { [champ]: !!nouvelleValeur })
     } catch (err) {
       console.error('Erreur mise à jour notification :', err)
+      setErrorMsg('Impossible de modifier les notifications de cette alerte.')
       setAlertes((prev) =>
         prev.map((a) => (a.id === id ? { ...a, [champ]: valeurActuelle } : a))
       )
@@ -154,10 +144,9 @@ export default function TabAlertes({
   }
 
   const handleSubmit = async () => {
-    await fetch(`${API}/api/alertes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      setErrorMsg(null)
+      await api.createAlerte({
         id_utilisateur: idUtilisateur,
         id_ville: form.idVille ? Number(form.idVille) : null,
         quartier: form.quartier || null,
@@ -167,10 +156,13 @@ export default function TabAlertes({
         regles: form.reglesColoc,
         notif_push: form.notifPush,
         notif_email: form.notifEmail,
-      }),
-    })
-    closeModal()
-    charger()
+      })
+      closeModal()
+      await charger()
+    } catch (err) {
+      console.error('Erreur création alerte :', err)
+      setErrorMsg('Impossible de créer cette alerte.')
+    }
   }
 
   const buildTitre = (a: Alerte): string => {
@@ -354,6 +346,10 @@ export default function TabAlertes({
       <p className="text-sm text-muted-foreground mb-5">
         {t('subtitle')}
       </p>
+
+      {errorMsg && (
+        <p role="alert" className="text-sm text-red-600 mb-4">{errorMsg}</p>
+      )}
 
       {alertes.length === 0 ? (
         <div className="text-center py-10 text-muted-foreground">

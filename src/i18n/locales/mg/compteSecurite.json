@@ -36,6 +36,7 @@
     "description": "Azo atao na tsy atao. Rehefa voaamarina, misy famantarana <b>{{boldBadge}}</b> mampitoky ireo mpiray trano aminao amin'ny hoavy. Ny fanamarinana dia atao amin'ny alalan'ny mpamatsy rezo findainao (USSD: Telma / Orange / Airtel), tsy misy sarany SMS.",
     "badgeLabel": "« Mombamomba voaamarina »",
     "notConfirmed": "Mombamomba tsy mbola voaamarina",
+    "rejectedTitle": "Nolavina ny fanamarinana — antony",
     "comingSoon": "Ho avy tsy ho ela"
   },
   "privacy": {
