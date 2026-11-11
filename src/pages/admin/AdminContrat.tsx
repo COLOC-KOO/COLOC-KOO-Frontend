@@ -569,8 +569,8 @@ const DocumentDetailsModal = ({
             <div className="text-white/40 text-xs uppercase tracking-wider mb-2">
               Parties
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Parties au contrat" tabIndex={0}>
+              <table className="w-full min-w-[700px] text-sm break-words">
                 <thead className="bg-white/5">
                   <tr>
                     <th className="text-left p-2 text-white/40 font-medium text-xs">
@@ -632,6 +632,7 @@ const DocumentDetailsModal = ({
                 </tbody>
               </table>
             </div>
+            <p className="pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes.</p>
 
             {estComplet ? (
               <div className="mt-2 text-xs text-green-400 flex items-center gap-1">
@@ -660,8 +661,9 @@ const DocumentDetailsModal = ({
                 Aucun versement enregistré pour cette demande
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <>
+                <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Versements associés au contrat" tabIndex={0}>
+                  <table className="w-full min-w-[820px] text-sm break-words">
                   <thead className="bg-white/5">
                     <tr>
                       <th className="text-left p-2 text-white/40 font-medium text-xs">
@@ -713,7 +715,7 @@ const DocumentDetailsModal = ({
                           <td className="p-2">
                             <VersementStatusBadge statut={v.statut} />
                           </td>
-                          <td className="p-2 text-center">
+                          <td className="p-2 text-center whitespace-nowrap">
                             {v.statut === "a-verifier" && (
                               <div className="flex items-center justify-center gap-1">
                                 <button
@@ -759,8 +761,10 @@ const DocumentDetailsModal = ({
                       <td colSpan={2} className="p-2"></td>
                     </tr>
                   </tfoot>
-                </table>
-              </div>
+                  </table>
+                </div>
+                <p className="pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes et les actions.</p>
+              </>
             )}
           </div>
 
@@ -1366,7 +1370,7 @@ export default function AdminContratsEDL() {
             <h1 className="bebas text-3xl text-white">
               Contrats &amp; états des lieux
             </h1>
-            <p className="text-white/50 text-sm">
+            <p className="break-words text-white/50 text-sm">
               {stats.total} demandes au total · {stats.contrats} contrats · {stats.edl}{" "}
               EDL · {stats.newRequestsToProcess + stats.aEmettre + stats.aPlanifier} à traiter
             </p>
@@ -1408,10 +1412,10 @@ export default function AdminContratsEDL() {
 
         {/* Onglets */}
         <div className="border-b border-white/10">
-          <div className="flex gap-1">
+          <div className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap">
             <button
               onClick={() => setActiveTab("demandes")}
-              className={`px-4 py-2 text-sm font-medium transition ${
+              className={`min-w-0 px-3 py-2 text-center text-xs font-medium leading-tight transition sm:px-4 sm:text-sm ${
                 activeTab === "demandes"
                   ? "text-brand-cyan border-b-2 border-brand-cyan"
                   : "text-white/40 hover:text-white/60"
@@ -1421,7 +1425,7 @@ export default function AdminContratsEDL() {
             </button>
             <button
               onClick={() => setActiveTab("offres")}
-              className={`px-4 py-2 text-sm font-medium transition ${
+              className={`min-w-0 px-3 py-2 text-center text-xs font-medium leading-tight transition sm:px-4 sm:text-sm ${
                 activeTab === "offres"
                   ? "text-brand-cyan border-b-2 border-brand-cyan"
                   : "text-white/40 hover:text-white/60"
@@ -1431,7 +1435,7 @@ export default function AdminContratsEDL() {
             </button>
             <button
               onClick={() => setActiveTab("nouvelles-demandes")}
-              className={`px-4 py-2 text-sm font-medium transition ${
+              className={`min-w-0 px-3 py-2 text-center text-xs font-medium leading-tight transition sm:px-4 sm:text-sm ${
                 activeTab === "nouvelles-demandes"
                   ? "text-brand-cyan border-b-2 border-brand-cyan"
                   : "text-white/40 hover:text-white/60"
@@ -1487,7 +1491,7 @@ export default function AdminContratsEDL() {
                 <div className="text-xs text-white/40">Signés</div>
               </div>
               <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-brand-cyan">
+                <div className="text-2xl font-bold text-brand-cyan break-words">
                   {stats.totalMontant.toLocaleString("fr-FR")}
                 </div>
                 <div className="text-xs text-white/40">Montant total</div>
@@ -1509,10 +1513,10 @@ export default function AdminContratsEDL() {
                 </div>
                 <div className="divide-y divide-white/5">
                   {submittedNewRequests.map((request) => (
-                    <article key={request.id_demande} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                    <article key={request.id_demande} className="flex min-w-0 flex-col items-stretch justify-between gap-3 px-3 py-3 sm:flex-row sm:items-center sm:px-4">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-white">{request.reference}</span>
+                          <span className="break-all font-semibold text-white">{request.reference}</span>
                           <span className="text-xs text-white/50">
                             {request.type_document === "edl" ? "État des lieux" : "Contrat"}
                           </span>
@@ -1532,12 +1536,12 @@ export default function AdminContratsEDL() {
                                   : "Paiement à vérifier"}
                           </span>
                         </div>
-                        <p className="mt-1 truncate text-xs text-white/50">
+                        <p className="mt-1 break-words text-xs text-white/50">
                           {request.donnees.nom_demandeur || request.email || "Demandeur"} · {request.profil_demandeur}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
+                      <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+                        <div className="text-left sm:text-right">
                           <div className="text-sm font-semibold text-brand-cyan">
                             {Number(request.montant || 0).toLocaleString("fr-FR")} MGA
                           </div>
@@ -1548,7 +1552,7 @@ export default function AdminContratsEDL() {
                         <button
                           type="button"
                           onClick={() => setActiveTab("nouvelles-demandes")}
-                          className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5"
+                          className="shrink-0 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5"
                         >
                           Ouvrir
                         </button>
@@ -1563,7 +1567,7 @@ export default function AdminContratsEDL() {
             <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-white/10">
                 <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs min-w-0">
                     <Search className="w-4 h-4 text-white/40" />
                     <input
                       placeholder="Rechercher un document..."
@@ -1799,7 +1803,7 @@ export default function AdminContratsEDL() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[700px]">
                 <thead className="bg-white/5">
                   <tr>
                     <th className="text-left p-3 text-white/40 font-medium text-xs uppercase tracking-wider">
@@ -1903,7 +1907,7 @@ export default function AdminContratsEDL() {
           onClick={closeOffreModal}
         >
           <div
-            className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full p-6"
+            className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">

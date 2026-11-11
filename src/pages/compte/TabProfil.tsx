@@ -300,7 +300,7 @@ export default function TabProfil({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl border border-[#e5e2dc] bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-[#e5e2dc] bg-white p-4 sm:p-6 shadow-sm">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 className="flex items-center gap-3 font-bebas text-2xl tracking-wide text-[#2b2b2b]">
@@ -356,7 +356,7 @@ export default function TabProfil({
 
           <div>
             <label className={labelClass}>{t('phone')}</label>
-            <div className="grid grid-cols-[140px_1fr] gap-3">
+            <div className="grid grid-cols-[110px_1fr] gap-3 sm:grid-cols-[140px_1fr]">
               <select className={inputClass} defaultValue="+261" aria-label={t('countryCode')}>
                 <option value="+261">MG +261</option>
                 <option value="+33">FR +33</option>
@@ -486,7 +486,7 @@ export default function TabProfil({
                   {photoMessage || t('chooseImage')}
                 </div>
               </div>
-              <div>
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -508,7 +508,7 @@ export default function TabProfil({
                     variant="ghost"
                     disabled={uploadingProfile}
                     onClick={handleRemoveProfilePicture}
-                    className="ml-2 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                    className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
                   >
                     <Trash2 className="mr-2 h-4 w-4" /> {t('removePhoto')}
                   </Button>
@@ -533,7 +533,7 @@ export default function TabProfil({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-brand-cyan/20 bg-brand-cyan/10 px-6 py-5">
+      <section className="rounded-2xl border border-brand-cyan/20 bg-brand-cyan/10 px-4 sm:px-6 py-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-4">
             <Store className="mt-1 h-7 w-7 shrink-0 text-brand-cyan" />

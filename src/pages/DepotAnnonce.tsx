@@ -759,7 +759,7 @@ const response = await api.createDepotAnnonce({
               type="button"
               disabled={!canSubmit || submitting || processingPhotos}
               onClick={handleSubmit}
-              className="h-14 min-w-[320px] rounded-xl bg-[var(--brand-cyan-dark)] px-8 text-base font-extrabold text-white shadow-xl shadow-cyan-900/20 ring-2 ring-white hover:bg-[var(--brand-green-dark)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-14 w-full min-w-0 max-w-[400px] rounded-xl bg-[var(--brand-cyan-dark)] px-8 text-base font-extrabold text-white shadow-xl shadow-cyan-900/20 ring-2 ring-white hover:bg-[var(--brand-green-dark)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[320px]"
             >
               {submitting || processingPhotos ? <Loader2 className="mr-3 h-4 w-4 animate-spin" /> : <Pencil className="mr-3 h-4 w-4" />}
               {processingPhotos ? 'Préparation des photos...' : 'Publier votre annonce'}

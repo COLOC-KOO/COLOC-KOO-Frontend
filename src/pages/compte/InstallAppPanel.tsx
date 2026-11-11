@@ -47,12 +47,12 @@ export default function InstallAppPanel({ compact = false, buttonLabel }: { comp
       )}
 
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 py-8" onClick={() => setIsOpen(false)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 px-4 py-8" onClick={() => setIsOpen(false)}>
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="install-app-title"
-            className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <button type="button" onClick={() => setIsOpen(false)} aria-label={t('displayNetwork.installModal.close')} className="absolute right-4 top-4 rounded-full bg-muted p-1.5 hover:bg-muted/70">

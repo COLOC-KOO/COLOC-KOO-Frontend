@@ -194,7 +194,7 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
       {/* MODALE: Changement de mot de passe */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 relative">
+          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 relative">
 
             <button
               onClick={() => setShowPasswordModal(false)}
@@ -376,7 +376,7 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
             {appareils.map((a) => (
               <li
                 key={a.id}
-                className="flex items-center gap-2 text-sm text-foreground/80"
+                className="flex items-center gap-2 flex-wrap text-sm text-foreground/80"
               >
                 {a.type === 'mobile' ? (
                   <Smartphone className="w-4 h-4 text-brand-green" />
@@ -429,7 +429,7 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
           />
         </p>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             disabled
             className="inline-flex items-center gap-2 text-sm font-semibold border border-border rounded-lg px-4 py-2 text-foreground/60 opacity-70 cursor-not-allowed"
@@ -552,7 +552,7 @@ export default function TabCompteDonnees({ onAccountDeleted }: TabCompteDonneesP
       {/* MODALE: Suppression */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 relative text-center">
+          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 relative text-center">
 
             <button
               onClick={() => setShowDeleteModal(false)}

@@ -82,7 +82,7 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
         style={liteMode ? { background: LITE_HERO_GRADIENT } : undefined}
       />
       <div className="relative z-[60] flex flex-col items-center px-4 py-8 pb-7 text-center">
-        <h1 className="bebas mb-1.5 px-4 text-[40px] leading-tight tracking-wide text-white">
+        <h1 className="bebas mb-1.5 px-4 text-[34px] sm:text-[40px] leading-tight tracking-wide text-white">
           {titleBefore}
           <span className="text-brand-green">{titleHighlight}</span>
           {titleAfter}
@@ -132,7 +132,7 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
         <div className="mt-4">
           <InstallAppPanel compact buttonLabel={t('home:cta.installApp')} />
         </div>
-        <div className="mt-5 flex gap-4 rounded-xl bg-white/10 px-5 py-2.5">
+        <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-2 rounded-xl bg-white/10 px-5 py-2.5">
           {[
             ['120', t('home:stats.activeListings')],
             ['12', t('home:stats.coveredCities')],

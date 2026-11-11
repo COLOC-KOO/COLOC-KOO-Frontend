@@ -238,7 +238,7 @@ function TabSecu() {
 
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 relative">
+          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 relative">
             <button
               onClick={() => setShowPasswordModal(false)}
               className="absolute top-4 right-4 p-1.5 rounded-full bg-muted hover:bg-muted/70"
@@ -374,7 +374,7 @@ function TabSecu() {
         <p className="text-sm text-muted-foreground mb-4 max-w-lg">
           Optionnelle. Une fois confirmée, un badge <strong>« Identité confirmée »</strong> rassure tes futurs colocataires. La vérification se fera via ton opérateur mobile (USSD : Telma / Orange / Airtel), sans frais de SMS.
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button disabled className="inline-flex items-center gap-2 text-sm font-semibold border border-border rounded-lg px-4 py-2 text-foreground/60 opacity-70 cursor-not-allowed">
             <ShieldOff className="w-4 h-4" /> Identité non confirmée
           </button>
@@ -441,7 +441,7 @@ function TabSecu() {
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 relative text-center">
+          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 relative text-center">
             <button
               onClick={() => setShowDeleteModal(false)}
               className="absolute top-4 right-4 p-1.5 rounded-full bg-muted hover:bg-muted/70"
@@ -797,7 +797,7 @@ export default function Compte() {
 
       {/* HEADER SOMBRE */}
       <div className="bg-gradient-to-r from-[#2C2C2C] to-[#3a3a3a] text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 flex flex-wrap items-center gap-4">
 
           <div className="relative shrink-0">
 
@@ -917,7 +917,7 @@ export default function Compte() {
 
           </div>
 
-          <div className="ml-auto hidden md:flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto">
 
             {user && isAdmin && (
               <Button
@@ -954,7 +954,7 @@ export default function Compte() {
         <div className="grid md:grid-cols-[220px_1fr] gap-6 items-start">
 
           {/* Sidebar desktop */}
-          <aside className="hidden md:flex md:flex-col gap-1 bg-white rounded-2xl border border-border p-2 sticky top-20">
+          <aside className="hidden md:flex md:flex-col gap-1 bg-white rounded-2xl border border-border p-2 sticky top-20 max-h-[calc(100dvh-6rem)] overflow-y-auto">
 
             {tabs.map((tItem) => {
 
@@ -1008,7 +1008,7 @@ export default function Compte() {
                   onClick={() =>
                     navigate(`/compte?tab=${tItem.id}`)
                   }
-                  className={`shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                  className={`shrink-0 whitespace-nowrap flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
                     isActive
                       ? 'bg-brand-cyan-light text-brand-cyan-dark border-brand-cyan/30'
                       : 'bg-white text-foreground/70 border-border'

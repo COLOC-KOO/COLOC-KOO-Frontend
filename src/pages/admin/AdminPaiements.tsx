@@ -17,7 +17,7 @@ export default function AdminPaiements() {
           {paymentStats.map((s) => (
             <div key={s.label} className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl p-5">
               <div className="text-xs text-white/50">{s.label}</div>
-              <div className="mt-2 text-2xl font-bold text-white">{s.value}</div>
+              <div className="mt-2 text-2xl font-bold text-white break-words">{s.value}</div>
               <div className={`text-xs inline-flex items-center gap-0.5 mt-1 ${s.up ? 'text-brand-green' : 'text-brand-magenta'}`}>
                 {s.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />} {s.delta}
               </div>
@@ -29,8 +29,8 @@ export default function AdminPaiements() {
           <div className="p-4 border-b border-white/10">
             <h2 className="bebas text-xl text-white">Transactions récentes</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Transactions récentes" tabIndex={0}>
+            <table className="w-full min-w-[700px] text-sm break-words">
               <thead className="text-xs uppercase text-white/40 border-b border-white/10">
                 <tr>
                   <th className="text-left p-4 font-medium">ID</th>
@@ -67,6 +67,7 @@ export default function AdminPaiements() {
               </tbody>
             </table>
           </div>
+          <p className="px-4 pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes.</p>
         </div>
       </div>
     </AdminLayout>

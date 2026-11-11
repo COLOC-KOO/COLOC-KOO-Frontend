@@ -306,7 +306,7 @@ const VersementDetails = ({
 
         {/* Détails */}
         <div className="p-4 space-y-3 overflow-y-auto max-h-[60vh]">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="text-white/40 text-xs uppercase tracking-wider">Émetteur</div>
               <div className="font-medium">{versement.emetteur}</div>
@@ -318,7 +318,7 @@ const VersementDetails = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="text-white/40 text-xs uppercase tracking-wider">Associé à</div>
               <div className="font-medium">{versement.associeA}</div>
@@ -332,16 +332,16 @@ const VersementDetails = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 p-3 bg-white/5 rounded-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-white/5 rounded-lg">
             <div>
               <div className="text-white/40 text-xs uppercase tracking-wider">Montant dû</div>
-              <div className="text-2xl font-bold text-white/80">
+              <div className="text-xl sm:text-2xl font-bold text-white/80 break-words">
                 {versement.montantDu.toLocaleString('fr-FR')} MGA
               </div>
             </div>
             <div>
               <div className="text-white/40 text-xs uppercase tracking-wider">Montant reçu</div>
-              <div className={`text-2xl font-bold ${
+              <div className={`text-xl sm:text-2xl font-bold break-words ${
                 versement.montantRecu === versement.montantDu 
                   ? 'text-brand-green' 
                   : versement.montantRecu === 0 

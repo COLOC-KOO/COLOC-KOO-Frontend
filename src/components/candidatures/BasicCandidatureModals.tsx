@@ -55,8 +55,8 @@ export function BasicCandidatureModals({
   return (
     <>
       {showPostulerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+          <div className="my-auto max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xl font-semibold">Postuler à la colocation</h3>
               <button onClick={onClosePostuler} className="rounded-full p-2 transition-colors hover:bg-gray-100">
@@ -72,7 +72,7 @@ export function BasicCandidatureModals({
               placeholder="Présentez-vous brièvement et expliquez pourquoi vous êtes intéressé..."
               className="min-h-[120px] w-full resize-none rounded-2xl border border-border p-3 text-sm outline-none transition-colors focus:border-brand-cyan"
             />
-            <div className="mt-4 flex gap-3">
+            <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row">
               <button
                 onClick={onClosePostuler}
                 className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-gray-50"
@@ -183,19 +183,19 @@ export function BasicCandidatureModals({
       )}
 
       {chatModalOpen && selectedCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center gap-3 border-b border-border p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+          <div className="my-auto flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl">
+            <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
               <button type="button" onClick={onCloseChat} className="rounded-full p-2 transition-colors hover:bg-muted">
                 <X className="h-5 w-5" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-cyan font-semibold text-white">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-cyan font-semibold text-white">
                   {selectedCandidate.initials}
                 </div>
-                <div>
-                  <div className="font-semibold">{selectedCandidate.name}</div>
-                  <div className="text-sm text-muted-foreground">{selectedCandidate.subtitle}</div>
+                <div className="min-w-0">
+                  <div className="truncate font-semibold">{selectedCandidate.name}</div>
+                  <div className="truncate text-sm text-muted-foreground">{selectedCandidate.subtitle}</div>
                 </div>
               </div>
               <div className="ml-auto">

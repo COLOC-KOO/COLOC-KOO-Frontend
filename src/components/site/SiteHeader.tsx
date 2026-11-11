@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell, Heart, FileText } from 'lucide-react'
+import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell, Heart, FileText, Menu, X } from 'lucide-react'
 import { Logo, LogoMark, LogoName } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
@@ -145,6 +145,23 @@ export function SiteHeader() {
     setUnreadCount(notifications.filter((item) => item.est_lue === 0).length)
   }, [notifications])
 
+  useEffect(() => {
+    setOpen(false)
+    setUserMenuOpen(false)
+    setLanguageMenuOpen(false)
+    setShowNotif(false)
+  }, [location.pathname])
+
+  // Empêche le défilement de l'arrière-plan quand le tiroir mobile est ouvert.
+  useEffect(() => {
+    if (!open) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [open])
+
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const query = search.trim()
@@ -251,13 +268,25 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
+          {/* Bouton hamburger : seul moyen d'ouvrir le menu de navigation
+              sur mobile/tablette (le tiroir est masqué à partir de lg). */}
+          <button
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-expanded={open}
+            aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+            className="lg:hidden inline-flex items-center justify-center w-9 h-9 border border-border rounded-lg bg-white hover:bg-muted transition-colors"
+          >
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
           <button
             type="button"
             onClick={handleToggleLiteMode}
             aria-pressed={liteMode}
             aria-label={liteMode ? 'Désactiver le mode Lite' : 'Activer le mode Lite'}
             className={cn(
-              'inline-flex items-center gap-1 px-1.5 sm:px-2 py-1.5 border rounded-lg text-xs font-bold transition-colors',
+              'hidden lg:inline-flex items-center gap-1 px-1.5 sm:px-2 py-1.5 border rounded-lg text-xs font-bold transition-colors',
               liteMode
                 ? 'border-brand-green/40 bg-brand-green/10 text-brand-green-dark'
                 : 'border-border/50 hover:border-brand-cyan/30 hover:bg-muted/80 text-foreground/70'
@@ -486,8 +515,8 @@ export function SiteHeader() {
 
       {open && (
         <React.Fragment>
-          <div className="sm:hidden fixed inset-0 top-14 bg-black/50 z-40" onClick={() => setOpen(false)} />
-          <div className="sm:hidden border-t border-border bg-white px-4 py-4 flex flex-col gap-3 relative z-50">
+          <div className="lg:hidden fixed inset-0 top-14 bg-black/50 z-40" onClick={() => setOpen(false)} />
+          <div className="lg:hidden max-h-[calc(100vh-3.5rem)] overflow-y-auto border-t border-border bg-white px-4 py-4 flex flex-col gap-3 relative z-50">
             {visibleNavItems.map((item) => {
               const isActive = location.pathname.startsWith(item.to)
               const label = getNavLabel(item.label)

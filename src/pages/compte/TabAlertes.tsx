@@ -216,7 +216,7 @@ export default function TabAlertes({
       case 0:
         return (
           <>
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="grid grid-cols-1 gap-3 mb-3 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-semibold mb-1">
                   {t('city')} <span className="text-red-500">*</span>
@@ -268,7 +268,7 @@ export default function TabAlertes({
           <>
             <div className="mb-4">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('propertyType')}</div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {TYPES_BIEN.map((item) => (
                   <Checkbox
                     key={item.key}
@@ -282,7 +282,7 @@ export default function TabAlertes({
 
             <div className="mb-4">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('colocRules')}</div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {REGLES_COLOC.map((item) => (
                   <Checkbox
                     key={item.key}
@@ -297,7 +297,7 @@ export default function TabAlertes({
             {canFilterAnnouncementType && (
               <div className="mb-4">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('announcementType')}</div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {TYPES_ANNONCE.map((item) => (
                     <Checkbox
                       key={item.key}
@@ -317,7 +317,7 @@ export default function TabAlertes({
         return (
           <div className="mb-5">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t('notification')}</div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Checkbox
                 label={t('push')}
                 checked={form.notifPush}
@@ -405,7 +405,7 @@ export default function TabAlertes({
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 py-8 overflow-y-auto">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 relative">
+          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 relative">
             <button onClick={closeModal} className="absolute top-4 right-4 p-1.5 rounded-full bg-muted hover:bg-muted/70">
               <X className="w-4 h-4" />
             </button>

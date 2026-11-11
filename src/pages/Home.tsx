@@ -302,7 +302,7 @@ export default function Home() {
   return (
     <SiteLayout>
       {favoriteMessage && (
-        <div className="fixed bottom-5 right-5 z-[80] rounded-xl border border-[var(--brand-cyan-dark)]/20 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-2xl">
+        <div className="fixed bottom-5 right-5 z-[80] max-w-[calc(100vw-2.5rem)] rounded-xl border border-[var(--brand-cyan-dark)]/20 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-2xl">
           {favoriteMessage}
         </div>
       )}

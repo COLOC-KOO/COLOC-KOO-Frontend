@@ -387,7 +387,7 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
       
       {/* Carte d'information flottante - toujours visible */}
       {activeListing && (
-        <div className="absolute right-4 top-4 z-20 w-72 rounded-2xl bg-white/95 backdrop-blur-sm border border-gray-200 shadow-xl p-4 text-sm transition-all duration-300">
+        <div className="absolute right-4 top-4 z-20 w-72 max-w-[calc(100vw-2rem)] rounded-2xl bg-white/95 backdrop-blur-sm border border-gray-200 shadow-xl p-4 text-sm transition-all duration-300">
           <p className="text-xs uppercase tracking-[0.25em] text-gray-500 mb-2">Annonce sélectionnée</p>
           <h3 className="font-semibold text-base leading-tight mb-1">{activeListing.title}</h3>
           <p className="text-xs text-gray-500 mb-2">

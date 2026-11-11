@@ -244,7 +244,7 @@ export default function AdminTechnique() {
         <div className="bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl overflow-hidden">
           <div className="p-4 border-b border-white/10">
             <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 flex-1 max-w-xs min-w-0">
                 <Search className="w-4 h-4 text-white/40" />
                 <input
                   placeholder="Rechercher..."
@@ -317,7 +317,7 @@ export default function AdminTechnique() {
               <Leaf className="w-4 h-4 text-emerald-400" />
               <h3 className="text-sm font-semibold text-white/80">Sobriété numérique</h3>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {sobrieteMetrics.map((metric) => (
                 <div key={metric.label} className="bg-[oklch(0.24_0.005_260)] border border-white/10 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
@@ -342,7 +342,7 @@ export default function AdminTechnique() {
               </span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[640px] text-sm">
                 <thead className="bg-white/5">
                   <tr>
                     <th className="text-left p-2 text-white/40 font-medium text-xs uppercase tracking-wider">Page</th>

@@ -262,7 +262,7 @@ export default function AdminAnnonces() {
                 <button
                   key={filter.value}
                   onClick={() => setActive(filter.value)}
-                  className={`px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition ${
+                  className={`px-3 py-1.5 text-xs rounded-lg whitespace-nowrap shrink-0 transition ${
                     active === filter.value ? 'bg-brand-cyan text-[oklch(0.15_0_0)] font-semibold' : 'text-white/60 hover:bg-white/5'
                   }`}
                 >
@@ -272,8 +272,8 @@ export default function AdminAnnonces() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" role="region" aria-label="Tableau des annonces" tabIndex={0}>
+            <table className="w-full min-w-[900px] text-sm break-words">
            <thead className="text-xs uppercase text-white/40 border-b border-white/10">
                  <tr>
                    <th className="text-left p-4 font-medium">Annonce</th>
@@ -316,7 +316,7 @@ export default function AdminAnnonces() {
                        <StatusBadge status={annonce.statut} />
                      </td>
                      <td className="text-white/50 text-xs">{new Date(annonce.date_creation).toLocaleDateString('fr-FR')}</td>
-                     <td className="p-4 text-right">
+                     <td className="p-4 text-right whitespace-nowrap">
                        <div className="flex justify-end gap-1 flex-wrap">
                          <button onClick={() => { setSelectedAnnonce(annonce); setSelectedPhotoIndex(0); setShowViewModal(true) }} className="p-1.5 hover:bg-white/10 rounded text-white/70 hover:text-white" title="Voir">
                            <Eye className="w-4 h-4" />
@@ -361,6 +361,7 @@ export default function AdminAnnonces() {
               </tbody>
             </table>
           </div>
+          <p className="px-4 pt-2 text-xs text-white/40 lg:hidden">Faites défiler horizontalement pour afficher toutes les colonnes et les actions.</p>
         </div>
       </div>
 
@@ -373,7 +374,7 @@ export default function AdminAnnonces() {
              onSelect={setSelectedPhotoIndex}
              onZoom={() => setIsPhotoZoomed(true)}
            />
-           <div className="grid grid-cols-2 gap-4 mt-4">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
              <Info label="Titre" value={selectedAnnonce.titre} />
              <Info label="Ville" value={selectedAnnonce.ville} />
              <Info label="Type" value={selectedAnnonce.type_propriete} />
@@ -536,19 +537,19 @@ export default function AdminAnnonces() {
                  ))}
                </select>
              </div>
-             <div className="grid grid-cols-2 gap-3">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                <EditInput label="Type de bien" value={editForm.type_propriete} onChange={(value) => setEditForm({ ...editForm, type_propriete: value })} />
                <EditInput label="Type de bail" value={editForm.type_bail} onChange={(value) => setEditForm({ ...editForm, type_bail: value })} />
              </div>
-             <div className="grid grid-cols-2 gap-3">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                <EditInput label="Surface totale (m²)" value={editForm.surface_totale} onChange={(value) => setEditForm({ ...editForm, surface_totale: value })} />
                <EditInput label="Total colocataires" value={editForm.total_colocataires} onChange={(value) => setEditForm({ ...editForm, total_colocataires: value })} />
              </div>
-             <div className="grid grid-cols-2 gap-3">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                <EditInput label="Meuble" value={editForm.est_meuble} onChange={(value) => setEditForm({ ...editForm, est_meuble: value })} />
                <EditInput label="Date dispo" value={editForm.date_disponibilite} onChange={(value) => setEditForm({ ...editForm, date_disponibilite: value })} />
              </div>
-             <div className="grid grid-cols-2 gap-3">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                <EditInput label="Prix loyer (Ar)" value={editForm.prix_loyer} onChange={(value) => setEditForm({ ...editForm, prix_loyer: value })} />
                <EditInput label="Classe énergie" value={editForm.energy_class} onChange={(value) => setEditForm({ ...editForm, energy_class: value })} />
              </div>
@@ -616,7 +617,7 @@ function StatusBadge({ status }: { status: ApiAnnonce['statut'] }) {
 function Modal({ title, children, onClose, narrow = false }: { title: string; children: React.ReactNode; onClose: () => void; narrow?: boolean }) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className={`bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl ${narrow ? 'max-w-md' : 'max-w-2xl'} w-full max-h-[90vh] overflow-y-auto p-6`}>
+      <div className={`bg-[oklch(0.22_0.005_260)] border border-white/10 rounded-2xl ${narrow ? 'max-w-md' : 'max-w-2xl'} w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6`}>
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-xl font-semibold text-white">{title}</h3>
           <button onClick={onClose} className="p-1 hover:bg-white/10 rounded text-white/70">

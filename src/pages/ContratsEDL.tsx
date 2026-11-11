@@ -278,13 +278,13 @@ export default function ContratsEDL() {
           </div>
         </div>
 
-        <div className="mt-7 grid grid-cols-2 gap-3 rounded-2xl border border-brand-cyan/20 bg-brand-cyan-light/40 p-2 shadow-sm" role="tablist" aria-label="Contrats et états des lieux">
+        <div className="mt-7 grid grid-cols-2 gap-2 rounded-2xl border border-brand-cyan/20 bg-brand-cyan-light/40 p-2 shadow-sm sm:gap-3 sm:p-3" role="tablist" aria-label="Contrats et états des lieux">
           <button
             type="button"
             role="tab"
             aria-selected={pageTab === 'create'}
             onClick={() => setPageTab('create')}
-            className={`flex min-h-14 items-center justify-center rounded-xl border px-3 py-3 text-center text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2 ${pageTab === 'create' ? 'border-brand-cyan bg-white text-brand-cyan-dark shadow-sm' : 'border-transparent bg-transparent text-muted-foreground hover:border-brand-cyan/30 hover:bg-white/70 hover:text-brand-cyan-dark'}`}
+            className={`flex min-h-14 min-w-0 items-center justify-center rounded-xl border px-2 py-3 text-center text-xs font-bold leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2 sm:px-4 sm:text-sm ${pageTab === 'create' ? 'border-brand-cyan bg-white text-brand-cyan-dark shadow-sm' : 'border-transparent bg-transparent text-muted-foreground hover:border-brand-cyan/30 hover:bg-white/70 hover:text-brand-cyan-dark'}`}
           >
             Créer un document
           </button>
@@ -293,7 +293,7 @@ export default function ContratsEDL() {
             role="tab"
             aria-selected={pageTab === 'requests'}
             onClick={() => { setPageTab('requests'); void refreshRequests() }}
-            className={`flex min-h-14 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-center text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2 ${pageTab === 'requests' ? 'border-brand-cyan bg-white text-brand-cyan-dark shadow-sm' : 'border-transparent bg-transparent text-muted-foreground hover:border-brand-cyan/30 hover:bg-white/70 hover:text-brand-cyan-dark'}`}
+            className={`flex min-h-14 min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-center text-xs font-bold leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2 sm:gap-2 sm:px-4 sm:text-sm ${pageTab === 'requests' ? 'border-brand-cyan bg-white text-brand-cyan-dark shadow-sm' : 'border-transparent bg-transparent text-muted-foreground hover:border-brand-cyan/30 hover:bg-white/70 hover:text-brand-cyan-dark'}`}
           >
             Mes demandes
             <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${pageTab === 'requests' ? 'bg-brand-cyan text-white' : 'bg-white text-brand-cyan-dark'}`}>{requests.length}</span>
@@ -304,7 +304,7 @@ export default function ContratsEDL() {
 
         {pageTab === 'create' && step !== 'done' ? (
           <section className="mt-7 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-7">
-            <div className="mb-6 flex flex-wrap gap-2 text-xs font-semibold">
+            <div className="mb-6 grid grid-cols-2 gap-2 text-xs font-semibold sm:flex sm:flex-wrap">
               {(['details', 'clauses', 'preview', 'payment'] as const).map((current, index) => (
                 <span key={current} className={`rounded-full px-3 py-1.5 ${step === current ? 'bg-brand-cyan text-white' : 'bg-muted text-muted-foreground'}`}>
                   {index + 1}. {['Informations', 'Clauses', 'Aperçu', 'Paiement'][index]}
@@ -412,8 +412,8 @@ export default function ContratsEDL() {
                     <span className="mt-1 block text-xs text-muted-foreground">La capture est conservée en privé et visible uniquement par l’équipe de vérification.</span>
                   </label>
                 )}
-                <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/50 p-4"><span className="font-semibold">{isDocumentType} · {draft?.reference}</span><strong className="bebas text-2xl text-brand-magenta">{Number(draft?.montant || 0).toLocaleString('fr-FR')} Ar</strong></div>
-                <div className="mt-5 flex justify-between"><button type="button" onClick={() => setStep('preview')} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Retour à l’aperçu</button><button type="button" disabled={busy || !paymentMethod || paymentReference.trim().length < 4 || (paymentMethod.toLowerCase().includes('mvola') && !paymentProof)} onClick={() => void submitPayment()} className="inline-flex items-center gap-2 rounded-xl bg-brand-green px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Soumettre le paiement</button></div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/50 p-3 sm:p-4"><span className="min-w-0 break-words font-semibold">{isDocumentType} · {draft?.reference}</span><strong className="bebas shrink-0 text-2xl text-brand-magenta">{Number(draft?.montant || 0).toLocaleString('fr-FR')} Ar</strong></div>
+                <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3"><button type="button" onClick={() => setStep('preview')} className="w-full rounded-xl border border-border px-4 py-3 text-sm font-semibold sm:w-auto">Retour à l’aperçu</button><button type="button" disabled={busy || !paymentMethod || paymentReference.trim().length < 4 || (paymentMethod.toLowerCase().includes('mvola') && !paymentProof)} onClick={() => void submitPayment()} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-green px-5 py-3 text-sm font-bold text-white disabled:opacity-50 sm:w-auto">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Soumettre le paiement</button></div>
               </div>
             )}
           </section>
@@ -435,12 +435,12 @@ export default function ContratsEDL() {
             </div>
             <div className="space-y-3">
             {requests.map((request) => (
-              <article key={request.id_demande} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-white p-4">
-                <div>
-                  <div className="font-semibold">{request.type_document === 'edl' ? 'État des lieux' : 'Contrat'} · {request.reference}</div>
+              <article key={request.id_demande} className="flex min-w-0 flex-col items-stretch justify-between gap-3 rounded-xl border border-border bg-white p-3 sm:flex-row sm:items-center sm:p-4">
+                <div className="min-w-0">
+                  <div className="break-words font-semibold">{request.type_document === 'edl' ? 'État des lieux' : 'Contrat'} · {request.reference}</div>
                   <div className="mt-1 text-sm text-muted-foreground">{statusLabel(request.statut)} · Paiement : {request.statut_paiement.replace(/-/g, ' ')}</div>
                 </div>
-                {request.statut === 'valide' && request.statut_paiement === 'conforme' && <button type="button" onClick={() => void openFinalDocument(request.id_demande)} className="inline-flex items-center gap-2 rounded-lg border border-brand-cyan px-3 py-2 text-sm font-bold text-brand-cyan-dark"><Download className="h-4 w-4" />Télécharger / imprimer le PDF</button>}
+                {request.statut === 'valide' && request.statut_paiement === 'conforme' && <button type="button" onClick={() => void openFinalDocument(request.id_demande)} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-cyan px-3 py-2 text-sm font-bold text-brand-cyan-dark sm:w-auto"><Download className="h-4 w-4 shrink-0" />Télécharger / imprimer le PDF</button>}
               </article>
             ))}
             {requests.length === 0 && <p className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">Aucune demande de document pour le moment.</p>}

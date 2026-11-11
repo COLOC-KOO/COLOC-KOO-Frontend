@@ -438,7 +438,7 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
                           <label
                             key={item.id_booster}
                             className={cn(
-                              'flex items-center gap-3 rounded-lg px-4 py-4 cursor-pointer transition-colors',
+                              'flex flex-col items-start gap-3 rounded-lg px-4 py-4 cursor-pointer transition-colors sm:flex-row sm:items-center',
                               active ? 'bg-brand-cyan/15 ring-1 ring-brand-cyan/40' : 'bg-muted/70 hover:bg-brand-cyan/10',
                             )}
                           >
@@ -448,13 +448,13 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
                               checked={active}
                               onChange={() => toggleBoost(item.id_booster)}
                             />
-                            <span className="text-sm text-foreground flex-1">
+                            <span className="min-w-0 self-stretch text-sm text-foreground flex-1 sm:self-auto">
                               {item.nom}
                               {item.description && (
                                 <span className="block text-xs text-muted-foreground">{item.description}</span>
                               )}
                             </span>
-                            <span className="text-sm font-extrabold text-foreground whitespace-nowrap">
+                            <span className="self-end text-sm font-extrabold text-foreground whitespace-nowrap sm:self-auto">
                               {formatAr(Number(item.prix))}{dureeLabel ? ` / ${dureeLabel}` : uniteLabel ? ` ${uniteLabel}` : ''}
                             </span>
                           </label>

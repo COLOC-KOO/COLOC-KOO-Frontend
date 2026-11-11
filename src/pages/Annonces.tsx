@@ -322,10 +322,11 @@ interface DropdownPillProps {
   onToggle: () => void;
   active?: boolean;
   minWidth?: number;
+  alignRightOnMobile?: boolean;
   children: React.ReactNode;
 }
 
-function DropdownPill({ label, icon, isOpen, onToggle, active, minWidth = 180, children }: DropdownPillProps) {
+function DropdownPill({ label, icon, isOpen, onToggle, active, minWidth = 180, alignRightOnMobile, children }: DropdownPillProps) {
   return (
     <div className="relative">
       <button
@@ -344,7 +345,7 @@ function DropdownPill({ label, icon, isOpen, onToggle, active, minWidth = 180, c
       </button>
       {isOpen && (
         <div
-          className="absolute top-[calc(100%+6px)] left-0 bg-white border border-gray-200 rounded-xl shadow-sc-lg z-50 p-3"
+          className={`absolute top-[calc(100%+6px)] ${alignRightOnMobile ? "right-0 left-auto sm:left-0 sm:right-auto" : "left-0"} max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-xl shadow-sc-lg z-50 p-3`}
           style={{ minWidth }}
         >
           {children}
@@ -877,7 +878,7 @@ export default function Annonces() {
           </div>
 
           <div ref={equipmentsRef} className="relative">
-            <DropdownPill label={t("annonces:filters.equipments")} icon="ti-building" isOpen={openDrop === "equipments"} onToggle={() => setOpenDrop((v) => (v === "equipments" ? null : "equipments"))} active={selectedEquipments.length > 0} minWidth={240}>
+            <DropdownPill label={t("annonces:filters.equipments")} icon="ti-building" isOpen={openDrop === "equipments"} onToggle={() => setOpenDrop((v) => (v === "equipments" ? null : "equipments"))} active={selectedEquipments.length > 0} minWidth={240} alignRightOnMobile>
               <p className="text-[11px] font-bold text-sc-gr2 mb-2">Équipements</p>
               <div className="space-y-1 max-h-60 overflow-y-auto">
                 {EQUIPMENT_OPTIONS.map((eq) => (

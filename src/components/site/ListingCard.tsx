@@ -145,7 +145,7 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
         )}
 
         <p className={`flex items-center gap-1 text-gray-500 ${compact ? 'text-[10px]' : 'text-[12px]'} mb-1.5`}>
-          <MapPin className="w-4 h-4 text-cyan-600" /> {l.district}, {l.city}
+          <MapPin className="w-4 h-4 shrink-0 text-cyan-600" /> <span className="min-w-0 truncate">{l.district}, {l.city}</span>
         </p>
 
         {!compact && (
