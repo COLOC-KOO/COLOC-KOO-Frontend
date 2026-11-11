@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { api, type ApiPartenaireCampagne } from '../lib/api'
 import { LazyImage } from '../components/ui/LazyImage'
+import { LOGO_PLACEHOLDER } from '../lib/placeholders'
 
 function normalizeImageUrl(value: string | null | undefined) {
   if (!value) return ''
@@ -126,7 +127,7 @@ export default function PartenairesTous() {
               return (
                 <div key={partner.id_partenaire} className={`rounded-2xl border border-slate-200 border-t-[3px] border-t-[#cacc7d] bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${levelStyle.card}`}>
                   <div className="mb-4 flex flex-col items-center justify-center gap-3 text-center">
-                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white/90 shadow-sm">
+                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-[--brand-cyan-light] shadow-sm">
                       {partner.visuel || partner.logo ? (
                         <LazyImage
                           src={normalizeImageUrl(partner.visuel || partner.logo)}
@@ -134,7 +135,7 @@ export default function PartenairesTous() {
                           className="h-full w-full object-contain"
                         />
                       ) : (
-                        <span className="text-lg font-semibold text-slate-700">{(partner.partenaire_nom || partner.titre || partner.nom || 'P').charAt(0)}</span>
+                        <img src={LOGO_PLACEHOLDER} alt="" className="h-full w-full object-contain p-1" loading="lazy" />
                       )}
                     </div>
                     {levelLabel && (

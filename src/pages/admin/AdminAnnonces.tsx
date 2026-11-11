@@ -5,6 +5,7 @@ import { AdminLayout } from '../../components/admin/AdminLayout'
 import { ApiAnnonce, Ville, api } from '../../lib/api'
 import { formatAr } from '../../lib/utils'
 import { useAuth } from '../../lib/auth'
+import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
 
 const filters = [
   { label: 'Toutes', value: 'all' },
@@ -294,8 +295,8 @@ export default function AdminAnnonces() {
                      <td className="p-4">
                        <div className="flex items-center gap-3">
                          <img
-                           src={annonce.photos[0] || 'https://picsum.photos/seed/colockoo/200/200'}
-                           className="w-10 h-10 rounded-lg object-cover"
+                           src={annonce.photos[0] || LOGO_PLACEHOLDER}
+                           className={`w-10 h-10 rounded-lg ${isLogoPlaceholder(annonce.photos[0] || LOGO_PLACEHOLDER) ? 'object-contain bg-[--brand-cyan-light] p-1' : 'object-cover'}`}
                            alt=""
                          />
                          <div className="min-w-0">
@@ -477,9 +478,9 @@ export default function AdminAnnonces() {
             <X className="h-6 w-6" />
           </button>
           <img
-            src={(selectedAnnonce.photos.length ? selectedAnnonce.photos : ['https://picsum.photos/seed/colockoo/900/400'])[selectedPhotoIndex]}
+            src={(selectedAnnonce.photos.length ? selectedAnnonce.photos : [LOGO_PLACEHOLDER])[selectedPhotoIndex]}
             alt={`${selectedAnnonce.titre} — photo ${selectedPhotoIndex + 1}`}
-            className="max-h-[90vh] max-w-[92vw] cursor-zoom-out object-contain"
+            className={`max-h-[90vh] max-w-[92vw] cursor-zoom-out ${selectedAnnonce.photos.length ? 'object-contain' : 'object-contain rounded-lg bg-[--brand-cyan-light] p-8'}`}
             onClick={(event) => event.stopPropagation()}
           />
           {selectedAnnonce.photos.length > 1 && (
@@ -657,7 +658,7 @@ function PhotoGallery({
   onSelect: (index: number) => void
   onZoom: () => void
 }) {
-  const images = photos.length ? photos : ['https://picsum.photos/seed/colockoo/900/400']
+  const images = photos.length ? photos : [LOGO_PLACEHOLDER]
   const currentIndex = Math.min(selectedIndex, images.length - 1)
 
   return (
@@ -669,7 +670,11 @@ function PhotoGallery({
           aria-label="Agrandir la photo sélectionnée"
           className="block w-full cursor-zoom-in"
         >
-          <img src={images[currentIndex]} className="w-full h-56 object-cover rounded-lg" alt={`${title} — photo ${currentIndex + 1}`} />
+          <img
+            src={images[currentIndex]}
+            className={`w-full h-56 rounded-lg ${isLogoPlaceholder(images[currentIndex]) ? 'object-contain bg-[--brand-cyan-light] p-8' : 'object-cover'}`}
+            alt={`${title} — photo ${currentIndex + 1}`}
+          />
         </button>
         {images.length > 1 && (
           <>
@@ -706,7 +711,11 @@ function PhotoGallery({
               aria-pressed={currentIndex === index}
               className={`shrink-0 rounded-md border-2 ${currentIndex === index ? 'border-brand-cyan' : 'border-transparent'}`}
             >
-              <img src={photo} alt="" className="h-14 w-20 rounded object-cover" />
+              <img
+                src={photo}
+                alt=""
+                className={`h-14 w-20 rounded ${isLogoPlaceholder(photo) ? 'object-contain bg-[--brand-cyan-light] p-1' : 'object-cover'}`}
+              />
             </button>
           ))}
         </div>

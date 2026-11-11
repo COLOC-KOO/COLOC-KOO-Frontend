@@ -7,10 +7,27 @@ import "leaflet/dist/leaflet.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { ListingCard } from "../components/site/ListingCard";
-import { api, annonceToListing, Ville } from "../lib/api";
+import { api, annonceToListing, type ApiPartenaireCampagne, type Ville } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { formatAr } from "../lib/utils";
 import { Listing } from "../types";
+import { LOGO_PLACEHOLDER, isLogoPlaceholder } from "../lib/placeholders";
+
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:4000/api"
+).replace(/\/api\/?$/, "");
+
+function normalizeCampaignImageUrl(value: string) {
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${API_BASE_URL}${value.startsWith("/") ? "" : "/"}${value}`;
+}
+
+function isFeedCampaignEligible(campaign: ApiPartenaireCampagne) {
+  const level = (campaign.partenaire_niveau || campaign.niveau || "")
+    .trim()
+    .toLowerCase();
+  return campaign.emplacement === "fil_annonces" && (level === "or" || level === "diamant");
+}
 
 const MADAGASCAR_CITIES_FALLBACK = [
   "Antananarivo", "Toamasina", "Antsirabe", "Fianarantsoa", "Mahajanga", "Toliara",
@@ -359,6 +376,8 @@ export default function Annonces() {
   const [query, setQuery] = useState("");
   const [colocFilter, setColocFilter] = useState("");
   const [listings, setListings] = useState<Listing[]>([]);
+  const [feedCampaigns, setFeedCampaigns] = useState<ApiPartenaireCampagne[]>([]);
+  const [campaignError, setCampaignError] = useState("");
   const [villes, setVilles] = useState<Ville[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -394,6 +413,16 @@ export default function Annonces() {
 
   useEffect(() => {
     fetchMadagascarCities().then(setExternalCities);
+  }, []);
+
+  useEffect(() => {
+    api.partenairesCampagnes()
+      .then((campaigns) => setFeedCampaigns(campaigns.filter(isFeedCampaignEligible)))
+      .catch((err) => {
+        setCampaignError(
+          err instanceof Error ? err.message : "Impossible de charger les campagnes partenaires."
+        );
+      });
   }, []);
 
   useEffect(() => {
@@ -533,6 +562,21 @@ export default function Annonces() {
       return true;
     });
   }, [listings, selectedServices, selectedEquipments]);
+
+  const feedItems: Array<
+    | { type: "listing"; listing: Listing }
+    | { type: "campaign"; campaign: ApiPartenaireCampagne }
+  > = [];
+  const campaignInsertionIndex = Math.min(3, visibleListings.length - 1);
+  visibleListings.forEach((listing, index) => {
+    feedItems.push({ type: "listing", listing });
+    if (feedCampaigns.length > 0 && index === campaignInsertionIndex) {
+      feedCampaigns.forEach((campaign) => feedItems.push({ type: "campaign", campaign }));
+    }
+  });
+  if (visibleListings.length === 0) {
+    feedCampaigns.forEach((campaign) => feedItems.push({ type: "campaign", campaign }));
+  }
 
   const toggleService = (value: string) => {
     setSelectedServices((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
@@ -1067,7 +1111,7 @@ export default function Annonces() {
               </h2>
             </div>
 
-            {visibleListings.length === 0 && !loading && (
+            {visibleListings.length === 0 && feedCampaigns.length === 0 && !loading && (
               <div className="text-center py-16">
                 <i className="ti ti-map-search text-5xl text-sc-gr2 mb-4 block" />
                 <h3 className="font-bebas text-xl text-sc-dark mb-2">{t("annonces:empty")}</h3>
@@ -1107,17 +1151,47 @@ export default function Annonces() {
               </div>
             )}
 
-            {!loading && !error && visibleListings.length > 0 && (
+            {!loading && !error && feedItems.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {visibleListings.map((l) => (
+                {feedItems.map((item) => item.type === "listing" ? (
                   <ListingCard
-                    key={l.id}
-                    l={l}
-                    isFavorite={favoriteIds.has(String(l.id))}
+                    key={`listing-${item.listing.id}`}
+                    l={item.listing}
+                    isFavorite={favoriteIds.has(String(item.listing.id))}
                     onFavoriteClick={handleFavoriteClick}
                   />
+                ) : (
+                  <article
+                    key={`campaign-${item.campaign.id_campagne}`}
+                    className="overflow-hidden rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white shadow-sm"
+                  >
+                    <img
+                      src={item.campaign.visuel ? normalizeCampaignImageUrl(item.campaign.visuel) : LOGO_PLACEHOLDER}
+                      alt=""
+                      className={`aspect-[4/3] w-full ${isLogoPlaceholder(item.campaign.visuel ? normalizeCampaignImageUrl(item.campaign.visuel) : LOGO_PLACEHOLDER) ? "object-contain bg-[--brand-cyan-light] p-8" : "object-cover"}`}
+                      loading="lazy"
+                    />
+                    <div className="space-y-2 p-4">
+                      <span className="inline-flex rounded-full bg-cyan-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-cyan-800">
+                        Partenaire
+                      </span>
+                      <h3 className="font-semibold text-slate-900">{item.campaign.titre}</h3>
+                      <p className="text-sm text-slate-600">
+                        {item.campaign.description || item.campaign.partenaire_nom}
+                      </p>
+                      <p className="text-xs font-medium text-slate-500">
+                        {item.campaign.partenaire_nom}
+                      </p>
+                    </div>
+                  </article>
                 ))}
               </div>
+            )}
+
+            {campaignError && (
+              <p className="mt-4 text-sm text-red-600">
+                Impossible de charger les campagnes partenaires.
+              </p>
             )}
 
             {error && <div className="border border-red-200 bg-red-50/80 p-5 text-sm text-red-700 rounded-xl">{error}</div>}

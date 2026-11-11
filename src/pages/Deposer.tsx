@@ -15,6 +15,7 @@ import { api, Ville } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LazyImage } from '../components/ui/LazyImage'
+import { LOGO_PLACEHOLDER } from '../lib/placeholders'
 
 // Ajout de l'image hero
 const heroImage = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80"
@@ -831,6 +832,11 @@ export default function Deposer() {
                         </motion.div>
                       ))}
                     </motion.div>
+                  )}
+                  {form.photos.length === 0 && (
+                    <div className="aspect-square max-w-48 overflow-hidden rounded-xl border border-border bg-[--brand-cyan-light] p-6">
+                      <img src={LOGO_PLACEHOLDER} alt="" className="h-full w-full object-contain" />
+                    </div>
                   )}
                 </motion.div>
               )}

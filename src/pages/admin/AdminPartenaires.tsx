@@ -44,9 +44,9 @@ import { AdminLayout } from '../../components/admin/AdminLayout'
 import { api, type ApiPartenaireRequest, type Ville } from '../../lib/api'
 import { useDialog } from '../../components/ui/Dialog'
 import { useAuth } from '../../lib/auth'
+import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
 const PARTNER_LEVELS = ['Bronze', 'Argent', 'Or', 'Diamant'] as const
 type PartnerLevel = typeof PARTNER_LEVELS[number]
 type PartnerPricing = Record<PartnerLevel, number>
@@ -801,12 +801,16 @@ function CampagneModal({
                 <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
               </label>
             </div>
-            {(preview || visuel) && (
-              <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-2">
-                <img src={preview || visuel} alt="Prévisualisation" className="h-16 w-16 rounded object-cover" />
-                <span className="text-xs text-white/50">Visuel prêt à être enregistré</span>
-              </div>
-            )}
+            <div className="mt-3 flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-2">
+              <img
+                src={preview || visuel || LOGO_PLACEHOLDER}
+                alt="Prévisualisation"
+                className={`h-16 w-16 rounded ${isLogoPlaceholder(preview || visuel || LOGO_PLACEHOLDER) ? 'object-contain bg-[--brand-cyan-light] p-2' : 'object-cover'}`}
+              />
+              <span className="text-xs text-white/50">
+                {preview || visuel ? 'Visuel prêt à être enregistré' : 'Logo Coloc’KOO affiché par défaut si aucun visuel n’est ajouté'}
+              </span>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2 border-t border-white/10">
@@ -1931,24 +1935,12 @@ export default function AdminPartenaires() {
                           <td className="p-3">
                             <div className="flex items-start gap-3">
                               <div className="h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                                {campagne.visuel ? (
-                                  <img
-                                    src={normalizeCampaignImageUrl(campagne.visuel) || FALLBACK_IMAGE}
-                                    alt={campagne.titre}
-                                    className="h-full w-full object-cover"
-                                    loading="lazy"
-                                    onError={(event) => {
-                                      const target = event.currentTarget as HTMLImageElement
-                                      if (target.src !== FALLBACK_IMAGE) {
-                                        target.src = FALLBACK_IMAGE
-                                      }
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center bg-brand-cyan/10 text-brand-cyan">
-                                    <Image className="w-5 h-5" />
-                                  </div>
-                                )}
+                                <img
+                                  src={campagne.visuel ? normalizeCampaignImageUrl(campagne.visuel) : LOGO_PLACEHOLDER}
+                                  alt={campagne.titre}
+                                  className={`h-full w-full ${campagne.visuel ? 'object-cover' : 'object-contain bg-[--brand-cyan-light] p-3'}`}
+                                  loading="lazy"
+                                />
                               </div>
                               <div className="min-w-0">
                                 <div className="font-medium text-white break-words">{campagne.titre}</div>

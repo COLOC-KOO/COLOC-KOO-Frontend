@@ -37,6 +37,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { geocodeAddress } from '../lib/geocoding'
 import { cn } from '../lib/utils'
+import { LOGO_PLACEHOLDER } from '../lib/placeholders'
 
 const markerIcon = new Icon({
   iconUrl: icon,
@@ -737,6 +738,11 @@ const response = await api.createDepotAnnonce({
                       </button>
                     </div>
                   ))}
+                </div>
+              )}
+              {photoPreviews.length === 0 && (
+                <div className="mx-auto aspect-[4/3] w-full max-w-sm overflow-hidden rounded border border-gray-200 bg-[--brand-cyan-light] p-8">
+                  <img src={LOGO_PLACEHOLDER} alt="" className="h-full w-full object-contain" />
                 </div>
               )}
             </div>
