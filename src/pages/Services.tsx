@@ -272,7 +272,7 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
         message: message.trim() || undefined,
         telephone: telephone.trim() || undefined,
       })
-      setConfirmation({ reference: res.reference, total: res.total, message: res.message || undefined })
+      setConfirmation({ reference: res.reference, total: res.total })
       clearCart()
       setMessage('')
     } catch (e) {

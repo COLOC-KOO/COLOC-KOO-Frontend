@@ -74,6 +74,10 @@ export default function ContratsEDL() {
   const [draft, setDraft] = useState<{ id: number; reference: string; montant: number } | null>(null)
   const [previewHtml, setPreviewHtml] = useState('')
   const [requests, setRequests] = useState<ContractDocumentRequest[]>([])
+  const [passwordRequestId, setPasswordRequestId] = useState<number | null>(null)
+  const [pdfPassword, setPdfPassword] = useState('')
+  const [pdfPasswordConfirmation, setPdfPasswordConfirmation] = useState('')
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -212,20 +216,35 @@ export default function ContratsEDL() {
     }
   }
 
-  const openFinalDocument = async (id: number) => {
-    const documentWindow = window.open('', '_blank')
-    if (!documentWindow) {
-      setError('Autorise les fenêtres contextuelles pour ouvrir le document.')
+  const downloadFinalDocument = async (event: React.FormEvent<HTMLFormElement>, request: ContractDocumentRequest) => {
+    event.preventDefault()
+    if (pdfPassword.length < 12 || pdfPassword.length > 127 || !/^[\x20-\x7e]+$/.test(pdfPassword)) {
+      setError('Choisis un mot de passe de 12 à 127 caractères ASCII visibles.')
       return
     }
+    if (pdfPassword !== pdfPasswordConfirmation) {
+      setError('Les deux mots de passe ne correspondent pas.')
+      return
+    }
+    setDownloadingDocumentId(request.id_demande)
+    setError('')
     try {
-      const html = await api.getContractDocumentRequestDocument(id)
-      const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
-      documentWindow.location.href = url
+      const blob = await api.getContractDocumentRequestDocument(request.id_demande, pdfPassword)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${request.reference}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
       window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+      setPasswordRequestId(null)
+      setPdfPassword('')
+      setPdfPasswordConfirmation('')
     } catch (documentError) {
-      documentWindow.close()
       setError(documentError instanceof Error ? documentError.message : 'Impossible de télécharger le document.')
+    } finally {
+      setDownloadingDocumentId(null)
     }
   }
 
@@ -440,7 +459,63 @@ export default function ContratsEDL() {
                   <div className="break-words font-semibold">{request.type_document === 'edl' ? 'État des lieux' : 'Contrat'} · {request.reference}</div>
                   <div className="mt-1 text-sm text-muted-foreground">{statusLabel(request.statut)} · Paiement : {request.statut_paiement.replace(/-/g, ' ')}</div>
                 </div>
-                {request.statut === 'valide' && request.statut_paiement === 'conforme' && <button type="button" onClick={() => void openFinalDocument(request.id_demande)} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-cyan px-3 py-2 text-sm font-bold text-brand-cyan-dark sm:w-auto"><Download className="h-4 w-4 shrink-0" />Télécharger / imprimer le PDF</button>}
+                {request.statut === 'valide' && request.statut_paiement === 'conforme' && (
+                  <div className="w-full sm:max-w-md">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPasswordRequestId(passwordRequestId === request.id_demande ? null : request.id_demande)
+                        setPdfPassword('')
+                        setPdfPasswordConfirmation('')
+                        setError('')
+                      }}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-cyan px-3 py-2 text-sm font-bold text-brand-cyan-dark"
+                    >
+                      <Download className="h-4 w-4 shrink-0" />Télécharger le PDF chiffré
+                    </button>
+                    {passwordRequestId === request.id_demande && (
+                      <form onSubmit={(event) => void downloadFinalDocument(event, request)} className="mt-3 space-y-3 rounded-lg bg-muted/40 p-3">
+                        <p className="text-xs text-muted-foreground">Définis le mot de passe qui servira à ouvrir et imprimer ce PDF. Il n’est pas enregistré : communique-le séparément au destinataire. Une archive PDF/A et son empreinte SHA-256 sont conservées en privé par Coloc’KOO.</p>
+                        <label className="block text-sm">
+                          <span className="mb-1 block font-semibold">Mot de passe (12 à 127 caractères) *</span>
+                          <input
+                            type="password"
+                            value={pdfPassword}
+                            onChange={(event) => setPdfPassword(event.target.value)}
+                            minLength={12}
+                            maxLength={127}
+                            pattern="[ -~]{12,127}"
+                            autoComplete="new-password"
+                            required
+                            className="w-full rounded-lg border border-border px-3 py-2.5"
+                          />
+                        </label>
+                        <label className="block text-sm">
+                          <span className="mb-1 block font-semibold">Confirmer le mot de passe *</span>
+                          <input
+                            type="password"
+                            value={pdfPasswordConfirmation}
+                            onChange={(event) => setPdfPasswordConfirmation(event.target.value)}
+                            minLength={12}
+                            maxLength={127}
+                            pattern="[ -~]{12,127}"
+                            autoComplete="new-password"
+                            required
+                            className="w-full rounded-lg border border-border px-3 py-2.5"
+                          />
+                        </label>
+                        <button
+                          type="submit"
+                          disabled={downloadingDocumentId === request.id_demande}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-cyan px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
+                        >
+                          {downloadingDocumentId === request.id_demande ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          Télécharger la copie protégée
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
               </article>
             ))}
             {requests.length === 0 && <p className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">Aucune demande de document pour le moment.</p>}

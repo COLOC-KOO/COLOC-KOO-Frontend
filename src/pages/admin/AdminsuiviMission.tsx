@@ -94,6 +94,7 @@ interface MissionStats {
   partenairesActifs: number
   caPartenaires: number
   nouveauxPartenairesMois: number
+  partenairesCaDetail: Array<{ id: number; nom: string; niveau: string; montant: number }>
   demandes: ServiceDemande[]
   contratsRecents: Contrat[]
 }
@@ -184,6 +185,7 @@ export default function AdminSuiviMissions() {
     partenairesActifs: 0,
     caPartenaires: 0,
     nouveauxPartenairesMois: 0,
+    partenairesCaDetail: [],
     demandes: [],
     contratsRecents: []
   })
@@ -191,6 +193,7 @@ export default function AdminSuiviMissions() {
   const [filterStatus, setFilterStatus] = useState<string>('tous')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<string>('')
+  const [showPartnerRevenue, setShowPartnerRevenue] = useState(false)
 
   // Charger les données
   const loadData = async () => {
@@ -209,7 +212,7 @@ export default function AdminSuiviMissions() {
       // Charger les partenaires + grille tarifaire utilisée pour le CA
       const [partenaires, pricing] = await Promise.all([
         api.partenaires() || [],
-        api.backofficePartnerPricing().catch(() => ({ Bronze: 0, Argent: 0, Or: 0, Diamant: 0 }))
+        api.backofficePartnerPricing()
       ])
 
       // Transformer les données
@@ -239,13 +242,19 @@ export default function AdminSuiviMissions() {
 
       const partenairesActifs = partenaires?.filter((p: any) => Number(p.actif) === 1).length || 0
       const pricingByLevel = pricing as Record<string, number>
-      const caPartenaires = partenaires
+      const partenairesCaDetail = partenaires
         ?.filter((p: any) => Number(p.actif) === 1)
-        .reduce((total: number, p: any) => {
+        .map((p: any) => {
           const niveau = p.niveau || 'Bronze'
           const montant = Number(p.montant ?? pricingByLevel[niveau] ?? 0)
-          return total + (Number.isFinite(montant) ? montant : 0)
-        }, 0) || 0
+          return {
+            id: Number(p.id_partenaire),
+            nom: String(p.nom || 'Partenaire'),
+            niveau,
+            montant: Number.isFinite(montant) ? montant : 0,
+          }
+        }) || []
+      const caPartenaires = partenairesCaDetail.reduce((total, p) => total + p.montant, 0)
       const nouveauxPartenairesMois = partenaires?.filter((p: any) => {
         const date = p.date_creation ? new Date(p.date_creation) : null
         if (!date || Number.isNaN(date.getTime())) return false
@@ -265,6 +274,7 @@ export default function AdminSuiviMissions() {
         partenairesActifs,
         caPartenaires,
         nouveauxPartenairesMois,
+        partenairesCaDetail,
         demandes: demandes || [],
         contratsRecents
       })
@@ -505,15 +515,17 @@ export default function AdminSuiviMissions() {
               <div className="text-lg font-bold text-pink-400">{stats.partenairesActifs}</div>
               <div className="text-xs text-white/40">Partenaires actifs</div>
             </div>
-            <div 
+            <button
+              type="button"
               className="bg-white/5 rounded-lg p-3 text-center cursor-pointer hover:bg-white/10 transition"
-              onClick={() => navigate('/admin/partenaires')}
+              onClick={() => setShowPartnerRevenue(true)}
             >
               <div className="text-lg font-bold text-brand-cyan">
                 {new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(stats.caPartenaires)} MGA
               </div>
-              <div className="text-xs text-white/40">CA partenaires</div>
-            </div>
+              <div className="text-xs text-white/40">CA estimé partenaires</div>
+              <div className="mt-1 text-[10px] text-brand-cyan/70">Voir le calcul</div>
+            </button>
             <div 
               className="bg-white/5 rounded-lg p-3 text-center cursor-pointer hover:bg-white/10 transition"
               onClick={() => navigate('/admin/partenaires')}
@@ -524,6 +536,56 @@ export default function AdminSuiviMissions() {
           </div>
         </div>
       </div>
+      {showPartnerRevenue && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="partner-revenue-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setShowPartnerRevenue(false)
+          }}
+        >
+          <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-[oklch(0.22_0.005_260)] p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="partner-revenue-title" className="text-lg font-semibold text-white">Calcul estimatif du CA partenaires</h2>
+                <p className="mt-1 text-xs text-white/50">
+                  Somme des tarifs de niveau appliqués aux partenaires actifs ; les hypothèses se modifient dans la grille tarifaire.
+                </p>
+              </div>
+              <button type="button" onClick={() => setShowPartnerRevenue(false)} aria-label="Fermer" className="rounded p-1 text-white/60 hover:bg-white/10">
+                <XCircle className="h-5 w-5" />
+              </button>
+            </div>
+            <ul className="mt-4 max-h-72 space-y-2 overflow-y-auto">
+              {stats.partenairesCaDetail.map((partner) => (
+                <li key={partner.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/5 px-3 py-2 text-sm">
+                  <span className="min-w-0 truncate text-white/80">{partner.nom} <span className="text-white/40">· {partner.niveau}</span></span>
+                  <span className="shrink-0 text-brand-cyan">{new Intl.NumberFormat('fr-FR').format(partner.montant)} MGA</span>
+                </li>
+              ))}
+              {stats.partenairesCaDetail.length === 0 && (
+                <li className="py-5 text-center text-sm text-white/45">Aucun partenaire actif à calculer.</li>
+              )}
+            </ul>
+            <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
+              <span className="font-semibold text-white">Total estimé</span>
+              <span className="font-bold text-brand-cyan">{new Intl.NumberFormat('fr-FR').format(stats.caPartenaires)} MGA</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowPartnerRevenue(false)
+                navigate('/admin/partenaires')
+              }}
+              className="mt-4 w-full rounded-lg bg-brand-cyan px-4 py-2 text-sm font-semibold text-white hover:bg-brand-cyan-dark"
+            >
+              Modifier les tarifs supposés
+            </button>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   )
 }

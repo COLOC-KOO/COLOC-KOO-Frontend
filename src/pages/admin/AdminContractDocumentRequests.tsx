@@ -219,7 +219,7 @@ export default function AdminContractDocumentRequests({ onRequestsChanged }: { o
                 <button type="button" disabled={busyId === request.id_demande} onClick={() => void update(request.id_demande, 'refuse')} className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 px-3 py-2 text-xs font-semibold text-red-200 hover:bg-red-400/10 disabled:opacity-50"><X className="h-3.5 w-3.5" />Refuser</button>
               </div>
             )}
-            {request.statut === 'valide' && <p className="mt-3 flex items-center gap-2 text-xs text-green-300"><Check className="h-4 w-4" />Le document final est accessible au demandeur.</p>}
+            {request.statut === 'valide' && <p className="mt-3 flex items-center gap-2 text-xs text-green-300"><Check className="h-4 w-4" />L’archive PDF/A est conservée en privé. Le demandeur peut télécharger une copie PDF chiffrée avec son propre mot de passe.</p>}
             {request.statut === 'refuse' && <p className="mt-3 flex items-center gap-2 text-xs text-red-300"><AlertCircle className="h-4 w-4" />Demande refusée.</p>}
           </article>
         )

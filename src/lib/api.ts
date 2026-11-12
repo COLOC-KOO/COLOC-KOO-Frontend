@@ -810,6 +810,33 @@ async function requestText(path: string, options: RequestInit = {}): Promise<str
     return request<string>(path, options)
 }
 
+async function requestBlob(path: string, options: RequestInit = {}): Promise<Blob> {
+    const token = getToken()
+    const headers = new Headers(options.headers)
+    if (token) headers.set('Authorization', 'Bearer ' + token)
+    if (!(options.body instanceof FormData)) headers.set('Content-Type', 'application/json')
+
+    const response = await fetch(`${API_URL}${path}`, { ...options, headers })
+    if (!response.ok) {
+        const text = await response.text()
+        let data: { message?: string; code?: string; suspensionReason?: string } | null = null
+        if (text) {
+            try {
+                data = JSON.parse(text)
+            } catch {
+                data = { message: text }
+            }
+        }
+        if (data?.code === 'ACCOUNT_SUSPENDED' && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('colockoo:account-suspended', {
+                detail: { reason: data.suspensionReason },
+            }))
+        }
+        throw new ApiError(data?.message || 'Erreur API', data?.code)
+    }
+    return response.blob()
+}
+
 async function requestWithFallback<T>(primaryPath: string, fallbackPath: string, options: RequestInit = {}): Promise<T> {
     try {
         return await request<T>(primaryPath, options)
@@ -1504,8 +1531,11 @@ export const api = {
             body,
         })
     },
-    getContractDocumentRequestDocument(id: number) {
-        return requestText(`/documents-contractuels/${id}/document`)
+    getContractDocumentRequestDocument(id: number, password: string) {
+        return requestBlob(`/documents-contractuels/${id}/document`, {
+            method: 'POST',
+            body: JSON.stringify({ password }),
+        })
     },
     backofficeContractDocumentRequests() {
         return request<ContractDocumentRequest[]>('/backoffice/documents-contractuels')
