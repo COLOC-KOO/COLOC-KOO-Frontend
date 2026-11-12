@@ -12,6 +12,7 @@ import { FeaturedListingsSection } from "../components/home/FeaturedListingsSect
 import { CitiesExploreSection } from "../components/home/CitiesExploreSection";
 import { HowItWorksSection } from "../components/home/HowItWorksSection";
 import { PartnersSection } from "../components/home/PartnersSection";
+import InstallAppPanel from "./compte/InstallAppPanel";
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:4000/api"
@@ -315,6 +316,10 @@ export default function Home() {
         suggestions={searchSuggestions}
         onSearch={handleSearch}
       />
+      <section className="bg-brand-cyan-dark px-4 py-4 text-center">
+        <p className="mb-2 text-sm text-white/85">{t("home:installAppCta")}</p>
+        <InstallAppPanel compact buttonLabel={t("home:installAppButton")} />
+      </section>
 
       {regionalCampaigns.length > 0 && (
         <section className="border-b border-cyan-100 bg-gradient-to-r from-cyan-50 to-white py-5">
