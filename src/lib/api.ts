@@ -875,6 +875,8 @@ export const api = {
             message: string;
             destinataires: string[];
             count: number;
+            pdfCount?: number;
+            archiveCount?: number;
         }>(`/contrats/${id}/email`, {
             method: 'POST',
             body: JSON.stringify(payload || {type: 'contrat'}),

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
-import { api, ContractDocumentRequest } from "../../lib/api";
+import { api, ApiPaiement, ContractDocumentRequest } from "../../lib/api";
 import AdminContractDocumentRequests from "./AdminContractDocumentRequests";
 import { useDialog } from "../../components/ui/Dialog";
 import {
@@ -92,6 +92,7 @@ interface OffreCommerciale {
 
 interface Versement {
   id: string;
+  paymentId: number;
   emetteur: string;
   associe: string;
   ref: string;
@@ -136,43 +137,6 @@ interface ApiBackofficeContratDetails extends ApiBackofficeContratRow {
     commentaire?: string | null;
   }>;
 }
-
-// ===== DONNÉES MOCKÉES POUR LES VERSEMENTS =====
-const MOCK_VERSEMENTS: Versement[] = [
-  {
-    id: "VST-0312",
-    emetteur: "Naina B.",
-    associe: "CTR-0142 (Contrat)",
-    ref: "CTR-0142",
-    canal: "MVOLA",
-    date: "2026-06-15",
-    du: 120000,
-    recu: 120000,
-    statut: "a-verifier",
-  },
-  {
-    id: "VST-0310",
-    emetteur: "Naina B.",
-    associe: "SVC-217 (Services Coloc'KOO)",
-    ref: "SVC-217",
-    canal: "MVOLA",
-    date: "2026-06-14",
-    du: 26400,
-    recu: 26400,
-    statut: "a-verifier",
-  },
-  {
-    id: "VST-0309",
-    emetteur: "Faniry T.",
-    associe: "CTR-0140 (Contrat)",
-    ref: "CTR-0140",
-    canal: "MVOLA",
-    date: "2026-06-12",
-    du: 150000,
-    recu: 150000,
-    statut: "conforme",
-  },
-];
 
 // ===== FONCTIONS DE MAPPING =====
 function mapApiContratRow(row: ApiBackofficeContratRow): DocumentDemande {
@@ -223,17 +187,18 @@ function mapApiContratDetails(
   };
 }
 
-function mapVersement(row: any): Versement {
+function mapVersement(row: ApiPaiement): Versement {
   return {
     id: row.reference || `VST-${row.id_paiement}`,
-    emetteur: row.nom || row.prenom || "Client",
-    associe: row.annonce_titre || `Contrat #${row.id_contrat}`,
+    paymentId: row.id_paiement,
+    emetteur: [row.prenom, row.nom].filter(Boolean).join(" ") || "Client",
+    associe: row.annonce_titre || (row.id_contrat ? `Contrat #${row.id_contrat}` : `Annonce #${row.id_annonce || "—"}`),
     ref: String(row.id_contrat || row.id_annonce || ''),
     canal: row.moyen_paiement || "MVOLA",
     date: row.date_paiement || row.date_creation,
     du: row.montant_du || 0,
     recu: row.montant_recu || 0,
-    statut: row.statut || "a-verifier",
+    statut: row.statut === "en_attente" ? "en-attente" : row.statut || "a-verifier",
   };
 }
 
@@ -367,6 +332,7 @@ const DocumentDetailsModal = ({
   const [emailStatus, setEmailStatus] = useState<{
     sent: boolean;
     count: number;
+    pdfCount?: number;
     message?: string;
     destinataires?: string[];
   } | null>(null);
@@ -418,7 +384,9 @@ const DocumentDetailsModal = ({
   // ============================================================
 
   const handleSendToAll = async () => {
-    const emails = document.parties.filter(p => p.email && p.email.trim() !== "").map(p => p.email);
+    const emails = [...new Set(document.parties
+      .map((party) => party.email?.trim().toLowerCase())
+      .filter((email): email is string => Boolean(email)))];
 
     if (emails.length === 0) {
       void dialog.alert({
@@ -432,7 +400,7 @@ const DocumentDetailsModal = ({
     // Confirmation avant envoi
     const confirmerEnvoi = await dialog.confirm({
       title: "Envoyer le document",
-      message: `Le document ${document.id} va être envoyé à ${emails.length} destinataire(s).`,
+      message: `Le document ${document.id} et son mot de passe seront envoyés par e-mail à ${emails.length} destinataire(s). Une archive PDF/A et les empreintes des copies seront conservées.`,
       confirmLabel: "Envoyer",
     });
     if (!confirmerEnvoi) return;
@@ -443,13 +411,12 @@ const DocumentDetailsModal = ({
     try {
       const response = await api.envoyerEmailContrat(document.id, {
         type: document.type,
-        sujet: `Document ${document.type === 'contrat' ? 'Contrat' : 'État des lieux'} - ${document.id}`,
-        message: `Bonjour,\n\nVeuillez trouver ci-joint le document ${document.type === 'contrat' ? 'contrat' : 'état des lieux'} (référence: ${document.id}).\n\nCordialement,\nL'équipe Coloc'KOO`
       });
 
       setEmailStatus({
         sent: response.success,
         count: response.count || emails.length,
+        pdfCount: response.pdfCount,
         message: response.message,
         destinataires: response.destinataires,
       });
@@ -466,23 +433,27 @@ const DocumentDetailsModal = ({
       void dialog.alert({
         tone: "danger",
         title: "Envoi impossible",
-        message: "L'e-mail n'a pas pu être envoyé. Merci de réessayer dans quelques instants.",
+        message: error instanceof Error
+          ? error.message
+          : "L'e-mail n'a pas pu être envoyé. Merci de réessayer dans quelques instants.",
       });
     } finally {
       setSendingEmail(false);
     }
   };
 
-  const handleUpdateVersement = async (versementId: string, newStatut: Versement["statut"]) => {
+  const handleUpdateVersement = async (paymentId: number, newStatut: Versement["statut"]) => {
     setVersementsLoading(true);
     try {
-      await api.updatePaiementStatus(versementId, { statut: newStatut });
+      await api.updatePaiementStatus(paymentId, { statut: newStatut });
       await onRefresh();
     } catch (err) {
       void dialog.alert({
         tone: "danger",
         title: "Mise à jour impossible",
-        message: "Le statut du versement n'a pas pu être enregistré. Merci de réessayer.",
+        message: err instanceof Error
+          ? err.message
+          : "Le statut du versement n'a pas pu être enregistré. Merci de réessayer.",
       });
     } finally {
       setVersementsLoading(false);
@@ -490,7 +461,9 @@ const DocumentDetailsModal = ({
   };
 
   const getEmailsCount = () => {
-    return document.parties.filter(p => p.email && p.email.trim() !== "").length;
+    return new Set(document.parties
+      .map((party) => party.email?.trim().toLowerCase())
+      .filter(Boolean)).size;
   };
 
   return (
@@ -698,7 +671,7 @@ const DocumentDetailsModal = ({
                       const estDepasse = v.recu > v.du;
 
                       return (
-                        <tr key={v.id} className="hover:bg-white/5 transition">
+                        <tr key={v.paymentId} className="hover:bg-white/5 transition">
                           <td className="p-2 font-mono text-xs">{v.id}</td>
                           <td className="p-2">{v.emetteur}</td>
                           <td className="p-2">
@@ -719,7 +692,7 @@ const DocumentDetailsModal = ({
                             {v.statut === "a-verifier" && (
                               <div className="flex items-center justify-center gap-1">
                                 <button
-                                  onClick={() => handleUpdateVersement(v.id, "conforme")}
+                                  onClick={() => handleUpdateVersement(v.paymentId, "conforme")}
                                   disabled={versementsLoading}
                                   className="p-1 rounded hover:bg-green-500/20 text-green-400 transition"
                                   title="Marquer conforme"
@@ -727,7 +700,7 @@ const DocumentDetailsModal = ({
                                   <CheckCircle className="w-3.5 h-3.5" />
                                 </button>
                                 <button
-                                  onClick={() => handleUpdateVersement(v.id, "non-conforme")}
+                                  onClick={() => handleUpdateVersement(v.paymentId, "non-conforme")}
                                   disabled={versementsLoading}
                                   className="p-1 rounded hover:bg-red-500/20 text-red-400 transition"
                                   title="Marquer non conforme"
@@ -774,7 +747,7 @@ const DocumentDetailsModal = ({
               {emailStatus.sent ? (
                 <>
                   <CheckCircle className="w-3 h-3" />
-                  ✅ Email envoyé à {emailStatus.count} destinataire(s)
+                  ✅ {emailStatus.pdfCount || 1} PDF envoyé(s) à {emailStatus.count} destinataire(s)
                   {emailStatus.destinataires && emailStatus.destinataires.length > 0 && (
                     <span className="text-white/40 text-[10px] ml-2">
                       ({emailStatus.destinataires.join(', ')})
@@ -855,7 +828,7 @@ const DocumentDetailsModal = ({
             title={
               getEmailsCount() === 0
                 ? 'Aucun email disponible'
-                : 'Envoyer le document à tous'
+                : 'Envoyer les PDF protégés aux parties après validation de tous les paiements'
             }
           >
             {sendingEmail ? (
@@ -866,7 +839,7 @@ const DocumentDetailsModal = ({
             ) : (
               <>
                 <Mail className="w-4 h-4" />
-                Envoyer à tous
+                Envoyer les PDF à tous
                 {getEmailsCount() > 0 && (
                   <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded-full">
                     {getEmailsCount()}
@@ -1112,7 +1085,8 @@ export default function AdminContratsEDL() {
       const rows = await api.backofficePaiements();
       setVersements(rows.map(mapVersement));
     } catch (err) {
-      setVersements(MOCK_VERSEMENTS);
+      setVersements([]);
+      setError(err instanceof Error ? err.message : "Impossible de charger les paiements.");
     }
   };
 
@@ -1128,20 +1102,20 @@ export default function AdminContratsEDL() {
       
       // Filtrer les paiements liés à ce contrat
       const contratPaiements = paiements
-        .filter((p: any) => String(p.id_contrat) === id)
+        .filter((p) => p.service_type === "contrat" && String(p.id_contrat) === id)
         .map(mapVersement);
       
       setSelectedDocument(mapApiContratDetails(detail));
-      setVersements(contratPaiements.length > 0 ? contratPaiements : MOCK_VERSEMENTS);
+      setVersements(contratPaiements);
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : "Impossible de charger le document",
       );
-      // Fallback avec des données mockées
+      // The payment history is unavailable when the contract details request fails.
       setSelectedDocument(null);
-      setVersements(MOCK_VERSEMENTS);
+      setVersements([]);
     } finally {
       setLoading(false);
     }
