@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { CheckCircle, ChevronLeft, ChevronRight, Eye, Pencil, RefreshCw, Search, Save, Trash2, X, XCircle, Home, Users, Ruler, Bed, Wifi, Car, Dog, Shield } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminLayout } from '../../components/admin/AdminLayout'
-import { ApiAnnonce, Ville, api } from '../../lib/api'
+import { ApiAnnonce, Ville, api, annonceFallbackImage } from '../../lib/api'
 import { formatAr } from '../../lib/utils'
 import { useAuth } from '../../lib/auth'
 import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
@@ -295,8 +295,9 @@ export default function AdminAnnonces() {
                      <td className="p-4">
                        <div className="flex items-center gap-3">
                          <img
-                           src={annonce.photos[0] || LOGO_PLACEHOLDER}
-                           className={`w-10 h-10 rounded-lg ${isLogoPlaceholder(annonce.photos[0] || LOGO_PLACEHOLDER) ? 'object-contain bg-[--brand-cyan-light] p-1' : 'object-cover'}`}
+                           src={annonce.photos[0] || annonceFallbackImage(annonce)}
+                           onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = LOGO_PLACEHOLDER }}
+                           className="w-10 h-10 rounded-lg object-cover"
                            alt=""
                          />
                          <div className="min-w-0">
@@ -369,6 +370,7 @@ export default function AdminAnnonces() {
          <Modal title="Détails de l'annonce" onClose={closeViewModal}>
            <PhotoGallery
              photos={selectedAnnonce.photos}
+             fallbackImage={annonceFallbackImage(selectedAnnonce)}
              title={selectedAnnonce.titre}
              selectedIndex={selectedPhotoIndex}
              onSelect={setSelectedPhotoIndex}
@@ -479,7 +481,8 @@ export default function AdminAnnonces() {
             <X className="h-6 w-6" />
           </button>
           <img
-            src={(selectedAnnonce.photos.length ? selectedAnnonce.photos : [LOGO_PLACEHOLDER])[selectedPhotoIndex]}
+            src={(selectedAnnonce.photos.length ? selectedAnnonce.photos : [annonceFallbackImage(selectedAnnonce)])[selectedPhotoIndex]}
+            onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = LOGO_PLACEHOLDER }}
             alt={`${selectedAnnonce.titre} — photo ${selectedPhotoIndex + 1}`}
             className={`max-h-[90vh] max-w-[92vw] cursor-zoom-out ${selectedAnnonce.photos.length ? 'object-contain' : 'object-contain rounded-lg bg-[--brand-cyan-light] p-8'}`}
             onClick={(event) => event.stopPropagation()}
@@ -648,18 +651,20 @@ function formatFurnished(value: string | number | null | undefined) {
 
 function PhotoGallery({
   photos,
+  fallbackImage,
   title,
   selectedIndex,
   onSelect,
   onZoom,
 }: {
   photos: string[]
+  fallbackImage: string
   title: string
   selectedIndex: number
   onSelect: (index: number) => void
   onZoom: () => void
 }) {
-  const images = photos.length ? photos : [LOGO_PLACEHOLDER]
+  const images = photos.length ? photos : [fallbackImage]
   const currentIndex = Math.min(selectedIndex, images.length - 1)
 
   return (
@@ -673,6 +678,7 @@ function PhotoGallery({
         >
           <img
             src={images[currentIndex]}
+            onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = LOGO_PLACEHOLDER }}
             className={`w-full h-56 rounded-lg ${isLogoPlaceholder(images[currentIndex]) ? 'object-contain bg-[--brand-cyan-light] p-8' : 'object-cover'}`}
             alt={`${title} — photo ${currentIndex + 1}`}
           />

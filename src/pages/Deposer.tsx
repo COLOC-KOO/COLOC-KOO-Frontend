@@ -11,7 +11,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { MapView } from '../components/MapView'
-import { api, Ville } from '../lib/api'
+import { api, Ville, annonceFallbackImage } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LazyImage } from '../components/ui/LazyImage'
@@ -839,7 +839,12 @@ export default function Deposer() {
                   )}
                   {form.photos.length === 0 && (
                     <div className="aspect-square max-w-48 overflow-hidden rounded-xl border border-border bg-[--brand-cyan-light] p-6">
-                      <img src={LOGO_PLACEHOLDER} alt="" className="h-full w-full object-contain" />
+                      <img
+                        src={annonceFallbackImage({ type_propriete: form.type_propriete })}
+                        alt="Visuel de couverture par défaut"
+                        className="h-full w-full object-cover"
+                        onError={(event) => { event.currentTarget.src = LOGO_PLACEHOLDER }}
+                      />
                     </div>
                   )}
                 </motion.div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Heart, Trash, Image as ImageIcon } from 'lucide-react'
-import { api, ApiAnnonce } from '../../lib/api'
+import { api, ApiAnnonce, annonceFallbackImage } from '../../lib/api'
 import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
 
 const FALLBACK_IMG = LOGO_PLACEHOLDER
@@ -87,7 +87,7 @@ export default function TabMesFavoris() {
         <div className="mt-5 space-y-4">
           {favoris.map((annonce) => {
             const photos = normalizePhotos(annonce.photos)
-            const img = photos[0] || FALLBACK_IMG
+            const img = photos[0] || annonceFallbackImage(annonce)
             return (
               <div key={annonce.id} className="relative rounded-3xl border border-border bg-white shadow-sm overflow-hidden">
                 <div className="absolute right-4 top-4 z-10 rounded-full bg-red-500 p-2 text-white shadow-lg">
@@ -99,6 +99,11 @@ export default function TabMesFavoris() {
                     <img
                       src={img}
                       alt={annonce.titre}
+                      onError={(event) => {
+                        event.currentTarget.onerror = null
+                        event.currentTarget.src = FALLBACK_IMG
+                        event.currentTarget.className = 'w-full h-full object-contain bg-[--brand-cyan-light] p-6'
+                      }}
                       className={
                         isLogoPlaceholder(img)
                           ? 'w-full h-full object-contain bg-[--brand-cyan-light] p-6'

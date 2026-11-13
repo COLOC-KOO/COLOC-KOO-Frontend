@@ -1,7 +1,6 @@
 
 // src/lib/api.ts
 import {Listing} from '../types'
-import {LOGO_PLACEHOLDER} from './placeholders'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 const API_BASE_URL = API_URL.replace(/\/api\/?$/, '')
@@ -2100,7 +2099,16 @@ export const api = {
     // ================================================================
 }
 
-const FALLBACK_IMAGE = LOGO_PLACEHOLDER
+export function annonceFallbackImage(row: { type_propriete?: unknown; logement?: unknown }): string {
+    // Visuels Sarintany fournis pour les annonces sans photo : 1.png pour une
+    // maison et 2.png pour un appartement. Le serveur backend expose public/
+    // sous /uploads, donc ces fichiers résident dans public/uploads/.
+    const typeBien = String(row.type_propriete || row.logement || '').toLowerCase()
+    const fileName = typeBien.includes('maison') || typeBien.includes('villa') || typeBien.includes('chalet') || typeBien.includes('cabane')
+        ? '1.png'
+        : '2.png'
+    return `${API_BASE_URL}/uploads/${fileName}`
+}
 
 function normalizePhotos(value: unknown): string[] {
     if (Array.isArray(value)) {
@@ -2141,7 +2149,7 @@ export function annonceToListing(a: ApiAnnonce): Listing {
         if (photo.startsWith('http://') || photo.startsWith('https://')) return photo
         return `${API_BASE_URL}${photo.startsWith('/') ? '' : '/'}${photo}`
     })
-    const image = normalizedPhotos[0] || FALLBACK_IMAGE
+    const image = normalizedPhotos[0] || annonceFallbackImage(row)
     const firstRoom = row.chambre || row.chambres?.[0] || row.rooms?.[0] || null
     const amenities = Array.isArray(row.commodites) ? row.commodites : (Array.isArray(row.services) ? row.services : Array.isArray(row.amenities) ? row.amenities : [])
     const regles = Array.isArray(row.regles) ? row.regles : Array.isArray(row.rules) ? row.rules : []

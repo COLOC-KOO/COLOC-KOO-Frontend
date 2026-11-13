@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Check, ChevronLeft, Info, Mail, Sparkles, X, Eye, Copy, Smartphone } from "lucide-react";
 import { LogoMark } from "../Logo";
+import { annonceFallbackImage } from "../../lib/api";
+import { LOGO_PLACEHOLDER } from "../../lib/placeholders";
 
 type Props = {
   activeBail: any[];
@@ -327,9 +329,12 @@ export function ContractWizardModal({
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Aucune photo du logement n’est disponible.
-                    </p>
+                    <img
+                      src={annonceFallbackImage(annonceData || {})}
+                      alt="Visuel de couverture du logement"
+                      className="mt-2 h-24 w-full max-w-sm rounded-lg border border-border object-cover"
+                      onError={(event) => { event.currentTarget.src = LOGO_PLACEHOLDER }}
+                    />
                   )}
                 </section>
               </div>
