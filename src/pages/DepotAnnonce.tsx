@@ -33,7 +33,7 @@ import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
-import { api } from '../lib/api'
+import { api, annonceFallbackImage } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { geocodeAddress } from '../lib/geocoding'
 import { cn } from '../lib/utils'
@@ -742,7 +742,12 @@ const response = await api.createDepotAnnonce({
               )}
               {photoPreviews.length === 0 && (
                 <div className="mx-auto aspect-[4/3] w-full max-w-sm overflow-hidden rounded border border-gray-200 bg-[--brand-cyan-light] p-8">
-                  <img src={LOGO_PLACEHOLDER} alt="" className="h-full w-full object-contain" />
+                  <img
+                    src={annonceFallbackImage({ type_propriete: form.logement })}
+                    alt="Visuel de couverture par défaut"
+                    className="h-full w-full object-cover"
+                    onError={(event) => { event.currentTarget.src = LOGO_PLACEHOLDER }}
+                  />
                 </div>
               )}
             </div>

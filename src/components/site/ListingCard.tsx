@@ -5,6 +5,7 @@ import { Listing } from '../../types'
 import { formatAr } from '../../lib/utils'
 import { LazyImage } from '../ui/LazyImage'
 import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
+import { annonceFallbackImage } from '../../lib/api'
 
 const FALLBACK_IMAGE = LOGO_PLACEHOLDER
 
@@ -26,7 +27,7 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
     setImgIdx(0)
   }, [l.id])
 
-  const imgs: string[] = (l.gallery && l.gallery.length > 0) ? l.gallery : [l.image || FALLBACK_IMAGE]
+  const imgs: string[] = (l.gallery && l.gallery.length > 0) ? l.gallery : [l.image || annonceFallbackImage({ type_propriete: l.type }) || FALLBACK_IMAGE]
   const hasFallbackImage = imgs.every(isLogoPlaceholder)
   const handleCardClick = () => {
     navigate(`/annonces/${l.id}`)
@@ -34,6 +35,12 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
 
   // Nombre réel de colocataires (utilise l.rooms comme dans AnnonceDetail, repli sur l.bedrooms puis 1)
   const colocCount = Number(l.rooms ?? l.bedrooms ?? 1)
+  const listingBadges = [
+    l.furnished
+      ? (String(l.meublee || '').toLowerCase() === 'partiellement' ? 'PARTIELLEMENT MEUBLÉE' : 'MEUBLÉE')
+      : null,
+    l.womenOnly ? 'FILLES UNIQU.' : l.menOnly ? 'GARÇONS UNIQU.' : null,
+  ].filter((badge): badge is string => Boolean(badge))
 
   return (
     <article
@@ -52,6 +59,10 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
               key={i}
               src={src}
               alt={l.title}
+              onError={(event) => {
+                const fallback = annonceFallbackImage({ type_propriete: l.type })
+                event.currentTarget.src = event.currentTarget.src === fallback ? FALLBACK_IMAGE : fallback
+              }}
               className={
                 isLogoPlaceholder(src)
                   ? 'min-w-full h-full object-contain flex-shrink-0 bg-transparent p-8'
@@ -60,6 +71,19 @@ export function ListingCard({ l, compact = false, isFavorite = false, onFavorite
             />
           ))}
         </div>
+
+        {listingBadges.length > 0 && (
+          <div className="absolute left-2 top-2 z-10 flex max-w-[75%] flex-wrap gap-1">
+            {listingBadges.map((badge) => (
+              <span
+                key={badge}
+                className={`rounded px-1.5 py-0.5 font-bold leading-none text-slate-700 shadow-sm ${compact ? 'text-[6px]' : 'text-[8px]'} bg-lime-200/95`}
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Dots */}
         {imgs.length > 1 && !compact && (

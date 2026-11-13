@@ -5,6 +5,7 @@ import { Listing } from '../types';
 import { geocodeAddress } from '../lib/geocoding';
 import { formatAr } from '../lib/utils';
 import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../lib/placeholders';
+import { annonceFallbackImage } from '../lib/api';
 import { MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
@@ -337,9 +338,13 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
               <Tooltip direction="top" offset={[0, -10]} sticky className="max-w-xs">
                 <div className="w-56 p-2 bg-white rounded-lg shadow-md border border-gray-200">
                   <img
-                    src={listing.image || LOGO_PLACEHOLDER}
+                    src={listing.image || annonceFallbackImage({ type_propriete: listing.type })}
                     alt={listing.title}
-                    className={`w-full h-28 rounded-md mb-2 ${isLogoPlaceholder(listing.image || LOGO_PLACEHOLDER) ? 'object-contain bg-[--brand-cyan-light] p-4' : 'object-cover'}`}
+                    onError={(event) => {
+                      const fallback = annonceFallbackImage({ type_propriete: listing.type })
+                      event.currentTarget.src = event.currentTarget.src === fallback ? LOGO_PLACEHOLDER : fallback
+                    }}
+                    className={`w-full h-28 rounded-md mb-2 ${isLogoPlaceholder(listing.image || '') ? 'object-contain bg-[--brand-cyan-light] p-4' : 'object-cover'}`}
                   />
                   <div>
                     <h4 className="font-semibold text-sm leading-tight">{listing.title}</h4>
@@ -358,9 +363,13 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
               <Popup>
                 <div className="p-1">
                   <img
-                    src={listing.image || LOGO_PLACEHOLDER}
+                    src={listing.image || annonceFallbackImage({ type_propriete: listing.type })}
                     alt={listing.title}
-                    className={`w-full h-32 rounded-lg mb-3 ${isLogoPlaceholder(listing.image || LOGO_PLACEHOLDER) ? 'object-contain bg-[--brand-cyan-light] p-5' : 'object-cover'}`}
+                    onError={(event) => {
+                      const fallback = annonceFallbackImage({ type_propriete: listing.type })
+                      event.currentTarget.src = event.currentTarget.src === fallback ? LOGO_PLACEHOLDER : fallback
+                    }}
+                    className={`w-full h-32 rounded-lg mb-3 ${isLogoPlaceholder(listing.image || '') ? 'object-contain bg-[--brand-cyan-light] p-5' : 'object-cover'}`}
                   />
                   <h3 className="font-semibold text-base">{listing.title}</h3>
                   <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Edit, Trash, Image as ImageIcon, Eye, Archive, Plus } from 'lucide-react'
-import { api, ApiAnnonce } from '../../lib/api'
+import { api, ApiAnnonce, annonceFallbackImage } from '../../lib/api'
 import { LOGO_PLACEHOLDER, isLogoPlaceholder } from '../../lib/placeholders'
 import { useDialog } from '../../components/ui/Dialog'
 
@@ -234,7 +234,7 @@ export default function TabMesAnnonces() {
         <div className="mt-5 space-y-4">
           {annonces.map((annonce) => {
             const photos = normalizePhotos(annonce.photos)
-            const img = photos[0] || FALLBACK_IMG
+            const img = photos[0] || annonceFallbackImage(annonce as ApiAnnonce & Record<string, any>)
             const isArchived = annonce.statut === 'archived'
             return (
               <div key={annonce.id} className="rounded-3xl border border-border bg-white shadow-sm overflow-hidden">
@@ -243,6 +243,11 @@ export default function TabMesAnnonces() {
                     <img
                       src={img}
                       alt={annonce.titre}
+                      onError={(event) => {
+                        event.currentTarget.onerror = null
+                        event.currentTarget.src = FALLBACK_IMG
+                        event.currentTarget.className = 'w-full h-full object-contain bg-[--brand-cyan-light] p-6'
+                      }}
                       className={
                         isLogoPlaceholder(img)
                           ? 'w-full h-full object-contain bg-[--brand-cyan-light] p-6'
@@ -357,7 +362,7 @@ export default function TabMesAnnonces() {
                       <button type="button" onClick={() => removePhoto(index)} className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white" aria-label="Supprimer cette photo">×</button>
                     </div>
                   ))}
-                  {editablePhotos.length === 0 && <img src={FALLBACK_IMG} alt="Aucune photo" className="h-16 w-24 rounded-2xl object-contain bg-[--brand-cyan-light] p-2 border border-border" />}
+                  {editablePhotos.length === 0 && <img src={editingAnnonce ? annonceFallbackImage(editingAnnonce) : FALLBACK_IMG} alt="Visuel de couverture par défaut" className="h-16 w-24 rounded-2xl object-cover border border-border" onError={(event) => { event.currentTarget.src = FALLBACK_IMG }} />}
                   <label className="flex h-16 w-24 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-brand-cyan text-center text-xs font-semibold text-brand-cyan hover:bg-brand-cyan/5">
                     {uploadingPhotos ? 'Ajout...' : '+ Ajouter'}
                     <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" disabled={uploadingPhotos} />

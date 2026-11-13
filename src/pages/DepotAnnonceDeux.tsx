@@ -51,6 +51,14 @@ import { geocodeAddress } from '../lib/geocoding'
 import { cn } from '../lib/utils'
 import { LOGO_PLACEHOLDER } from '../lib/placeholders'
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '')
+
+function couvertureParDefaut(logement: string): string {
+  const type = logement.trim().toLowerCase()
+  const isHouse = ['maison', 'villa', 'cabane', 'chalet'].some((value) => type.includes(value))
+  return `${API_BASE_URL}/uploads/${isHouse ? '1' : '2'}.png`
+}
+
 /* ============================================================================
  * DepotAnnonceDeux.tsx
  * ----------------------------------------------------------------------------
@@ -1814,7 +1822,12 @@ const steps = stepsForRole(role)
                         onChange={(e) => onPhotoPick(i, e.target.files?.[0] ?? null)}
                       />
                       {!photoPreviews[i] && i === 0 && (
-                        <img src={LOGO_PLACEHOLDER} alt="" className="photo-default" />
+                        <img
+                          src={couvertureParDefaut(typeLogement)}
+                          alt="Visuel de couverture par défaut"
+                          className="photo-default"
+                          onError={(event) => { event.currentTarget.src = LOGO_PLACEHOLDER }}
+                        />
                       )}
                       {!photoPreviews[i] && i !== 0 && (
                         <span className="ps-ph" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
