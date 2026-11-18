@@ -7,6 +7,7 @@ import {
   Calendar,
   Camera,
   Heart,
+  Handshake,
   Home,
   MapPin,
   MessageSquare,
@@ -545,6 +546,11 @@ export default function Compte() {
       icon: Wrench
     },
     {
+      id: 'contrats-immo',
+      label: t('realEstateContracts'),
+      icon: Handshake
+    },
+    {
       id: 'installer',
       label: t('installAppTab'),
       icon: Smartphone
@@ -964,7 +970,7 @@ export default function Compte() {
               return (
                 <Link
                   key={tItem.id}
-                  to={`/compte?tab=${tItem.id}`}
+                  to={tItem.id === 'contrats-immo' ? '/contrats-edl' : `/compte?tab=${tItem.id}`}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
                     isActive
                       ? 'bg-brand-cyan-light text-brand-cyan-dark'
@@ -1006,7 +1012,7 @@ export default function Compte() {
                 <button
                   key={tItem.id}
                   onClick={() =>
-                    navigate(`/compte?tab=${tItem.id}`)
+                    navigate(tItem.id === 'contrats-immo' ? '/contrats-edl' : `/compte?tab=${tItem.id}`)
                   }
                   className={`shrink-0 whitespace-nowrap flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
                     isActive

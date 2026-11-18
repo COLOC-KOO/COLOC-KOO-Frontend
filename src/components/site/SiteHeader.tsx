@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell, Heart, FileText, Menu, X } from 'lucide-react'
+import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell, Heart, FileText, Handshake, Wrench, Menu, X } from 'lucide-react'
 import { Logo, LogoMark, LogoName } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
@@ -461,6 +461,22 @@ export function SiteHeader() {
                         <UserCircle className="w-4 h-4 text-muted-foreground" />
                         <span>{t('myProfile', { ns: 'header' })}</span>
                       </Link>
+                      <Link
+                        to="/contrats-edl"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
+                      >
+                        <Handshake className="w-4 h-4 text-muted-foreground" />
+                        <span>{t('realEstateContracts', { ns: 'header' })}</span>
+                      </Link>
+                      <Link
+                        to="/services"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
+                      >
+                        <Wrench className="w-4 h-4 text-muted-foreground" />
+                        <span>{t('colocKooServices', { ns: 'header' })}</span>
+                      </Link>
                       {isColocataire && (
                         <Link
                           to="/compte?tab=dossier"
@@ -609,6 +625,14 @@ export function SiteHeader() {
                           <div className="text-xs opacity-80 truncate">{user.email}</div>
                         </div>
                       </div>
+                    </Link>
+                    <Link to="/contrats-edl" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted transition-colors" onClick={() => setOpen(false)}>
+                      <Handshake className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-semibold">{t('realEstateContracts', { ns: 'header' })}</span>
+                    </Link>
+                    <Link to="/services" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted transition-colors" onClick={() => setOpen(false)}>
+                      <Wrench className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-semibold">{t('colocKooServices', { ns: 'header' })}</span>
                     </Link>
                     <button
                       onClick={() => { logout(); setOpen(false) }}
