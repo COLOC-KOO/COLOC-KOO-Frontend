@@ -24,7 +24,7 @@ const DOCUMENT_TEMPLATES: Array<{ id: TemplateId; title: string; keyword: string
   { id: 'attestation_logement', title: 'Attestation de logement', keyword: 'Attestation logement' },
 ]
 
-function humanizeVariable(value: string) { return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) }
+function humanizeVariable(value: string) { return value.replace(/_/g, ' ').replace(/\b\w/g, (letter: string) => letter.toUpperCase()) }
 
 function documentTitle(templateId?: string | null, type?: DocumentType, profile?: Profile) {
   const matched = DOCUMENT_TEMPLATES.find((item) => item.id === templateId)
@@ -132,7 +132,7 @@ export default function ContratsEDL() {
   const [paymentReference, setPaymentReference] = useState('')
   const [paymentProof, setPaymentProof] = useState<File | null>(null)
   const [draft, setDraft] = useState<{ id: number; reference: string; montant: number } | null>(null)
-  const [previewHtml, setPreviewHtml] = useState('')
+  const [previewPages, setPreviewPages] = useState<string[]>([])
   const [requests, setRequests] = useState<ContractDocumentRequest[]>([])
   const [passwordRequestId, setPasswordRequestId] = useState<number | null>(null)
   const [pdfPassword, setPdfPassword] = useState('')
@@ -213,8 +213,10 @@ export default function ContratsEDL() {
   const showPreview = async () => {
     setBusy(true)
     setError('')
+    setPreviewPages([])
     try {
-      setPreviewHtml(await api.previewContractDocument(requestPayload))
+      const preview = await api.previewContractDocument(requestPayload)
+      setPreviewPages(preview.pages)
       setStep('preview')
     } catch (previewError) {
       setError(previewError instanceof Error ? previewError.message : 'Impossible de générer l’aperçu.')
@@ -573,9 +575,19 @@ export default function ContratsEDL() {
 
             {step === 'preview' && (
               <div>
-                <h2 className="bebas text-2xl">Aperçu des deux premières pages</h2>
-                <p className="mb-4 text-sm text-muted-foreground">Les pages de signature ne sont pas incluses. Vérifie les informations avant de continuer vers le paiement.</p>
-                <iframe title="Aperçu du document" sandbox="allow-same-origin allow-downloads" srcDoc={previewHtml} className="h-[70vh] w-full rounded-xl border border-border bg-white" />
+                <h2 className="bebas text-2xl">Aperçu du document</h2>
+                <p className="mb-4 text-sm text-muted-foreground">Aperçu en lecture seule, affiché page par page. Vérifie les informations avant de continuer vers le paiement.</p>
+                <div aria-label="Pages de l’aperçu du document" className="max-h-[70vh] space-y-4 overflow-auto rounded-xl border border-border bg-slate-100 p-3 sm:p-5">
+                  {previewPages.map((page, index) => (
+                    <img
+                      key={index}
+                      src={`data:image/png;base64,${page}`}
+                      alt={`Page ${index + 1} de l’aperçu`}
+                      className="mx-auto block h-auto w-full max-w-[850px] bg-white shadow"
+                      draggable={false}
+                    />
+                  ))}
+                </div>
                 <div className="mt-5 flex flex-wrap justify-between gap-3"><button type="button" onClick={() => setStep('details')} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Modifier les informations</button><button type="button" disabled={busy} onClick={() => void continueToPayment()} className="inline-flex items-center gap-2 rounded-xl bg-brand-magenta px-5 py-3 text-sm font-bold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Continuer vers le paiement <ArrowRight className="h-4 w-4" /></button></div>
               </div>
             )}
