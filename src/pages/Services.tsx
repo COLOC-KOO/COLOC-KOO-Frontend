@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ConciergeBell, Sparkles, Check, ShoppingCart, Send, CheckCircle2,
   UserCircle, Mail, Phone, MapPin, Briefcase, ArrowRight, Loader2, ClipboardList, Trash2,
-  Leaf, Zap, Droplets, SprayCan, Shield, Paintbrush, Truck, Wrench,
+  Leaf, Zap, Droplets, SprayCan, Shield, Paintbrush, Truck, Wrench, Download,
 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
@@ -368,9 +368,19 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
             <h2 className="bebas text-xl text-brand-dark">Contrats &amp; états des lieux</h2>
             <p className="mt-1 text-sm text-muted-foreground">Prépare un document adapté à ton profil, vérifie son aperçu et règle par Mobile Money.</p>
           </div>
-          <Link to="/contrats-edl" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-cyan px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-cyan-dark">
-            Créer un document <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+            <Link to="/contrats-edl" className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-cyan px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-cyan-dark">
+              Créer un document <ArrowRight className="h-4 w-4" />
+            </Link>
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs sm:justify-end">
+              <a href="/documents-contractuels/quittance-loyer-2026.pdf" download className="inline-flex items-center gap-1 font-semibold text-brand-cyan-dark underline underline-offset-2">
+                <Download className="h-3.5 w-3.5" /> Quittance de loyer vierge
+              </a>
+              <a href="/documents-contractuels/attestation-remise-especes.pdf" download className="inline-flex items-center gap-1 font-semibold text-brand-cyan-dark underline underline-offset-2">
+                <Download className="h-3.5 w-3.5" /> Attestation de remise en espèces vierge
+              </a>
+            </div>
+          </div>
         </motion.div>
 
         {/* ===== BOOSTER UNE ANNONCE (données réelles services_ckoo) =====
