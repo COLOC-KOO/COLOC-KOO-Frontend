@@ -4,11 +4,34 @@ import { AlertCircle, ArrowLeft, ArrowRight, Check, Download, FileText, Loader2 
 import { SiteLayout } from '../components/site/SiteLayout'
 import { api, ContractDocumentRequest } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import contratsImmoSpec from '../data/contratsImmoSpec.json'
 
 type DocumentType = 'contrat' | 'edl'
 type Profile = 'locataire' | 'proprietaire' | 'professionnel'
-type Step = 'details' | 'clauses' | 'preview' | 'payment' | 'done'
+type Step = 'details' | 'clauses' | 'summary' | 'preview' | 'payment' | 'done'
 type PageTab = 'create' | 'requests'
+type TemplateId = 'autorisation_colocation' | 'avenant_substitution' | 'charte_colocation' | 'contrat_intercolocs' | 'contrat_mandacolocs' | 'contrat_propriocolocs' | 'etat_des_lieux' | 'mandat_gestion' | 'attestation_logement'
+
+const DOCUMENT_TEMPLATES: Array<{ id: TemplateId; title: string; keyword: string; profile?: Profile }> = [
+  { id: 'contrat_intercolocs', title: 'Contrat Intercolocs', keyword: 'Intercolocs', profile: 'locataire' },
+  { id: 'contrat_propriocolocs', title: 'Contrat Propriocolocs', keyword: 'Propriocolocs', profile: 'proprietaire' },
+  { id: 'contrat_mandacolocs', title: 'Contrat Mandacolocs', keyword: 'Mandacolocs', profile: 'professionnel' },
+  { id: 'autorisation_colocation', title: 'Autorisation de colocation', keyword: 'Autorisation' },
+  { id: 'mandat_gestion', title: 'Mandat de gestion', keyword: 'Mandat' },
+  { id: 'avenant_substitution', title: 'Avenant de substitution', keyword: 'Avenant' },
+  { id: 'etat_des_lieux', title: 'État des lieux', keyword: 'lieux' },
+  { id: 'charte_colocation', title: 'Charte de colocation', keyword: 'Charte' },
+  { id: 'attestation_logement', title: 'Attestation de logement', keyword: 'Attestation logement' },
+]
+
+function humanizeVariable(value: string) { return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) }
+
+function documentTitle(templateId?: string | null, type?: DocumentType, profile?: Profile) {
+  const matched = DOCUMENT_TEMPLATES.find((item) => item.id === templateId)
+  if (matched) return matched.title
+  if (type === 'edl') return 'État des lieux'
+  return DOCUMENT_TEMPLATES.find((item) => item.profile === profile)?.title || 'Contrat'
+}
 
 const EMPTY_FIELDS: Record<string, string> = {
   nom_demandeur: '',
@@ -22,7 +45,19 @@ const EMPTY_FIELDS: Record<string, string> = {
   nom_entreprise: '',
   nif: '',
   representant: '',
+  nom_proprietaire: '',
+  adresse_proprietaire: '',
+  cin_proprietaire: '',
+  telephone_proprietaire: '',
+  email_proprietaire: '',
+  date_naissance_demandeur: '',
+  ville_naissance_demandeur: '',
+  pays_naissance_demandeur: '',
+  date_naissance_autre_partie: '',
+  ville_naissance_autre_partie: '',
+  pays_naissance_autre_partie: '',
   adresse: '',
+  code_postal: '',
   quartier: '',
   ville: '',
   type_bien: '',
@@ -30,15 +65,39 @@ const EMPTY_FIELDS: Record<string, string> = {
   loyer: '',
   charges: '',
   caution: '',
-  type_bail: 'Collectif',
-  solidarite: 'Sans',
+  solidarite: '',
   observations: '',
-}
-
-function guessProfile(poste?: string): Profile {
-  if (poste === 'proprietaire') return 'proprietaire'
-  if (poste === 'agent') return 'professionnel'
-  return 'locataire'
+  nombre_colocataires: '',
+  choix_colocataires: '',
+  delai_validation: '',
+  personne_morale: '',
+  pouvoir_signature: '',
+  meuble: '',
+  duree_bail: '',
+  mois_depot: '1',
+  periodicite_revision: '3',
+  taux_revision: '',
+  preavis_bailleur: '',
+  jour_paiement: '',
+  salle_bain_privee: '',
+  niveaux_texte: '',
+  espace_privatif_description: '',
+  charges_avec: '',
+  charges_lignes_texte: '',
+  modes_reglement: '',
+  bail_principal_proprietaire: '',
+  bail_principal_date_effet: '',
+  bail_principal_duree: '',
+  bail_principal_date_fin: '',
+  bail_principal_article: '',
+  representant_qualite: '',
+  forme_juridique: '',
+  rcs: '',
+  stat: '',
+  adresse_entreprise: '',
+  mandataire_agrement: '',
+  mandataire_rc_pro: '',
+  date_mandat: '',
 }
 
 function statusLabel(status: ContractDocumentRequest['statut']) {
@@ -61,7 +120,8 @@ function normalizePhone(value: string) {
 export default function ContratsEDL() {
   const { user, loading } = useAuth()
   const [type, setType] = useState<DocumentType>('contrat')
-  const [profile, setProfile] = useState<Profile>(() => guessProfile(user?.poste))
+  const [templateId, setTemplateId] = useState<TemplateId | ''>('')
+  const [profile, setProfile] = useState<Profile | ''>('')
   const [fields, setFields] = useState(EMPTY_FIELDS)
   const [selectedClauses, setSelectedClauses] = useState<number[]>([])
   const [step, setStep] = useState<Step>('details')
@@ -118,10 +178,27 @@ export default function ContratsEDL() {
 
   const requestPayload = useMemo(() => ({
     type_document: type,
-    profil_demandeur: profile,
+    template_id: templateId || undefined,
+    profil_demandeur: profile as Profile,
     donnees: fields,
     clauses_ids: selectedClauses,
-  }), [fields, profile, selectedClauses, type])
+  }), [fields, profile, selectedClauses, templateId, type])
+
+  const activeTemplate = DOCUMENT_TEMPLATES.find((item) => item.id === templateId)
+  const isAuxiliaryTemplate = Boolean(activeTemplate && !activeTemplate.profile)
+  const extraVariables = activeTemplate && !activeTemplate.profile
+    ? contratsImmoSpec.variables.filter((item) => item.documents.includes(activeTemplate.keyword) && !item.type.toLowerCase().includes('calcul') && !/^(so_|repartition_)/.test(item.variable))
+    : []
+
+  const chooseTemplate = (value: string) => {
+    const selected = DOCUMENT_TEMPLATES.find((item) => item.id === value)
+    setTemplateId((value || '') as TemplateId | '')
+    setType(value === 'etat_des_lieux' ? 'edl' : 'contrat')
+    if (selected?.profile) setProfile(selected.profile)
+    setFields(EMPTY_FIELDS)
+    setDraft(null)
+    setError('')
+  }
 
   const updateField = (key: string, value: string) => {
     setFields((current) => ({ ...current, [key]: value }))
@@ -146,7 +223,30 @@ export default function ContratsEDL() {
     }
   }
 
+  const goToSummary = () => {
+    setError('')
+    setStep('summary')
+  }
+
   const continueToClauses = () => {
+    if (!templateId) {
+      setError('Choisis le document à générer.')
+      return
+    }
+    if (!profile) {
+      setError('Choisis ton profil pour afficher le parcours correspondant.')
+      return
+    }
+    if (activeTemplate && !activeTemplate.profile) {
+      const missingSpecific = extraVariables.filter((item) => !item.description.toLowerCase().includes('facultatif') && !String(fields[item.type.toLowerCase() === 'liste' ? `${item.variable}_texte` : item.variable] || '').trim())
+      if (missingSpecific.length) {
+        setError(`Renseigne les champs du modèle : ${missingSpecific.map((item) => humanizeVariable(item.variable)).join(', ')}.`)
+        return
+      }
+      setError('')
+      setStep('clauses')
+      return
+    }
     const requiredFields = [
       'nom_demandeur',
       'telephone_demandeur',
@@ -155,15 +255,33 @@ export default function ContratsEDL() {
       'telephone_autre_partie',
       'email_autre_partie',
       'adresse',
+      'code_postal',
       'ville',
       'type_bien',
       'date_entree',
       ...(type === 'contrat' ? ['loyer'] : []),
-      ...(profile === 'professionnel' ? ['nom_entreprise', 'representant'] : []),
+      ...(type === 'contrat' ? ['nombre_colocataires', 'choix_colocataires', 'solidarite', 'meuble', 'duree_bail', 'mois_depot', 'periodicite_revision', 'taux_revision', 'preavis_bailleur', 'jour_paiement', 'modes_reglement'] : []),
+      ...(type === 'contrat' ? ['niveaux_texte', 'espace_privatif_description', 'charges_avec'] : []),
+      ...(type === 'contrat' && fields.charges_avec === 'oui' ? ['charges_lignes_texte'] : []),
+      ...(type === 'contrat' && profile === 'professionnel' ? ['pouvoir_signature'] : []),
+      ...(type === 'contrat' && profile === 'proprietaire' ? ['personne_morale'] : []),
+      ...(type === 'contrat' && profile === 'professionnel' ? ['nom_proprietaire', 'adresse_proprietaire'] : []),
+      ...(type === 'contrat' && profile !== 'professionnel' ? ['date_naissance_demandeur', 'ville_naissance_demandeur', 'pays_naissance_demandeur'] : []),
+      ...(type === 'contrat' ? ['date_naissance_autre_partie', 'ville_naissance_autre_partie', 'pays_naissance_autre_partie'] : []),
+      ...(type === 'contrat' && fields.choix_colocataires === 'gestionnaire_presel_proprietaire_valide' ? ['delai_validation'] : []),
+      'salle_bain_privee',
+      ...(profile === 'professionnel' ? ['nom_entreprise', 'representant', 'forme_juridique', 'rcs', 'stat', 'adresse_entreprise', 'date_mandat'] : []),
+      ...(type === 'contrat' && profile === 'proprietaire' && fields.personne_morale === 'oui' ? ['nom_entreprise', 'representant'] : []),
+      ...(type === 'contrat' && profile === 'proprietaire' && fields.personne_morale === 'oui' ? ['representant_qualite'] : []),
+      ...(type === 'contrat' && profile === 'locataire' ? ['bail_principal_proprietaire', 'bail_principal_date_effet', 'bail_principal_duree', 'bail_principal_date_fin', 'bail_principal_article'] : []),
     ]
     const missing = requiredFields.filter((key) => !fields[key]?.trim())
     if (missing.length) {
       setError('Merci de renseigner tous les champs obligatoires marqués d’un astérisque.')
+      return
+    }
+    if (type === 'contrat' && profile === 'professionnel' && fields.pouvoir_signature === 'non') {
+      setError('Un mandat de gestion signé avec pouvoir est nécessaire avant de créer un Mandacolocs.')
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email_demandeur) ||
@@ -250,8 +368,7 @@ export default function ContratsEDL() {
 
   if (loading) return <div className="grid min-h-screen place-items-center">Chargement...</div>
   if (!user) return <Navigate to="/auth?mode=signin&redirect=%2Fcontrats-edl" replace />
-
-  const isDocumentType = type === 'contrat' ? 'Contrat de location / colocation' : 'État des lieux'
+  const isDocumentType = documentTitle(templateId, type, profile as Profile)
   const otherParty = profile === 'locataire' ? 'Propriétaire / bailleur' : 'Locataire / autre partie'
   const numericFieldLimits: Record<string, number> = {
     cin_demandeur: 12,
@@ -324,9 +441,9 @@ export default function ContratsEDL() {
         {pageTab === 'create' && step !== 'done' ? (
           <section className="mt-7 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-7">
             <div className="mb-6 grid grid-cols-2 gap-2 text-xs font-semibold sm:flex sm:flex-wrap">
-              {(['details', 'clauses', 'preview', 'payment'] as const).map((current, index) => (
+              {(['details', 'clauses', 'summary', 'preview', 'payment'] as const).map((current, index) => (
                 <span key={current} className={`rounded-full px-3 py-1.5 ${step === current ? 'bg-brand-cyan text-white' : 'bg-muted text-muted-foreground'}`}>
-                  {index + 1}. {['Informations', 'Clauses', 'Aperçu', 'Paiement'][index]}
+                  {index + 1}. {['Questionnaire', 'Clauses', 'Récapitulatif', 'Aperçu', 'Paiement'][index]}
                 </span>
               ))}
             </div>
@@ -334,16 +451,25 @@ export default function ContratsEDL() {
             {step === 'details' && (
               <div className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block text-sm"><span className="mb-1 block font-semibold">Document</span><select value={type} onChange={(event) => { setType(event.target.value as DocumentType); setDraft(null) }} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="contrat">Contrat de location / colocation</option><option value="edl">État des lieux (commun aux profils)</option></select></label>
-                  <label className="block text-sm"><span className="mb-1 block font-semibold">Profil du demandeur</span><select value={profile} onChange={(event) => { setProfile(event.target.value as Profile); setDraft(null) }} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="locataire">Locataire</option><option value="proprietaire">Propriétaire</option><option value="professionnel">Professionnel</option></select></label>
+                  <label className="block text-sm"><span className="mb-1 block font-semibold">Document à générer *</span><select value={templateId} onChange={(event) => chooseTemplate(event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir un document…</option>{DOCUMENT_TEMPLATES.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
+<label className="block text-sm"><span className="mb-1 block font-semibold">Profil du demandeur *</span><select value={profile} onChange={(event) => { const nextProfile = event.target.value as Profile | ''; setProfile(nextProfile); const currentTemplate = DOCUMENT_TEMPLATES.find((item) => item.id === templateId); if (!currentTemplate || currentTemplate.profile) { const routed = DOCUMENT_TEMPLATES.find((item) => item.profile === nextProfile); if (routed) { setTemplateId(routed.id); setType('contrat') } } setDraft(null) }} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="locataire">Occupant principal</option><option value="proprietaire">Propriétaire</option><option value="professionnel">Professionnel immobilier</option></select></label>
                 </div>
-                {profile === 'professionnel' && <div className="grid gap-4 rounded-xl bg-muted/40 p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Informations professionnelles</h2>{field('nom_entreprise', 'Nom de l’entreprise', true)}{field('nif', 'NIF / identifiant professionnel')}{field('representant', 'Nom du représentant', true)}</div>}
+                <aside className="rounded-xl border border-brand-cyan/30 bg-brand-cyan-light/30 p-4 text-sm"><h2 className="font-bold">Modèles PDF vierges à télécharger</h2><div className="mt-2 flex flex-wrap gap-x-5 gap-y-2"><a className="font-semibold text-brand-cyan-dark underline" href="/documents-contractuels/quittance-loyer-2026.pdf" download>Télécharger la quittance de loyer</a><a className="font-semibold text-brand-cyan-dark underline" href="/documents-contractuels/attestation-remise-especes.pdf" download>Télécharger l’attestation de remise en espèces</a></div><p className="mt-2 text-xs text-muted-foreground">Ces deux PDF sont vierges et se téléchargent tels quels, sans passer par le questionnaire.</p></aside>
+                {extraVariables.length > 0 && <section className="grid gap-4 rounded-xl border border-brand-cyan/30 bg-brand-cyan-light/20 p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Informations pour {activeTemplate?.title}</h2>{extraVariables.map((item) => { const key = item.variable; const isOptional = item.description.toLowerCase().includes('facultatif'); const isBool = item.type.toLowerCase().includes('bool'); const isDate = item.type.toLowerCase().includes('date'); const isLong = item.type.toLowerCase().includes('long'); const isList = item.type.toLowerCase() === 'liste'; const fieldKey = isList ? `${key}_texte` : key; const listHint = key === 'sous_occupants' ? 'Une ligne par personne : nom et prénom | date du contrat (JJ/MM/AAAA)' : 'Une ligne par colocataire : habitant | chambre | montant'; return <label key={key} className="block text-sm"><span className="mb-1 block font-semibold">{item.description || humanizeVariable(key)}{isOptional ? '' : ' *'}</span>{isBool ? <select value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="true">Oui</option><option value="false">Non</option></select> : isList || isLong ? <><textarea rows={3} value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} placeholder={isList ? listHint : undefined} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" />{isList && <span className="text-xs text-muted-foreground">{listHint}</span>}</> : <input type={isDate ? 'date' : item.type.toLowerCase().includes('nombre') || item.type.toLowerCase().includes('montant') ? 'number' : 'text'} value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" />}</label> })}</section>}
+                <div hidden={isAuxiliaryTemplate}>
+                {(profile === 'professionnel' || (profile === 'proprietaire' && fields.personne_morale === 'oui')) && <div className="grid gap-4 rounded-xl bg-muted/40 p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Informations professionnelles</h2>{field('nom_entreprise', 'Nom de l’entreprise', true)}{field('nif', 'NIF / identifiant professionnel')}{field('representant', 'Nom du représentant', true)}</div>}
+                {profile === 'professionnel' && field('date_mandat', 'Date du mandat signé', true, 'date')}
+                {profile === 'professionnel' && <div className="grid gap-4 rounded-xl bg-muted/40 p-4 sm:grid-cols-2">{field('forme_juridique', 'Forme juridique de la société', true)}{field('rcs', 'Numéro RCS', true)}{field('stat', 'Numéro STAT', true)}{field('adresse_entreprise', 'Siège social', true)}{field('mandataire_agrement', 'Numéro d’agrément / carte professionnelle')}{field('mandataire_rc_pro', 'Numéro de police RC professionnelle')}</div>}
+                {profile === 'proprietaire' && fields.personne_morale === 'oui' && field('representant_qualite', 'Qualité du représentant', true)}
+                {type === 'contrat' && profile === 'locataire' && <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Bail principal</h2>{field('bail_principal_proprietaire', 'Nom du Propriétaire du bail principal', true)}{field('bail_principal_date_effet', 'Date de début du bail principal', true, 'date')}{field('bail_principal_duree', 'Durée du bail principal', true)}{field('bail_principal_date_fin', 'Date de fin du bail principal', true, 'date')}{field('bail_principal_article', 'Article autorisant la sous-location', true)}</div>}
+                {profile === 'professionnel' && <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Propriétaire représenté</h2>{field('nom_proprietaire', 'Nom ou raison sociale du Propriétaire', true)}{field('cin_proprietaire', 'CIN ou immatriculation')}{field('adresse_proprietaire', 'Adresse du Propriétaire', true)}{field('telephone_proprietaire', 'Téléphone du Propriétaire')}{field('email_proprietaire', 'E-mail du Propriétaire', false, 'email')}</div>}
                 <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
                   <h2 className="font-bold sm:col-span-2">Demandeur</h2>
                   {field('nom_demandeur', profile === 'professionnel' ? 'Nom du contact' : 'Nom complet', true)}
                   {field('cin_demandeur', 'CIN (12 chiffres maximum)')}
                   {field('telephone_demandeur', 'Téléphone (13 chiffres maximum)', true, 'tel')}
                   {field('email_demandeur', 'E-mail', true, 'email')}
+                  {type === 'contrat' && profile !== 'professionnel' && <>{field('date_naissance_demandeur', 'Date de naissance', true, 'date')}{field('ville_naissance_demandeur', 'Ville de naissance', true)}{field('pays_naissance_demandeur', 'Pays de naissance', true)}</>}
                 </div>
                 <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
                   <h2 className="font-bold sm:col-span-2">{otherParty}</h2>
@@ -351,27 +477,49 @@ export default function ContratsEDL() {
                   {field('cin_autre_partie', 'CIN (12 chiffres maximum)')}
                   {field('telephone_autre_partie', 'Téléphone (13 chiffres maximum)', true, 'tel')}
                   {field('email_autre_partie', 'E-mail', true, 'email')}
+                  {type === 'contrat' && <>{field('date_naissance_autre_partie', 'Date de naissance', true, 'date')}{field('ville_naissance_autre_partie', 'Ville de naissance', true)}{field('pays_naissance_autre_partie', 'Pays de naissance', true)}</>}
                 </div>
                 <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
                   <h2 className="font-bold sm:col-span-2">Logement</h2>
                   {field('adresse', 'Adresse du logement', true)}
+                  {field('code_postal', 'Code postal')}
                   {field('quartier', 'Quartier')}
                   {field('ville', 'Ville', true)}
                   {field('type_bien', 'Type de bien (appartement, maison…)', true)}
+                  {type === 'contrat' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Niveaux du logement *</span><textarea rows={3} value={fields.niveaux_texte} onChange={(event) => updateField('niveaux_texte', event.target.value)} placeholder="Une ligne par niveau : libellé | description (ex. RDC | salon, cuisine ; R+1 | chambres)" className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>}
                 </div>
                 {type === 'contrat' && (
                   <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
-                    <h2 className="font-bold sm:col-span-2">Conditions de location</h2>
+                    <h2 className="font-bold sm:col-span-2">Parcours de colocation</h2>
+                    <p className="text-sm text-muted-foreground sm:col-span-2">Le contrat proposé dépend du profil : Intercolocs pour un Occupant principal, Propriocolocs pour un Propriétaire, Mandacolocs pour un Professionnel.</p>
+                    {field('nombre_colocataires', 'Nombre de colocataires', true, 'number')}
+                    <p className="text-xs text-muted-foreground sm:col-span-2">Le cahier prévoit un contrat et un paiement par sous-occupant. Pour plusieurs personnes, une demande distincte doit être faite pour chacune.</p>
+                    <label className="block text-sm"><span className="mb-1 block font-semibold">Qui choisit les colocataires ? *</span><select required value={fields.choix_colocataires} onChange={(event) => updateField('choix_colocataires', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option>{profile === 'professionnel' ? <><option value="gestionnaire_seul">Le Mandataire seul</option><option value="mandant_valide">Le Mandant valide</option></> : <><option value="gestionnaire_seul">Le gestionnaire seul</option><option value="gestionnaire_presel_proprietaire_valide">Le gestionnaire présélectionne, le Propriétaire valide</option><option value="proprietaire_seul">Le Propriétaire seul</option></>}</select></label>
+                    {fields.choix_colocataires === 'gestionnaire_presel_proprietaire_valide' && field('delai_validation', 'Délai de validation (jours)', true, 'number')}
+                    {profile === 'professionnel' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Mandat de gestion signé et pouvoir de signer ? *</span><select required value={fields.pouvoir_signature} onChange={(event) => updateField('pouvoir_signature', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select>{fields.pouvoir_signature === 'non' && <span className="mt-2 block text-amber-800">Le Mandacolocs nécessite un mandat signé. Faites établir le Mandat de gestion avant de poursuivre.</span>}</label>}
+                    {profile === 'proprietaire' && <label className="block text-sm"><span className="mb-1 block font-semibold">Le Propriétaire est une société ? *</span><select required value={fields.personne_morale} onChange={(event) => updateField('personne_morale', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="non">Non, personne physique</option><option value="oui">Oui, personne morale</option></select></label>}
+                    <label className="block text-sm"><span className="mb-1 block font-semibold">Régime de responsabilité *</span><select required value={fields.solidarite} onChange={(event) => updateField('solidarite', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="Individuelle">Individuelle</option><option value="Solidaire">Collective (solidaire)</option></select>{profile !== 'locataire' && <span className="mt-1 block text-xs text-muted-foreground">Le régime choisi doit être identique pour tous les contrats du même logement.</span>}</label>
+                    <h2 className="mt-3 font-bold sm:col-span-2">Conditions de location</h2>
                     {field('date_entree', 'Date d’entrée', true, 'date')}
+                    <label className="block text-sm"><span className="mb-1 block font-semibold">Salle de bain privee dans la chambre ? *</span><select required value={fields.salle_bain_privee} onChange={(event) => updateField('salle_bain_privee', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir...</option><option value="oui">Oui</option><option value="non">Non</option></select><span className="mt-1 block text-xs text-muted-foreground">Un etat des lieux dentree sera ajoute au contrat.</span></label>
                     {field('loyer', 'Loyer mensuel (Ar)', true, 'number')}
+                    <fieldset className="block text-sm"><legend className="mb-1 block font-semibold">Modes de règlement *</legend><div className="grid gap-2 sm:grid-cols-2">{['Virement', 'Mobile money', 'Application de transfert', 'Espèces', 'Chèque'].map((method) => { const selected = fields.modes_reglement.split(';').map((item) => item.trim()).filter(Boolean); return <label key={method} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2"><input type="checkbox" checked={selected.includes(method)} onChange={() => updateField('modes_reglement', (selected.includes(method) ? selected.filter((item) => item !== method) : [...selected, method]).join('; '))} />{method}</label> })}</div></fieldset>
                     {field('charges', 'Charges mensuelles (Ar)', false, 'number')}
-                    {field('caution', 'Dépôt de garantie (Ar)', false, 'number')}
-                    <label className="block text-sm"><span className="mb-1 block font-semibold">Type de bail</span><select value={fields.type_bail} onChange={(event) => updateField('type_bail', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option>Collectif</option><option>Individuel</option></select></label>
-                    <label className="block text-sm"><span className="mb-1 block font-semibold">Clause de solidarité</span><select value={fields.solidarite} onChange={(event) => updateField('solidarite', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option>Sans</option><option>Avec</option></select></label>
+                    <label className="block text-sm"><span className="mb-1 block font-semibold">Logement meuble ? *</span><select required value={fields.meuble} onChange={(event) => updateField('meuble', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir...</option><option value="oui">Oui</option><option value="non">Non</option></select></label>
+                    <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Espace privatif et équipements *</span><textarea rows={3} required value={fields.espace_privatif_description} onChange={(event) => updateField('espace_privatif_description', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>
+                    <label className="block text-sm"><span className="mb-1 block font-semibold">Le loyer inclut-il des charges ? *</span><select required value={fields.charges_avec} onChange={(event) => updateField('charges_avec', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir...</option><option value="non">Non</option><option value="oui">Oui</option></select></label>
+                    {fields.charges_avec === 'oui' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Lignes de charges *</span><textarea rows={4} required value={fields.charges_lignes_texte} onChange={(event) => updateField('charges_lignes_texte', event.target.value)} placeholder="Une ligne par charge : nom | montant | répartition | description" className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>}
+                    {field('duree_bail', 'Duree du bail', true)}
+                    {field('mois_depot', 'Depot de garantie (nombre de mois)', true, 'number')}
+                    {field('periodicite_revision', 'Periodicite de revision (annees)', true, 'number')}
+                    {field('taux_revision', 'Taux de revision du loyer (%)', true, 'number')}
+                    {field('preavis_bailleur', 'Preavis du bailleur (mois)', true, 'number')}
+                    {field('jour_paiement', 'Jour limite de paiement', true, 'number')}
                   </div>
                 )}
-                {type === 'edl' && field('date_entree', 'Date du constat', true, 'date')}
+                {type === 'edl' && <>{field('date_entree', 'Date du constat', true, 'date')}<label className="mt-4 block text-sm"><span className="mb-1 block font-semibold">La chambre possède une salle de bain privée ? *</span><select required value={fields.salle_bain_privee} onChange={(event) => updateField('salle_bain_privee', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label></>}
                 <label className="block text-sm"><span className="mb-1 block font-semibold">Observations</span><textarea rows={3} value={fields.observations} onChange={(event) => updateField('observations', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>
+                </div>
                 <div className="flex justify-end"><button type="button" onClick={continueToClauses} className="inline-flex items-center gap-2 rounded-xl bg-brand-magenta px-5 py-3 text-sm font-bold text-white">Continuer <ArrowRight className="h-4 w-4" /></button></div>
               </div>
             )}
@@ -389,7 +537,37 @@ export default function ContratsEDL() {
                   ))}
                   {clauses.length === 0 && <p className="text-sm text-muted-foreground">Aucune clause active n’est disponible. Tu peux continuer avec les clauses communes du document.</p>}
                 </div>
-                <div className="mt-5 flex justify-between"><button type="button" onClick={() => setStep('details')} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Précédent</button><button type="button" disabled={busy} onClick={() => void showPreview()} className="inline-flex items-center gap-2 rounded-xl bg-brand-magenta px-5 py-3 text-sm font-bold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Générer l’aperçu</button></div>
+                <div className="mt-5 flex justify-between"><button type="button" onClick={() => setStep('details')} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Précédent</button><button type="button" onClick={goToSummary} className="inline-flex items-center gap-2 rounded-xl bg-brand-magenta px-5 py-3 text-sm font-bold text-white">Vérifier mes réponses <ArrowRight className="h-4 w-4" /></button></div>
+              </div>
+            )}
+
+            {step === 'summary' && (
+              <div>
+                <h2 className="bebas text-2xl">Récapitulatif du questionnaire</h2>
+                <p className="mb-4 text-sm text-muted-foreground">Vérifie les informations avant de générer l’aperçu. Tu peux revenir au questionnaire pour les modifier.</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <section className="rounded-xl border border-border p-4 sm:col-span-2">
+                    <h3 className="mb-2 font-bold">Document et profil</h3>
+                    <p className="text-sm">{isDocumentType} · {profile === 'locataire' ? 'Occupant principal' : profile === 'proprietaire' ? 'Propriétaire' : 'Professionnel de l’immobilier'}</p>
+                  </section>
+                  <section className="rounded-xl border border-border p-4 sm:col-span-2">
+                    <h3 className="mb-2 font-bold">Réponses fournies</h3>
+                    <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                      {Object.entries(fields).filter(([, value]) => value.trim()).map(([key, value]) => (
+                        <div key={key} className="min-w-0 text-sm">
+                          <dt className="text-muted-foreground">{key.replace(/_/g, ' ').replace(/^./, (letter) => letter.toUpperCase())}</dt>
+                          <dd className="whitespace-pre-wrap break-words font-medium">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                  {selectedClauses.length > 0 && <section className="rounded-xl border border-border p-4 sm:col-span-2"><h3 className="mb-2 font-bold">Clauses sélectionnées</h3><ul className="list-inside list-disc text-sm">{clauses.filter((clause) => selectedClauses.includes(clause.id_clause)).map((clause) => <li key={clause.id_clause}>{clause.titre}</li>)}</ul></section>}
+                </div>
+                <div className="mt-5 flex flex-wrap justify-between gap-2">
+                  <button type="button" onClick={() => setStep('details')} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Modifier le questionnaire</button>
+                  <button type="button" onClick={() => setStep('clauses')} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Modifier les clauses</button>
+                  <button type="button" disabled={busy} onClick={() => void showPreview()} className="inline-flex items-center gap-2 rounded-xl bg-brand-magenta px-5 py-3 text-sm font-bold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Confirmer et générer l’aperçu</button>
+                </div>
               </div>
             )}
 
@@ -397,8 +575,8 @@ export default function ContratsEDL() {
               <div>
                 <h2 className="bebas text-2xl">Aperçu des deux premières pages</h2>
                 <p className="mb-4 text-sm text-muted-foreground">Les pages de signature ne sont pas incluses. Vérifie les informations avant de continuer vers le paiement.</p>
-                <iframe title="Aperçu du document" sandbox="" srcDoc={previewHtml} className="h-[70vh] w-full rounded-xl border border-border bg-white" />
-                <div className="mt-5 flex flex-wrap justify-between gap-3"><button type="button" onClick={() => setStep('clauses')} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Modifier les clauses</button><button type="button" disabled={busy} onClick={() => void continueToPayment()} className="inline-flex items-center gap-2 rounded-xl bg-brand-magenta px-5 py-3 text-sm font-bold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Continuer vers le paiement <ArrowRight className="h-4 w-4" /></button></div>
+                <iframe title="Aperçu du document" sandbox="allow-same-origin allow-downloads" srcDoc={previewHtml} className="h-[70vh] w-full rounded-xl border border-border bg-white" />
+                <div className="mt-5 flex flex-wrap justify-between gap-3"><button type="button" onClick={() => setStep('details')} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold">Modifier les informations</button><button type="button" disabled={busy} onClick={() => void continueToPayment()} className="inline-flex items-center gap-2 rounded-xl bg-brand-magenta px-5 py-3 text-sm font-bold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Continuer vers le paiement <ArrowRight className="h-4 w-4" /></button></div>
               </div>
             )}
 
@@ -456,7 +634,7 @@ export default function ContratsEDL() {
             {requests.map((request) => (
               <article key={request.id_demande} className="flex min-w-0 flex-col items-stretch justify-between gap-3 rounded-xl border border-border bg-white p-3 sm:flex-row sm:items-center sm:p-4">
                 <div className="min-w-0">
-                  <div className="break-words font-semibold">{request.type_document === 'edl' ? 'État des lieux' : 'Contrat'} · {request.reference}</div>
+                  <div className="break-words font-semibold">{documentTitle(request.template_id, request.type_document, request.profil_demandeur)} · {request.reference}</div>
                   <div className="mt-1 text-sm text-muted-foreground">{statusLabel(request.statut)} · Paiement : {request.statut_paiement.replace(/-/g, ' ')}</div>
                 </div>
                 {request.statut === 'valide' && request.statut_paiement === 'conforme' && (

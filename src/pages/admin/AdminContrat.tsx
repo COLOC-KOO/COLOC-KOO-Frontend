@@ -3,6 +3,18 @@ import { AdminLayout } from "../../components/admin/AdminLayout";
 import { api, ApiPaiement, ContractDocumentRequest } from "../../lib/api";
 import AdminContractDocumentRequests from "./AdminContractDocumentRequests";
 import { useDialog } from "../../components/ui/Dialog";
+
+const CONTRACT_TEMPLATE_TITLES: Record<string, string> = {
+  autorisation_colocation: "Autorisation de colocation",
+  avenant_substitution: "Avenant de substitution",
+  charte_colocation: "Charte de colocation",
+  contrat_intercolocs: "Contrat Intercolocs",
+  contrat_mandacolocs: "Contrat Mandacolocs",
+  contrat_propriocolocs: "Contrat Propriocolocs",
+  etat_des_lieux: "État des lieux",
+  mandat_gestion: "Mandat de gestion",
+  attestation_logement: "Attestation de logement",
+};
 import {
   FileText,
   Search,
@@ -1492,7 +1504,7 @@ export default function AdminContratsEDL() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="break-all font-semibold text-white">{request.reference}</span>
                           <span className="text-xs text-white/50">
-                            {request.type_document === "edl" ? "État des lieux" : "Contrat"}
+                            {CONTRACT_TEMPLATE_TITLES[request.template_id || ""] || (request.type_document === "edl" ? "État des lieux" : "Contrat")}
                           </span>
                           <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                             request.statut === "valide"

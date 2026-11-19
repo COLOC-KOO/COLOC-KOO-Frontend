@@ -1,0 +1,2469 @@
+{
+  "source": "Arbre decisionnaire et variables ? transmis le 18/11/2026",
+  "variables": [
+    {
+      "variable": "bailleur_nom",
+      "type": "Texte",
+      "description": "Bailleur (Occupant principal dans l’Intercolocs, Propriétaire dans le Propriocolocs) — Nom",
+      "question": "C-01",
+      "documents": "Intercolocs, Propriocolocs",
+      "syntax": "{{bailleur_nom}}"
+    },
+    {
+      "variable": "bailleur_prenom",
+      "type": "Texte",
+      "description": "Bailleur (Occupant principal dans l’Intercolocs, Propriétaire dans le Propriocolocs) — Prénom(s)",
+      "question": "C-01",
+      "documents": "Intercolocs, Propriocolocs",
+      "syntax": "{{bailleur_prenom}}"
+    },
+    {
+      "variable": "bailleur_date_naissance",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Bailleur (Occupant principal dans l’Intercolocs, Propriétaire dans le Propriocolocs) — Date de naissance",
+      "question": "C-01",
+      "documents": "Intercolocs, Propriocolocs",
+      "syntax": "{{bailleur_date_naissance}}"
+    },
+    {
+      "variable": "bailleur_ville_naissance",
+      "type": "Texte",
+      "description": "Bailleur (Occupant principal dans l’Intercolocs, Propriétaire dans le Propriocolocs) — Ville de naissance",
+      "question": "C-01",
+      "documents": "Intercolocs, Propriocolocs",
+      "syntax": "{{bailleur_ville_naissance}}"
+    },
+    {
+      "variable": "bailleur_pays_naissance",
+      "type": "Texte",
+      "description": "Bailleur (Occupant principal dans l’Intercolocs, Propriétaire dans le Propriocolocs) — Pays de naissance",
+      "question": "C-01",
+      "documents": "Intercolocs, Propriocolocs",
+      "syntax": "{{bailleur_pays_naissance}}"
+    },
+    {
+      "variable": "bailleur_piece_identite",
+      "type": "Texte",
+      "description": "Bailleur (Occupant principal dans l’Intercolocs, Propriétaire dans le Propriocolocs) — N° de passeport / CIN (ou d’immatriculation)",
+      "question": "C-01",
+      "documents": "Intercolocs, Propriocolocs",
+      "syntax": "{{bailleur_piece_identite}}"
+    },
+    {
+      "variable": "bailleur_telephone",
+      "type": "Texte",
+      "description": "Bailleur (Occupant principal dans l’Intercolocs, Propriétaire dans le Propriocolocs) — Téléphone",
+      "question": "C-01",
+      "documents": "Intercolocs, Propriocolocs",
+      "syntax": "{{bailleur_telephone}}"
+    },
+    {
+      "variable": "bailleur_email",
+      "type": "Texte",
+      "description": "Bailleur (Occupant principal dans l’Intercolocs, Propriétaire dans le Propriocolocs) — Adresse e-mail",
+      "question": "C-01",
+      "documents": "Intercolocs, Propriocolocs",
+      "syntax": "{{bailleur_email}}"
+    },
+    {
+      "variable": "locataire_nom",
+      "type": "Texte",
+      "description": "Sous-occupant / occupant — Nom",
+      "question": "C-03",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, État des lieux, Charte, Attestation logement",
+      "syntax": "{{locataire_nom}}"
+    },
+    {
+      "variable": "locataire_prenom",
+      "type": "Texte",
+      "description": "Sous-occupant / occupant — Prénom(s)",
+      "question": "C-03",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, État des lieux, Charte, Attestation logement",
+      "syntax": "{{locataire_prenom}}"
+    },
+    {
+      "variable": "locataire_date_naissance",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Sous-occupant / occupant — Date de naissance",
+      "question": "C-03",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, Attestation logement",
+      "syntax": "{{locataire_date_naissance}}"
+    },
+    {
+      "variable": "locataire_ville_naissance",
+      "type": "Texte",
+      "description": "Sous-occupant / occupant — Ville de naissance",
+      "question": "C-03",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{locataire_ville_naissance}}"
+    },
+    {
+      "variable": "locataire_pays_naissance",
+      "type": "Texte",
+      "description": "Sous-occupant / occupant — Pays de naissance",
+      "question": "C-03",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{locataire_pays_naissance}}"
+    },
+    {
+      "variable": "locataire_piece_identite",
+      "type": "Texte",
+      "description": "Sous-occupant / occupant — N° de passeport / CIN (ou d’immatriculation)",
+      "question": "C-03",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, État des lieux, Attestation logement",
+      "syntax": "{{locataire_piece_identite}}"
+    },
+    {
+      "variable": "locataire_telephone",
+      "type": "Texte",
+      "description": "Sous-occupant / occupant — Téléphone",
+      "question": "C-03",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, État des lieux",
+      "syntax": "{{locataire_telephone}}"
+    },
+    {
+      "variable": "locataire_email",
+      "type": "Texte",
+      "description": "Sous-occupant / occupant — Adresse e-mail",
+      "question": "C-03",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{locataire_email}}"
+    },
+    {
+      "variable": "logement_code_postal",
+      "type": "Texte",
+      "description": "Code postal du logement",
+      "question": "C-04",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, Autorisation, Mandat, Avenant, État des lieux, Charte, Attestation logement",
+      "syntax": "{{logement_code_postal}}"
+    },
+    {
+      "variable": "logement_adresse",
+      "type": "Texte",
+      "description": "Adresse du logement",
+      "question": "C-04",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, Autorisation, Mandat, Avenant, État des lieux, Charte, Attestation logement",
+      "syntax": "{{logement_adresse}}"
+    },
+    {
+      "variable": "logement_ville",
+      "type": "Texte",
+      "description": "Ville du logement",
+      "question": "C-04",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, Autorisation, Mandat, Avenant, État des lieux, Charte, Attestation logement",
+      "syntax": "{{logement_ville}}"
+    },
+    {
+      "variable": "logement_description",
+      "type": "Texte",
+      "description": "Description de l’espace global",
+      "question": "C-05",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{logement_description}}"
+    },
+    {
+      "variable": "logement_typologie",
+      "type": "Texte",
+      "description": "Typologie (maison, appartement…)",
+      "question": "C-05",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{logement_typologie}}"
+    },
+    {
+      "variable": "niveaux",
+      "type": "Liste",
+      "description": "Niveaux du logement (une ligne par niveau)",
+      "question": "C-05",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{#niveaux}}…{{/niveaux}}"
+    },
+    {
+      "variable": "niveau_libelle",
+      "type": "Texte",
+      "description": "Libellé du niveau (R-1, RDC, R+1…) (dans la liste « niveaux »)",
+      "question": "C-05",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{niveau_libelle}}"
+    },
+    {
+      "variable": "niveau_description",
+      "type": "Texte",
+      "description": "Description du niveau (dans la liste « niveaux »)",
+      "question": "C-05",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{niveau_description}}"
+    },
+    {
+      "variable": "espace_meuble",
+      "type": "Booléen",
+      "description": "Vrai = espace privatif meublé ; faux = non meublé",
+      "question": "C-06",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{#espace_meuble}}…{{/espace_meuble}} / {{^espace_meuble}}…{{/espace_meuble}}"
+    },
+    {
+      "variable": "espace_privatif_description",
+      "type": "Texte long",
+      "description": "Emplacement de l’espace privatif et équipements mis à disposition",
+      "question": "C-06",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{espace_privatif_description}}"
+    },
+    {
+      "variable": "duree_bail",
+      "type": "Texte",
+      "description": "Durée du contrat (ex. « 12 mois »)",
+      "question": "C-07",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{duree_bail}}"
+    },
+    {
+      "variable": "date_effet",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Date d’effet (contrat : date d’effet et d’entrée ; avenant : date d’effet ; attestation : date d’arrivée)",
+      "question": "C-07 / AVE / ATL",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, Avenant, Attestation logement",
+      "syntax": "{{date_effet}}"
+    },
+    {
+      "variable": "loyer_montant",
+      "type": "Montant",
+      "description": "Loyer mensuel en chiffres (ex. 850.000)",
+      "question": "C-09",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{loyer_montant}}"
+    },
+    {
+      "variable": "loyer_montant_lettres",
+      "type": "Calculé",
+      "description": "Loyer mensuel en toutes lettres",
+      "question": "C-09",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{loyer_montant_lettres}}"
+    },
+    {
+      "variable": "modes_reglement",
+      "type": "Texte",
+      "description": "Modes de règlement cochés, séparés par « ; »",
+      "question": "C-09",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{modes_reglement}}"
+    },
+    {
+      "variable": "charges_avec",
+      "type": "Booléen",
+      "description": "Vrai = option « avec charges » ; faux = « sans charge »",
+      "question": "C-08",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{#charges_avec}}…{{/charges_avec}} / {{^charges_avec}}…{{/charges_avec}}"
+    },
+    {
+      "variable": "charges",
+      "type": "Liste",
+      "description": "Lignes de charges",
+      "question": "C-08",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{#charges}}…{{/charges}}"
+    },
+    {
+      "variable": "charge_nom",
+      "type": "Texte",
+      "description": "Dénomination de la charge (dans la liste « charges »)",
+      "question": "C-08",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{charge_nom}}"
+    },
+    {
+      "variable": "charge_repartition",
+      "type": "Texte",
+      "description": "Répartition (montant fixe ou variable, égale ou équitable) (dans la liste « charges »)",
+      "question": "C-08",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{charge_repartition}}"
+    },
+    {
+      "variable": "charge_description",
+      "type": "Texte",
+      "description": "Description (espaces communs et/ou privatifs) (dans la liste « charges »)",
+      "question": "C-08",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{charge_description}}"
+    },
+    {
+      "variable": "charges_total",
+      "type": "Calculé",
+      "description": "Total des charges en chiffres",
+      "question": "C-08",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{charges_total}}"
+    },
+    {
+      "variable": "charges_total_lettres",
+      "type": "Calculé",
+      "description": "Total des charges en toutes lettres",
+      "question": "C-08",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{charges_total_lettres}}"
+    },
+    {
+      "variable": "regime_solidaire",
+      "type": "Booléen",
+      "description": "Vrai = régime solidaire ; faux = non solidaire / individuel",
+      "question": "P-05 (MDT, AUT : régime du document)",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs, Autorisation, Mandat",
+      "syntax": "{{#regime_solidaire}}…{{/regime_solidaire}} / {{^regime_solidaire}}…{{/regime_solidaire}}"
+    },
+    {
+      "variable": "depot_montant",
+      "type": "Calculé",
+      "description": "Dépôt de garantie = nombre de mois × loyer (1 mois pré-saisi)",
+      "question": "C-10",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{depot_montant}}"
+    },
+    {
+      "variable": "depot_montant_lettres",
+      "type": "Calculé",
+      "description": "Dépôt de garantie en toutes lettres",
+      "question": "C-10",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{depot_montant_lettres}}"
+    },
+    {
+      "variable": "bail_proprietaire_nom",
+      "type": "Texte",
+      "description": "Nom et prénom du Propriétaire (bail principal)",
+      "question": "C-02",
+      "documents": "Intercolocs",
+      "syntax": "{{bail_proprietaire_nom}}"
+    },
+    {
+      "variable": "bail_date_effet",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Date de prise d’effet du bail principal",
+      "question": "C-02 / AUT-01",
+      "documents": "Intercolocs, Autorisation",
+      "syntax": "{{bail_date_effet}}"
+    },
+    {
+      "variable": "bail_duree_annees",
+      "type": "Nombre",
+      "description": "Durée du bail principal en années",
+      "question": "C-02",
+      "documents": "Intercolocs",
+      "syntax": "{{bail_duree_annees}}"
+    },
+    {
+      "variable": "bail_date_fin",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Date de fin du bail principal",
+      "question": "C-02",
+      "documents": "Intercolocs",
+      "syntax": "{{bail_date_fin}}"
+    },
+    {
+      "variable": "bail_article",
+      "type": "Texte",
+      "description": "Article du bail principal autorisant la sous-location",
+      "question": "C-02",
+      "documents": "Intercolocs",
+      "syntax": "{{bail_article}}"
+    },
+    {
+      "variable": "loyer_jour_paiement",
+      "type": "Nombre",
+      "description": "Jour limite de paiement du loyer",
+      "question": "C-09",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{loyer_jour_paiement}}"
+    },
+    {
+      "variable": "revision_pourcentage",
+      "type": "Nombre",
+      "description": "Pourcentage d’augmentation",
+      "question": "C-12",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{revision_pourcentage}}"
+    },
+    {
+      "variable": "revision_periodicite_annees",
+      "type": "Nombre",
+      "description": "Périodicité de révision en années (3 pré-saisi, PRO / MAN)",
+      "question": "C-12",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{revision_periodicite_annees}}"
+    },
+    {
+      "variable": "revision_date_anniversaire",
+      "type": "Date JJ/MM",
+      "description": "Date anniversaire (INT : saisie ; PRO / MAN : calculée = date d’effet)",
+      "question": "C-12",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{revision_date_anniversaire}}"
+    },
+    {
+      "variable": "preavis_bailleur_mois",
+      "type": "Nombre",
+      "description": "Préavis de congé du bailleur en mois",
+      "question": "C-13",
+      "documents": "Intercolocs, Propriocolocs, Mandacolocs",
+      "syntax": "{{preavis_bailleur_mois}}"
+    },
+    {
+      "variable": "bailleur_societe",
+      "type": "Booléen",
+      "description": "Vrai = Propriétaire personne morale",
+      "question": "C-01",
+      "documents": "Propriocolocs",
+      "syntax": "{{#bailleur_societe}}…{{/bailleur_societe}} / {{^bailleur_societe}}…{{/bailleur_societe}}"
+    },
+    {
+      "variable": "bailleur_denomination",
+      "type": "Texte",
+      "description": "Dénomination sociale du Propriétaire",
+      "question": "C-01",
+      "documents": "Propriocolocs",
+      "syntax": "{{bailleur_denomination}}"
+    },
+    {
+      "variable": "bailleur_representant",
+      "type": "Texte",
+      "description": "Nom et prénom du représentant de la société propriétaire",
+      "question": "C-01",
+      "documents": "Propriocolocs",
+      "syntax": "{{bailleur_representant}}"
+    },
+    {
+      "variable": "bailleur_representant_qualite",
+      "type": "Texte",
+      "description": "Qualité du représentant (gérant, directeur…)",
+      "question": "C-01",
+      "documents": "Propriocolocs",
+      "syntax": "{{bailleur_representant_qualite}}"
+    },
+    {
+      "variable": "proprietaire_nom",
+      "type": "Texte",
+      "description": "Propriétaire — Nom",
+      "question": "C-01 (MAN) / AUT-02 / AVE-02",
+      "documents": "Mandacolocs, Autorisation, Avenant",
+      "syntax": "{{proprietaire_nom}}"
+    },
+    {
+      "variable": "proprietaire_adresse",
+      "type": "Texte",
+      "description": "Propriétaire — Adresse",
+      "question": "C-01 (MAN) / AUT-02 / AVE-02",
+      "documents": "Mandacolocs, Autorisation, Avenant",
+      "syntax": "{{proprietaire_adresse}}"
+    },
+    {
+      "variable": "proprietaire_piece_identite",
+      "type": "Texte",
+      "description": "Propriétaire — N° de passeport / CIN (ou d’immatriculation)",
+      "question": "C-01 (MAN) / AUT-02 / AVE-02",
+      "documents": "Mandacolocs, Autorisation, Avenant",
+      "syntax": "{{proprietaire_piece_identite}}"
+    },
+    {
+      "variable": "mandataire_denomination",
+      "type": "Texte",
+      "description": "Dénomination du Mandataire",
+      "question": "C-01 / MDT-02",
+      "documents": "Mandacolocs, Autorisation, Mandat",
+      "syntax": "{{mandataire_denomination}}"
+    },
+    {
+      "variable": "mandataire_nif",
+      "type": "Texte",
+      "description": "NIF du Mandataire",
+      "question": "C-01 / MDT-02",
+      "documents": "Mandacolocs, Autorisation, Mandat",
+      "syntax": "{{mandataire_nif}}"
+    },
+    {
+      "variable": "mandataire_rcs",
+      "type": "Texte",
+      "description": "N° RCS du Mandataire",
+      "question": "C-01 / MDT-02",
+      "documents": "Mandacolocs, Autorisation, Mandat",
+      "syntax": "{{mandataire_rcs}}"
+    },
+    {
+      "variable": "mandataire_stat",
+      "type": "Texte",
+      "description": "N° STAT du Mandataire",
+      "question": "C-01 / MDT-02",
+      "documents": "Mandacolocs, Autorisation, Mandat",
+      "syntax": "{{mandataire_stat}}"
+    },
+    {
+      "variable": "mandataire_representant",
+      "type": "Texte",
+      "description": "Représentant du Mandataire (nom et qualité)",
+      "question": "C-01 / MDT-02",
+      "documents": "Mandacolocs, Autorisation, Mandat",
+      "syntax": "{{mandataire_representant}}"
+    },
+    {
+      "variable": "mandat_date",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Date du Mandat de gestion",
+      "question": "C-02",
+      "documents": "Mandacolocs",
+      "syntax": "{{mandat_date}}"
+    },
+    {
+      "variable": "represente_par_mandataire",
+      "type": "Booléen",
+      "description": "Vrai = Propriétaire représenté par son Mandataire",
+      "question": "AUT-02",
+      "documents": "Autorisation",
+      "syntax": "{{#represente_par_mandataire}}…{{/represente_par_mandataire}} / {{^represente_par_mandataire}}…{{/represente_par_mandataire}}"
+    },
+    {
+      "variable": "op_nom",
+      "type": "Texte",
+      "description": "Occupant principal — Nom",
+      "question": "AUT-03",
+      "documents": "Autorisation",
+      "syntax": "{{op_nom}}"
+    },
+    {
+      "variable": "op_prenom",
+      "type": "Texte",
+      "description": "Occupant principal — Prénom(s)",
+      "question": "AUT-03",
+      "documents": "Autorisation",
+      "syntax": "{{op_prenom}}"
+    },
+    {
+      "variable": "op_date_naissance",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Occupant principal — Date de naissance",
+      "question": "AUT-03",
+      "documents": "Autorisation",
+      "syntax": "{{op_date_naissance}}"
+    },
+    {
+      "variable": "op_ville_naissance",
+      "type": "Texte",
+      "description": "Occupant principal — Ville de naissance",
+      "question": "AUT-03",
+      "documents": "Autorisation",
+      "syntax": "{{op_ville_naissance}}"
+    },
+    {
+      "variable": "op_pays_naissance",
+      "type": "Texte",
+      "description": "Occupant principal — Pays de naissance",
+      "question": "AUT-03",
+      "documents": "Autorisation",
+      "syntax": "{{op_pays_naissance}}"
+    },
+    {
+      "variable": "op_piece_identite",
+      "type": "Texte",
+      "description": "Occupant principal — N° de passeport / CIN (ou d’immatriculation)",
+      "question": "AUT-03",
+      "documents": "Autorisation",
+      "syntax": "{{op_piece_identite}}"
+    },
+    {
+      "variable": "op_telephone",
+      "type": "Texte",
+      "description": "Occupant principal — Téléphone",
+      "question": "AUT-03",
+      "documents": "Autorisation",
+      "syntax": "{{op_telephone}}"
+    },
+    {
+      "variable": "op_email",
+      "type": "Texte",
+      "description": "Occupant principal — Adresse e-mail",
+      "question": "AUT-03",
+      "documents": "Autorisation",
+      "syntax": "{{op_email}}"
+    },
+    {
+      "variable": "bail_duree",
+      "type": "Texte",
+      "description": "Durée du bail principal",
+      "question": "AUT-01",
+      "documents": "Autorisation",
+      "syntax": "{{bail_duree}}"
+    },
+    {
+      "variable": "colocs_par_piece",
+      "type": "Booléen",
+      "description": "Vrai = 2 colocataires maximum par pièce ; faux = nombre total",
+      "question": "AUT-05",
+      "documents": "Autorisation",
+      "syntax": "{{#colocs_par_piece}}…{{/colocs_par_piece}} / {{^colocs_par_piece}}…{{/colocs_par_piece}}"
+    },
+    {
+      "variable": "colocs_nombre_total",
+      "type": "Nombre",
+      "description": "Nombre total de colocataires",
+      "question": "AUT-05",
+      "documents": "Autorisation",
+      "syntax": "{{colocs_nombre_total}}"
+    },
+    {
+      "variable": "validation_proprietaire",
+      "type": "Booléen",
+      "description": "Vrai = le Propriétaire / Mandant valide le choix (Cas 2 / droit de regard OUI)",
+      "question": "P-04",
+      "documents": "Autorisation, Mandat",
+      "syntax": "{{#validation_proprietaire}}…{{/validation_proprietaire}} / {{^validation_proprietaire}}…{{/validation_proprietaire}}"
+    },
+    {
+      "variable": "validation_delai_jours",
+      "type": "Nombre",
+      "description": "Délai de refus motivé en jours",
+      "question": "P-04",
+      "documents": "Autorisation, Mandat",
+      "syntax": "{{validation_delai_jours}}"
+    },
+    {
+      "variable": "retribution_marge",
+      "type": "Booléen",
+      "description": "Option « marge sur les sous-loyers »",
+      "question": "AUT-07 / AVE-08",
+      "documents": "Autorisation, Avenant",
+      "syntax": "{{#retribution_marge}}…{{/retribution_marge}} / {{^retribution_marge}}…{{/retribution_marge}}"
+    },
+    {
+      "variable": "retribution_marge_valeur",
+      "type": "Texte",
+      "description": "Marge (montant ou %)",
+      "question": "AUT-07 / AVE-08",
+      "documents": "Autorisation, Avenant",
+      "syntax": "{{retribution_marge_valeur}}"
+    },
+    {
+      "variable": "retribution_reduction",
+      "type": "Booléen",
+      "description": "Option « réduction de loyer »",
+      "question": "AUT-07 / AVE-08",
+      "documents": "Autorisation, Avenant",
+      "syntax": "{{#retribution_reduction}}…{{/retribution_reduction}} / {{^retribution_reduction}}…{{/retribution_reduction}}"
+    },
+    {
+      "variable": "retribution_reduction_valeur",
+      "type": "Texte",
+      "description": "Réduction (montant ou %)",
+      "question": "AUT-07 / AVE-08",
+      "documents": "Autorisation, Avenant",
+      "syntax": "{{retribution_reduction_valeur}}"
+    },
+    {
+      "variable": "retribution_aucune",
+      "type": "Booléen",
+      "description": "Option « aucune rétribution »",
+      "question": "AUT-07 / AVE-08",
+      "documents": "Autorisation, Avenant",
+      "syntax": "{{#retribution_aucune}}…{{/retribution_aucune}} / {{^retribution_aucune}}…{{/retribution_aucune}}"
+    },
+    {
+      "variable": "revocation_un_mois",
+      "type": "Booléen",
+      "description": "Vrai = préavis de révocation d’un mois ; faux = autre préavis",
+      "question": "AUT-08",
+      "documents": "Autorisation",
+      "syntax": "{{#revocation_un_mois}}…{{/revocation_un_mois}} / {{^revocation_un_mois}}…{{/revocation_un_mois}}"
+    },
+    {
+      "variable": "revocation_preavis_mois",
+      "type": "Nombre",
+      "description": "Autre préavis de révocation en mois",
+      "question": "AUT-08",
+      "documents": "Autorisation",
+      "syntax": "{{revocation_preavis_mois}}"
+    },
+    {
+      "variable": "mandant_nom",
+      "type": "Texte",
+      "description": "Mandant (Propriétaire) — Nom",
+      "question": "MDT-01",
+      "documents": "Mandat",
+      "syntax": "{{mandant_nom}}"
+    },
+    {
+      "variable": "mandant_adresse",
+      "type": "Texte",
+      "description": "Mandant (Propriétaire) — Adresse",
+      "question": "MDT-01",
+      "documents": "Mandat",
+      "syntax": "{{mandant_adresse}}"
+    },
+    {
+      "variable": "mandant_piece_identite",
+      "type": "Texte",
+      "description": "Mandant (Propriétaire) — N° de passeport / CIN (ou d’immatriculation)",
+      "question": "MDT-01",
+      "documents": "Mandat",
+      "syntax": "{{mandant_piece_identite}}"
+    },
+    {
+      "variable": "mandataire_forme_juridique",
+      "type": "Texte",
+      "description": "Forme juridique du Mandataire",
+      "question": "MDT-02",
+      "documents": "Mandat",
+      "syntax": "{{mandataire_forme_juridique}}"
+    },
+    {
+      "variable": "mandataire_agrement",
+      "type": "Texte (facultatif)",
+      "description": "N° d’agrément ou de carte professionnelle — ligne masquée si vide",
+      "question": "MDT-02",
+      "documents": "Mandat",
+      "syntax": "{{mandataire_agrement}}"
+    },
+    {
+      "variable": "mandataire_siege",
+      "type": "Texte",
+      "description": "Adresse du siège du Mandataire",
+      "question": "MDT-02",
+      "documents": "Mandat",
+      "syntax": "{{mandataire_siege}}"
+    },
+    {
+      "variable": "pouvoir_selection",
+      "type": "Booléen",
+      "description": "Pouvoir « rechercher et sélectionner »",
+      "question": "MDT-04",
+      "documents": "Mandat",
+      "syntax": "{{#pouvoir_selection}}…{{/pouvoir_selection}} / {{^pouvoir_selection}}…{{/pouvoir_selection}}"
+    },
+    {
+      "variable": "pouvoir_etats_des_lieux",
+      "type": "Booléen",
+      "description": "Pouvoir « états des lieux »",
+      "question": "MDT-04",
+      "documents": "Mandat",
+      "syntax": "{{#pouvoir_etats_des_lieux}}…{{/pouvoir_etats_des_lieux}} / {{^pouvoir_etats_des_lieux}}…{{/pouvoir_etats_des_lieux}}"
+    },
+    {
+      "variable": "pouvoir_perception",
+      "type": "Booléen",
+      "description": "Pouvoir « percevoir les loyers »",
+      "question": "MDT-04",
+      "documents": "Mandat",
+      "syntax": "{{#pouvoir_perception}}…{{/pouvoir_perception}} / {{^pouvoir_perception}}…{{/pouvoir_perception}}"
+    },
+    {
+      "variable": "pouvoir_entrees_sorties",
+      "type": "Booléen",
+      "description": "Pouvoir « entrées et sorties »",
+      "question": "MDT-04",
+      "documents": "Mandat",
+      "syntax": "{{#pouvoir_entrees_sorties}}…{{/pouvoir_entrees_sorties}} / {{^pouvoir_entrees_sorties}}…{{/pouvoir_entrees_sorties}}"
+    },
+    {
+      "variable": "pouvoir_gestion_courante",
+      "type": "Booléen",
+      "description": "Pouvoir « gestion courante »",
+      "question": "MDT-04",
+      "documents": "Mandat",
+      "syntax": "{{#pouvoir_gestion_courante}}…{{/pouvoir_gestion_courante}} / {{^pouvoir_gestion_courante}}…{{/pouvoir_gestion_courante}}"
+    },
+    {
+      "variable": "remu_ponctuelle_forfait",
+      "type": "Booléen",
+      "description": "Rémunération ponctuelle forfaitaire",
+      "question": "MDT-05",
+      "documents": "Mandat",
+      "syntax": "{{#remu_ponctuelle_forfait}}…{{/remu_ponctuelle_forfait}} / {{^remu_ponctuelle_forfait}}…{{/remu_ponctuelle_forfait}}"
+    },
+    {
+      "variable": "remu_ponctuelle_montant",
+      "type": "Montant",
+      "description": "Montant forfaitaire par colocataire installé (Ar)",
+      "question": "MDT-05",
+      "documents": "Mandat",
+      "syntax": "{{remu_ponctuelle_montant}}"
+    },
+    {
+      "variable": "remu_ponctuelle_pourcentage",
+      "type": "Booléen",
+      "description": "Rémunération ponctuelle indexée",
+      "question": "MDT-05",
+      "documents": "Mandat",
+      "syntax": "{{#remu_ponctuelle_pourcentage}}…{{/remu_ponctuelle_pourcentage}} / {{^remu_ponctuelle_pourcentage}}…{{/remu_ponctuelle_pourcentage}}"
+    },
+    {
+      "variable": "remu_ponctuelle_taux",
+      "type": "Nombre",
+      "description": "% du premier mois de loyer",
+      "question": "MDT-05",
+      "documents": "Mandat",
+      "syntax": "{{remu_ponctuelle_taux}}"
+    },
+    {
+      "variable": "remu_ponctuelle_aucune",
+      "type": "Booléen",
+      "description": "Aucune rémunération ponctuelle",
+      "question": "MDT-05",
+      "documents": "Mandat",
+      "syntax": "{{#remu_ponctuelle_aucune}}…{{/remu_ponctuelle_aucune}} / {{^remu_ponctuelle_aucune}}…{{/remu_ponctuelle_aucune}}"
+    },
+    {
+      "variable": "remu_mensuelle_forfait",
+      "type": "Booléen",
+      "description": "Vrai = forfait mensuel ; faux = % du loyer encaissé",
+      "question": "MDT-06",
+      "documents": "Mandat",
+      "syntax": "{{#remu_mensuelle_forfait}}…{{/remu_mensuelle_forfait}} / {{^remu_mensuelle_forfait}}…{{/remu_mensuelle_forfait}}"
+    },
+    {
+      "variable": "remu_mensuelle_montant",
+      "type": "Montant",
+      "description": "Forfait mensuel HT (Ar)",
+      "question": "MDT-06",
+      "documents": "Mandat",
+      "syntax": "{{remu_mensuelle_montant}}"
+    },
+    {
+      "variable": "remu_mensuelle_taux",
+      "type": "Nombre",
+      "description": "% du loyer mensuel encaissé HT",
+      "question": "MDT-06",
+      "documents": "Mandat",
+      "syntax": "{{remu_mensuelle_taux}}"
+    },
+    {
+      "variable": "colocs_nombre_max",
+      "type": "Nombre",
+      "description": "Nombre maximum de colocataires",
+      "question": "MDT-07",
+      "documents": "Mandat",
+      "syntax": "{{colocs_nombre_max}}"
+    },
+    {
+      "variable": "loyer_total",
+      "type": "Montant",
+      "description": "Loyer total mensuel dû au Mandant",
+      "question": "MDT-08",
+      "documents": "Mandat",
+      "syntax": "{{loyer_total}}"
+    },
+    {
+      "variable": "repartition",
+      "type": "Liste",
+      "description": "Répartition du loyer (une ligne par colocataire)",
+      "question": "MDT-09",
+      "documents": "Mandat",
+      "syntax": "{{#repartition}}…{{/repartition}}"
+    },
+    {
+      "variable": "repartition_habitant",
+      "type": "Texte",
+      "description": "Habitant (dans la liste « repartition »)",
+      "question": "MDT-09",
+      "documents": "Mandat",
+      "syntax": "{{repartition_habitant}}"
+    },
+    {
+      "variable": "repartition_chambre",
+      "type": "Texte",
+      "description": "Chambre / pièce occupée (dans la liste « repartition »)",
+      "question": "MDT-09",
+      "documents": "Mandat",
+      "syntax": "{{repartition_chambre}}"
+    },
+    {
+      "variable": "repartition_montant",
+      "type": "Montant",
+      "description": "Part / montant du loyer (dans la liste « repartition »)",
+      "question": "MDT-09",
+      "documents": "Mandat",
+      "syntax": "{{repartition_montant}}"
+    },
+    {
+      "variable": "repartition_total",
+      "type": "Calculé",
+      "description": "Total de la répartition",
+      "question": "MDT-09",
+      "documents": "Mandat",
+      "syntax": "{{repartition_total}}"
+    },
+    {
+      "variable": "depot_par_colocataire",
+      "type": "Booléen",
+      "description": "Vrai = versé par chaque colocataire ; faux = conservé par le Mandataire",
+      "question": "MDT-10",
+      "documents": "Mandat",
+      "syntax": "{{#depot_par_colocataire}}…{{/depot_par_colocataire}} / {{^depot_par_colocataire}}…{{/depot_par_colocataire}}"
+    },
+    {
+      "variable": "depot_mois",
+      "type": "Nombre",
+      "description": "Dépôt de garantie en mois de loyer",
+      "question": "MDT-10",
+      "documents": "Mandat",
+      "syntax": "{{depot_mois}}"
+    },
+    {
+      "variable": "reversement_delai_jours",
+      "type": "Nombre",
+      "description": "Délai de reversement au Mandant (jours)",
+      "question": "MDT-10",
+      "documents": "Mandat",
+      "syntax": "{{reversement_delai_jours}}"
+    },
+    {
+      "variable": "mandat_duree_3_ans",
+      "type": "Booléen",
+      "description": "Vrai = 3 ans ; faux = autre durée",
+      "question": "MDT-11",
+      "documents": "Mandat",
+      "syntax": "{{#mandat_duree_3_ans}}…{{/mandat_duree_3_ans}} / {{^mandat_duree_3_ans}}…{{/mandat_duree_3_ans}}"
+    },
+    {
+      "variable": "mandat_duree_autre",
+      "type": "Texte",
+      "description": "Autre durée du mandat",
+      "question": "MDT-11",
+      "documents": "Mandat",
+      "syntax": "{{mandat_duree_autre}}"
+    },
+    {
+      "variable": "mandat_preavis",
+      "type": "Texte",
+      "description": "Préavis de révocation du mandat",
+      "question": "MDT-11",
+      "documents": "Mandat",
+      "syntax": "{{mandat_preavis}}"
+    },
+    {
+      "variable": "mandataire_rc_pro",
+      "type": "Texte (facultatif)",
+      "description": "N° de police RC professionnelle — ligne masquée si vide",
+      "question": "MDT-12",
+      "documents": "Mandat",
+      "syntax": "{{mandataire_rc_pro}}"
+    },
+    {
+      "variable": "autorisation_date",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Date de l’Autorisation de colocation",
+      "question": "AVE-01",
+      "documents": "Avenant",
+      "syntax": "{{autorisation_date}}"
+    },
+    {
+      "variable": "op_sortant_nom",
+      "type": "Texte",
+      "description": "Occupant principal sortant — Nom",
+      "question": "AVE-03",
+      "documents": "Avenant",
+      "syntax": "{{op_sortant_nom}}"
+    },
+    {
+      "variable": "op_sortant_adresse",
+      "type": "Texte",
+      "description": "Occupant principal sortant — Adresse",
+      "question": "AVE-03",
+      "documents": "Avenant",
+      "syntax": "{{op_sortant_adresse}}"
+    },
+    {
+      "variable": "op_sortant_piece_identite",
+      "type": "Texte",
+      "description": "Occupant principal sortant — N° de passeport / CIN (ou d’immatriculation)",
+      "question": "AVE-03",
+      "documents": "Avenant",
+      "syntax": "{{op_sortant_piece_identite}}"
+    },
+    {
+      "variable": "op_nouveau_nom",
+      "type": "Texte",
+      "description": "Nouvel Occupant principal — Nom",
+      "question": "AVE-04",
+      "documents": "Avenant",
+      "syntax": "{{op_nouveau_nom}}"
+    },
+    {
+      "variable": "op_nouveau_adresse",
+      "type": "Texte",
+      "description": "Nouvel Occupant principal — Adresse",
+      "question": "AVE-04",
+      "documents": "Avenant",
+      "syntax": "{{op_nouveau_adresse}}"
+    },
+    {
+      "variable": "op_nouveau_piece_identite",
+      "type": "Texte",
+      "description": "Nouvel Occupant principal — N° de passeport / CIN (ou d’immatriculation)",
+      "question": "AVE-04",
+      "documents": "Avenant",
+      "syntax": "{{op_nouveau_piece_identite}}"
+    },
+    {
+      "variable": "op_nouveau_etait_sous_occupant",
+      "type": "Booléen",
+      "description": "Vrai = le nouvel OP était Sous-occupant",
+      "question": "AVE-06",
+      "documents": "Avenant",
+      "syntax": "{{#op_nouveau_etait_sous_occupant}}…{{/op_nouveau_etait_sous_occupant}} / {{^op_nouveau_etait_sous_occupant}}…{{/op_nouveau_etait_sous_occupant}}"
+    },
+    {
+      "variable": "op_nouveau_date_contrat_intercolocs",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Date de son contrat Intercolocs",
+      "question": "AVE-06",
+      "documents": "Avenant",
+      "syntax": "{{op_nouveau_date_contrat_intercolocs}}"
+    },
+    {
+      "variable": "sous_occupants",
+      "type": "Liste",
+      "description": "Sous-occupants notifiés",
+      "question": "AVE-07",
+      "documents": "Avenant",
+      "syntax": "{{#sous_occupants}}…{{/sous_occupants}}"
+    },
+    {
+      "variable": "so_nom",
+      "type": "Texte",
+      "description": "Nom, prénom du Sous-occupant (dans la liste « sous_occupants »)",
+      "question": "AVE-07",
+      "documents": "Avenant",
+      "syntax": "{{so_nom}}"
+    },
+    {
+      "variable": "so_date_contrat",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Date de son contrat Intercolocs (dans la liste « sous_occupants »)",
+      "question": "AVE-07",
+      "documents": "Avenant",
+      "syntax": "{{so_date_contrat}}"
+    },
+    {
+      "variable": "retribution_reconduite",
+      "type": "Booléen",
+      "description": "Vrai = rétribution reconduite à l’identique",
+      "question": "AVE-08",
+      "documents": "Avenant",
+      "syntax": "{{#retribution_reconduite}}…{{/retribution_reconduite}} / {{^retribution_reconduite}}…{{/retribution_reconduite}}"
+    },
+    {
+      "variable": "edl_type",
+      "type": "Texte",
+      "description": "« d’entrée » ou « de sortie »",
+      "question": "EDL-01",
+      "documents": "État des lieux",
+      "syntax": "{{edl_type}}"
+    },
+    {
+      "variable": "gestionnaire_qualite",
+      "type": "Texte",
+      "description": "Qualité du gestionnaire (occupant principal, propriétaire, mandataire) — déduite du profil",
+      "question": "P-01",
+      "documents": "État des lieux, Attestation logement",
+      "syntax": "{{gestionnaire_qualite}}"
+    },
+    {
+      "variable": "gestionnaire_nom_prenom",
+      "type": "Texte",
+      "description": "Nom et prénom du gestionnaire (repris du contrat de la session)",
+      "question": "EDL-02 / ATL-01",
+      "documents": "État des lieux, Attestation logement",
+      "syntax": "{{gestionnaire_nom_prenom}}"
+    },
+    {
+      "variable": "gestionnaire_piece_identite",
+      "type": "Texte",
+      "description": "Pièce d’identité du gestionnaire",
+      "question": "EDL-02 / ATL-01",
+      "documents": "État des lieux, Attestation logement",
+      "syntax": "{{gestionnaire_piece_identite}}"
+    },
+    {
+      "variable": "gestionnaire_contact",
+      "type": "Texte",
+      "description": "Contact du gestionnaire",
+      "question": "EDL-02",
+      "documents": "État des lieux",
+      "syntax": "{{gestionnaire_contact}}"
+    },
+    {
+      "variable": "edl_sdd",
+      "type": "Booléen",
+      "description": "Vrai = affiche la grille « Salle de bain / douche privée »",
+      "question": "EDL-04",
+      "documents": "État des lieux",
+      "syntax": "{{#edl_sdd}}…{{/edl_sdd}} / {{^edl_sdd}}…{{/edl_sdd}}"
+    },
+    {
+      "variable": "gestionnaire_proprietaire",
+      "type": "Booléen",
+      "description": "Charte mise en place par le Propriétaire (Propriocolocs)",
+      "question": "P-01",
+      "documents": "Charte",
+      "syntax": "{{#gestionnaire_proprietaire}}…{{/gestionnaire_proprietaire}} / {{^gestionnaire_proprietaire}}…{{/gestionnaire_proprietaire}}"
+    },
+    {
+      "variable": "gestionnaire_occupant_principal",
+      "type": "Booléen",
+      "description": "Charte mise en place par l’OP (Intercolocs)",
+      "question": "P-01",
+      "documents": "Charte",
+      "syntax": "{{#gestionnaire_occupant_principal}}…{{/gestionnaire_occupant_principal}} / {{^gestionnaire_occupant_principal}}…{{/gestionnaire_occupant_principal}}"
+    },
+    {
+      "variable": "gestionnaire_mandataire",
+      "type": "Booléen",
+      "description": "Charte mise en place par le Mandataire (Mandacolocs)",
+      "question": "P-01",
+      "documents": "Charte",
+      "syntax": "{{#gestionnaire_mandataire}}…{{/gestionnaire_mandataire}} / {{^gestionnaire_mandataire}}…{{/gestionnaire_mandataire}}"
+    },
+    {
+      "variable": "tranquillite_21h_6h",
+      "type": "Booléen",
+      "description": "Vrai = 21h–6h ; faux = autres horaires",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{#tranquillite_21h_6h}}…{{/tranquillite_21h_6h}} / {{^tranquillite_21h_6h}}…{{/tranquillite_21h_6h}}"
+    },
+    {
+      "variable": "tranquillite_debut",
+      "type": "Texte",
+      "description": "Autres horaires : heure de début",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{tranquillite_debut}}"
+    },
+    {
+      "variable": "tranquillite_fin",
+      "type": "Texte",
+      "description": "Autres horaires : heure de fin",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{tranquillite_fin}}"
+    },
+    {
+      "variable": "invites_3_6",
+      "type": "Booléen",
+      "description": "Vrai = 3 nuits / 6 par mois ; faux = autre limite",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{#invites_3_6}}…{{/invites_3_6}} / {{^invites_3_6}}…{{/invites_3_6}}"
+    },
+    {
+      "variable": "invites_limite_nuits",
+      "type": "Nombre",
+      "description": "Autre limite de nuits",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{invites_limite_nuits}}"
+    },
+    {
+      "variable": "menage_planning",
+      "type": "Booléen",
+      "description": "Vrai = planning tournant ; faux = service de ménage",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{#menage_planning}}…{{/menage_planning}} / {{^menage_planning}}…{{/menage_planning}}"
+    },
+    {
+      "variable": "tabac_exterieur",
+      "type": "Booléen",
+      "description": "Tabac à l’extérieur",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{#tabac_exterieur}}…{{/tabac_exterieur}} / {{^tabac_exterieur}}…{{/tabac_exterieur}}"
+    },
+    {
+      "variable": "tabac_interieur_communs",
+      "type": "Booléen",
+      "description": "Tabac à l’intérieur, espaces communs compris",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{#tabac_interieur_communs}}…{{/tabac_interieur_communs}} / {{^tabac_interieur_communs}}…{{/tabac_interieur_communs}}"
+    },
+    {
+      "variable": "tabac_interieur_privatifs",
+      "type": "Booléen",
+      "description": "Tabac à l’intérieur, espaces privatifs uniquement",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{#tabac_interieur_privatifs}}…{{/tabac_interieur_privatifs}} / {{^tabac_interieur_privatifs}}…{{/tabac_interieur_privatifs}}"
+    },
+    {
+      "variable": "tabac_espaces_designes",
+      "type": "Booléen",
+      "description": "Tabac dans des espaces désignés",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{#tabac_espaces_designes}}…{{/tabac_espaces_designes}} / {{^tabac_espaces_designes}}…{{/tabac_espaces_designes}}"
+    },
+    {
+      "variable": "tabac_espaces",
+      "type": "Texte",
+      "description": "Espaces désignés pour le tabac",
+      "question": "CHA-02",
+      "documents": "Charte",
+      "syntax": "{{tabac_espaces}}"
+    },
+    {
+      "variable": "gestionnaire_date_naissance",
+      "type": "Date JJ/MM/AAAA",
+      "description": "Date de naissance du gestionnaire",
+      "question": "ATL-01",
+      "documents": "Attestation logement",
+      "syntax": "{{gestionnaire_date_naissance}}"
+    }
+  ],
+  "contractQuestions": [
+    {
+      "ID": "P-01",
+      "Section": "Parcours commun",
+      "Élément (1 question)": "Profil du client",
+      "Champs à renseigner": "Profil",
+      "Type": "Choix unique",
+      "Obligatoire": "Oui",
+      "Choix proposés": "Occupant principal ; Propriétaire ; Professionnel de l'immobilier",
+      "Afficher si": "—",
+      "Variante selon profil": "—",
+      "INT (OP) min": "1",
+      "INT (OP) max": "1",
+      "PRO (Propriétaire) min": "1",
+      "PRO (Propriétaire) max": "1",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "1",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "P-02",
+      "Section": "Parcours commun",
+      "Élément (1 question)": "Document à établir",
+      "Champs à renseigner": "Document",
+      "Type": "Choix unique",
+      "Obligatoire": "Oui",
+      "Choix proposés": "Liste filtrée selon le profil (onglet Parcours)",
+      "Afficher si": "—",
+      "Variante selon profil": "—",
+      "INT (OP) min": "1",
+      "INT (OP) max": "1",
+      "PRO (Propriétaire) min": "1",
+      "PRO (Propriétaire) max": "1",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "1",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "P-03",
+      "Section": "Parcours commun",
+      "Élément (1 question)": "Nombre de colocataires",
+      "Champs à renseigner": "Nombre",
+      "Type": "Nombre",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Variante selon profil": "—",
+      "INT (OP) min": "1",
+      "INT (OP) max": "1",
+      "PRO (Propriétaire) min": "1",
+      "PRO (Propriétaire) max": "1",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "1",
+      "Note pour le prestataire": "Un paiement par contrat (contrat + EDL) ; chaque Sous-occupant ajoute 8 champs (C-03)."
+    },
+    {
+      "ID": "P-04",
+      "Section": "Parcours commun",
+      "Élément (1 question)": "Qui choisit les colocataires ?",
+      "Champs à renseigner": "Choix ; délai de validation (jours) si validation",
+      "Type": "Choix unique + nombre",
+      "Obligatoire": "Oui",
+      "Choix proposés": "Le gestionnaire seul ; Le gestionnaire présélectionne, le Propriétaire valide ; Le Propriétaire seul",
+      "Afficher si": "—",
+      "Variante selon profil": "OP / Propriétaire : 3 cas. Professionnel : 2 cas (droit de regard du Mandant OUI / NON).",
+      "INT (OP) min": "1",
+      "INT (OP) max": "2",
+      "PRO (Propriétaire) min": "1",
+      "PRO (Propriétaire) max": "2",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "2",
+      "Note pour le prestataire": "Aucun préremplissage (pas de mémorisation)."
+    },
+    {
+      "ID": "P-05",
+      "Section": "Parcours commun",
+      "Élément (1 question)": "Régime de responsabilité",
+      "Champs à renseigner": "Individuelle / collective (solidaire)",
+      "Type": "Choix unique",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Variante selon profil": "Identique pour les 3 contrats ; le contrat est déterminé par le profil (R01).",
+      "INT (OP) min": "1",
+      "INT (OP) max": "1",
+      "PRO (Propriétaire) min": "1",
+      "PRO (Propriétaire) max": "1",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "1",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "C-00",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "Le pouvoir de signer",
+      "Champs à renseigner": "Le Mandataire est-il chargé de pouvoir (mandat de gestion signé) ?",
+      "Type": "Choix unique",
+      "Obligatoire": "Oui",
+      "Choix proposés": "Oui ; Non",
+      "Afficher si": "MAN seulement",
+      "Variante selon profil": "Non → arrêt du parcours et renvoi vers le Mandat de gestion à faire signer (R05)",
+      "INT (OP) min": "",
+      "INT (OP) max": "",
+      "PRO (Propriétaire) min": "",
+      "PRO (Propriétaire) max": "",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "1",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "C-01",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "Le bailleur / gestionnaire",
+      "Champs à renseigner": "Bloc BLK-PARTIE",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "INT : personne physique. PRO : personne physique ou morale",
+      "Afficher si": "—",
+      "Variante selon profil": "INT : Occupant principal (8). PRO : Propriétaire, physique ou morale (1 + 8 ou 9). MAN : Mandataire (BLK-SOC, 9) + Propriétaire représenté (BLK-PERS-SIMPLE, 3).",
+      "INT (OP) min": "8",
+      "INT (OP) max": "8",
+      "PRO (Propriétaire) min": "9",
+      "PRO (Propriétaire) max": "10",
+      "MAN (Pro) min": "12",
+      "MAN (Pro) max": "12",
+      "Note pour le prestataire": "Personne morale : Propriétaire et Mandataire uniquement."
+    },
+    {
+      "ID": "C-02",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "Le cadre juridique",
+      "Champs à renseigner": "INT : nom du Propriétaire, date, durée et fin du bail principal, article autorisant la sous-location (5). PRO : statut propriétaire / titulaire, type de bien (2). MAN : date du mandat, statut, type de bien (3)",
+      "Type": "Texte, dates, choix",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Variante selon profil": "Champs propres à chaque contrat.",
+      "INT (OP) min": "5",
+      "INT (OP) max": "5",
+      "PRO (Propriétaire) min": "2",
+      "PRO (Propriétaire) max": "2",
+      "MAN (Pro) min": "3",
+      "MAN (Pro) max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "C-03",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "Le Sous-occupant",
+      "Champs à renseigner": "Bloc BLK-PARTIE (personne physique)",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Variante selon profil": "Identique aux 3 profils",
+      "INT (OP) min": "8",
+      "INT (OP) max": "8",
+      "PRO (Propriétaire) min": "8",
+      "PRO (Propriétaire) max": "8",
+      "MAN (Pro) min": "8",
+      "MAN (Pro) max": "8",
+      "Note pour le prestataire": "Répété pour chaque Sous-occupant."
+    },
+    {
+      "ID": "C-04",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "L'adresse du bien",
+      "Champs à renseigner": "Bloc BLK-ADR",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Variante selon profil": "Identique",
+      "INT (OP) min": "3",
+      "INT (OP) max": "3",
+      "PRO (Propriétaire) min": "3",
+      "PRO (Propriétaire) max": "3",
+      "MAN (Pro) min": "3",
+      "MAN (Pro) max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "C-05",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "Les locaux",
+      "Champs à renseigner": "Bloc BLK-LOCAUX",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Variante selon profil": "Identique",
+      "INT (OP) min": "3",
+      "INT (OP) max": "5",
+      "PRO (Propriétaire) min": "3",
+      "PRO (Propriétaire) max": "5",
+      "MAN (Pro) min": "3",
+      "MAN (Pro) max": "5",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "C-06",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "L'espace privatif",
+      "Champs à renseigner": "Meublé / non meublé ; équipements",
+      "Type": "Choix + texte long",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Variante selon profil": "Identique",
+      "INT (OP) min": "1",
+      "INT (OP) max": "2",
+      "PRO (Propriétaire) min": "1",
+      "PRO (Propriétaire) max": "2",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "2",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "C-07",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "La durée",
+      "Champs à renseigner": "Durée (déterminée, renouvelable par tacite reconduction) ; date d'effet et d'entrée",
+      "Type": "Texte + date",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Variante selon profil": "Identique",
+      "INT (OP) min": "2",
+      "INT (OP) max": "2",
+      "PRO (Propriétaire) min": "2",
+      "PRO (Propriétaire) max": "2",
+      "MAN (Pro) min": "2",
+      "MAN (Pro) max": "2",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "C-08",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "La gestion des charges",
+      "Champs à renseigner": "Bloc BLK-CHARGES",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "Option 1 sans charge ; Option 2 avec charges",
+      "Afficher si": "—",
+      "Variante selon profil": "",
+      "INT (OP) min": "1",
+      "INT (OP) max": "11",
+      "PRO (Propriétaire) min": "1",
+      "PRO (Propriétaire) max": "11",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "11",
+      "Note pour le prestataire": "Total loyer + charges calculé (R07)."
+    },
+    {
+      "ID": "C-09",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "Le loyer et son règlement",
+      "Champs à renseigner": "Loyer mensuel ; modes de règlement ; jour limite de paiement",
+      "Type": "Montant + choix multiple + nombre",
+      "Obligatoire": "Oui",
+      "Choix proposés": "Cases à cocher (plusieurs possibles) : Virement ; Mobile money ; Application de transfert ; Espèces ; Chèque",
+      "Afficher si": "—",
+      "Variante selon profil": "Identique",
+      "INT (OP) min": "3",
+      "INT (OP) max": "3",
+      "PRO (Propriétaire) min": "3",
+      "PRO (Propriétaire) max": "3",
+      "MAN (Pro) min": "3",
+      "MAN (Pro) max": "3",
+      "Note pour le prestataire": "Loyer imprimé en chiffres et en toutes lettres (R08). Espèces → attestation ESP proposée (R14)."
+    },
+    {
+      "ID": "C-10",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "Le dépôt de garantie",
+      "Champs à renseigner": "Nombre de mois de loyer",
+      "Type": "Nombre",
+      "Obligatoire": "Oui",
+      "Choix proposés": "Valeur initiale : 1 mois, modifiable par le client",
+      "Afficher si": "—",
+      "Variante selon profil": "Identique",
+      "INT (OP) min": "1",
+      "INT (OP) max": "1",
+      "PRO (Propriétaire) min": "1",
+      "PRO (Propriétaire) max": "1",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "1",
+      "Note pour le prestataire": "Montant calculé = mois × loyer, imprimé en chiffres et en toutes lettres (R07, R08)."
+    },
+    {
+      "ID": "C-12",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "La révision du loyer",
+      "Champs à renseigner": "Pourcentage ; périodicité ; date anniversaire (INT)",
+      "Type": "Pourcentage + nombre + date",
+      "Obligatoire": "Oui",
+      "Choix proposés": "PRO / MAN : périodicité initiale 3 ans, modifiable",
+      "Afficher si": "—",
+      "Variante selon profil": "INT : soumis au bail principal entre le Propriétaire et l'OP — mention affichée : « L'Occupant principal se réfère à son contrat initial pour renseigner ces champs ». PRO / MAN : date anniversaire = date d'entrée (calculée).",
+      "INT (OP) min": "3",
+      "INT (OP) max": "3",
+      "PRO (Propriétaire) min": "2",
+      "PRO (Propriétaire) max": "2",
+      "MAN (Pro) min": "2",
+      "MAN (Pro) max": "2",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "C-13",
+      "Section": "Contrat colocataire (tronc commun Intercolocs)",
+      "Élément (1 question)": "Le préavis du bailleur",
+      "Champs à renseigner": "Nombre de mois",
+      "Type": "Nombre",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Variante selon profil": "Identique",
+      "INT (OP) min": "1",
+      "INT (OP) max": "1",
+      "PRO (Propriétaire) min": "1",
+      "PRO (Propriétaire) max": "1",
+      "MAN (Pro) min": "1",
+      "MAN (Pro) max": "1",
+      "Note pour le prestataire": "Saisie libre."
+    }
+  ],
+  "otherDocumentQuestions": [
+    {
+      "ID": "AUT-01",
+      "Document": "AUT",
+      "Élément (1 question)": "Le bail principal",
+      "Champs à renseigner": "Date ; durée",
+      "Type": "Date + texte",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "2",
+      "Champs max": "2",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AUT-02",
+      "Document": "AUT",
+      "Élément (1 question)": "Le Propriétaire ou son Mandataire",
+      "Champs à renseigner": "Signataire : Propriétaire / Mandataire ; identité (BLK-PERS-SIMPLE) ; si Mandataire : BLK-SOC",
+      "Type": "Choix + bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "4",
+      "Champs max": "12",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AUT-03",
+      "Document": "AUT",
+      "Élément (1 question)": "L'Occupant principal",
+      "Champs à renseigner": "Bloc BLK-PERS-SIMPLE",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AUT-04",
+      "Document": "AUT",
+      "Élément (1 question)": "L'adresse du bien",
+      "Champs à renseigner": "Bloc BLK-ADR",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AUT-05",
+      "Document": "AUT",
+      "Élément (1 question)": "Le nombre de colocataires",
+      "Champs à renseigner": "Mode ; nombre total",
+      "Type": "Choix + nombre",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "2",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AUT-06",
+      "Document": "AUT",
+      "Élément (1 question)": "Qui choisit les colocataires + régime",
+      "Champs à renseigner": "Cas 1 (l'OP seul) / Cas 2 (validation du Propriétaire) ; délai de validation et régime si Cas 2",
+      "Type": "Choix + nombre + choix",
+      "Obligatoire": "Oui",
+      "Choix proposés": "Cas 1 → régime solidaire imposé (confirmé) ; Cas 2 → solidaire ou individuel",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "3",
+      "Note pour le prestataire": "Régime individuel : chaque colocataire signe ensuite un Propriocolocs avec le Propriétaire."
+    },
+    {
+      "ID": "AUT-07",
+      "Document": "AUT",
+      "Élément (1 question)": "La rétribution de l'Occupant principal",
+      "Champs à renseigner": "Option ; montant ou %",
+      "Type": "Choix + montant",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "2",
+      "Note pour le prestataire": "Réduction ≤ 10 % (R06)."
+    },
+    {
+      "ID": "AUT-08",
+      "Document": "AUT",
+      "Élément (1 question)": "Le préavis de révocation",
+      "Champs à renseigner": "Option ; autre préavis",
+      "Type": "Choix + texte",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "0",
+      "Champs max": "2",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-01",
+      "Document": "MDT",
+      "Élément (1 question)": "Le Mandant",
+      "Champs à renseigner": "Bloc BLK-PERS-SIMPLE",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-02",
+      "Document": "MDT",
+      "Élément (1 question)": "Le Mandataire",
+      "Champs à renseigner": "Bloc BLK-SOC",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "8",
+      "Champs max": "9",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-03",
+      "Document": "MDT",
+      "Élément (1 question)": "Le bien",
+      "Champs à renseigner": "Adresse (3) ; nombre de chambres ou lots (1)",
+      "Type": "Bloc + nombre",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "4",
+      "Champs max": "4",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-04",
+      "Document": "MDT",
+      "Élément (1 question)": "Les pouvoirs confiés",
+      "Champs à renseigner": "Cases à cocher",
+      "Type": "Choix multiple",
+      "Obligatoire": "Oui",
+      "Choix proposés": "« Signer les contrats » coché d'office, non décochable",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "1",
+      "Note pour le prestataire": "« Signer les contrats » toujours coché."
+    },
+    {
+      "ID": "MDT-05",
+      "Document": "MDT",
+      "Élément (1 question)": "La rémunération ponctuelle",
+      "Champs à renseigner": "Option ; montant ou %",
+      "Type": "Choix + montant",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "2",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-06",
+      "Document": "MDT",
+      "Élément (1 question)": "La rémunération mensuelle",
+      "Champs à renseigner": "Option ; montant ou %",
+      "Type": "Choix + montant",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "2",
+      "Note pour le prestataire": "Taux obligatoire."
+    },
+    {
+      "ID": "MDT-07",
+      "Document": "MDT",
+      "Élément (1 question)": "Qui choisit + régime",
+      "Champs à renseigner": "Questions communes P-04 et P-05 ; nombre max de colocataires",
+      "Type": "Commun + nombre",
+      "Obligatoire": "—",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "2",
+      "Champs max": "4",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-08",
+      "Document": "MDT",
+      "Élément (1 question)": "Le loyer total",
+      "Champs à renseigner": "Montant",
+      "Type": "Montant (Ar)",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "1",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-09",
+      "Document": "MDT",
+      "Élément (1 question)": "La répartition du loyer",
+      "Champs à renseigner": "Bloc BLK-REPART",
+      "Type": "Bloc",
+      "Obligatoire": "Non",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "0",
+      "Champs max": "21",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-10",
+      "Document": "MDT",
+      "Élément (1 question)": "Le dépôt et le reversement",
+      "Champs à renseigner": "Option ; mois ; délai de reversement",
+      "Type": "Choix + nombres",
+      "Obligatoire": "Oui",
+      "Choix proposés": "8 jours",
+      "Afficher si": "—",
+      "Champs min": "2",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-11",
+      "Document": "MDT",
+      "Élément (1 question)": "La durée et la révocation",
+      "Champs à renseigner": "Durée ; autre durée ; préavis",
+      "Type": "Choix + texte",
+      "Obligatoire": "Oui",
+      "Choix proposés": "1 mois",
+      "Afficher si": "—",
+      "Champs min": "2",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "MDT-12",
+      "Document": "MDT",
+      "Élément (1 question)": "L'assurance RC professionnelle",
+      "Champs à renseigner": "N° de police",
+      "Type": "Texte",
+      "Obligatoire": "Non",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "0",
+      "Champs max": "1",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AVE-01",
+      "Document": "AVE",
+      "Élément (1 question)": "L'Autorisation de colocation",
+      "Champs à renseigner": "Date",
+      "Type": "Date",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "1",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AVE-02",
+      "Document": "AVE",
+      "Élément (1 question)": "Le Propriétaire",
+      "Champs à renseigner": "Bloc BLK-PERS-SIMPLE",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AVE-03",
+      "Document": "AVE",
+      "Élément (1 question)": "L'Occupant principal sortant",
+      "Champs à renseigner": "Bloc BLK-PERS-SIMPLE",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AVE-04",
+      "Document": "AVE",
+      "Élément (1 question)": "Le nouvel Occupant principal",
+      "Champs à renseigner": "Bloc BLK-PERS-SIMPLE",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AVE-05",
+      "Document": "AVE",
+      "Élément (1 question)": "L'adresse du bien",
+      "Champs à renseigner": "Bloc BLK-ADR",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AVE-06",
+      "Document": "AVE",
+      "Élément (1 question)": "La situation du nouvel OP",
+      "Champs à renseigner": "Option ; date de son contrat Intercolocs",
+      "Type": "Choix + date",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "2",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AVE-07",
+      "Document": "AVE",
+      "Élément (1 question)": "Les Sous-occupants notifiés",
+      "Champs à renseigner": "Tableau : nom ; date du contrat",
+      "Type": "Tableau répétable",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "0",
+      "Champs max": "14",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "AVE-08",
+      "Document": "AVE",
+      "Élément (1 question)": "La rétribution",
+      "Champs à renseigner": "Régime de l'Autorisation (solidaire / individuel) ; reconduite / modifiée ; option ; montant",
+      "Type": "Choix + montant",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "2",
+      "Champs max": "4",
+      "Note pour le prestataire": "Le régime de l'Autorisation est demandé (rien n'est mémorisé) : l'option « marge » n'est proposée qu'en régime solidaire (R10)."
+    },
+    {
+      "ID": "AVE-09",
+      "Document": "AVE",
+      "Élément (1 question)": "La date d'effet",
+      "Champs à renseigner": "Date",
+      "Type": "Date",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "1",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "CHA-01",
+      "Document": "CHA",
+      "Élément (1 question)": "L'adresse du bien",
+      "Champs à renseigner": "Bloc BLK-ADR",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": "Gestionnaire déduit du profil."
+    },
+    {
+      "ID": "CHA-02",
+      "Document": "CHA",
+      "Élément (1 question)": "Les règles de vie",
+      "Champs à renseigner": "Horaires ; invités ; entretien ; tabac (+ précisions si « autre »)",
+      "Type": "Choix",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "4",
+      "Champs max": "8",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "CHA-03",
+      "Document": "CHA",
+      "Élément (1 question)": "Le colocataire",
+      "Champs à renseigner": "Nom",
+      "Type": "Texte",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "1",
+      "Note pour le prestataire": "Une charte par colocataire."
+    },
+    {
+      "ID": "EDL-01",
+      "Document": "EDL",
+      "Élément (1 question)": "Le type et le bien",
+      "Champs à renseigner": "Entrée / sortie ; adresse",
+      "Type": "Choix + bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "4",
+      "Champs max": "4",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "EDL-02",
+      "Document": "EDL",
+      "Élément (1 question)": "Le Gestionnaire",
+      "Champs à renseigner": "Nom ; pièce ; contact",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": "Qualité déduite du profil."
+    },
+    {
+      "ID": "EDL-03",
+      "Document": "EDL",
+      "Élément (1 question)": "Le Sous-occupant",
+      "Champs à renseigner": "Nom ; pièce ; contact",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "EDL-04",
+      "Document": "EDL",
+      "Élément (1 question)": "La salle d'eau privée",
+      "Champs à renseigner": "Oui / non (affiche la grille SDD)",
+      "Type": "Choix",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "1",
+      "Champs max": "1",
+      "Note pour le prestataire": "Grilles d'état laissées vierges."
+    },
+    {
+      "ID": "QUI-01",
+      "Document": "QUI",
+      "Élément (1 question)": "Modèle type vierge",
+      "Champs à renseigner": "Aucune saisie",
+      "Type": "—",
+      "Obligatoire": "—",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "0",
+      "Champs max": "0",
+      "Note pour le prestataire": "Téléchargeable une fois, adaptable ensuite par l'utilisateur."
+    },
+    {
+      "ID": "ATL-01",
+      "Document": "ATL",
+      "Élément (1 question)": "Le Gestionnaire",
+      "Champs à renseigner": "Nom ; date de naissance ; pièce ; qualité",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "4",
+      "Champs max": "4",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "ATL-02",
+      "Document": "ATL",
+      "Élément (1 question)": "L'adresse du bien",
+      "Champs à renseigner": "Bloc BLK-ADR",
+      "Type": "Bloc",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "3",
+      "Champs max": "3",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "ATL-03",
+      "Document": "ATL",
+      "Élément (1 question)": "Le colocataire et sa date d'arrivée",
+      "Champs à renseigner": "Nom ; date de naissance ; pièce ; réside depuis le",
+      "Type": "Bloc + date",
+      "Obligatoire": "Oui",
+      "Choix proposés": "",
+      "Afficher si": "—",
+      "Champs min": "4",
+      "Champs max": "4",
+      "Note pour le prestataire": ""
+    },
+    {
+      "ID": "ESP-01",
+      "Document": "ESP",
+      "Élément (1 question)": "Attestation de remise en espèce",
+      "Champs à renseigner": "Parties pré-remplies ; montant, date et motif",
+      "Type": "Montant + date + texte",
+      "Obligatoire": "Non",
+      "Choix proposés": "Optionnelle, incluse",
+      "Afficher si": "—",
+      "Champs min": "0",
+      "Champs max": "3",
+      "Note pour le prestataire": "Parties pré-remplies si générée avec le contrat ; montant et date vierges."
+    }
+  ],
+  "rules": [
+    {
+      "ID": "R01",
+      "Type": "Aiguillage",
+      "Condition": "Toujours",
+      "Règle": "Le contrat est déterminé par le profil : Occupant principal → INT ; Propriétaire → PRO ; Professionnel → MAN",
+      "Éléments concernés": "P-01, INT, PRO, MAN"
+    },
+    {
+      "ID": "R02",
+      "Type": "Choix",
+      "Condition": "Toujours",
+      "Règle": "Responsabilité individuelle ou collective proposée dans les 3 contrats ; le gabarit insère la clause correspondante",
+      "Éléments concernés": "P-05"
+    },
+    {
+      "ID": "R03",
+      "Type": "Libellés",
+      "Condition": "Profil Professionnel",
+      "Règle": "P-04 limité à 2 choix : le Mandataire seul / le Mandant valide",
+      "Éléments concernés": "P-04"
+    },
+    {
+      "ID": "R04",
+      "Type": "Prérequis",
+      "Condition": "Contrat Intercolocs",
+      "Règle": "Une Autorisation de colocation entre l'Occupant principal et le Propriétaire (ou son Mandataire) est nécessaire ; elle ne l'est pas pour le Propriocolocs",
+      "Éléments concernés": "AUT, INT"
+    },
+    {
+      "ID": "R05",
+      "Type": "Arrêt",
+      "Condition": "MAN, C-00 = Non",
+      "Règle": "Arrêt du parcours ; renvoi vers le Mandat de gestion à faire signer",
+      "Éléments concernés": "C-00"
+    },
+    {
+      "ID": "R06",
+      "Type": "Validation",
+      "Condition": "Réduction de loyer saisie",
+      "Règle": "≤ 10 % du loyer total",
+      "Éléments concernés": "AUT-07, AVE-08"
+    },
+    {
+      "ID": "R07",
+      "Type": "Calcul",
+      "Condition": "Toujours",
+      "Règle": "Total des charges = somme des lignes de charges ; dépôt = nombre de mois × loyer",
+      "Éléments concernés": "C-08, C-10"
+    },
+    {
+      "ID": "R08",
+      "Type": "Calcul",
+      "Condition": "Toujours",
+      "Règle": "Montants imprimés en chiffres et en toutes lettres : loyer, total des charges, dépôt de garantie",
+      "Éléments concernés": "C-08, C-09, C-10"
+    },
+    {
+      "ID": "R09",
+      "Type": "Validation",
+      "Condition": "Répartition remplie",
+      "Règle": "Somme des parts = loyer total (alerte non bloquante)",
+      "Éléments concernés": "MDT-09"
+    },
+    {
+      "ID": "R10",
+      "Type": "Masquage",
+      "Condition": "Régime individuel",
+      "Règle": "Option « marge sur les parts de loyer » masquée : elle n'est possible qu'en responsabilité solidaire",
+      "Éléments concernés": "AUT-07, AVE-08"
+    },
+    {
+      "ID": "R21",
+      "Type": "Aide à la saisie",
+      "Condition": "PRO, MAN",
+      "Règle": "Afficher sous P-05 : « Le régime choisi doit être identique pour tous les contrats du même logement. »",
+      "Éléments concernés": "P-05"
+    },
+    {
+      "ID": "R11",
+      "Type": "Pas de mémorisation",
+      "Condition": "Toujours",
+      "Règle": "Aucune donnée conservée hors PDF. Seuls les documents générés dans la même session (EDL et documents communs choisis) sont pré-remplis avec les réponses du contrat",
+      "Éléments concernés": "Tous"
+    },
+    {
+      "ID": "R12",
+      "Type": "Choix obligatoires",
+      "Condition": "Toujours",
+      "Règle": "Aucune valeur par défaut ni recommandation : chaque choix doit être fait pour passer à l'étape suivante. Seules exceptions : dépôt de garantie (1 mois) et périodicité de révision (3 ans), pré-saisis et modifiables",
+      "Éléments concernés": "Tous"
+    },
+    {
+      "ID": "R13",
+      "Type": "Mise en page",
+      "Condition": "Toujours",
+      "Règle": "Seule l'option retenue est imprimée",
+      "Éléments concernés": "Tous"
+    },
+    {
+      "ID": "R14",
+      "Type": "Proposition",
+      "Condition": "Espèces cochées en C-09",
+      "Règle": "Proposer l'attestation de remise en espèce",
+      "Éléments concernés": "C-09, ESP"
+    },
+    {
+      "ID": "R15",
+      "Type": "Multi-colocataires",
+      "Condition": "P-03 > 1",
+      "Règle": "Un contrat et un paiement par Sous-occupant ; seul C-03 est ressaisi (8 champs)",
+      "Éléments concernés": "C-03"
+    },
+    {
+      "ID": "R16",
+      "Type": "Calcul",
+      "Condition": "PRO, MAN",
+      "Règle": "Date anniversaire de révision = date d'entrée ; périodicité 3 ans, modifiable",
+      "Éléments concernés": "C-12"
+    },
+    {
+      "ID": "R17",
+      "Type": "Saisie unique",
+      "Condition": "Toujours",
+      "Règle": "Une information demandée plusieurs fois dans un modèle n'est saisie qu'une fois",
+      "Éléments concernés": "Tous"
+    },
+    {
+      "ID": "R18",
+      "Type": "Paiement",
+      "Condition": "Toujours",
+      "Règle": "Paiement unitaire : un contrat + son EDL d'entrée, obligatoirement associés ; autres documents communs en option, inclus",
+      "Éléments concernés": "INT, PRO, MAN, EDL"
+    },
+    {
+      "ID": "R19",
+      "Type": "Récapitulatif",
+      "Condition": "Après le questionnaire du contrat",
+      "Règle": "Toutes les réponses affichées par rubrique, chacune modifiable, avant l'aperçu filigrané",
+      "Éléments concernés": "Tous"
+    },
+    {
+      "ID": "R20",
+      "Type": "Signature",
+      "Condition": "Toujours",
+      "Règle": "« Fait à … le … » laissé vierge",
+      "Éléments concernés": "Tous"
+    }
+  ],
+  "technicalRequirements": [
+    {
+      "Thème": "Parcours",
+      "Exigence": "8 étapes : profil → choix communs → questionnaire du contrat → récapitulatif (chaque réponse modifiable) → aperçu → paiement → génération du PDF → historique."
+    },
+    {
+      "Thème": "Aiguillage",
+      "Exigence": "Le contrat est déterminé par le profil : Occupant principal → Intercolocs ; Propriétaire → Propriocolocs ; Professionnel → Mandacolocs. Questions communes aux 3 profils : qui choisit les colocataires ; responsabilité individuelle ou collective."
+    },
+    {
+      "Thème": "Arrêt du parcours",
+      "Exigence": "Mandacolocs : si le Mandataire n'est pas chargé de pouvoir, le parcours s'arrête et renvoie vers le Mandat de gestion à faire signer."
+    },
+    {
+      "Thème": "Saisie",
+      "Exigence": "Tous les choix sont obligatoires pour passer à l'étape suivante ; aucune valeur par défaut ni recommandation. Seules exceptions, pré-saisies et modifiables : dépôt de garantie (1 mois) et périodicité de révision (3 ans). Une information demandée plusieurs fois dans un modèle n'est saisie qu'une fois."
+    },
+    {
+      "Thème": "Parties",
+      "Exigence": "Personnes physiques ; personne morale possible pour le Propriétaire et le Mandataire uniquement."
+    },
+    {
+      "Thème": "Aide à la saisie",
+      "Exigence": "Intercolocs : afficher « L'Occupant principal se réfère à son contrat initial pour renseigner ces champs » sur la révision du loyer et le bail principal. Propriocolocs et Mandacolocs : afficher sous le choix du régime « Le régime choisi doit être identique pour tous les contrats du même logement »."
+    },
+    {
+      "Thème": "Génération",
+      "Exigence": "Seules les options retenues sont imprimées (les options non choisies disparaissent). Tableaux à lignes variables : charges, répartition des loyers (Mandat), Sous-occupants notifiés, niveaux du logement. Durée toujours déterminée, renouvelable par tacite reconduction."
+    },
+    {
+      "Thème": "Calculs",
+      "Exigence": "Total des charges ; dépôt = nombre de mois × loyer ; loyer, charges et dépôt imprimés en chiffres et en toutes lettres ; date anniversaire de révision = date d'effet (Propriocolocs, Mandacolocs) ; contrôle réduction ≤ 10 % ; alerte si la répartition du Mandat ≠ loyer total."
+    },
+    {
+      "Thème": "Aperçu",
+      "Exigence": "Premières pages seulement, filigrane généré côté serveur (pas de calque CSS)."
+    },
+    {
+      "Thème": "Paiement",
+      "Exigence": "Mobile money. Un paiement par contrat, couvrant le contrat et son état des lieux d'entrée, obligatoirement associés. Génération uniquement après confirmation du paiement par l'opérateur."
+    },
+    {
+      "Thème": "Documents communs",
+      "Exigence": "État des lieux d'entrée généré automatiquement avec le contrat. Charte, attestation de logement et attestation de remise en espèce proposées en option, incluses, pré-remplies avec les réponses de la session. Quittance : modèle type vierge. « Fait à … le … » toujours laissé vierge."
+    },
+    {
+      "Thème": "Données",
+      "Exigence": "Aucune mémorisation des réponses : seul le PDF est conservé. Pas de préremplissage d'une session à l'autre."
+    },
+    {
+      "Thème": "Historique client",
+      "Exigence": "Liste chronologique des PDF achetés ; le client peut les conserver ou les supprimer (confirmation) ; lien de téléchargement à durée limitée, régénérable. Un re-téléchargement sert toujours le même fichier archivé, jamais un PDF regénéré (sinon l'empreinte ne correspond plus)."
+    },
+    {
+      "Thème": "Archive Coloc'KOO",
+      "Exigence": "Copie de chaque PDF et de son empreinte numérique conservée côté serveur, même si le client le supprime."
+    },
+    {
+      "Thème": "Intégrité du PDF",
+      "Exigence": "Option 1 retenue : traçabilité et intégrité, sans chiffrement ni mot de passe. Empreinte SHA-256 calculée sur le PDF final livré (marquage inclus : nom de l'acheteur, n° de transaction) et conservée côté Coloc'KOO avec la date et la transaction. Option 2 retenue : format PDF/A. Pas de signature électronique."
+    },
+    {
+      "Thème": "Back-office Super Admin",
+      "Exigence": "Modification du texte des modèles en ligne ; les contrats déjà vendus restent dans leur version d'origine (PDF archivé)."
+    }
+  ],
+  "documentRouting": [
+    {
+      "Code": "AUT",
+      "Document": "Autorisation de colocation",
+      "Signataires": "Propriétaire (ou Mandataire) + Occupant principal",
+      "Occupant principal": "Oui",
+      "Propriétaire": "Oui",
+      "Professionnel": "Oui",
+      "Prérequis / aiguillage": "Requise pour l'Intercolocs uniquement ; signée par l'Occupant principal et le Propriétaire (ou son Mandataire chargé de pouvoir)",
+      "Exemplaires": "2"
+    },
+    {
+      "Code": "MDT",
+      "Document": "Mandat de gestion de colocation",
+      "Signataires": "Propriétaire (Mandant) + professionnel (Mandataire)",
+      "Occupant principal": "—",
+      "Propriétaire": "Oui",
+      "Professionnel": "Oui",
+      "Prérequis / aiguillage": "Chargé de pouvoir obligatoire ; joint au Mandacolocs (annexe 0). À faire signer si absent",
+      "Exemplaires": "2"
+    },
+    {
+      "Code": "AVE",
+      "Document": "Avenant de substitution d'Occupant principal",
+      "Signataires": "Propriétaire + Occupant principal sortant + nouvel Occupant principal",
+      "Occupant principal": "Oui",
+      "Propriétaire": "Oui",
+      "Professionnel": "—",
+      "Prérequis / aiguillage": "Document ponctuel ; maintient les contrats Intercolocs en cours",
+      "Exemplaires": "3"
+    },
+    {
+      "Code": "INT",
+      "Document": "Contrat de bail Intercolocs (modèle de référence)",
+      "Signataires": "Occupant principal + 1 Sous-occupant",
+      "Occupant principal": "Oui",
+      "Propriétaire": "Oui",
+      "Professionnel": "—",
+      "Prérequis / aiguillage": "Profil Occupant principal ; responsabilité individuelle ou collective",
+      "Exemplaires": "2 par Sous-occupant"
+    },
+    {
+      "Code": "PRO",
+      "Document": "Contrat de bail Propriocolocs",
+      "Signataires": "Propriétaire + 1 Sous-occupant",
+      "Occupant principal": "Oui",
+      "Propriétaire": "Oui",
+      "Professionnel": "—",
+      "Prérequis / aiguillage": "Profil Propriétaire ; responsabilité individuelle ou collective",
+      "Exemplaires": "2 par Sous-occupant"
+    },
+    {
+      "Code": "MAN",
+      "Document": "Contrat de bail Mandacolocs",
+      "Signataires": "Mandataire (pour le Propriétaire) + 1 Sous-occupant",
+      "Occupant principal": "—",
+      "Propriétaire": "—",
+      "Professionnel": "Oui",
+      "Prérequis / aiguillage": "Profil Professionnel ; MDT en annexe 0 ; responsabilité individuelle ou collective",
+      "Exemplaires": "2 par Sous-occupant"
+    },
+    {
+      "Code": "CHA",
+      "Document": "Charte de colocation",
+      "Signataires": "Gestionnaire + 1 colocataire",
+      "Occupant principal": "Oui",
+      "Propriétaire": "Oui",
+      "Professionnel": "Oui",
+      "Prérequis / aiguillage": "Annexe 3 — incluse en option, pré-remplie dans la session du contrat",
+      "Exemplaires": "1 par colocataire"
+    },
+    {
+      "Code": "EDL",
+      "Document": "État des lieux entrée / sortie (chambre + SDD)",
+      "Signataires": "Gestionnaire + 1 Sous-occupant",
+      "Occupant principal": "Oui",
+      "Propriétaire": "Oui",
+      "Professionnel": "Oui",
+      "Prérequis / aiguillage": "Annexe 2 — générée automatiquement avec le contrat, pré-remplie",
+      "Exemplaires": "1 par colocataire et par mouvement"
+    },
+    {
+      "Code": "QUI",
+      "Document": "Quittance de loyer",
+      "Signataires": "Gestionnaire + colocataire",
+      "Occupant principal": "Oui",
+      "Propriétaire": "Oui",
+      "Professionnel": "Oui",
+      "Prérequis / aiguillage": "Modèle type vierge, téléchargeable une fois, adaptable",
+      "Exemplaires": "1"
+    },
+    {
+      "Code": "ATL",
+      "Document": "Attestation de logement",
+      "Signataires": "Gestionnaire + colocataire",
+      "Occupant principal": "Oui",
+      "Propriétaire": "Oui",
+      "Professionnel": "Oui",
+      "Prérequis / aiguillage": "Incluse en option, pré-remplie dans la session du contrat",
+      "Exemplaires": "1"
+    },
+    {
+      "Code": "ESP",
+      "Document": "Attestation de remise en espèce (vierge)",
+      "Signataires": "Les deux parties au paiement",
+      "Occupant principal": "Oui",
+      "Propriétaire": "Oui",
+      "Professionnel": "Oui",
+      "Prérequis / aiguillage": "Incluse en option, parties pré-remplies",
+      "Exemplaires": "2 par page"
+    },
+    {
+      "Code": "Aiguillage (identique pour les 3 profils)",
+      "Document": "",
+      "Signataires": "",
+      "Occupant principal": "",
+      "Propriétaire": "",
+      "Professionnel": "",
+      "Prérequis / aiguillage": "",
+      "Exemplaires": ""
+    },
+    {
+      "Code": "1. Profil et document à établir. L'Autorisation de colocation (ponctuelle) n'est requise que pour l'Intercolocs ; le Mandat de gestion conditionne le Mandacolocs et y est joint en annexe 0.",
+      "Document": "",
+      "Signataires": "",
+      "Occupant principal": "",
+      "Propriétaire": "",
+      "Professionnel": "",
+      "Prérequis / aiguillage": "",
+      "Exemplaires": ""
+    },
+    {
+      "Code": "2. Question commune : qui choisit les colocataires ?",
+      "Document": "",
+      "Signataires": "",
+      "Occupant principal": "",
+      "Propriétaire": "",
+      "Professionnel": "",
+      "Prérequis / aiguillage": "",
+      "Exemplaires": ""
+    },
+    {
+      "Code": "3. Question commune : responsabilité individuelle ou collective.",
+      "Document": "",
+      "Signataires": "",
+      "Occupant principal": "",
+      "Propriétaire": "",
+      "Professionnel": "",
+      "Prérequis / aiguillage": "",
+      "Exemplaires": ""
+    },
+    {
+      "Code": "4. Contrat déterminé par le profil : Occupant principal → Intercolocs ; Propriétaire → Propriocolocs ; Professionnel → Mandacolocs.",
+      "Document": "",
+      "Signataires": "",
+      "Occupant principal": "",
+      "Propriétaire": "",
+      "Professionnel": "",
+      "Prérequis / aiguillage": "",
+      "Exemplaires": ""
+    },
+    {
+      "Code": "5. Tronc commun du contrat (modèle Intercolocs), puis documents communs : attestation de logement, attestation de remise en espèce, charte, état des lieux, quittance.",
+      "Document": "",
+      "Signataires": "",
+      "Occupant principal": "",
+      "Propriétaire": "",
+      "Professionnel": "",
+      "Prérequis / aiguillage": "",
+      "Exemplaires": ""
+    }
+  ]
+}

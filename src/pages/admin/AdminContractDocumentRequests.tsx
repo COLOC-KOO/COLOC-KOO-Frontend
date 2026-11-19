@@ -86,6 +86,27 @@ export default function AdminContractDocumentRequests({ onRequestsChanged }: { o
     }
   }
 
+  const openGeneratedDocument = async (id: number) => {
+    const documentWindow = window.open('', '_blank')
+    if (!documentWindow) {
+      setError('Autorise les fenêtres contextuelles pour consulter le document.')
+      return
+    }
+    setBusyId(id)
+    setError('')
+    try {
+      const document = await api.getBackofficeContractDocumentPreview(id)
+      const url = URL.createObjectURL(document)
+      documentWindow.location.href = url
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+    } catch (documentError) {
+      documentWindow.close()
+      setError(documentError instanceof Error ? documentError.message : 'Impossible de charger le document généré.')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   const resetClauseForm = () => {
     setEditingClauseId(null)
     setClauseTitle('')
@@ -199,8 +220,10 @@ export default function AdminContractDocumentRequests({ onRequestsChanged }: { o
               </div>
             </div>
             {request.has_payment_proof && <button type="button" disabled={busyId === request.id_demande} onClick={() => void openPaymentProof(request.id_demande)} className="mt-3 w-full rounded-lg border border-brand-cyan/30 px-3 py-2 text-xs font-semibold text-brand-cyan hover:bg-brand-cyan/10 disabled:opacity-50 sm:w-auto">{busyId === request.id_demande ? 'Chargement…' : 'Voir la capture de paiement'}</button>}
+            <button type="button" disabled={busyId === request.id_demande} onClick={() => void openGeneratedDocument(request.id_demande)} className="mt-3 w-full rounded-lg border border-brand-cyan/30 px-3 py-2 text-xs font-semibold text-brand-cyan hover:bg-brand-cyan/10 disabled:opacity-50 sm:ml-2 sm:w-auto">{busyId === request.id_demande ? 'Chargement...' : 'Voir le document généré'}</button>
             <details className="mt-3 rounded-lg bg-black/10 p-3 text-xs text-white/70">
-              <summary className="cursor-pointer break-words font-semibold">Voir les informations et les parties</summary>
+              <summary className="cursor-pointer break-words font-semibold">Document généré et confidentialité</summary>
+              <p className="mt-3">Les réponses ne sont pas conservées séparément. Le document généré est conservé en privé.</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {Object.entries(request.donnees).map(([key, value]) => value ? <div key={key} className="min-w-0 break-words"><span className="text-white/40">{key.replace(/_/g, ' ')} : </span>{value}</div> : null)}
               </div>

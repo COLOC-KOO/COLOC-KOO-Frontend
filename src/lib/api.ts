@@ -64,6 +64,7 @@ export interface ContractDocumentRequest {
     id_demande: number
     reference: string
     type_document: 'contrat' | 'edl'
+    template_id?: string | null
     profil_demandeur: 'locataire' | 'proprietaire' | 'professionnel'
     donnees: Record<string, string>
     clauses_ids: number[]
@@ -1499,6 +1500,7 @@ export const api = {
     },
     createContractDocumentRequest(payload: {
         type_document: 'contrat' | 'edl'
+        template_id?: string
         profil_demandeur: 'locataire' | 'proprietaire' | 'professionnel'
         donnees: Record<string, string>
         clauses_ids: number[]
@@ -1510,6 +1512,7 @@ export const api = {
     },
     previewContractDocument(payload: {
         type_document: 'contrat' | 'edl'
+        template_id?: string
         profil_demandeur: 'locataire' | 'proprietaire' | 'professionnel'
         donnees: Record<string, string>
         clauses_ids: number[]
@@ -1559,6 +1562,9 @@ export const api = {
             throw new ApiError(message)
         }
         return response.blob()
+    },
+    getBackofficeContractDocumentPreview(id: number) {
+        return requestBlob(`/backoffice/documents-contractuels/${id}/document-preview`)
     },
     backofficeContractClauses() {
         return request<Array<{ id_clause: number; titre: string; description: string | null; ordre: number; est_actif: number }>>('/backoffice/documents-contractuels/clauses')
