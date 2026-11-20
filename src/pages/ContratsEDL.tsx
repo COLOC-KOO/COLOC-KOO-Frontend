@@ -388,7 +388,6 @@ export default function ContratsEDL() {
       'date_naissance_autre_partie', 'ville_naissance_autre_partie', 'pays_naissance_autre_partie',
     ]) nextFields[key] = ''
     setFields(nextFields)
-    setSelectedClauses([])
     setPaymentReference('')
     setPaymentMethod('')
     setPaymentProof(null)
