@@ -102,6 +102,7 @@ const EMPTY_FIELDS: Record<string, string> = {
   inclure_charte: 'non',
   inclure_attestation_logement: 'non',
   inclure_attestation_especes: 'non',
+  edl_type: '',
   especes_montant: '',
   especes_motif: '',
   especes_ville: '',
@@ -200,7 +201,7 @@ export default function ContratsEDL() {
   const activeTemplate = DOCUMENT_TEMPLATES.find((item) => item.id === templateId)
   const isAuxiliaryTemplate = Boolean(activeTemplate && !activeTemplate.profile)
   const extraVariables = activeTemplate && !activeTemplate.profile
-    ? contratsImmoSpec.variables.filter((item) => item.documents.includes(activeTemplate.keyword) && !item.type.toLowerCase().includes('calcul') && !/^(so_|repartition_)/.test(item.variable))
+    ? contratsImmoSpec.variables.filter((item) => item.documents.includes(activeTemplate.keyword) && !item.type.toLowerCase().includes('calcul') && !/^(so_|repartition_)/.test(item.variable) && !(item.variable === 'retribution_marge' && fields.regime_solidaire === 'false'))
     : []
 
   const chooseTemplate = (value: string) => {
@@ -217,7 +218,11 @@ export default function ContratsEDL() {
   }
 
   const updateField = (key: string, value: string) => {
-    setFields((current) => ({ ...current, [key]: value }))
+    setFields((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === 'regime_solidaire' && value === 'false' ? { retribution_marge: 'false' } : {}),
+    }))
     if (key === 'autorisation_signee' && value !== 'oui') setAutorisationFile(null)
     if (key === 'pouvoir_signature' && value !== 'oui') setMandatFile(null)
     setDraft(null)
@@ -299,6 +304,7 @@ export default function ContratsEDL() {
       'ville',
       'type_bien',
       'date_entree',
+      ...(type === 'edl' ? ['edl_type'] : []),
       ...(type === 'contrat' ? ['loyer'] : []),
       ...(type === 'contrat' ? ['nombre_colocataires', 'choix_colocataires', 'solidarite', 'meuble', 'duree_bail', 'mois_depot', 'periodicite_revision', 'taux_revision', 'preavis_bailleur', 'jour_paiement', 'modes_reglement'] : []),
       ...(type === 'contrat' ? ['niveaux_texte', 'espace_privatif_description', 'charges_avec'] : []),
@@ -318,7 +324,6 @@ export default function ContratsEDL() {
       ...(type === 'contrat' && profile === 'locataire' ? ['bail_principal_proprietaire', 'bail_principal_date_effet', 'bail_principal_duree', 'bail_principal_date_fin', 'bail_principal_article'] : []),
       ...(type === 'contrat' && fields.inclure_charte === 'oui' ? ['tranquillite_21h_6h', 'invites_3_6', 'menage_planning', 'tabac_exterieur', 'tabac_interieur_communs', 'tabac_interieur_privatifs', 'tabac_espaces_designes', ...(fields.tranquillite_21h_6h === 'non' ? ['tranquillite_debut', 'tranquillite_fin'] : []), ...(fields.invites_3_6 === 'non' ? ['invites_limite_nuits'] : []), ...(fields.tabac_espaces_designes === 'oui' ? ['tabac_espaces'] : [])] : []),
       ...(type === 'contrat' && fields.inclure_attestation_logement === 'oui' && profile === 'professionnel' ? ['gestionnaire_date_naissance'] : []),
-      ...(type === 'contrat' && fields.inclure_attestation_especes === 'oui' ? ['especes_montant', 'especes_motif', 'especes_ville', 'especes_date'] : []),
     ]
     const missing = requiredFields.filter((key) => !fields[key]?.trim())
     if (missing.length) {
@@ -573,7 +578,7 @@ export default function ContratsEDL() {
                     {profile === 'professionnel' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Mandat de gestion signé et pouvoir de signer ? *</span><select required value={fields.pouvoir_signature} onChange={(event) => updateField('pouvoir_signature', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select>{fields.pouvoir_signature === 'non' && <span className="mt-2 block text-amber-800">Le Mandacolocs nécessite un mandat signé. Faites établir le Mandat de gestion avant de poursuivre.</span>}</label>}
                     {profile === 'professionnel' && fields.pouvoir_signature === 'oui' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Copie PDF du Mandat signé *</span><input type="file" accept="application/pdf,.pdf" onChange={(event) => setMandatFile(event.target.files?.[0] || null)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /><span className="mt-1 block text-xs text-muted-foreground">Il sera joint en annexe 0 au contrat Mandacolocs. Maximum 15 Mo.</span></label>}
                     <fieldset className="sm:col-span-2"><legend className="mb-2 font-bold">Documents communs inclus dans le même paiement</legend><div className="grid gap-2 sm:grid-cols-2"><label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"><input type="checkbox" checked={fields.inclure_charte === 'oui'} onChange={(event) => updateField('inclure_charte', event.target.checked ? 'oui' : 'non')} />Générer une charte de colocation par occupant</label><label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"><input type="checkbox" checked={fields.inclure_attestation_logement === 'oui'} onChange={(event) => updateField('inclure_attestation_logement', event.target.checked ? 'oui' : 'non')} />Générer une attestation de logement</label>{fields.modes_reglement.split(';').map((item) => item.trim()).includes('Espèces') && <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"><input type="checkbox" checked={fields.inclure_attestation_especes === 'oui'} onChange={(event) => updateField('inclure_attestation_especes', event.target.checked ? 'oui' : 'non')} />Joindre l’attestation de remise en espèces (2 exemplaires)</label>}</div><p className="mt-1 text-xs text-muted-foreground">L’état des lieux d’entrée est automatiquement joint au contrat. Ces documents sont préremplis et inclus dans le même paiement.</p></fieldset>
-                    {fields.inclure_attestation_especes === 'oui' && <fieldset className="grid gap-3 rounded-lg border border-border p-4 sm:col-span-2 sm:grid-cols-2"><legend className="px-1 font-bold">Informations de remise en espèces</legend>{field('especes_montant', 'Montant remis (Ar)', true, 'number')}{field('especes_motif', 'Motif de la remise', true)}{field('especes_ville', 'Ville de remise', true)}{field('especes_date', 'Date de remise', true, 'date')}</fieldset>}
+                    {fields.inclure_attestation_especes === 'oui' && <p className="rounded-lg bg-muted/40 p-3 text-sm sm:col-span-2">L’attestation est jointe en deux exemplaires. Les parties sont préremplies ; le montant, le motif, le lieu et la date restent vierges pour être complétés lors de la remise.</p>}
                     {fields.inclure_charte === 'oui' && <fieldset className="grid gap-3 rounded-lg border border-border p-4 sm:col-span-2 sm:grid-cols-2"><legend className="px-1 font-bold">Règles de la charte</legend><label className="block text-sm">Horaires habituels<select value={fields.tranquillite_21h_6h} onChange={(event) => updateField('tranquillite_21h_6h', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">21 h à 6 h</option><option value="non">Autres horaires</option></select></label>{fields.tranquillite_21h_6h === 'non' && <>{field('tranquillite_debut', 'Heure de début', true)}{field('tranquillite_fin', 'Heure de fin', true)}</>}<label className="block text-sm">Limite des invités<select value={fields.invites_3_6} onChange={(event) => updateField('invites_3_6', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">3 nuits consécutives, 6 nuits par mois</option><option value="non">Autre limite</option></select></label>{fields.invites_3_6 === 'non' && field('invites_limite_nuits', 'Limite en nuits par mois', true, 'number')}<label className="block text-sm">Entretien<select value={fields.menage_planning} onChange={(event) => updateField('menage_planning', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">Planning tournant</option><option value="non">Service de ménage</option></select></label>{(['tabac_exterieur', 'tabac_interieur_communs', 'tabac_interieur_privatifs'] as const).map((key) => <label key={key} className="block text-sm">{key === 'tabac_exterieur' ? 'Tabac autorisé à l’extérieur' : key === 'tabac_interieur_communs' ? 'Tabac autorisé dans les espaces communs' : 'Tabac autorisé dans les espaces privatifs'}<select value={fields[key]} onChange={(event) => updateField(key, event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label>)}<label className="block text-sm">Tabac dans des espaces désignés<select value={fields.tabac_espaces_designes} onChange={(event) => updateField('tabac_espaces_designes', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label>{fields.tabac_espaces_designes === 'oui' && field('tabac_espaces', 'Espaces désignés', true)}</fieldset>}
                     {fields.inclure_attestation_logement === 'oui' && profile === 'professionnel' && field('gestionnaire_date_naissance', 'Date de naissance du Mandataire', true, 'date')}
                     {profile === 'proprietaire' && <label className="block text-sm"><span className="mb-1 block font-semibold">Le Propriétaire est une société ? *</span><select required value={fields.personne_morale} onChange={(event) => updateField('personne_morale', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="non">Non, personne physique</option><option value="oui">Oui, personne morale</option></select></label>}
@@ -592,13 +597,12 @@ export default function ContratsEDL() {
                     {field('mois_depot', 'Depot de garantie (nombre de mois)', true, 'number')}
                     {field('periodicite_revision', 'Periodicite de revision (annees)', true, 'number')}
                     {profile === 'locataire' && <>{field('revision_date_anniversaire', 'Date anniversaire de révision du bail principal', true, 'date')}<p className="text-xs text-muted-foreground sm:col-span-2">L’Occupant principal se réfère à son contrat initial pour renseigner ces champs.</p></>}
-                    {profile === 'locataire' && <p className="text-xs text-muted-foreground sm:col-span-2">L’Occupant principal se réfère à son contrat initial pour renseigner ces champs.</p>}
                     {field('taux_revision', 'Taux de revision du loyer (%)', true, 'number')}
                     {field('preavis_bailleur', 'Preavis du bailleur (mois)', true, 'number')}
                     {field('jour_paiement', 'Jour limite de paiement', true, 'number')}
                   </div>
                 )}
-                {type === 'edl' && <>{field('date_entree', 'Date du constat', true, 'date')}<label className="mt-4 block text-sm"><span className="mb-1 block font-semibold">La chambre possède une salle de bain privée ? *</span><select required value={fields.salle_bain_privee} onChange={(event) => updateField('salle_bain_privee', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label></>}
+                {type === 'edl' && <><label className="block text-sm"><span className="mb-1 block font-semibold">Type d’état des lieux *</span><select required value={fields.edl_type} onChange={(event) => updateField('edl_type', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="d’entrée">État des lieux d’entrée</option><option value="de sortie">État des lieux de sortie</option></select></label>{field('date_entree', 'Date du constat', true, 'date')}<label className="mt-4 block text-sm"><span className="mb-1 block font-semibold">La chambre possède une salle de bain privée ? *</span><select required value={fields.salle_bain_privee} onChange={(event) => updateField('salle_bain_privee', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label></>}
                 <label className="block text-sm"><span className="mb-1 block font-semibold">Observations</span><textarea rows={3} value={fields.observations} onChange={(event) => updateField('observations', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>
                 </div>
                 <div className="flex justify-end"><button type="button" onClick={continueToClauses} className="inline-flex items-center gap-2 rounded-xl bg-brand-magenta px-5 py-3 text-sm font-bold text-white">Continuer <ArrowRight className="h-4 w-4" /></button></div>
