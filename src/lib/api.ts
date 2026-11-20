@@ -1552,6 +1552,19 @@ export const api = {
     backofficeContractDocumentRequests() {
         return request<ContractDocumentRequest[]>('/backoffice/documents-contractuels')
     },
+    getBackofficeContractTemplate(templateId: string) {
+        return request<{
+            template: { id: string; title: string }
+            paragraphs: Array<{ index: number; text: string }>
+            revisions: Array<{ id: number; version: number; edits: Record<string, string>; sha256: string; active: boolean; created_at: string }>
+        }>(`/backoffice/documents-contractuels/templates/${encodeURIComponent(templateId)}`)
+    },
+    saveBackofficeContractTemplate(templateId: string, edits: Record<string, string>) {
+        return request<{ ok: boolean; id: number; version: number; sha256: string }>(`/backoffice/documents-contractuels/templates/${encodeURIComponent(templateId)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ edits }),
+        })
+    },
     async getBackofficeContractPaymentProof(id: number) {
         const token = getToken()
         const response = await fetch(`${API_URL}/backoffice/documents-contractuels/${id}/payment-proof`, {

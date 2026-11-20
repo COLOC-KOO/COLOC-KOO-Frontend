@@ -153,6 +153,13 @@ const navItems: NavSection[] = [
         description: "Documents et états des lieux",
       },
       {
+        to: "/admin/modeles-contrats",
+        label: "Modèles Contrats Immo",
+        icon: FileText,
+        minRole: 3,
+        description: "Édition des modèles et versions",
+      },
+      {
         to: "/admin/partenaires",
         label: "Partenaires",
         icon: Store,
