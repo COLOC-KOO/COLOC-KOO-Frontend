@@ -241,7 +241,9 @@
     "welcomeBackConnected": "Bon retour ! On finalise la publication de ton annonce…",
     "welcomeBackDraft": "Bon retour ! Ton brouillon a été restauré — connecte-toi pour publier.",
     "errors": {
-      "engagementRequired": "Tu dois confirmer cet engagement pour continuer."
+      "engagementRequired": "Tu dois confirmer cet engagement pour continuer.",
+      "offerRequired": "Choisis une offre avant de continuer.",
+      "emailRequired": "Renseigne une adresse e-mail valide sur ton compte avant de publier."
     }
   },
   "simulation": {

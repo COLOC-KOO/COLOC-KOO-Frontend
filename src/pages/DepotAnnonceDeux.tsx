@@ -20,6 +20,7 @@ import {
   Info,
   KeyRound,
   ListChecks,
+  FileText,
   Loader2,
   Lock,
   MapPin,
@@ -509,9 +510,6 @@ const steps = stepsForRole(role)
 
   /* ---- Étape 2 : esprit coloc ---- */
   const [typeAnnonce, setTypeAnnonce] = useState<'existante' | 'creation' | ''>('')
-  useEffect(() => {
-    if (role && role !== 'membre' && !typeAnnonce) setTypeAnnonce('creation')
-  }, [role]) // eslint-disable-line react-hooks/exhaustive-deps
   const [ambianceAge, setAmbianceAge] = useState('')
   const [ambiance, setAmbiance] = useState<string[]>([])
   const [presentation, setPresentation] = useState('')
@@ -691,11 +689,12 @@ const steps = stepsForRole(role)
 
   /* ---- Étape 8 : publier ---- */
   const [proEngageChecked, setProEngageChecked] = useState(false)
-  const [offer, setOffer] = useState<'annonce' | 'immo'>('annonce')
+  const [offer, setOffer] = useState<'annonce' | 'immo' | ''>('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [toastMessage, setToastMessage] = useState('')
+  const [publishedReference, setPublishedReference] = useState('')
 
   useEffect(() => {
     if (!toastMessage) return
@@ -884,9 +883,9 @@ const steps = stepsForRole(role)
   /* ---------------------------------------------------------------- */
   /*  Validation par étape                                             */
   /* ---------------------------------------------------------------- */
-  function validateCurrentStep(): boolean {
+  function validateCurrentStep(stepIndex = cur): boolean {
     setStepErr(null)
-    const key = steps[cur]?.key
+    const key = steps[stepIndex]?.key
     const focusMissingField = (fieldId: string) => {
       window.requestAnimationFrame(() => {
         const field = document.getElementById(fieldId)
@@ -918,16 +917,22 @@ const steps = stepsForRole(role)
         return false
       }
     }
+    if (key === 'esprit' && role !== 'membre' && !typeAnnonce) {
+      setStepErr(t('depot:logement.errors.fieldsRequired'))
+      focusMissingField('required-listing-type')
+      return false
+    }
     if (key === 'logement') {
       const missingField =
         !typeLogement ? 'required-property-type' :
         role !== 'membre' && nbColocTotal === '' ? 'required-total-coloc' :
-        !nbPieces.trim() ? 'required-room-count' :
+        !nbPieces.trim() || !Number.isFinite(Number(nbPieces)) || Number(nbPieces) < 1 ? 'required-room-count' :
+        !locAddr.trim() ? 'listing-address' :
         !cityOptions.some((ville) => ville.nom_ville === locVille) ? 'listing-city' :
         pin === null ? 'required-map-pin' : ''
       if (missingField) {
         setStepErr(
-          missingField === 'listing-city' || missingField === 'required-map-pin'
+          missingField === 'listing-city' || missingField === 'listing-address' || missingField === 'required-map-pin'
             ? t('depot:logement.errors.locationRequired')
             : t('depot:logement.errors.fieldsRequired'),
         )
@@ -958,6 +963,14 @@ const steps = stepsForRole(role)
       focusMissingField('required-pro-engagement')
       return false
     }
+    if (key === 'publier' && role === 'pro' && !offer) {
+      setStepErr(t('depot:publish.errors.offerRequired'))
+      return false
+    }
+    if (key === 'publier' && user && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email || '')) {
+      setStepErr(t('depot:publish.errors.emailRequired'))
+      return false
+    }
     return true
   }
 
@@ -984,6 +997,31 @@ const steps = stepsForRole(role)
   }
   function goStep(i: number) {
     if (i <= maxStep) setCur(i)
+  }
+
+  function openContractFromListing() {
+    const furnished = meublee[0] || ''
+    navigate('/contrats-edl', {
+      state: {
+        listingPrefill: {
+          profile: role,
+          adresse: locAddr,
+          ville: locVille,
+          quartier: locQuartier,
+          type_bien: typeLogement,
+          date_entree: dispoDate,
+          loyer: loyer.replace(/\D/g, ''),
+          meuble: /non/i.test(furnished) ? 'non' : 'oui',
+          nombre_colocataires: nbColocTotal || nbColoc || '',
+          observations: presentation,
+          charges: charges.replace(/\D/g, ''),
+        },
+      },
+    })
+  }
+
+  function finishWithoutContract() {
+    navigate('/compte?tab=dossier')
   }
 
   // Reflète dans `cur` toute navigation arrière/avant du navigateur sur l'étape.
@@ -1034,7 +1072,15 @@ const steps = stepsForRole(role)
   }
 
   async function handlePublish() {
-    if (!validateCurrentStep()) return
+    if (publishedReference || submitting) return
+    for (let index = 0; index < steps.length; index += 1) {
+      if (!validateCurrentStep(index)) {
+        setCur(index)
+        navigate({ pathname: location.pathname, search: `?etape=${index}` })
+        scrollToFormTop()
+        return
+      }
+    }
     const selectedCity = cityOptions.find((city) => city.nom_ville === locVille)
     if (!selectedCity) return
     if (!user) {
@@ -1138,11 +1184,9 @@ const steps = stepsForRole(role)
       } as any)
 
       const successMessage = t('depot:publish.success')
+      setPublishedReference(response.reference)
       setSuccess(t('depot:publish.successWithReference', { message: successMessage, reference: response.reference }))
       setToastMessage(successMessage)
-      window.setTimeout(() => {
-        navigate('/compte?tab=dossier')
-      }, 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('depot:publish.error'))
     } finally {
@@ -1229,7 +1273,19 @@ const steps = stepsForRole(role)
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
         {success && (
-          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{success}</div>
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            <p>{success}</p>
+            {publishedReference && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" className="btn-next" onClick={openContractFromListing}>
+                  <FileText size={16} /> Créer le contrat de colocation
+                </button>
+                <button type="button" className="btn-back" onClick={finishWithoutContract}>
+                  Continuer sans contrat
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         <div className="card">
@@ -1370,7 +1426,7 @@ const steps = stepsForRole(role)
               )}
 
               {role !== 'membre' && (
-                <div id="required-total-coloc" className="grp" tabIndex={-1}>
+                <div id="required-listing-type" className="grp" tabIndex={-1}>
                   <label className="lbl">{t('depot:esprit.typeAnnonceLabel')}<span className="req">*</span></label>
                   <div className="pills">
                     <Pill label={t('depot:esprit.existingColoc')} on={typeAnnonce === 'existante'} onClick={() => setTypeAnnonce('existante')} />
@@ -1512,7 +1568,7 @@ const steps = stepsForRole(role)
                   ).map((quartier) => <option key={quartier} value={quartier} />)}
                 </datalist>
 
-                <label className="lbl" htmlFor="listing-address">{t('depot:logement.addressLabel')}</label>
+                <label className="lbl" htmlFor="listing-address">{t('depot:logement.addressLabel')}<span className="req">*</span></label>
                 <input
                   id="listing-address"
                   className="inp"
@@ -1975,7 +2031,7 @@ const steps = stepsForRole(role)
               </button>
             )}
             {isLast && !isRenewal && (
-              <button className="btn-publish" onClick={handlePublish} disabled={submitting}>
+              <button className="btn-publish" onClick={handlePublish} disabled={submitting || Boolean(publishedReference)}>
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t('depot:publishButton')}
               </button>
             )}

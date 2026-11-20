@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, ArrowRight, Check, Download, FileText, Loader2, Trash2 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { api, ContractDocumentRequest } from '../lib/api'
@@ -193,10 +193,35 @@ function summaryCategory(key: string) {
 
 export default function ContratsEDL() {
   const { user, loading } = useAuth()
+  const location = useLocation()
+  const listingPrefill = (location.state as { listingPrefill?: Record<string, unknown> } | null)?.listingPrefill
+  const listingProfile: Profile | '' = listingPrefill?.profile === 'membre'
+    ? 'locataire'
+    : listingPrefill?.profile === 'proprio'
+      ? 'proprietaire'
+      : listingPrefill?.profile === 'pro'
+        ? 'professionnel'
+        : ''
+  const listingTemplate: TemplateId | '' = listingProfile === 'locataire'
+    ? 'contrat_intercolocs'
+    : listingProfile === 'proprietaire'
+      ? 'contrat_propriocolocs'
+      : listingProfile === 'professionnel'
+        ? 'contrat_mandacolocs'
+        : ''
+  const fieldsFromListing = Object.fromEntries(
+    ['adresse', 'ville', 'quartier', 'type_bien', 'date_entree', 'loyer', 'meuble', 'observations', 'charges']
+      .filter((key) => typeof listingPrefill?.[key] === 'string' && String(listingPrefill[key]).trim())
+      .map((key) => [key, String(listingPrefill?.[key])]),
+  ) as Record<string, string>
   const [type, setType] = useState<DocumentType>('contrat')
-  const [templateId, setTemplateId] = useState<TemplateId | ''>('')
-  const [profile, setProfile] = useState<Profile | ''>('')
-  const [fields, setFields] = useState(EMPTY_FIELDS)
+  const [templateId, setTemplateId] = useState<TemplateId | ''>(listingTemplate)
+  const [profile, setProfile] = useState<Profile | ''>(listingProfile)
+  const [fields, setFields] = useState<Record<string, string>>({
+    ...EMPTY_FIELDS,
+    ...fieldsFromListing,
+    ...(listingProfile === 'proprietaire' || listingProfile === 'professionnel' ? { periodicite_revision: '3' } : {}),
+  })
   const [selectedClauses, setSelectedClauses] = useState<number[]>([])
   const [step, setStep] = useState<Step>('details')
   const [pageTab, setPageTab] = useState<PageTab>('create')
@@ -278,7 +303,7 @@ export default function ContratsEDL() {
     setTemplateId((value || '') as TemplateId | '')
     setType(value === 'etat_des_lieux' ? 'edl' : 'contrat')
     if (selected?.profile) setProfile(selected.profile)
-    setFields({ ...EMPTY_FIELDS, ...(selected?.profile === 'proprietaire' || selected?.profile === 'professionnel' ? { periodicite_revision: '3' } : {}), ...(value === 'mandat_gestion' ? { depot_mois: '1' } : {}) })
+    setFields({ ...EMPTY_FIELDS, ...fieldsFromListing, ...(selected?.profile === 'proprietaire' || selected?.profile === 'professionnel' ? { periodicite_revision: '3' } : {}), ...(value === 'mandat_gestion' ? { depot_mois: '1' } : {}) })
     setAutorisationFile(null)
     setMandatFile(null)
     setOccupantIndex(1)
@@ -301,7 +326,7 @@ export default function ContratsEDL() {
       setType('contrat')
     }
     if (changedProfile) {
-      setFields({ ...EMPTY_FIELDS, ...(nextProfile === 'proprietaire' || nextProfile === 'professionnel' ? { periodicite_revision: '3' } : {}), ...(templateId === 'mandat_gestion' ? { depot_mois: '1' } : {}) })
+      setFields({ ...EMPTY_FIELDS, ...fieldsFromListing, ...(nextProfile === 'proprietaire' || nextProfile === 'professionnel' ? { periodicite_revision: '3' } : {}), ...(templateId === 'mandat_gestion' ? { depot_mois: '1' } : {}) })
       setAutorisationFile(null)
       setMandatFile(null)
       setOccupantIndex(1)
@@ -638,6 +663,11 @@ export default function ContratsEDL() {
 
             {step === 'details' && (
               <div id="questionnaire-details" className="space-y-5">
+                {Object.keys(fieldsFromListing).length > 0 && (
+                  <div className="rounded-xl border border-brand-cyan/30 bg-brand-cyan-light/40 p-3 text-sm text-slate-700">
+                    Les informations du logement de ton annonce ont été reprises automatiquement. Vérifie-les et complète les informations des parties avant de continuer.
+                  </div>
+                )}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm"><span className="mb-1 block font-semibold">Document à générer *</span><select value={templateId} onChange={(event) => chooseTemplate(event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-slate-900"><option value="" className="bg-white text-slate-900">Choisir un document…</option>{availableTemplates.map((item) => <option key={item.id} value={item.id} className="bg-white text-slate-900">{item.title}</option>)}</select></label>
 <label className="block text-sm"><span className="mb-1 block font-semibold">Profil du demandeur *</span><select value={profile} onChange={(event) => chooseProfile(event.target.value as Profile | '')} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="locataire">Occupant principal</option><option value="proprietaire">Propriétaire</option><option value="professionnel">Professionnel immobilier</option></select></label>

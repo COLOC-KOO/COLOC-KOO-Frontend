@@ -241,7 +241,9 @@
     "welcomeBackConnected": "Welcome back! We are finalizing your listing publication…",
     "welcomeBackDraft": "Welcome back! Your draft has been restored — log in to publish it.",
     "errors": {
-      "engagementRequired": "You must confirm this commitment to continue."
+      "engagementRequired": "You must confirm this commitment to continue.",
+      "offerRequired": "Choose an offer before continuing.",
+      "emailRequired": "Add a valid email address to your account before publishing."
     }
   },
   "simulation": {
