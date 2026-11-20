@@ -39,7 +39,7 @@ const DERIVED_AUXILIARY_FIELDS = new Set(['gestionnaire_qualite', 'gestionnaire_
 
 function isAuxiliaryFieldVisible(templateId: TemplateId | '', key: string, fields: Record<string, string>) {
   if (templateId === 'autorisation_colocation') {
-    if (['mandataire_denomination', 'mandataire_nif', 'mandataire_rcs', 'mandataire_stat', 'mandataire_representant'].includes(key) && fields.represente_par_mandataire !== 'true') return false
+    if (['mandataire_denomination', 'mandataire_forme_juridique', 'mandataire_nif', 'mandataire_rcs', 'mandataire_stat', 'mandataire_siege', 'mandataire_representant', 'mandataire_agrement'].includes(key) && fields.represente_par_mandataire !== 'true') return false
     if (key === 'colocs_nombre_total' && fields.colocs_par_piece !== 'false') return false
     if (key === 'validation_delai_jours' && fields.validation_proprietaire !== 'true') return false
     if (key === 'revocation_preavis_mois' && fields.revocation_un_mois !== 'false') return false
@@ -73,10 +73,12 @@ function documentTitle(templateId?: string | null, type?: DocumentType, profile?
 
 const EMPTY_FIELDS: Record<string, string> = {
   nom_demandeur: '',
+  prenom_demandeur: '',
   cin_demandeur: '',
   telephone_demandeur: '',
   email_demandeur: '',
   nom_autre_partie: '',
+  prenom_autre_partie: '',
   cin_autre_partie: '',
   telephone_autre_partie: '',
   email_autre_partie: '',
@@ -103,17 +105,19 @@ const EMPTY_FIELDS: Record<string, string> = {
   loyer: '',
   charges: '',
   caution: '',
+  depot_mois: '',
   solidarite: '',
   observations: '',
   nombre_colocataires: '',
   choix_colocataires: '',
   delai_validation: '',
   personne_morale: '',
+  statut_proprietaire: '',
   pouvoir_signature: '',
   meuble: '',
   duree_bail: '',
   mois_depot: '1',
-  periodicite_revision: '3',
+  periodicite_revision: '',
   revision_date_anniversaire: '',
   taux_revision: '',
   preavis_bailleur: '',
@@ -137,9 +141,9 @@ const EMPTY_FIELDS: Record<string, string> = {
   mandataire_agrement: '',
   mandataire_rc_pro: '',
   date_mandat: '',
-  inclure_charte: 'non',
-  inclure_attestation_logement: 'non',
-  inclure_attestation_especes: 'non',
+  inclure_charte: '',
+  inclure_attestation_logement: '',
+  inclure_attestation_especes: '',
   edl_type: '',
   especes_montant: '',
   especes_motif: '',
@@ -179,6 +183,14 @@ function normalizePhone(value: string) {
   return startsWithPlus ? `+${digits}` : digits
 }
 
+function summaryCategory(key: string) {
+  if (/^(inclure_|tranquillite_|invites_|menage_|tabac_|retribution_|remu_|pouvoir_|regime_|represente_|validation_|revocation_)/.test(key)) return 'Options et décisions'
+  if (/^(nom_|prenom_|cin_|telephone_|email_|date_naissance_|ville_naissance_|pays_naissance_|representant|mandant_|mandataire_|proprietaire_|locataire_|op_|bailleur_|gestionnaire_)/.test(key)) return 'Parties et identités'
+  if (/^(adresse|code_postal|quartier|ville|type_bien|logement_|niveaux_|espace_privatif|observations|salle_bain)/.test(key)) return 'Logement et locaux'
+  if (/^(loyer|charges|meuble|duree_bail|date_entree|date_effet|mois_depot|depot_|periodicite_revision|revision_|taux_revision|preavis_|jour_paiement|modes_reglement|nombre_colocataires|choix_colocataires|delai_validation|bail_principal_|statut_proprietaire)/.test(key)) return 'Conditions de location'
+  return 'Détails du document'
+}
+
 export default function ContratsEDL() {
   const { user, loading } = useAuth()
   const [type, setType] = useState<DocumentType>('contrat')
@@ -202,6 +214,15 @@ export default function ContratsEDL() {
   const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [summaryEditField, setSummaryEditField] = useState('')
+
+  useEffect(() => {
+    if (step !== 'details' || !summaryEditField) return
+    const target = document.getElementById(summaryEditField) || document.getElementById('questionnaire-details')
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement) target.focus()
+    setSummaryEditField('')
+  }, [step, summaryEditField])
 
   useEffect(() => {
     let active = true
@@ -257,7 +278,7 @@ export default function ContratsEDL() {
     setTemplateId((value || '') as TemplateId | '')
     setType(value === 'etat_des_lieux' ? 'edl' : 'contrat')
     if (selected?.profile) setProfile(selected.profile)
-    setFields({ ...EMPTY_FIELDS })
+    setFields({ ...EMPTY_FIELDS, ...(selected?.profile === 'proprietaire' || selected?.profile === 'professionnel' ? { periodicite_revision: '3' } : {}), ...(value === 'mandat_gestion' ? { depot_mois: '1' } : {}) })
     setAutorisationFile(null)
     setMandatFile(null)
     setOccupantIndex(1)
@@ -266,6 +287,7 @@ export default function ContratsEDL() {
   }
 
   const chooseProfile = (nextProfile: Profile | '') => {
+    const changedProfile = Boolean(profile && nextProfile !== profile)
     setProfile(nextProfile)
     const currentTemplate = DOCUMENT_TEMPLATES.find((item) => item.id === templateId)
     if (currentTemplate?.profile) {
@@ -278,7 +300,14 @@ export default function ContratsEDL() {
       setTemplateId('')
       setType('contrat')
     }
-    setFields((current) => ({ ...current, periodicite_revision: current.periodicite_revision || '3' }))
+    if (changedProfile) {
+      setFields({ ...EMPTY_FIELDS, ...(nextProfile === 'proprietaire' || nextProfile === 'professionnel' ? { periodicite_revision: '3' } : {}), ...(templateId === 'mandat_gestion' ? { depot_mois: '1' } : {}) })
+      setAutorisationFile(null)
+      setMandatFile(null)
+      setOccupantIndex(1)
+    } else {
+      setFields((current) => ({ ...current, periodicite_revision: nextProfile === 'proprietaire' || nextProfile === 'professionnel' ? current.periodicite_revision || '3' : '' }))
+    }
     setDraft(null)
   }
 
@@ -288,7 +317,8 @@ export default function ContratsEDL() {
       [key]: value,
       ...(key === 'regime_solidaire' && value === 'false' ? { retribution_marge: 'false' } : {}),
       ...(key === 'validation_proprietaire' && value === 'false' && templateId === 'autorisation_colocation' ? { regime_solidaire: 'true' } : {}),
-      ...(key === 'retribution_reconduite' && value === 'true' ? { retribution_marge: 'false', retribution_reduction: 'false', retribution_aucune: 'false' } : {}),
+    ...(key === 'retribution_reconduite' && value === 'true' ? { retribution_marge: 'false', retribution_reduction: 'false', retribution_aucune: 'false' } : {}),
+    ...(key === 'modes_reglement' && !value.split(';').some((method) => method.trim() === 'Espèces') ? { inclure_attestation_especes: '' } : {}),
     }))
     if (key === 'autorisation_signee' && value !== 'oui') setAutorisationFile(null)
     if (key === 'pouvoir_signature' && value !== 'oui') setMandatFile(null)
@@ -349,7 +379,7 @@ export default function ContratsEDL() {
       setError('Le mandat signé avec pouvoir est requis. Le parcours est dirigé vers le Mandat de gestion à faire signer avant le Mandacolocs.')
       return
     }
-    if (activeTemplate && !activeTemplate.profile) {
+    if (activeTemplate && !activeTemplate.profile && activeTemplate.id !== 'etat_des_lieux') {
       const missingSpecific = extraVariables.filter((item) => !OPTIONAL_AUXILIARY_FIELDS.has(item.variable) && !item.description.toLowerCase().includes('facultatif') && !String(fields[item.type.toLowerCase() === 'liste' ? `${item.variable}_texte` : item.variable] || '').trim())
       const missingChoices = templateId === 'autorisation_colocation'
         ? !['retribution_marge', 'retribution_reduction', 'retribution_aucune'].some((key) => fields[key] === 'true')
@@ -369,51 +399,54 @@ export default function ContratsEDL() {
       return
     }
     const requiredFields = [
-      'nom_demandeur',
+      ...(profile !== 'professionnel' || type === 'edl' ? ['nom_demandeur'] : []),
       'telephone_demandeur',
-      'email_demandeur',
       'nom_autre_partie',
       'cin_autre_partie',
       'telephone_autre_partie',
-      'email_autre_partie',
       'adresse',
       'code_postal',
       'ville',
-      'type_bien',
-      'date_entree',
+      ...(type === 'contrat' ? ['email_demandeur', 'email_autre_partie', 'type_bien'] : []),
+      ...(type === 'contrat' ? ['date_entree'] : []),
       ...(type === 'edl' ? ['edl_type'] : []),
       ...(type === 'contrat' ? ['loyer'] : []),
       ...(type === 'contrat' ? ['nombre_colocataires', 'choix_colocataires', 'solidarite', 'meuble', 'duree_bail', 'mois_depot', 'periodicite_revision', 'taux_revision', 'preavis_bailleur', 'jour_paiement', 'modes_reglement'] : []),
       ...(type === 'contrat' ? ['niveaux_texte', 'espace_privatif_description', 'charges_avec'] : []),
+      ...(type === 'contrat' ? ['observations'] : []),
       ...(type === 'contrat' && fields.charges_avec === 'oui' ? ['charges_lignes_texte'] : []),
       ...(type === 'contrat' && profile === 'professionnel' ? ['pouvoir_signature'] : []),
       ...(type === 'contrat' && profile === 'locataire' ? ['autorisation_signee'] : []),
       ...(type === 'contrat' && profile === 'proprietaire' ? ['personne_morale'] : []),
-      ...(type === 'contrat' && profile === 'professionnel' ? ['nom_proprietaire', 'adresse_proprietaire'] : []),
-      ...(type === 'contrat' && profile !== 'professionnel' ? ['date_naissance_demandeur', 'ville_naissance_demandeur', 'pays_naissance_demandeur'] : []),
+      ...(type === 'contrat' && ['proprietaire', 'professionnel'].includes(profile) ? ['statut_proprietaire'] : []),
+      ...(type === 'contrat' && profile === 'professionnel' ? ['nom_proprietaire', 'adresse_proprietaire', 'cin_proprietaire'] : []),
+      ...(type === 'contrat' && profile !== 'professionnel' && !(profile === 'proprietaire' && fields.personne_morale === 'oui') ? ['prenom_demandeur', 'date_naissance_demandeur', 'ville_naissance_demandeur', 'pays_naissance_demandeur'] : []),
+      ...(type === 'contrat' && profile === 'proprietaire' && fields.personne_morale !== 'oui' ? ['prenom_demandeur'] : []),
       ...(type === 'edl' || (profile !== 'professionnel' && !(profile === 'proprietaire' && fields.personne_morale === 'oui')) ? ['cin_demandeur'] : []),
+      ...(type === 'contrat' && fields.inclure_attestation_logement === 'oui' && (profile === 'professionnel' || profile === 'proprietaire' && fields.personne_morale === 'oui') ? ['cin_demandeur'] : []),
       ...(type === 'contrat' && profile === 'locataire' ? ['revision_date_anniversaire'] : []),
-      ...(type === 'contrat' ? ['date_naissance_autre_partie', 'ville_naissance_autre_partie', 'pays_naissance_autre_partie'] : []),
+      ...(type === 'contrat' ? ['prenom_autre_partie', 'date_naissance_autre_partie', 'ville_naissance_autre_partie', 'pays_naissance_autre_partie'] : []),
       ...(type === 'contrat' && ['gestionnaire_presel_proprietaire_valide', 'mandant_valide'].includes(fields.choix_colocataires) ? ['delai_validation'] : []),
       'salle_bain_privee',
-      ...(profile === 'professionnel' ? ['nom_entreprise', 'nif', 'representant', 'representant_qualite', 'forme_juridique', 'rcs', 'stat', 'adresse_entreprise', 'date_mandat'] : []),
-      ...(type === 'contrat' && profile === 'proprietaire' && fields.personne_morale === 'oui' ? ['nom_entreprise', 'nif', 'representant', 'forme_juridique', 'rcs', 'stat', 'adresse_entreprise', 'representant_qualite'] : []),
+      ...(type === 'contrat' && profile === 'professionnel' ? ['nom_entreprise', 'nif', 'representant', 'representant_qualite', 'forme_juridique', 'rcs', 'stat', 'adresse_entreprise', 'date_mandat'] : []),
+      ...(type === 'contrat' && profile === 'proprietaire' && fields.personne_morale === 'oui' ? ['nif', 'representant', 'forme_juridique', 'rcs', 'stat', 'adresse_entreprise'] : []),
       ...(type === 'contrat' && profile === 'locataire' ? ['bail_principal_proprietaire', 'bail_principal_date_effet', 'bail_principal_duree', 'bail_principal_date_fin', 'bail_principal_article'] : []),
       ...(type === 'contrat' && fields.inclure_charte === 'oui' ? ['tranquillite_21h_6h', 'invites_3_6', 'menage_planning', 'tabac_exterieur', 'tabac_interieur_communs', 'tabac_interieur_privatifs', 'tabac_espaces_designes', ...(fields.tranquillite_21h_6h === 'non' ? ['tranquillite_debut', 'tranquillite_fin'] : []), ...(fields.invites_3_6 === 'non' ? ['invites_limite_nuits'] : []), ...(fields.tabac_espaces_designes === 'oui' ? ['tabac_espaces'] : [])] : []),
-      ...(type === 'contrat' && fields.inclure_attestation_logement === 'oui' && profile === 'professionnel' ? ['gestionnaire_date_naissance'] : []),
+      ...(type === 'contrat' && fields.inclure_attestation_logement === 'oui' && (profile === 'professionnel' || profile === 'proprietaire' && fields.personne_morale === 'oui') ? ['gestionnaire_date_naissance'] : []),
+      ...(type === 'contrat' ? ['inclure_charte', 'inclure_attestation_logement', ...(fields.modes_reglement.split(';').map((item) => item.trim()).includes('Espèces') ? ['inclure_attestation_especes'] : [])] : []),
     ]
     const missing = requiredFields.filter((key) => !fields[key]?.trim())
     if (missing.length) {
       setError('Merci de renseigner tous les champs obligatoires marqués d’un astérisque.')
       return
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email_demandeur) ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email_autre_partie)) {
+    if (type === 'contrat' && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email_demandeur) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email_autre_partie))) {
       setError('Merci de vérifier le format des adresses e-mail.')
       return
     }
-    if (['cin_demandeur', 'cin_autre_partie'].some((key) => fields[key] && !/^\d{1,12}$/.test(fields[key]))) {
-      setError('Le CIN doit contenir au maximum 12 chiffres.')
+    if (['cin_demandeur', 'cin_autre_partie'].some((key) => fields[key] && !/^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ._/-]{0,39}$/.test(fields[key]))) {
+      setError('La pièce d’identité doit contenir au maximum 40 caractères alphanumériques.')
       return
     }
     if (['telephone_demandeur', 'telephone_autre_partie'].some((key) => !/^\+?\d{1,13}$/.test(fields[key]))) {
@@ -467,7 +500,7 @@ export default function ContratsEDL() {
     const nextFields = { ...fields }
     for (const key of [
       'nom_autre_partie', 'cin_autre_partie', 'telephone_autre_partie', 'email_autre_partie',
-      'date_naissance_autre_partie', 'ville_naissance_autre_partie', 'pays_naissance_autre_partie',
+      'prenom_autre_partie', 'date_naissance_autre_partie', 'ville_naissance_autre_partie', 'pays_naissance_autre_partie',
     ]) nextFields[key] = ''
     setFields(nextFields)
     setPaymentReference('')
@@ -516,15 +549,17 @@ export default function ContratsEDL() {
   if (loading) return <div className="grid min-h-screen place-items-center">Chargement...</div>
   if (!user) return <Navigate to="/auth?mode=signin&redirect=%2Fcontrats-edl" replace />
   const isDocumentType = documentTitle(templateId, type, profile as Profile)
+  const summaryEntries = Object.entries(fields).filter(([, value]) => value.trim())
+  const summaryGroups = ['Parties et identités', 'Logement et locaux', 'Conditions de location', 'Options et décisions', 'Détails du document']
   const otherParty = profile === 'locataire' ? 'Propriétaire / bailleur' : 'Locataire / autre partie'
   const repartitionTotal = fields.repartition_texte
     .split(/\r?\n/)
     .filter(Boolean)
     .reduce((total, row) => total + Number((row.split('|')[2] || '').replace(/\D/g, '') || 0), 0)
   const mandatRent = Number((fields.loyer_total || '').replace(/\D/g, '') || 0)
-  const numericFieldLimits: Record<string, number> = {
-    cin_demandeur: 12,
-    cin_autre_partie: 12,
+  const fieldMaxLengths: Record<string, number> = {
+    cin_demandeur: 40,
+    cin_autre_partie: 40,
     telephone_demandeur: 14,
     telephone_autre_partie: 14,
   }
@@ -534,15 +569,16 @@ export default function ContratsEDL() {
       <input
         type={typeName}
         required={required}
-        inputMode={key.startsWith('telephone_') ? 'tel' : numericFieldLimits[key] ? 'numeric' : undefined}
-        maxLength={numericFieldLimits[key]}
+        inputMode={key.startsWith('telephone_') ? 'tel' : undefined}
+        id={key}
+        maxLength={fieldMaxLengths[key]}
         value={fields[key] || ''}
         onChange={(event) => updateField(
           key,
           key.startsWith('telephone_')
             ? normalizePhone(event.target.value)
-            : numericFieldLimits[key]
-              ? event.target.value.replace(/\D/g, '').slice(0, numericFieldLimits[key])
+            : fieldMaxLengths[key]
+              ? event.target.value.slice(0, fieldMaxLengths[key])
               : event.target.value,
         )}
         className="w-full rounded-lg border border-border bg-white px-3 py-2.5"
@@ -601,7 +637,7 @@ export default function ContratsEDL() {
             </div>
 
             {step === 'details' && (
-              <div className="space-y-5">
+              <div id="questionnaire-details" className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm"><span className="mb-1 block font-semibold">Document à générer *</span><select value={templateId} onChange={(event) => chooseTemplate(event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-slate-900"><option value="" className="bg-white text-slate-900">Choisir un document…</option>{availableTemplates.map((item) => <option key={item.id} value={item.id} className="bg-white text-slate-900">{item.title}</option>)}</select></label>
 <label className="block text-sm"><span className="mb-1 block font-semibold">Profil du demandeur *</span><select value={profile} onChange={(event) => chooseProfile(event.target.value as Profile | '')} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="locataire">Occupant principal</option><option value="proprietaire">Propriétaire</option><option value="professionnel">Professionnel immobilier</option></select></label>
@@ -610,29 +646,31 @@ export default function ContratsEDL() {
                 {templateId === 'autorisation_colocation' && <label className="block text-sm"><span className="mb-1 block font-semibold">Rétribution de l’Occupant principal *</span><select required value={fields.retribution_marge === 'true' ? 'retribution_marge' : fields.retribution_reduction === 'true' ? 'retribution_reduction' : fields.retribution_aucune === 'true' ? 'retribution_aucune' : ''} onChange={(event) => setExclusiveOptions(['retribution_marge', 'retribution_reduction', 'retribution_aucune'], event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option>{fields.regime_solidaire !== 'false' && <option value="retribution_marge">Marge sur les sous-loyers</option>}<option value="retribution_reduction">Réduction de loyer</option><option value="retribution_aucune">Aucune rétribution</option></select></label>}
                 {templateId === 'avenant_substitution' && fields.retribution_reconduite === 'false' && <label className="block text-sm"><span className="mb-1 block font-semibold">Nouvelle modalité de rétribution *</span><select required value={fields.retribution_marge === 'true' ? 'retribution_marge' : fields.retribution_reduction === 'true' ? 'retribution_reduction' : fields.retribution_aucune === 'true' ? 'retribution_aucune' : ''} onChange={(event) => setExclusiveOptions(['retribution_marge', 'retribution_reduction', 'retribution_aucune'], event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option>{fields.regime_solidaire !== 'false' && <option value="retribution_marge">Marge sur les sous-loyers</option>}<option value="retribution_reduction">Réduction de loyer</option><option value="retribution_aucune">Aucune rétribution</option></select></label>}
                 {templateId === 'mandat_gestion' && <label className="block text-sm"><span className="mb-1 block font-semibold">Rémunération ponctuelle *</span><select required value={fields.remu_ponctuelle_forfait === 'true' ? 'remu_ponctuelle_forfait' : fields.remu_ponctuelle_pourcentage === 'true' ? 'remu_ponctuelle_pourcentage' : fields.remu_ponctuelle_aucune === 'true' ? 'remu_ponctuelle_aucune' : ''} onChange={(event) => setExclusiveOptions(['remu_ponctuelle_forfait', 'remu_ponctuelle_pourcentage', 'remu_ponctuelle_aucune'], event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="remu_ponctuelle_forfait">Forfait par colocataire installé</option><option value="remu_ponctuelle_pourcentage">Pourcentage du premier loyer</option><option value="remu_ponctuelle_aucune">Aucune rémunération ponctuelle</option></select></label>}
-                {extraVariables.length > 0 && <section className="grid gap-4 rounded-xl border border-brand-cyan/30 bg-brand-cyan-light/20 p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Informations pour {activeTemplate?.title}</h2>{extraVariables.map((item) => { const key = item.variable; const isOptional = item.description.toLowerCase().includes('facultatif'); const isBool = item.type.toLowerCase().includes('bool'); const isDate = item.type.toLowerCase().includes('date'); const isLong = item.type.toLowerCase().includes('long'); const isList = item.type.toLowerCase() === 'liste'; const fieldKey = isList ? `${key}_texte` : key; const listHint = key === 'sous_occupants' ? 'Une ligne par personne : nom et prénom | date du contrat (JJ/MM/AAAA)' : 'Une ligne par colocataire : habitant | chambre | montant'; return <label key={key} className="block text-sm"><span className="mb-1 block font-semibold">{item.description || humanizeVariable(key)}{isOptional ? '' : ' *'}</span>{isBool ? <select value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="true">Oui</option><option value="false">Non</option></select> : isList || isLong ? <><textarea rows={3} value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} placeholder={isList ? listHint : undefined} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" />{isList && <span className="text-xs text-muted-foreground">{listHint}</span>}</> : <input type={isDate ? 'date' : item.type.toLowerCase().includes('nombre') || item.type.toLowerCase().includes('montant') ? 'number' : 'text'} value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" />}</label> })}</section>}
+                {extraVariables.length > 0 && <section className="grid gap-4 rounded-xl border border-brand-cyan/30 bg-brand-cyan-light/20 p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Informations pour {activeTemplate?.title}</h2>{extraVariables.map((item) => { const key = item.variable; const isOptional = item.description.toLowerCase().includes('facultatif'); const isBool = item.type.toLowerCase().includes('bool'); const isDate = item.type.toLowerCase().includes('date'); const isLong = item.type.toLowerCase().includes('long'); const isList = item.type.toLowerCase() === 'liste'; const fieldKey = isList ? `${key}_texte` : key; const listHint = key === 'sous_occupants' ? 'Une ligne par personne : nom et prénom | date du contrat (JJ/MM/AAAA)' : 'Une ligne par colocataire : habitant | chambre | montant'; return <label key={key} className="block text-sm"><span className="mb-1 block font-semibold">{item.description || humanizeVariable(key)}{isOptional ? '' : ' *'}</span>{isBool ? <select id={fieldKey} value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="true">Oui</option><option value="false">Non</option></select> : isList || isLong ? <><textarea id={fieldKey} rows={3} value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} placeholder={isList ? listHint : undefined} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" />{isList && <span className="text-xs text-muted-foreground">{listHint}</span>}</> : <input id={fieldKey} type={isDate ? 'date' : item.type.toLowerCase().includes('nombre') || item.type.toLowerCase().includes('montant') ? 'number' : 'text'} value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" />}</label> })}</section>}
                 {(['autorisation_colocation', 'avenant_substitution'].includes(templateId) && fields.retribution_reduction === 'true') && field('loyer_total', 'Loyer mensuel total de référence (Ar)', true, 'number')}
                 {templateId === 'mandat_gestion' && fields.repartition_texte && mandatRent > 0 && repartitionTotal !== mandatRent && <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">La répartition saisie ({repartitionTotal.toLocaleString('fr-FR')} Ar) diffère du loyer total ({mandatRent.toLocaleString('fr-FR')} Ar). Vérifie les montants avant de continuer.</p>}
                 <div hidden={isAuxiliaryTemplate}>
-                {(profile === 'professionnel' || (profile === 'proprietaire' && fields.personne_morale === 'oui')) && <div className="grid gap-4 rounded-xl bg-muted/40 p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Informations professionnelles</h2>{field('nom_entreprise', 'Nom de l’entreprise', true)}{field('nif', 'NIF / identifiant professionnel', true)}{field('representant', 'Nom du représentant', true)}{field('representant_qualite', 'Qualité du représentant', true)}</div>}
-                {profile === 'professionnel' && field('date_mandat', 'Date du mandat signé', true, 'date')}
-                {(profile === 'professionnel' || (profile === 'proprietaire' && fields.personne_morale === 'oui')) && <div className="grid gap-4 rounded-xl bg-muted/40 p-4 sm:grid-cols-2">{field('forme_juridique', 'Forme juridique de la société', true)}{field('rcs', 'Numéro RCS', true)}{field('stat', 'Numéro STAT', true)}{field('adresse_entreprise', 'Siège social', true)}{profile === 'professionnel' && <>{field('mandataire_agrement', 'Numéro d’agrément / carte professionnelle')}{field('mandataire_rc_pro', 'Numéro de police RC professionnelle')}</>}</div>}
+                {type === 'contrat' && (profile === 'professionnel' || (profile === 'proprietaire' && fields.personne_morale === 'oui')) && <div className="grid gap-4 rounded-xl bg-muted/40 p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Informations professionnelles</h2>{profile === 'professionnel' && field('nom_entreprise', 'Nom de l’entreprise', true)}{field('nif', 'NIF / identifiant professionnel', true)}{field('representant', 'Nom du représentant', true)}{profile === 'professionnel' && field('representant_qualite', 'Qualité du représentant', true)}</div>}
+                {type === 'contrat' && profile === 'professionnel' && field('date_mandat', 'Date du mandat signé', true, 'date')}
+                {type === 'contrat' && (profile === 'professionnel' || (profile === 'proprietaire' && fields.personne_morale === 'oui')) && <div className="grid gap-4 rounded-xl bg-muted/40 p-4 sm:grid-cols-2">{field('forme_juridique', 'Forme juridique de la société', true)}{field('rcs', 'Numéro RCS', true)}{field('stat', 'Numéro STAT', true)}{field('adresse_entreprise', 'Siège social', true)}{profile === 'professionnel' && field('mandataire_agrement', 'Numéro d’agrément / carte professionnelle')}</div>}
                 {type === 'contrat' && profile === 'locataire' && <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Bail principal</h2><p className="text-sm text-muted-foreground sm:col-span-2">L’Occupant principal se réfère à son contrat initial pour renseigner ces champs.</p>{field('bail_principal_proprietaire', 'Nom du Propriétaire du bail principal', true)}{field('bail_principal_date_effet', 'Date de début du bail principal', true, 'date')}{field('bail_principal_duree', 'Durée du bail principal', true)}{field('bail_principal_date_fin', 'Date de fin du bail principal', true, 'date')}{field('bail_principal_article', 'Article autorisant la sous-location', true)}</div>}
-                {profile === 'professionnel' && <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Propriétaire représenté</h2>{field('nom_proprietaire', 'Nom ou raison sociale du Propriétaire', true)}{field('cin_proprietaire', 'CIN ou immatriculation')}{field('adresse_proprietaire', 'Adresse du Propriétaire', true)}{field('telephone_proprietaire', 'Téléphone du Propriétaire')}{field('email_proprietaire', 'E-mail du Propriétaire', false, 'email')}</div>}
+                {type === 'contrat' && profile === 'professionnel' && <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Propriétaire représenté</h2>{field('nom_proprietaire', 'Nom ou raison sociale du Propriétaire', true)}{field('cin_proprietaire', 'CIN ou immatriculation', true)}{field('adresse_proprietaire', 'Adresse du Propriétaire', true)}{field('telephone_proprietaire', 'Téléphone du Propriétaire')}{field('email_proprietaire', 'E-mail du Propriétaire', false, 'email')}</div>}
                 <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
                   <h2 className="font-bold sm:col-span-2">Demandeur</h2>
-                  {field('nom_demandeur', profile === 'professionnel' ? 'Nom du contact' : 'Nom complet', true)}
-                  {field('cin_demandeur', 'CIN / pièce d’identité (12 chiffres maximum)', type === 'edl' || profile !== 'professionnel')}
+                  {(profile !== 'professionnel' || type === 'edl') && field('nom_demandeur', type === 'edl' ? 'Nom complet' : profile === 'proprietaire' && fields.personne_morale === 'oui' ? 'Dénomination sociale' : 'Nom', true)}
+                  {profile !== 'professionnel' && !(profile === 'proprietaire' && fields.personne_morale === 'oui') && field('prenom_demandeur', 'Prénom(s)', true)}
+                  {field('cin_demandeur', 'N° de pièce d’identité ou d’immatriculation', type === 'edl' || profile !== 'professionnel' || fields.inclure_attestation_logement === 'oui' && (profile === 'professionnel' || profile === 'proprietaire' && fields.personne_morale === 'oui'))}
                   {field('telephone_demandeur', 'Téléphone (13 chiffres maximum)', true, 'tel')}
-                  {field('email_demandeur', 'E-mail', true, 'email')}
-                  {type === 'contrat' && profile !== 'professionnel' && <>{field('date_naissance_demandeur', 'Date de naissance', true, 'date')}{field('ville_naissance_demandeur', 'Ville de naissance', true)}{field('pays_naissance_demandeur', 'Pays de naissance', true)}</>}
+                  {type === 'contrat' && field('email_demandeur', 'E-mail', true, 'email')}
+                  {type === 'contrat' && profile !== 'professionnel' && !(profile === 'proprietaire' && fields.personne_morale === 'oui') && <>{field('date_naissance_demandeur', 'Date de naissance', true, 'date')}{field('ville_naissance_demandeur', 'Ville de naissance', true)}{field('pays_naissance_demandeur', 'Pays de naissance', true)}</>}
                 </div>
                 <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
                   <h2 className="font-bold sm:col-span-2">{otherParty}</h2>
-                  {field('nom_autre_partie', 'Nom complet / raison sociale', true)}
-                  {field('cin_autre_partie', 'CIN (12 chiffres maximum)', true)}
+                  {field('nom_autre_partie', type === 'contrat' ? 'Nom' : 'Nom complet', true)}
+                  {type === 'contrat' && field('prenom_autre_partie', 'Prénom(s)', true)}
+                  {field('cin_autre_partie', 'N° de pièce d’identité ou d’immatriculation', true)}
                   {field('telephone_autre_partie', 'Téléphone (13 chiffres maximum)', true, 'tel')}
-                  {field('email_autre_partie', 'E-mail', true, 'email')}
+                  {type === 'contrat' && field('email_autre_partie', 'E-mail', true, 'email')}
                   {type === 'contrat' && <>{field('date_naissance_autre_partie', 'Date de naissance', true, 'date')}{field('ville_naissance_autre_partie', 'Ville de naissance', true)}{field('pays_naissance_autre_partie', 'Pays de naissance', true)}</>}
                 </div>
                 <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
@@ -641,7 +679,7 @@ export default function ContratsEDL() {
                   {field('code_postal', 'Code postal', true)}
                   {field('quartier', 'Quartier')}
                   {field('ville', 'Ville', true)}
-                  {field('type_bien', 'Type de bien (appartement, maison…)', true)}
+                  {type === 'contrat' && field('type_bien', 'Type de bien (appartement, maison…)', true)}
                   {type === 'contrat' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Niveaux du logement *</span><textarea rows={3} value={fields.niveaux_texte} onChange={(event) => updateField('niveaux_texte', event.target.value)} placeholder="Une ligne par niveau : libellé | description (ex. RDC | salon, cuisine ; R+1 | chambres)" className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>}
                 </div>
                 {type === 'contrat' && (
@@ -656,22 +694,22 @@ export default function ContratsEDL() {
                     {profile === 'locataire' && fields.autorisation_signee === 'oui' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Copie PDF de l’Autorisation signée *</span><input type="file" accept="application/pdf,.pdf" onChange={(event) => setAutorisationFile(event.target.files?.[0] || null)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /><span className="mt-1 block text-xs text-muted-foreground">Elle sera jointe au contrat Intercolocs. Maximum 15 Mo.</span></label>}
                     {profile === 'professionnel' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Mandat de gestion signé et pouvoir de signer ? *</span><select required value={fields.pouvoir_signature} onChange={(event) => updateField('pouvoir_signature', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select>{fields.pouvoir_signature === 'non' && <span className="mt-2 block text-amber-800">Le Mandacolocs nécessite un mandat signé. Faites établir le Mandat de gestion avant de poursuivre.</span>}</label>}
                     {profile === 'professionnel' && fields.pouvoir_signature === 'oui' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Copie PDF du Mandat signé *</span><input type="file" accept="application/pdf,.pdf" onChange={(event) => setMandatFile(event.target.files?.[0] || null)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /><span className="mt-1 block text-xs text-muted-foreground">Il sera joint en annexe 0 au contrat Mandacolocs. Maximum 15 Mo.</span></label>}
-                    <fieldset className="sm:col-span-2"><legend className="mb-2 font-bold">Documents communs inclus dans le même paiement</legend><div className="grid gap-2 sm:grid-cols-2"><label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"><input type="checkbox" checked={fields.inclure_charte === 'oui'} onChange={(event) => updateField('inclure_charte', event.target.checked ? 'oui' : 'non')} />Générer une charte de colocation par occupant</label><label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"><input type="checkbox" checked={fields.inclure_attestation_logement === 'oui'} onChange={(event) => updateField('inclure_attestation_logement', event.target.checked ? 'oui' : 'non')} />Générer une attestation de logement</label>{fields.modes_reglement.split(';').map((item) => item.trim()).includes('Espèces') && <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"><input type="checkbox" checked={fields.inclure_attestation_especes === 'oui'} onChange={(event) => updateField('inclure_attestation_especes', event.target.checked ? 'oui' : 'non')} />Joindre l’attestation de remise en espèces (2 exemplaires)</label>}</div><p className="mt-1 text-xs text-muted-foreground">L’état des lieux d’entrée est automatiquement joint au contrat. Ces documents sont préremplis et inclus dans le même paiement.</p></fieldset>
+                    <fieldset className="grid gap-3 sm:col-span-2 sm:grid-cols-2"><legend className="mb-2 font-bold">Documents communs inclus dans le même paiement</legend>{([['inclure_charte', 'Générer une charte de colocation par occupant'], ['inclure_attestation_logement', 'Générer une attestation de logement']] as const).map(([key, label]) => <label key={key} className="block text-sm"><span className="mb-1 block font-semibold">{label} ? *</span><select required value={fields[key]} onChange={(event) => updateField(key, event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label>)}{fields.modes_reglement.split(';').map((item) => item.trim()).includes('Espèces') && <label className="block text-sm"><span className="mb-1 block font-semibold">Joindre l’attestation de remise en espèces (2 exemplaires) ? *</span><select required value={fields.inclure_attestation_especes} onChange={(event) => updateField('inclure_attestation_especes', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label>}<p className="text-xs text-muted-foreground sm:col-span-2">L’état des lieux d’entrée est automatiquement joint au contrat. Les documents retenus sont préremplis et inclus dans le même paiement.</p></fieldset>
                     {fields.inclure_attestation_especes === 'oui' && <p className="rounded-lg bg-muted/40 p-3 text-sm sm:col-span-2">L’attestation est jointe en deux exemplaires. Les parties sont préremplies ; le montant, le motif, le lieu et la date restent vierges pour être complétés lors de la remise.</p>}
                     {fields.inclure_charte === 'oui' && <fieldset className="grid gap-3 rounded-lg border border-border p-4 sm:col-span-2 sm:grid-cols-2"><legend className="px-1 font-bold">Règles de la charte</legend><label className="block text-sm">Horaires habituels<select value={fields.tranquillite_21h_6h} onChange={(event) => updateField('tranquillite_21h_6h', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">21 h à 6 h</option><option value="non">Autres horaires</option></select></label>{fields.tranquillite_21h_6h === 'non' && <>{field('tranquillite_debut', 'Heure de début', true)}{field('tranquillite_fin', 'Heure de fin', true)}</>}<label className="block text-sm">Limite des invités<select value={fields.invites_3_6} onChange={(event) => updateField('invites_3_6', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">3 nuits consécutives, 6 nuits par mois</option><option value="non">Autre limite</option></select></label>{fields.invites_3_6 === 'non' && field('invites_limite_nuits', 'Limite en nuits par mois', true, 'number')}<label className="block text-sm">Entretien<select value={fields.menage_planning} onChange={(event) => updateField('menage_planning', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">Planning tournant</option><option value="non">Service de ménage</option></select></label>{(['tabac_exterieur', 'tabac_interieur_communs', 'tabac_interieur_privatifs'] as const).map((key) => <label key={key} className="block text-sm">{key === 'tabac_exterieur' ? 'Tabac autorisé à l’extérieur' : key === 'tabac_interieur_communs' ? 'Tabac autorisé dans les espaces communs' : 'Tabac autorisé dans les espaces privatifs'}<select value={fields[key]} onChange={(event) => updateField(key, event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label>)}<label className="block text-sm">Tabac dans des espaces désignés<select value={fields.tabac_espaces_designes} onChange={(event) => updateField('tabac_espaces_designes', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label>{fields.tabac_espaces_designes === 'oui' && field('tabac_espaces', 'Espaces désignés', true)}</fieldset>}
-                    {fields.inclure_attestation_logement === 'oui' && profile === 'professionnel' && field('gestionnaire_date_naissance', 'Date de naissance du Mandataire', true, 'date')}
+                    {fields.inclure_attestation_logement === 'oui' && (profile === 'professionnel' || profile === 'proprietaire' && fields.personne_morale === 'oui') && field('gestionnaire_date_naissance', 'Date de naissance du représentant / gestionnaire', true, 'date')}
                     {profile === 'proprietaire' && <label className="block text-sm"><span className="mb-1 block font-semibold">Le Propriétaire est une société ? *</span><select required value={fields.personne_morale} onChange={(event) => updateField('personne_morale', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="non">Non, personne physique</option><option value="oui">Oui, personne morale</option></select></label>}
+                    {['proprietaire', 'professionnel'].includes(profile) && <label className="block text-sm"><span className="mb-1 block font-semibold">Statut du Propriétaire représenté *</span><select required value={fields.statut_proprietaire} onChange={(event) => updateField('statut_proprietaire', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="proprietaire">Propriétaire du bien</option><option value="titulaire_droits">Titulaire des droits d’occupation</option></select></label>}
                     <label className="block text-sm"><span className="mb-1 block font-semibold">Régime de responsabilité *</span><select required value={fields.solidarite} onChange={(event) => updateField('solidarite', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="Individuelle">Individuelle</option><option value="Solidaire">Collective (solidaire)</option></select>{profile !== 'locataire' && <span className="mt-1 block text-xs text-muted-foreground">Le régime choisi doit être identique pour tous les contrats du même logement.</span>}</label>
                     <h2 className="mt-3 font-bold sm:col-span-2">Conditions de location</h2>
                     {field('date_entree', 'Date d’entrée', true, 'date')}
                     <label className="block text-sm"><span className="mb-1 block font-semibold">Salle de bain privee dans la chambre ? *</span><select required value={fields.salle_bain_privee} onChange={(event) => updateField('salle_bain_privee', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir...</option><option value="oui">Oui</option><option value="non">Non</option></select><span className="mt-1 block text-xs text-muted-foreground">Un etat des lieux dentree sera ajoute au contrat.</span></label>
                     {field('loyer', 'Loyer mensuel (Ar)', true, 'number')}
                     <fieldset className="block text-sm"><legend className="mb-1 block font-semibold">Modes de règlement *</legend><div className="grid gap-2 sm:grid-cols-2">{['Virement', 'Mobile money', 'Application de transfert', 'Espèces', 'Chèque'].map((method) => { const selected = fields.modes_reglement.split(';').map((item) => item.trim()).filter(Boolean); return <label key={method} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2"><input type="checkbox" checked={selected.includes(method)} onChange={() => updateField('modes_reglement', (selected.includes(method) ? selected.filter((item) => item !== method) : [...selected, method]).join('; '))} />{method}</label> })}</div></fieldset>
-                    {field('charges', 'Charges mensuelles (Ar)', false, 'number')}
                     <label className="block text-sm"><span className="mb-1 block font-semibold">Logement meuble ? *</span><select required value={fields.meuble} onChange={(event) => updateField('meuble', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir...</option><option value="oui">Oui</option><option value="non">Non</option></select></label>
                     <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Espace privatif et équipements *</span><textarea rows={3} required value={fields.espace_privatif_description} onChange={(event) => updateField('espace_privatif_description', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>
                     <label className="block text-sm"><span className="mb-1 block font-semibold">Le loyer inclut-il des charges ? *</span><select required value={fields.charges_avec} onChange={(event) => updateField('charges_avec', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir...</option><option value="non">Non</option><option value="oui">Oui</option></select></label>
-                    {fields.charges_avec === 'oui' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Lignes de charges *</span><textarea rows={4} required value={fields.charges_lignes_texte} onChange={(event) => updateField('charges_lignes_texte', event.target.value)} placeholder="Une ligne par charge : nom | montant | répartition | description" className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>}
+                    {fields.charges_avec === 'oui' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Lignes de charges — nom | montant mensuel / répartition (Ar) | description *</span><textarea rows={4} required value={fields.charges_lignes_texte} onChange={(event) => updateField('charges_lignes_texte', event.target.value)} placeholder="Une ligne par charge : Électricité | 25000 | Parties communes" className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>}
                     {field('duree_bail', 'Duree du bail', true)}
                     {field('mois_depot', 'Depot de garantie (nombre de mois)', true, 'number')}
                     {field('periodicite_revision', 'Periodicite de revision (annees)', true, 'number')}
@@ -681,8 +719,8 @@ export default function ContratsEDL() {
                     {field('jour_paiement', 'Jour limite de paiement', true, 'number')}
                   </div>
                 )}
-                {type === 'edl' && <><label className="block text-sm"><span className="mb-1 block font-semibold">Type d’état des lieux *</span><select required value={fields.edl_type} onChange={(event) => updateField('edl_type', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="d’entrée">État des lieux d’entrée</option><option value="de sortie">État des lieux de sortie</option></select></label>{field('date_entree', 'Date du constat', true, 'date')}<label className="mt-4 block text-sm"><span className="mb-1 block font-semibold">La chambre possède une salle de bain privée ? *</span><select required value={fields.salle_bain_privee} onChange={(event) => updateField('salle_bain_privee', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label></>}
-                <label className="block text-sm"><span className="mb-1 block font-semibold">Observations</span><textarea rows={3} value={fields.observations} onChange={(event) => updateField('observations', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>
+                {type === 'edl' && <><label className="block text-sm"><span className="mb-1 block font-semibold">Type d’état des lieux *</span><select required value={fields.edl_type} onChange={(event) => updateField('edl_type', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="d’entrée">État des lieux d’entrée</option><option value="de sortie">État des lieux de sortie</option></select></label><label className="mt-4 block text-sm"><span className="mb-1 block font-semibold">La chambre possède une salle de bain privée ? *</span><select required value={fields.salle_bain_privee} onChange={(event) => updateField('salle_bain_privee', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label></>}
+                <label className="block text-sm"><span className="mb-1 block font-semibold">{type === 'contrat' ? 'Description générale de l’espace du logement *' : 'Observations'}</span><textarea rows={3} required={type === 'contrat'} value={fields.observations} onChange={(event) => updateField('observations', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" /></label>
                 </div>
                 <div className="flex justify-end"><button type="button" onClick={continueToClauses} className="inline-flex items-center gap-2 rounded-xl bg-brand-magenta px-5 py-3 text-sm font-bold text-white">Continuer <ArrowRight className="h-4 w-4" /></button></div>
               </div>
@@ -714,17 +752,20 @@ export default function ContratsEDL() {
                     <h3 className="mb-2 font-bold">Document et profil</h3>
                     <p className="text-sm">{isDocumentType} · {profile === 'locataire' ? 'Occupant principal' : profile === 'proprietaire' ? 'Propriétaire' : 'Professionnel de l’immobilier'}</p>
                   </section>
-                  <section className="rounded-xl border border-border p-4 sm:col-span-2">
-                    <h3 className="mb-2 font-bold">Réponses fournies</h3>
-                    <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                      {Object.entries(fields).filter(([, value]) => value.trim()).map(([key, value]) => (
-                        <div key={key} className="min-w-0 text-sm">
-                          <dt className="text-muted-foreground">{key.replace(/_/g, ' ').replace(/^./, (letter) => letter.toUpperCase())}</dt>
+                  {summaryGroups.map((group) => {
+                    const entries = summaryEntries.filter(([key]) => summaryCategory(key) === group)
+                    if (!entries.length) return null
+                    return <section key={group} className="rounded-xl border border-border p-4 sm:col-span-2">
+                      <h3 className="mb-2 font-bold">{group}</h3>
+                      <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                        {entries.map(([key, value]) => <div key={key} className="min-w-0 text-sm">
+                          <dt className="flex items-start justify-between gap-2 text-muted-foreground"><span>{key.replace(/_/g, ' ').replace(/^./, (letter) => letter.toUpperCase())}</span><button type="button" className="shrink-0 font-semibold text-brand-cyan-dark underline" onClick={() => { setSummaryEditField(key); setStep('details') }}>Modifier</button></dt>
                           <dd className="whitespace-pre-wrap break-words font-medium">{value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </section>
+                        </div>)}
+                      </dl>
+                    </section>
+                  })}
+                  {(autorisationFile || mandatFile) && <section className="rounded-xl border border-border p-4 sm:col-span-2"><h3 className="mb-2 font-bold">Annexes signées</h3><ul className="list-inside list-disc text-sm">{autorisationFile && <li>Autorisation de colocation : {autorisationFile.name}</li>}{mandatFile && <li>Mandat de gestion : {mandatFile.name}</li>}</ul><button type="button" className="mt-2 font-semibold text-brand-cyan-dark underline" onClick={() => setStep('details')}>Modifier les annexes</button></section>}
                   {selectedClauses.length > 0 && <section className="rounded-xl border border-border p-4 sm:col-span-2"><h3 className="mb-2 font-bold">Clauses sélectionnées</h3><ul className="list-inside list-disc text-sm">{clauses.filter((clause) => selectedClauses.includes(clause.id_clause)).map((clause) => <li key={clause.id_clause}>{clause.titre}</li>)}</ul></section>}
                 </div>
                 <div className="mt-5 flex flex-wrap justify-between gap-2">

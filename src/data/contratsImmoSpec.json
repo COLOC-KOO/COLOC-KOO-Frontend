@@ -442,6 +442,30 @@
       "syntax": "{{bailleur_representant_qualite}}"
     },
     {
+      "variable": "statut_proprietaire",
+      "type": "Choix unique",
+      "description": "Statut du Propriétaire du bien ou titulaire de droits d’occupation",
+      "question": "C-02",
+      "documents": "Propriocolocs, Mandacolocs",
+      "syntax": "{{statut_proprietaire}}"
+    },
+    {
+      "variable": "proprietaire_du_bien",
+      "type": "Booléen calculé",
+      "description": "Vrai si le signataire est propriétaire du bien",
+      "question": "C-02",
+      "documents": "Propriocolocs, Mandacolocs",
+      "syntax": "{{#proprietaire_du_bien}}…{{/proprietaire_du_bien}}"
+    },
+    {
+      "variable": "titulaire_des_droits",
+      "type": "Booléen calculé",
+      "description": "Vrai si le signataire détient les droits d’occupation",
+      "question": "C-02",
+      "documents": "Propriocolocs, Mandacolocs",
+      "syntax": "{{#titulaire_des_droits}}…{{/titulaire_des_droits}}"
+    },
+    {
       "variable": "proprietaire_nom",
       "type": "Texte",
       "description": "Propriétaire — Nom",
@@ -709,24 +733,24 @@
       "variable": "mandataire_forme_juridique",
       "type": "Texte",
       "description": "Forme juridique du Mandataire",
-      "question": "MDT-02",
-      "documents": "Mandat",
+      "question": "AUT-02 / MDT-02",
+      "documents": "Autorisation, Mandat",
       "syntax": "{{mandataire_forme_juridique}}"
     },
     {
       "variable": "mandataire_agrement",
       "type": "Texte (facultatif)",
       "description": "N° d’agrément ou de carte professionnelle — ligne masquée si vide",
-      "question": "MDT-02",
-      "documents": "Mandat",
+      "question": "AUT-02 / MDT-02",
+      "documents": "Autorisation, Mandat",
       "syntax": "{{mandataire_agrement}}"
     },
     {
       "variable": "mandataire_siege",
       "type": "Texte",
       "description": "Adresse du siège du Mandataire",
-      "question": "MDT-02",
-      "documents": "Mandat",
+      "question": "AUT-02 / MDT-02",
+      "documents": "Autorisation, Mandat",
       "syntax": "{{mandataire_siege}}"
     },
     {
