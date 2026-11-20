@@ -1532,6 +1532,14 @@ export const api = {
             body,
         })
     },
+    uploadSignedContractAnnex(id: number, type: 'autorisation' | 'mandat', document: File) {
+        const body = new FormData()
+        body.set('document', document)
+        return request<{ ok: boolean; type: string }>(`/documents-contractuels/${id}/annexes/${type}`, {
+            method: 'POST',
+            body,
+        })
+    },
     createContractDocumentDownloadLink(id: number) {
         return request<{ token: string; expires_in_seconds: number }>(`/documents-contractuels/${id}/download-link`, { method: 'POST' })
     },
