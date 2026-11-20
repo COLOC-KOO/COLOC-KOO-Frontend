@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, ArrowRight, Check, Download, FileText, Loader2 } from 'lucide-react'
+import { AlertCircle, ArrowLeft, ArrowRight, Check, Download, FileText, Loader2, Trash2 } from 'lucide-react'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { api, ContractDocumentRequest } from '../lib/api'
 import { useAuth } from '../lib/auth'
@@ -75,7 +75,8 @@ const EMPTY_FIELDS: Record<string, string> = {
   meuble: '',
   duree_bail: '',
   mois_depot: '1',
-  periodicite_revision: '3',
+  periodicite_revision: '',
+  revision_date_anniversaire: '',
   taux_revision: '',
   preavis_bailleur: '',
   jour_paiement: '',
@@ -98,6 +99,24 @@ const EMPTY_FIELDS: Record<string, string> = {
   mandataire_agrement: '',
   mandataire_rc_pro: '',
   date_mandat: '',
+  inclure_charte: 'non',
+  inclure_attestation_logement: 'non',
+  inclure_attestation_especes: 'non',
+  autorisation_signee: '',
+  gestionnaire_date_naissance: '',
+  tranquillite_21h_6h: '',
+  tranquillite_debut: '',
+  tranquillite_fin: '',
+  invites_3_6: '',
+  invites_limite_nuits: '',
+  menage_planning: '',
+  tabac_exterieur: '',
+  tabac_interieur_communs: '',
+  tabac_interieur_privatifs: '',
+  tabac_espaces_designes: '',
+  tabac_espaces: '',
+  repartition_texte: '',
+  loyer_total: '',
 }
 
 function statusLabel(status: ContractDocumentRequest['statut']) {
@@ -134,9 +153,6 @@ export default function ContratsEDL() {
   const [draft, setDraft] = useState<{ id: number; reference: string; montant: number } | null>(null)
   const [previewPages, setPreviewPages] = useState<string[]>([])
   const [requests, setRequests] = useState<ContractDocumentRequest[]>([])
-  const [passwordRequestId, setPasswordRequestId] = useState<number | null>(null)
-  const [pdfPassword, setPdfPassword] = useState('')
-  const [pdfPasswordConfirmation, setPdfPasswordConfirmation] = useState('')
   const [downloadingDocumentId, setDownloadingDocumentId] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -195,7 +211,7 @@ export default function ContratsEDL() {
     setTemplateId((value || '') as TemplateId | '')
     setType(value === 'etat_des_lieux' ? 'edl' : 'contrat')
     if (selected?.profile) setProfile(selected.profile)
-    setFields(EMPTY_FIELDS)
+    setFields(selected?.profile ? { ...EMPTY_FIELDS, periodicite_revision: selected.profile === 'locataire' ? '' : '3' } : EMPTY_FIELDS)
     setDraft(null)
     setError('')
   }
@@ -239,6 +255,18 @@ export default function ContratsEDL() {
       setError('Choisis ton profil pour afficher le parcours correspondant.')
       return
     }
+    if (type === 'contrat' && profile === 'locataire' && templateId !== 'autorisation_colocation' && fields.autorisation_signee === 'non') {
+      setTemplateId('autorisation_colocation')
+      setType('contrat')
+      setError('L’Autorisation de colocation doit être établie et signée avant l’Intercolocs. Le parcours est dirigé vers ce document.')
+      return
+    }
+    if (type === 'contrat' && profile === 'professionnel' && templateId !== 'mandat_gestion' && fields.pouvoir_signature === 'non') {
+      setTemplateId('mandat_gestion')
+      setType('contrat')
+      setError('Le mandat signé avec pouvoir est requis. Le parcours est dirigé vers le Mandat de gestion à faire signer avant le Mandacolocs.')
+      return
+    }
     if (activeTemplate && !activeTemplate.profile) {
       const missingSpecific = extraVariables.filter((item) => !item.description.toLowerCase().includes('facultatif') && !String(fields[item.type.toLowerCase() === 'liste' ? `${item.variable}_texte` : item.variable] || '').trim())
       if (missingSpecific.length) {
@@ -266,9 +294,11 @@ export default function ContratsEDL() {
       ...(type === 'contrat' ? ['niveaux_texte', 'espace_privatif_description', 'charges_avec'] : []),
       ...(type === 'contrat' && fields.charges_avec === 'oui' ? ['charges_lignes_texte'] : []),
       ...(type === 'contrat' && profile === 'professionnel' ? ['pouvoir_signature'] : []),
+      ...(type === 'contrat' && profile === 'locataire' ? ['autorisation_signee'] : []),
       ...(type === 'contrat' && profile === 'proprietaire' ? ['personne_morale'] : []),
       ...(type === 'contrat' && profile === 'professionnel' ? ['nom_proprietaire', 'adresse_proprietaire'] : []),
       ...(type === 'contrat' && profile !== 'professionnel' ? ['date_naissance_demandeur', 'ville_naissance_demandeur', 'pays_naissance_demandeur'] : []),
+      ...(type === 'contrat' && profile === 'locataire' ? ['revision_date_anniversaire'] : []),
       ...(type === 'contrat' ? ['date_naissance_autre_partie', 'ville_naissance_autre_partie', 'pays_naissance_autre_partie'] : []),
       ...(type === 'contrat' && fields.choix_colocataires === 'gestionnaire_presel_proprietaire_valide' ? ['delai_validation'] : []),
       'salle_bain_privee',
@@ -276,14 +306,12 @@ export default function ContratsEDL() {
       ...(type === 'contrat' && profile === 'proprietaire' && fields.personne_morale === 'oui' ? ['nom_entreprise', 'representant'] : []),
       ...(type === 'contrat' && profile === 'proprietaire' && fields.personne_morale === 'oui' ? ['representant_qualite'] : []),
       ...(type === 'contrat' && profile === 'locataire' ? ['bail_principal_proprietaire', 'bail_principal_date_effet', 'bail_principal_duree', 'bail_principal_date_fin', 'bail_principal_article'] : []),
+      ...(type === 'contrat' && fields.inclure_charte === 'oui' ? ['tranquillite_21h_6h', 'invites_3_6', 'menage_planning', 'tabac_exterieur', 'tabac_interieur_communs', 'tabac_interieur_privatifs', 'tabac_espaces_designes', ...(fields.tranquillite_21h_6h === 'non' ? ['tranquillite_debut', 'tranquillite_fin'] : []), ...(fields.invites_3_6 === 'non' ? ['invites_limite_nuits'] : []), ...(fields.tabac_espaces_designes === 'oui' ? ['tabac_espaces'] : [])] : []),
+      ...(type === 'contrat' && fields.inclure_attestation_logement === 'oui' && profile === 'professionnel' ? ['gestionnaire_date_naissance'] : []),
     ]
     const missing = requiredFields.filter((key) => !fields[key]?.trim())
     if (missing.length) {
       setError('Merci de renseigner tous les champs obligatoires marqués d’un astérisque.')
-      return
-    }
-    if (type === 'contrat' && profile === 'professionnel' && fields.pouvoir_signature === 'non') {
-      setError('Un mandat de gestion signé avec pouvoir est nécessaire avant de créer un Mandacolocs.')
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email_demandeur) ||
@@ -336,20 +364,12 @@ export default function ContratsEDL() {
     }
   }
 
-  const downloadFinalDocument = async (event: React.FormEvent<HTMLFormElement>, request: ContractDocumentRequest) => {
-    event.preventDefault()
-    if (pdfPassword.length < 12 || pdfPassword.length > 127 || !/^[\x20-\x7e]+$/.test(pdfPassword)) {
-      setError('Choisis un mot de passe de 12 à 127 caractères ASCII visibles.')
-      return
-    }
-    if (pdfPassword !== pdfPasswordConfirmation) {
-      setError('Les deux mots de passe ne correspondent pas.')
-      return
-    }
+  const downloadFinalDocument = async (request: ContractDocumentRequest) => {
     setDownloadingDocumentId(request.id_demande)
     setError('')
     try {
-      const blob = await api.getContractDocumentRequestDocument(request.id_demande, pdfPassword)
+      const downloadLink = await api.createContractDocumentDownloadLink(request.id_demande)
+      const blob = await api.getContractDocumentByDownloadToken(downloadLink.token)
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -358,9 +378,6 @@ export default function ContratsEDL() {
       link.click()
       link.remove()
       window.setTimeout(() => URL.revokeObjectURL(url), 60000)
-      setPasswordRequestId(null)
-      setPdfPassword('')
-      setPdfPasswordConfirmation('')
     } catch (documentError) {
       setError(documentError instanceof Error ? documentError.message : 'Impossible de télécharger le document.')
     } finally {
@@ -368,10 +385,27 @@ export default function ContratsEDL() {
     }
   }
 
+  const deleteRequest = async (request: ContractDocumentRequest) => {
+    if (!window.confirm('Supprimer cette demande de votre historique ? La copie d’archive Coloc’KOO sera conservée.')) return
+    setBusy(true)
+    setError('')
+    try {
+      await api.deleteContractDocumentRequest(request.id_demande)
+      await refreshRequests()
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Impossible de supprimer cette demande.')
+    } finally { setBusy(false) }
+  }
+
   if (loading) return <div className="grid min-h-screen place-items-center">Chargement...</div>
   if (!user) return <Navigate to="/auth?mode=signin&redirect=%2Fcontrats-edl" replace />
   const isDocumentType = documentTitle(templateId, type, profile as Profile)
   const otherParty = profile === 'locataire' ? 'Propriétaire / bailleur' : 'Locataire / autre partie'
+  const repartitionTotal = fields.repartition_texte
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .reduce((total, row) => total + Number((row.split('|')[2] || '').replace(/\D/g, '') || 0), 0)
+  const mandatRent = Number((fields.loyer_total || '').replace(/\D/g, '') || 0)
   const numericFieldLimits: Record<string, number> = {
     cin_demandeur: 12,
     cin_autre_partie: 12,
@@ -454,16 +488,18 @@ export default function ContratsEDL() {
               <div className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm"><span className="mb-1 block font-semibold">Document à générer *</span><select value={templateId} onChange={(event) => chooseTemplate(event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir un document…</option>{DOCUMENT_TEMPLATES.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
-<label className="block text-sm"><span className="mb-1 block font-semibold">Profil du demandeur *</span><select value={profile} onChange={(event) => { const nextProfile = event.target.value as Profile | ''; setProfile(nextProfile); const currentTemplate = DOCUMENT_TEMPLATES.find((item) => item.id === templateId); if (!currentTemplate || currentTemplate.profile) { const routed = DOCUMENT_TEMPLATES.find((item) => item.profile === nextProfile); if (routed) { setTemplateId(routed.id); setType('contrat') } } setDraft(null) }} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="locataire">Occupant principal</option><option value="proprietaire">Propriétaire</option><option value="professionnel">Professionnel immobilier</option></select></label>
+<label className="block text-sm"><span className="mb-1 block font-semibold">Profil du demandeur *</span><select value={profile} onChange={(event) => { const nextProfile = event.target.value as Profile | ''; setProfile(nextProfile); const currentTemplate = DOCUMENT_TEMPLATES.find((item) => item.id === templateId); if (!currentTemplate || currentTemplate.profile) { const routed = DOCUMENT_TEMPLATES.find((item) => item.profile === nextProfile); if (routed) { setTemplateId(routed.id); setType('contrat') } setFields((current) => ({ ...current, periodicite_revision: nextProfile === 'locataire' ? '' : nextProfile ? '3' : '' })) } setDraft(null) }} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="locataire">Occupant principal</option><option value="proprietaire">Propriétaire</option><option value="professionnel">Professionnel immobilier</option></select></label>
                 </div>
                 <aside className="rounded-xl border border-brand-cyan/30 bg-brand-cyan-light/30 p-4 text-sm"><h2 className="font-bold">Modèles PDF vierges à télécharger</h2><div className="mt-2 flex flex-wrap gap-x-5 gap-y-2"><a className="font-semibold text-brand-cyan-dark underline" href="/documents-contractuels/quittance-loyer-2026.pdf" download>Télécharger la quittance de loyer</a><a className="font-semibold text-brand-cyan-dark underline" href="/documents-contractuels/attestation-remise-especes.pdf" download>Télécharger l’attestation de remise en espèces</a></div><p className="mt-2 text-xs text-muted-foreground">Ces deux PDF sont vierges et se téléchargent tels quels, sans passer par le questionnaire.</p></aside>
                 {extraVariables.length > 0 && <section className="grid gap-4 rounded-xl border border-brand-cyan/30 bg-brand-cyan-light/20 p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Informations pour {activeTemplate?.title}</h2>{extraVariables.map((item) => { const key = item.variable; const isOptional = item.description.toLowerCase().includes('facultatif'); const isBool = item.type.toLowerCase().includes('bool'); const isDate = item.type.toLowerCase().includes('date'); const isLong = item.type.toLowerCase().includes('long'); const isList = item.type.toLowerCase() === 'liste'; const fieldKey = isList ? `${key}_texte` : key; const listHint = key === 'sous_occupants' ? 'Une ligne par personne : nom et prénom | date du contrat (JJ/MM/AAAA)' : 'Une ligne par colocataire : habitant | chambre | montant'; return <label key={key} className="block text-sm"><span className="mb-1 block font-semibold">{item.description || humanizeVariable(key)}{isOptional ? '' : ' *'}</span>{isBool ? <select value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="true">Oui</option><option value="false">Non</option></select> : isList || isLong ? <><textarea rows={3} value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} placeholder={isList ? listHint : undefined} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" />{isList && <span className="text-xs text-muted-foreground">{listHint}</span>}</> : <input type={isDate ? 'date' : item.type.toLowerCase().includes('nombre') || item.type.toLowerCase().includes('montant') ? 'number' : 'text'} value={fields[fieldKey] || ''} onChange={(event) => updateField(fieldKey, event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5" />}</label> })}</section>}
+                {(['autorisation_colocation', 'avenant_substitution'].includes(templateId) && fields.retribution_reduction === 'true') && field('loyer_total', 'Loyer mensuel total de référence (Ar)', true, 'number')}
+                {templateId === 'mandat_gestion' && fields.repartition_texte && mandatRent > 0 && repartitionTotal !== mandatRent && <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">La répartition saisie ({repartitionTotal.toLocaleString('fr-FR')} Ar) diffère du loyer total ({mandatRent.toLocaleString('fr-FR')} Ar). Vérifie les montants avant de continuer.</p>}
                 <div hidden={isAuxiliaryTemplate}>
                 {(profile === 'professionnel' || (profile === 'proprietaire' && fields.personne_morale === 'oui')) && <div className="grid gap-4 rounded-xl bg-muted/40 p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Informations professionnelles</h2>{field('nom_entreprise', 'Nom de l’entreprise', true)}{field('nif', 'NIF / identifiant professionnel')}{field('representant', 'Nom du représentant', true)}</div>}
                 {profile === 'professionnel' && field('date_mandat', 'Date du mandat signé', true, 'date')}
                 {profile === 'professionnel' && <div className="grid gap-4 rounded-xl bg-muted/40 p-4 sm:grid-cols-2">{field('forme_juridique', 'Forme juridique de la société', true)}{field('rcs', 'Numéro RCS', true)}{field('stat', 'Numéro STAT', true)}{field('adresse_entreprise', 'Siège social', true)}{field('mandataire_agrement', 'Numéro d’agrément / carte professionnelle')}{field('mandataire_rc_pro', 'Numéro de police RC professionnelle')}</div>}
                 {profile === 'proprietaire' && fields.personne_morale === 'oui' && field('representant_qualite', 'Qualité du représentant', true)}
-                {type === 'contrat' && profile === 'locataire' && <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Bail principal</h2>{field('bail_principal_proprietaire', 'Nom du Propriétaire du bail principal', true)}{field('bail_principal_date_effet', 'Date de début du bail principal', true, 'date')}{field('bail_principal_duree', 'Durée du bail principal', true)}{field('bail_principal_date_fin', 'Date de fin du bail principal', true, 'date')}{field('bail_principal_article', 'Article autorisant la sous-location', true)}</div>}
+                {type === 'contrat' && profile === 'locataire' && <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Bail principal</h2><p className="text-sm text-muted-foreground sm:col-span-2">L’Occupant principal se réfère à son contrat initial pour renseigner ces champs.</p>{field('bail_principal_proprietaire', 'Nom du Propriétaire du bail principal', true)}{field('bail_principal_date_effet', 'Date de début du bail principal', true, 'date')}{field('bail_principal_duree', 'Durée du bail principal', true)}{field('bail_principal_date_fin', 'Date de fin du bail principal', true, 'date')}{field('bail_principal_article', 'Article autorisant la sous-location', true)}</div>}
                 {profile === 'professionnel' && <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Propriétaire représenté</h2>{field('nom_proprietaire', 'Nom ou raison sociale du Propriétaire', true)}{field('cin_proprietaire', 'CIN ou immatriculation')}{field('adresse_proprietaire', 'Adresse du Propriétaire', true)}{field('telephone_proprietaire', 'Téléphone du Propriétaire')}{field('email_proprietaire', 'E-mail du Propriétaire', false, 'email')}</div>}
                 <div className="grid gap-4 rounded-xl border border-border p-4 sm:grid-cols-2">
                   <h2 className="font-bold sm:col-span-2">Demandeur</h2>
@@ -498,7 +534,11 @@ export default function ContratsEDL() {
                     <p className="text-xs text-muted-foreground sm:col-span-2">Le cahier prévoit un contrat et un paiement par sous-occupant. Pour plusieurs personnes, une demande distincte doit être faite pour chacune.</p>
                     <label className="block text-sm"><span className="mb-1 block font-semibold">Qui choisit les colocataires ? *</span><select required value={fields.choix_colocataires} onChange={(event) => updateField('choix_colocataires', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option>{profile === 'professionnel' ? <><option value="gestionnaire_seul">Le Mandataire seul</option><option value="mandant_valide">Le Mandant valide</option></> : <><option value="gestionnaire_seul">Le gestionnaire seul</option><option value="gestionnaire_presel_proprietaire_valide">Le gestionnaire présélectionne, le Propriétaire valide</option><option value="proprietaire_seul">Le Propriétaire seul</option></>}</select></label>
                     {fields.choix_colocataires === 'gestionnaire_presel_proprietaire_valide' && field('delai_validation', 'Délai de validation (jours)', true, 'number')}
+                    {profile === 'locataire' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">L’Autorisation de colocation entre l’Occupant principal et le Propriétaire est-elle signée ? *</span><select required value={fields.autorisation_signee} onChange={(event) => updateField('autorisation_signee', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui, elle est signée</option><option value="non">Non, je dois l’établir</option></select></label>}
                     {profile === 'professionnel' && <label className="block text-sm sm:col-span-2"><span className="mb-1 block font-semibold">Mandat de gestion signé et pouvoir de signer ? *</span><select required value={fields.pouvoir_signature} onChange={(event) => updateField('pouvoir_signature', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select>{fields.pouvoir_signature === 'non' && <span className="mt-2 block text-amber-800">Le Mandacolocs nécessite un mandat signé. Faites établir le Mandat de gestion avant de poursuivre.</span>}</label>}
+                    <fieldset className="sm:col-span-2"><legend className="mb-2 font-bold">Documents communs inclus dans le même paiement</legend><div className="grid gap-2 sm:grid-cols-2"><label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"><input type="checkbox" checked={fields.inclure_charte === 'oui'} onChange={(event) => updateField('inclure_charte', event.target.checked ? 'oui' : 'non')} />Générer une charte de colocation par occupant</label><label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"><input type="checkbox" checked={fields.inclure_attestation_logement === 'oui'} onChange={(event) => updateField('inclure_attestation_logement', event.target.checked ? 'oui' : 'non')} />Générer une attestation de logement</label>{fields.modes_reglement.split(';').map((item) => item.trim()).includes('Espèces') && <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"><input type="checkbox" checked={fields.inclure_attestation_especes === 'oui'} onChange={(event) => updateField('inclure_attestation_especes', event.target.checked ? 'oui' : 'non')} />Joindre l’attestation de remise en espèces (2 exemplaires)</label>}</div><p className="mt-1 text-xs text-muted-foreground">L’état des lieux d’entrée est automatiquement joint au contrat. Ces documents sont préremplis et inclus dans le même paiement.</p></fieldset>
+                    {fields.inclure_charte === 'oui' && <fieldset className="grid gap-3 rounded-lg border border-border p-4 sm:col-span-2 sm:grid-cols-2"><legend className="px-1 font-bold">Règles de la charte</legend><label className="block text-sm">Horaires habituels<select value={fields.tranquillite_21h_6h} onChange={(event) => updateField('tranquillite_21h_6h', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">21 h à 6 h</option><option value="non">Autres horaires</option></select></label>{fields.tranquillite_21h_6h === 'non' && <>{field('tranquillite_debut', 'Heure de début', true)}{field('tranquillite_fin', 'Heure de fin', true)}</>}<label className="block text-sm">Limite des invités<select value={fields.invites_3_6} onChange={(event) => updateField('invites_3_6', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">3 nuits consécutives, 6 nuits par mois</option><option value="non">Autre limite</option></select></label>{fields.invites_3_6 === 'non' && field('invites_limite_nuits', 'Limite en nuits par mois', true, 'number')}<label className="block text-sm">Entretien<select value={fields.menage_planning} onChange={(event) => updateField('menage_planning', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">Planning tournant</option><option value="non">Service de ménage</option></select></label>{(['tabac_exterieur', 'tabac_interieur_communs', 'tabac_interieur_privatifs'] as const).map((key) => <label key={key} className="block text-sm">{key === 'tabac_exterieur' ? 'Tabac autorisé à l’extérieur' : key === 'tabac_interieur_communs' ? 'Tabac autorisé dans les espaces communs' : 'Tabac autorisé dans les espaces privatifs'}<select value={fields[key]} onChange={(event) => updateField(key, event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label>)}<label className="block text-sm">Tabac dans des espaces désignés<select value={fields.tabac_espaces_designes} onChange={(event) => updateField('tabac_espaces_designes', event.target.value)} className="mt-1 w-full rounded-lg border border-border px-3 py-2"><option value="">Choisir…</option><option value="oui">Oui</option><option value="non">Non</option></select></label>{fields.tabac_espaces_designes === 'oui' && field('tabac_espaces', 'Espaces désignés', true)}</fieldset>}
+                    {fields.inclure_attestation_logement === 'oui' && profile === 'professionnel' && field('gestionnaire_date_naissance', 'Date de naissance du Mandataire', true, 'date')}
                     {profile === 'proprietaire' && <label className="block text-sm"><span className="mb-1 block font-semibold">Le Propriétaire est une société ? *</span><select required value={fields.personne_morale} onChange={(event) => updateField('personne_morale', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="non">Non, personne physique</option><option value="oui">Oui, personne morale</option></select></label>}
                     <label className="block text-sm"><span className="mb-1 block font-semibold">Régime de responsabilité *</span><select required value={fields.solidarite} onChange={(event) => updateField('solidarite', event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5"><option value="">Choisir…</option><option value="Individuelle">Individuelle</option><option value="Solidaire">Collective (solidaire)</option></select>{profile !== 'locataire' && <span className="mt-1 block text-xs text-muted-foreground">Le régime choisi doit être identique pour tous les contrats du même logement.</span>}</label>
                     <h2 className="mt-3 font-bold sm:col-span-2">Conditions de location</h2>
@@ -514,6 +554,8 @@ export default function ContratsEDL() {
                     {field('duree_bail', 'Duree du bail', true)}
                     {field('mois_depot', 'Depot de garantie (nombre de mois)', true, 'number')}
                     {field('periodicite_revision', 'Periodicite de revision (annees)', true, 'number')}
+                    {profile === 'locataire' && <>{field('revision_date_anniversaire', 'Date anniversaire de révision du bail principal', true, 'date')}<p className="text-xs text-muted-foreground sm:col-span-2">L’Occupant principal se réfère à son contrat initial pour renseigner ces champs.</p></>}
+                    {profile === 'locataire' && <p className="text-xs text-muted-foreground sm:col-span-2">L’Occupant principal se réfère à son contrat initial pour renseigner ces champs.</p>}
                     {field('taux_revision', 'Taux de revision du loyer (%)', true, 'number')}
                     {field('preavis_bailleur', 'Preavis du bailleur (mois)', true, 'number')}
                     {field('jour_paiement', 'Jour limite de paiement', true, 'number')}
@@ -651,61 +693,15 @@ export default function ContratsEDL() {
                 </div>
                 {request.statut === 'valide' && request.statut_paiement === 'conforme' && (
                   <div className="w-full sm:max-w-md">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPasswordRequestId(passwordRequestId === request.id_demande ? null : request.id_demande)
-                        setPdfPassword('')
-                        setPdfPasswordConfirmation('')
-                        setError('')
-                      }}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-cyan px-3 py-2 text-sm font-bold text-brand-cyan-dark"
-                    >
-                      <Download className="h-4 w-4 shrink-0" />Télécharger le PDF chiffré
+                    <p className="mb-2 text-xs text-muted-foreground">Le lien de téléchargement est valable 15 minutes et peut être recréé à la demande.</p>
+                    <button type="button" onClick={() => void downloadFinalDocument(request)} disabled={downloadingDocumentId === request.id_demande} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-cyan px-3 py-2 text-sm font-bold text-brand-cyan-dark disabled:opacity-50">
+                      {downloadingDocumentId === request.id_demande ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 shrink-0" />}Télécharger le PDF/A
                     </button>
-                    {passwordRequestId === request.id_demande && (
-                      <form onSubmit={(event) => void downloadFinalDocument(event, request)} className="mt-3 space-y-3 rounded-lg bg-muted/40 p-3">
-                        <p className="text-xs text-muted-foreground">Définis le mot de passe qui servira à ouvrir et imprimer ce PDF. Il n’est pas enregistré : communique-le séparément au destinataire. Une archive PDF/A et son empreinte SHA-256 sont conservées en privé par Coloc’KOO.</p>
-                        <label className="block text-sm">
-                          <span className="mb-1 block font-semibold">Mot de passe (12 à 127 caractères) *</span>
-                          <input
-                            type="password"
-                            value={pdfPassword}
-                            onChange={(event) => setPdfPassword(event.target.value)}
-                            minLength={12}
-                            maxLength={127}
-                            pattern="[ -~]{12,127}"
-                            autoComplete="new-password"
-                            required
-                            className="w-full rounded-lg border border-border px-3 py-2.5"
-                          />
-                        </label>
-                        <label className="block text-sm">
-                          <span className="mb-1 block font-semibold">Confirmer le mot de passe *</span>
-                          <input
-                            type="password"
-                            value={pdfPasswordConfirmation}
-                            onChange={(event) => setPdfPasswordConfirmation(event.target.value)}
-                            minLength={12}
-                            maxLength={127}
-                            pattern="[ -~]{12,127}"
-                            autoComplete="new-password"
-                            required
-                            className="w-full rounded-lg border border-border px-3 py-2.5"
-                          />
-                        </label>
-                        <button
-                          type="submit"
-                          disabled={downloadingDocumentId === request.id_demande}
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-cyan px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
-                        >
-                          {downloadingDocumentId === request.id_demande ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                          Télécharger la copie protégée
-                        </button>
-                      </form>
-                    )}
                   </div>
                 )}
+                <button type="button" disabled={busy} onClick={() => void deleteRequest(request)} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50" aria-label="Supprimer de mon historique">
+                  <Trash2 className="h-4 w-4" /><span className="sm:hidden">Supprimer</span>
+                </button>
               </article>
             ))}
             {requests.length === 0 && <p className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">Aucune demande de document pour le moment.</p>}

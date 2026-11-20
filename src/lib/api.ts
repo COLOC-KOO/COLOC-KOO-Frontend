@@ -75,6 +75,7 @@ export interface ContractDocumentRequest {
     moyen_paiement?: string | null
     reference_operateur?: string | null
     has_payment_proof?: boolean
+    has_archive?: boolean
     date_creation: string
     nom?: string
     prenom?: string
@@ -1531,11 +1532,14 @@ export const api = {
             body,
         })
     },
-    getContractDocumentRequestDocument(id: number, password: string) {
-        return requestBlob(`/documents-contractuels/${id}/document`, {
-            method: 'POST',
-            body: JSON.stringify({ password }),
-        })
+    createContractDocumentDownloadLink(id: number) {
+        return request<{ token: string; expires_in_seconds: number }>(`/documents-contractuels/${id}/download-link`, { method: 'POST' })
+    },
+    getContractDocumentByDownloadToken(token: string) {
+        return requestBlob(`/documents-contractuels/download/${encodeURIComponent(token)}`)
+    },
+    deleteContractDocumentRequest(id: number) {
+        return request<{ ok: boolean }>(`/documents-contractuels/${id}`, { method: 'DELETE' })
     },
     backofficeContractDocumentRequests() {
         return request<ContractDocumentRequest[]>('/backoffice/documents-contractuels')
