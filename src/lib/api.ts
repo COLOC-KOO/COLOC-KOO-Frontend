@@ -806,10 +806,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     return data as T
 }
 
-async function requestText(path: string, options: RequestInit = {}): Promise<string> {
-    return request<string>(path, options)
-}
-
 async function requestBlob(path: string, options: RequestInit = {}): Promise<Blob> {
     const token = getToken()
     const headers = new Headers(options.headers)
@@ -1517,7 +1513,7 @@ export const api = {
         donnees: Record<string, string>
         clauses_ids: number[]
     }) {
-        return requestText('/documents-contractuels/preview', {
+        return request<{ pages: string[] }>('/documents-contractuels/preview', {
             method: 'POST',
             body: JSON.stringify(payload),
         })
