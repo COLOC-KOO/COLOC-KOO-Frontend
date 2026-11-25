@@ -440,6 +440,7 @@ export default function Annonces() {
   }, [location.search]);
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     setError("");
     const params: any = {
@@ -455,20 +456,30 @@ export default function Annonces() {
 
     // Les villes alimentent les filtres et l'autocomplete : on ne veut pas
     // qu'un échec du chargement des annonces les fasse disparaître aussi.
-    api.villes().catch(() => []).then(setVilles);
+    api.villes().catch(() => []).then((available) => {
+      if (!cancelled) setVilles(available);
+    });
 
     api
       .annonces(params)
       .then((annonces) => {
+        if (cancelled) return;
         setListings(
           annonces.map(annonceToListing).sort((a, b) => Number(Boolean(b.isBoosted)) - Number(Boolean(a.isBoosted)))
         );
       })
       .catch(() => {
+        if (cancelled) return;
         setListings([]);
         setError("Impossible de charger les annonces pour le moment. Réessaie dans quelques instants.");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [city, district, type, minPrice, maxPrice, query, colocFilter, t]);
 
   useEffect(() => {
@@ -665,8 +676,10 @@ export default function Annonces() {
     return count;
   }, [city, district, type, selectedServices, selectedEquipments, minPrice, maxPrice, colocFilter]);
 
-  const emptyMessage = city || query ? "Aucune annonce disponible." : t("annonces:emptySub");
   const searchedCityLabel = city || query;
+  const emptyMessage = searchedCityLabel
+    ? t("annonces:emptyInLocation", { location: searchedCityLabel })
+    : t("annonces:emptySub");
 
   const MobileFilters = () => (
     <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setShowMobileFilters(false)}>
@@ -1101,7 +1114,7 @@ export default function Annonces() {
           <div className="bg-white px-4 pb-4">
             <Link
               to={`/profils-recherche-logement?ville=${encodeURIComponent(searchedCityLabel)}`}
-              className="mx-auto inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-green-700"
+              className="mx-auto flex w-fit items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-green-700"
             >
               <Users className="h-4 w-4 text-white" />
               Voir les profils qui recherchent aussi à {searchedCityLabel}
@@ -1118,7 +1131,7 @@ export default function Annonces() {
           />
         ) : (
           <div className="flex-1 px-4 py-5">
-            <div className="mb-4 flex items-center justify-between">
+            <div className={`mb-4 flex items-center ${visibleListings.length === 0 ? "justify-center text-center" : "justify-between"}`}>
               <h2 className="font-bebas text-xl text-sc-dark tracking-wide">
                 {visibleListings.length} annonce{visibleListings.length > 1 ? "s" : ""}
               </h2>
@@ -1132,7 +1145,7 @@ export default function Annonces() {
                 {searchedCityLabel && (
                   <Link
                     to={`/depot_annonce?ville=${encodeURIComponent(searchedCityLabel)}`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-sc-cy px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-sc-cy-d"
+                    className="inline-flex items-center gap-2 rounded-xl bg-brand-cyan px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-brand-cyan-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan focus-visible:ring-offset-2"
                   >
                     <PlusCircle className="h-4 w-4" />
                     Déposer une annonce

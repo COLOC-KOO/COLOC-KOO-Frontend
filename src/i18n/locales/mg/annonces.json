@@ -7,6 +7,7 @@
   "loading": "Fikarohana mitohy...",
   "empty": "Tsy misy fampilazana hita",
   "emptySub": "Andramo ovaina ny sivanao",
+  "emptyInLocation": "Tsy misy trano atolotra ao « {{location}} » amin’izao fotoana izao. Andramo tanàna hafa na miverena afaka kelikely.",
   "postCta": "Tsindrio eto raha toa ka hametraka fampilazana sy hitady maimaim-poana ny mpiara-manofa tranonao manaraka. ",
   "filters": {
     "types": {

@@ -23,7 +23,7 @@ type HomeHeroProps = {
   suggestions: HomeLocationSuggestion[]
   searchingLocations: boolean
   locationSearchError: string
-  onSearch: () => void
+  onSearch: (location?: HomeLocationSuggestion) => void
 }
 
 function normalizeCity(value: string) {
@@ -47,6 +47,7 @@ export function HomeHero({
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hasSelectedCity, setHasSelectedCity] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState<HomeLocationSuggestion | undefined>()
   const [searchMessage, setSearchMessage] = useState('')
   const [activeSuggestion, setActiveSuggestion] = useState(0)
   const { t } = useTranslation(['home', 'common'])
@@ -71,6 +72,7 @@ export function HomeHero({
   const chooseLocation = (location: HomeLocationSuggestion) => {
     onSearchTermChange(location.label)
     setHasSelectedCity(true)
+    setSelectedLocation(location)
     setSearchMessage('')
     setShowSuggestions(false)
   }
@@ -80,7 +82,7 @@ export function HomeHero({
       setShowSuggestions(true)
       return
     }
-    onSearch()
+    onSearch(selectedLocation)
   }
 
   const filteredSuggestions = visibleSuggestions
@@ -88,6 +90,7 @@ export function HomeHero({
   const handleSearchTermChange = (value: string) => {
     onSearchTermChange(value)
     setHasSelectedCity(false)
+    setSelectedLocation(undefined)
     setActiveSuggestion(0)
     setShowSuggestions(true)
 

@@ -354,15 +354,16 @@ export default function Home() {
     (campaign) => String(campaign.id_ville ?? "") === selectedCityId,
   );
 
-  const handleSearch = () => {
+  const handleSearch = (location?: HomeLocationSuggestion) => {
     const query = searchTerm.trim();
 
     // === Mode "Je propose un logement" ===
     // On affiche les profils des candidats qui recherchent une colocation dans la ville.
     if (heroMode === "proposer") {
       const params = new URLSearchParams();
-      if (query) {
-        params.set("ville", query.replace(/\s+/g, " ").trim());
+      const selectedCity = location?.kind === "district" ? location.context : location?.label;
+      if (selectedCity || query) {
+        params.set("ville", (selectedCity || query).replace(/\s+/g, " ").trim());
       }
       navigate(`/profils-recherche-logement${params.toString() ? `?${params.toString()}` : ""}`);
       return;
@@ -376,7 +377,14 @@ export default function Home() {
 
     const params = new URLSearchParams();
     const normalizedQuery = query.replace(/\s+/g, " ").trim();
-    params.set("q", normalizedQuery);
+    if (location?.kind === "city") {
+      params.set("ville", location.label);
+    } else if (location?.kind === "district") {
+      if (location.context) params.set("ville", location.context);
+      params.set("quartier", location.label);
+    } else {
+      params.set("q", normalizedQuery);
+    }
     if (searchType) {
       params.set("type", searchType);
     }
