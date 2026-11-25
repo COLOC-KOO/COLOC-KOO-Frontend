@@ -530,7 +530,7 @@ const steps = stepsForRole(role)
 
   useEffect(() => {
     const query = locVille.trim()
-    if (query.length < 3 || selectedCity?.nom_ville === query) {
+    if (!query || selectedCity?.nom_ville === query) {
       setCitySuggestions([])
       setSearchingCities(false)
       return
@@ -555,7 +555,7 @@ const steps = stepsForRole(role)
         .finally(() => {
           if (!cancelled) setSearchingCities(false)
         })
-    }, 500)
+    }, 250)
 
     return () => {
       cancelled = true
@@ -589,25 +589,49 @@ const steps = stepsForRole(role)
     setPendingCitySuggestion(null)
     setLocVille(city.nom_ville)
     setCitySuggestions([])
-    setFocus([suggestion.latitude, suggestion.longitude])
-    setPin({ x: suggestion.latitude, y: suggestion.longitude })
+    if (Number.isFinite(suggestion.latitude) && Number.isFinite(suggestion.longitude)) {
+      const coordinates: [number, number] = [suggestion.latitude!, suggestion.longitude!]
+      setFocus(coordinates)
+      setPin({ x: coordinates[0], y: coordinates[1] })
+    }
     setUserMovedPin(false)
   }
 
   async function chooseCity(suggestion: VilleSuggestion) {
     setCitySuggestionsOpen(false)
     setCitySearchError('')
+    if (typeof suggestion.id_ville === 'number') {
+      applyCitySelection({
+        id_ville: suggestion.id_ville,
+        id_region: suggestion.id_region ?? 0,
+        nom_ville: suggestion.nom_ville,
+        nom_region: suggestion.nom_region,
+      }, suggestion)
+      return
+    }
+
     if (!user) {
+      if (!suggestion.osm_type || !suggestion.osm_id) {
+        setCitySearchError(t('depot:logement.errors.cityResolve'))
+        return
+      }
       setSelectedCity(null)
       setPendingCitySuggestion(suggestion)
       setLocVille(suggestion.nom_ville)
       setCitySuggestions([])
-      setFocus([suggestion.latitude, suggestion.longitude])
-      setPin({ x: suggestion.latitude, y: suggestion.longitude })
+      if (Number.isFinite(suggestion.latitude) && Number.isFinite(suggestion.longitude)) {
+        const coordinates: [number, number] = [suggestion.latitude!, suggestion.longitude!]
+        setFocus(coordinates)
+        setPin({ x: coordinates[0], y: coordinates[1] })
+      }
       setUserMovedPin(false)
       return
     }
 
+    if (!suggestion.osm_type || !suggestion.osm_id) {
+      setCitySearchError(t('depot:logement.errors.cityResolve'))
+      return
+    }
     setPendingCitySuggestion(null)
     setResolvingCity(true)
     try {
@@ -626,6 +650,7 @@ const steps = stepsForRole(role)
 
   useEffect(() => {
     if (!user || !pendingCitySuggestion) return
+    if (!pendingCitySuggestion.osm_type || !pendingCitySuggestion.osm_id) return
     let cancelled = false
     setResolvingCity(true)
     api.resolveVilleSuggestion({
@@ -1634,7 +1659,7 @@ const steps = stepsForRole(role)
                   type="text"
                   role="combobox"
                   aria-autocomplete="list"
-                  aria-expanded={citySuggestionsOpen && locVille.trim().length >= 3 && !selectedCity && !pendingCitySuggestion}
+                  aria-expanded={citySuggestionsOpen && locVille.trim().length > 0 && !selectedCity && !pendingCitySuggestion}
                   aria-controls="listing-city-suggestions"
                   aria-activedescendant={
                     citySuggestions[activeCitySuggestion]
@@ -1677,7 +1702,7 @@ const steps = stepsForRole(role)
                   }}
                   required
                   />
-                  {citySuggestionsOpen && locVille.trim().length >= 3 && !selectedCity && !pendingCitySuggestion && (
+                  {citySuggestionsOpen && locVille.trim().length > 0 && !selectedCity && !pendingCitySuggestion && (
                   <div id="listing-city-suggestions" className="city-suggestions" role="listbox">
                     {searchingCities || resolvingCity ? (
                       <div className="city-suggestion-status">
@@ -1689,7 +1714,9 @@ const steps = stepsForRole(role)
                       <>
                         {citySuggestions.map((suggestion, index) => (
                           <button
-                            key={`${suggestion.osm_type}-${suggestion.osm_id}`}
+                            key={suggestion.id_ville != null
+                              ? `ville-${suggestion.id_ville}`
+                              : `${suggestion.osm_type}-${suggestion.osm_id}`}
                             id={`listing-city-option-${index}`}
                             type="button"
                             role="option"

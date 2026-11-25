@@ -376,13 +376,15 @@ export interface Ville {
 }
 
 export interface VilleSuggestion {
-    osm_type: 'N' | 'W' | 'R'
-    osm_id: number
+    id_ville?: number
+    id_region?: number
+    osm_type?: 'N' | 'W' | 'R'
+    osm_id?: number
     nom_ville: string
     nom_region: string
-    latitude: number
-    longitude: number
-    display_name: string
+    latitude?: number
+    longitude?: number
+    display_name?: string
 }
 
 export interface CreateAlertePayload {
