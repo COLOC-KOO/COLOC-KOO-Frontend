@@ -164,6 +164,7 @@ export function MapView({ listings, activeListingId, onListingHover, onListingCl
         'majunga': [-15.7167, 46.3167],
         'toliara': [-23.3515, 43.6667],
         'tulear': [-23.3515, 43.6667],
+        'toliary': [-23.3515, 43.6667],
         'antsirabe': [-19.8650, 47.0333],
         'diego suarez': [-12.2781, 49.2917],
         'antsiranana': [-12.2781, 49.2917],

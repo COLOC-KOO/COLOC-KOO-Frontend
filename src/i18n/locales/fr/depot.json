@@ -106,7 +106,10 @@
     "refineLabel": "Affiner son emplacement",
     "refineHint": "En fonction de son emplacement, ton logement peut gagner en intérêt. Alors sois précis.",
     "cityLabel": "Ville",
-    "cityPlaceholder": "Choisir une ville",
+    "cityPlaceholder": "Saisis une ville de Madagascar",
+    "citySearching": "Recherche des villes…",
+    "cityNoResults": "Aucune ville trouvée. Essaie une autre orthographe.",
+    "cityPendingLogin": "La ville sera ajoutée après ta connexion.",
     "neighborhoodLabel": "Quartier",
     "neighborhoodPlaceholder": "Ex. Isoraka",
     "addressLabel": "Adresse ou repère (facultatif)",
@@ -117,6 +120,8 @@
     "errors": {
       "locationRequired": "Merci de placer ton logement sur la carte (obligatoire).",
       "citiesLoad": "Impossible de charger la liste des villes.",
+      "citySearch": "Impossible de rechercher des villes pour le moment.",
+      "cityResolve": "Impossible d’enregistrer la ville sélectionnée.",
       "fieldsRequired": "Merci de compléter tous les champs obligatoires (*) avant de continuer."
     }
   },

@@ -375,6 +375,16 @@ export interface Ville {
     nom_region: string
 }
 
+export interface VilleSuggestion {
+    osm_type: 'N' | 'W' | 'R'
+    osm_id: number
+    nom_ville: string
+    nom_region: string
+    latitude: number
+    longitude: number
+    display_name: string
+}
+
 export interface CreateAlertePayload {
     id_utilisateur: number
     id_ville: number | null
@@ -1166,6 +1176,15 @@ export const api = {
     },
     villes() {
         return request<Ville[]>('/meta/villes')
+    },
+    suggestVilles(query: string) {
+        return request<VilleSuggestion[]>(`/geocode/cities?q=${encodeURIComponent(query)}`)
+    },
+    resolveVilleSuggestion(payload: Pick<VilleSuggestion, 'osm_type' | 'osm_id'>) {
+        return request<Ville>('/geocode/cities/resolve', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
     },
     createAlerte(payload: CreateAlertePayload) {
         return request<{ ok: boolean; id: number }>('/alertes', {

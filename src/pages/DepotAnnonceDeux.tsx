@@ -46,7 +46,7 @@ import 'leaflet/dist/leaflet.css'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 import { SiteLayout } from '../components/site/SiteLayout'
-import { api, type ApiAnnonce, type Ville } from '../lib/api'
+import { api, type ApiAnnonce, type Ville, type VilleSuggestion } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { geocodeAddress } from '../lib/geocoding'
 import { cn } from '../lib/utils'
@@ -230,32 +230,6 @@ function deriveVilleFromAddress(addr: string): string {
   return parts[parts.length - 1]
 }
 
-async function geocodeMadagascar(query: string): Promise<[number, number] | null> {
-  try {
-    const base = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1'
-    const normalizedQuery = query.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-    const isToliaraQuery = /\b(toliara|tulear|toliary)\b/.test(normalizedQuery)
-    const urls = [
-      `${base}&countrycodes=mg&q=${encodeURIComponent(query)}`,
-      ...(isToliaraQuery ? [`${base}&countrycodes=mg&q=${encodeURIComponent('Toliara, Madagascar')}`] : []),
-      `${base}&q=${encodeURIComponent(`${query}, Madagascar`)}`,
-    ]
-    for (const url of urls) {
-      const res = await fetch(url, { headers: { 'Accept-Language': 'fr' } })
-      if (!res.ok) continue
-      const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) {
-        const lat = parseFloat(data[0].lat)
-        const lon = parseFloat(data[0].lon)
-        if (Number.isFinite(lat) && Number.isFinite(lon)) return [lat, lon]
-      }
-    }
-    return null
-  } catch {
-    return null
-  }
-}
-
 /* ---------------------------------------------------------------------- */
 /*  VRAIE carte Leaflet — tuiles OSM, repère déplaçable, recentrage auto   */
 /* ---------------------------------------------------------------------- */
@@ -273,9 +247,27 @@ function MapController({ target }: { target: [number, number] | null }) {
   const key = target ? target.join(',') : ''
   useEffect(() => {
     if (!target) return
+    map.invalidateSize({ pan: false })
     map.flyTo(target, Math.max(map.getZoom(), 15), { duration: 0.9 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
+  return null
+}
+
+function MapResizeHandler() {
+  const map = useMap()
+  useEffect(() => {
+    const invalidateSize = () => map.invalidateSize({ pan: false })
+    const frame = window.requestAnimationFrame(invalidateSize)
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(invalidateSize)
+      : null
+    observer?.observe(map.getContainer())
+    return () => {
+      window.cancelAnimationFrame(frame)
+      observer?.disconnect()
+    }
+  }, [map])
   return null
 }
 
@@ -320,6 +312,7 @@ function InteractiveMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <ZoomControl position="bottomright" />
+        <MapResizeHandler />
         <MapController target={focus} />
         {/* Clic sur la carte = geste utilisateur → onUserMovePin */}
         <MapClickCatcher onUserPick={(lat, lng) => onUserMovePin({ x: lat, y: lng })} />
@@ -523,32 +516,61 @@ const steps = stepsForRole(role)
   const [locAddr, setLocAddr] = useState('')
   const [locVille, setLocVille] = useState('')
   const [locQuartier, setLocQuartier] = useState('')
-  const [cityOptions, setCityOptions] = useState<Ville[]>([])
+  const [selectedCity, setSelectedCity] = useState<Ville | null>(null)
+  const [pendingCitySuggestion, setPendingCitySuggestion] = useState<VilleSuggestion | null>(null)
+  const [citySuggestions, setCitySuggestions] = useState<VilleSuggestion[]>([])
+  const [activeCitySuggestion, setActiveCitySuggestion] = useState(0)
+  const [citySuggestionsOpen, setCitySuggestionsOpen] = useState(false)
+  const [searchingCities, setSearchingCities] = useState(false)
+  const [resolvingCity, setResolvingCity] = useState(false)
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>([])
-  const [cityLoadError, setCityLoadError] = useState('')
+  const [citySearchError, setCitySearchError] = useState('')
   const [pin, setPin] = useState<{ x: number; y: number } | null>(null)
   const [focus, setFocus] = useState<[number, number] | null>(null)
 
   useEffect(() => {
+    const query = locVille.trim()
+    if (query.length < 3 || selectedCity?.nom_ville === query) {
+      setCitySuggestions([])
+      setSearchingCities(false)
+      return
+    }
+
     let cancelled = false
-    api.villes()
-      .then((villes) => {
-        if (!cancelled) setCityOptions(villes)
-      })
-      .catch((error) => {
-        if (!cancelled) setCityLoadError(error instanceof Error ? error.message : t('depot:logement.errors.citiesLoad'))
-      })
-    return () => { cancelled = true }
-  }, [t])
+    const timer = window.setTimeout(() => {
+      setCitySearchError('')
+      api.suggestVilles(query)
+        .then((suggestions) => {
+          if (!cancelled) {
+            setCitySuggestions(suggestions)
+            setActiveCitySuggestion(0)
+          }
+        })
+        .catch((error) => {
+          if (!cancelled) {
+            setCitySuggestions([])
+            setCitySearchError(error instanceof Error ? error.message : t('depot:logement.errors.citySearch'))
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setSearchingCities(false)
+        })
+    }, 500)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [locVille, selectedCity, t])
 
   useEffect(() => {
     let cancelled = false
-    if (!locVille) {
+    if (!selectedCity) {
       setNeighborhoodOptions([])
       return
     }
 
-    api.annonces({ ville: locVille, statut: 'active' })
+    api.annonces({ ville: selectedCity.nom_ville, statut: 'active' })
       .then((annonces) => {
         if (cancelled) return
         setNeighborhoodOptions(
@@ -560,7 +582,70 @@ const steps = stepsForRole(role)
         if (!cancelled) setNeighborhoodOptions([])
       })
     return () => { cancelled = true }
-  }, [locVille])
+  }, [selectedCity])
+
+  function applyCitySelection(city: Ville, suggestion: VilleSuggestion) {
+    setSelectedCity(city)
+    setPendingCitySuggestion(null)
+    setLocVille(city.nom_ville)
+    setCitySuggestions([])
+    setFocus([suggestion.latitude, suggestion.longitude])
+    setPin({ x: suggestion.latitude, y: suggestion.longitude })
+    setUserMovedPin(false)
+  }
+
+  async function chooseCity(suggestion: VilleSuggestion) {
+    setCitySuggestionsOpen(false)
+    setCitySearchError('')
+    if (!user) {
+      setSelectedCity(null)
+      setPendingCitySuggestion(suggestion)
+      setLocVille(suggestion.nom_ville)
+      setCitySuggestions([])
+      setFocus([suggestion.latitude, suggestion.longitude])
+      setPin({ x: suggestion.latitude, y: suggestion.longitude })
+      setUserMovedPin(false)
+      return
+    }
+
+    setPendingCitySuggestion(null)
+    setResolvingCity(true)
+    try {
+      const city = await api.resolveVilleSuggestion({
+        osm_type: suggestion.osm_type,
+        osm_id: suggestion.osm_id,
+      })
+      applyCitySelection(city, suggestion)
+    } catch (error) {
+      setSelectedCity(null)
+      setCitySearchError(error instanceof Error ? error.message : t('depot:logement.errors.cityResolve'))
+    } finally {
+      setResolvingCity(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!user || !pendingCitySuggestion) return
+    let cancelled = false
+    setResolvingCity(true)
+    api.resolveVilleSuggestion({
+      osm_type: pendingCitySuggestion.osm_type,
+      osm_id: pendingCitySuggestion.osm_id,
+    })
+      .then((city) => {
+        if (!cancelled) applyCitySelection(city, pendingCitySuggestion)
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setPendingCitySuggestion(null)
+          setCitySearchError(error instanceof Error ? error.message : t('depot:logement.errors.cityResolve'))
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setResolvingCity(false)
+      })
+    return () => { cancelled = true }
+  }, [user, pendingCitySuggestion])
 
   // Distingue le positionnement AUTOMATIQUE (géocodage) du geste UTILISATEUR.
   // Le pin devient opaque seulement quand :
@@ -591,7 +676,6 @@ const steps = stepsForRole(role)
         } catch {
           coords = null
         }
-        if (!coords) coords = await geocodeMadagascar(query)
         if (coords) {
           setFocus(coords)
           // positionnement AUTO : on place le pin SANS activer userMovedPin
@@ -726,6 +810,8 @@ const steps = stepsForRole(role)
     if (draft.locAddr !== undefined) setLocAddr(draft.locAddr)
     if (draft.locVille !== undefined) setLocVille(draft.locVille)
     if (draft.locQuartier !== undefined) setLocQuartier(draft.locQuartier)
+    if (draft.selectedCity !== undefined) setSelectedCity(draft.selectedCity)
+    setPendingCitySuggestion(draft.pendingCitySuggestion ?? null)
     if (draft.pin !== undefined) setPin(draft.pin)
     if (draft.equipements !== undefined) setEquipements(draft.equipements)
     if (draft.internet !== undefined) setInternet(draft.internet)
@@ -873,12 +959,12 @@ const steps = stepsForRole(role)
   // La publication automatique n'a lieu qu'une fois le brouillon restauré
   // ET la personne réellement connectée.
   useEffect(() => {
-    if (!pendingAutoPublish || !user || autoPublishTriggered.current) return
+    if (!pendingAutoPublish || !user || pendingCitySuggestion || resolvingCity || autoPublishTriggered.current) return
     autoPublishTriggered.current = true
     setPendingAutoPublish(false)
     sessionStorage.removeItem(DEPOT_DRAFT_KEY)
     handlePublish()
-  }, [pendingAutoPublish, user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pendingAutoPublish, pendingCitySuggestion, resolvingCity, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ---------------------------------------------------------------- */
   /*  Validation par étape                                             */
@@ -928,7 +1014,8 @@ const steps = stepsForRole(role)
         role !== 'membre' && nbColocTotal === '' ? 'required-total-coloc' :
         !nbPieces.trim() || !Number.isFinite(Number(nbPieces)) || Number(nbPieces) < 1 ? 'required-room-count' :
         !locAddr.trim() ? 'listing-address' :
-        !cityOptions.some((ville) => ville.nom_ville === locVille) ? 'listing-city' :
+        (!selectedCity || selectedCity.nom_ville !== locVille.trim()) &&
+          (!pendingCitySuggestion || pendingCitySuggestion.nom_ville !== locVille.trim()) ? 'listing-city' :
         pin === null ? 'required-map-pin' : ''
       if (missingField) {
         setStepErr(
@@ -1054,6 +1141,7 @@ const steps = stepsForRole(role)
       savedAt: Date.now(),
       role, typeAnnonce, ambianceAge, ambiance, presentation,
       typeLogement, nbColoc, nbColocTotal, nbPieces, surfaceTotale, locAddr, locVille, locQuartier, pin,
+      selectedCity, pendingCitySuggestion,
       equipements, internet, parkingCars, parkingCarsCouvert, parkingMoto, parkingMotoCouvert,
       servicesPersonnel, servAutre, servAutreOn,
       sim, ckooIntegrated, ckooTotal, ckooChosenNames,
@@ -1081,10 +1169,13 @@ const steps = stepsForRole(role)
         return
       }
     }
-    const selectedCity = cityOptions.find((city) => city.nom_ville === locVille)
-    if (!selectedCity) return
+    if ((!selectedCity || selectedCity.nom_ville !== locVille.trim()) && !pendingCitySuggestion) return
     if (!user) {
       await persistDraftAndRedirect()
+      return
+    }
+    if (!selectedCity || selectedCity.nom_ville !== locVille.trim()) {
+      setCitySearchError(t('depot:logement.errors.cityResolve'))
       return
     }
     setSubmitting(true)
@@ -1295,6 +1386,7 @@ const steps = stepsForRole(role)
 
           <div className="draft-bar">
             <button
+              type="button"
               className="btn-draft"
               style={{ marginLeft: 'auto' }}
               onClick={() => setToastMessage(t('depot:draftSaved'))}
@@ -1535,18 +1627,99 @@ const steps = stepsForRole(role)
                 </p>
 
                 <label className="lbl" htmlFor="listing-city">{t('depot:logement.cityLabel')}<span className="req">*</span></label>
-                <select
+                <div className="city-autocomplete">
+                  <input
                   id="listing-city"
                   className="inp"
+                  type="text"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={citySuggestionsOpen && locVille.trim().length >= 3 && !selectedCity && !pendingCitySuggestion}
+                  aria-controls="listing-city-suggestions"
+                  aria-activedescendant={
+                    citySuggestions[activeCitySuggestion]
+                      ? `listing-city-option-${activeCitySuggestion}`
+                      : undefined
+                  }
+                  aria-busy={searchingCities || resolvingCity}
+                  autoComplete="off"
+                  placeholder={t('depot:logement.cityPlaceholder')}
                   style={{ marginBottom: 10 }}
                   value={locVille}
-                  onChange={(e) => setLocVille(e.target.value)}
+                  onFocus={() => setCitySuggestionsOpen(true)}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setLocVille(value)
+                    setSelectedCity(null)
+                    setPendingCitySuggestion(null)
+                    setCitySearchError('')
+                    setCitySuggestions([])
+                    setActiveCitySuggestion(0)
+                    setSearchingCities(value.trim().length >= 3)
+                    setPin(null)
+                    setFocus(null)
+                    setCitySuggestionsOpen(true)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'ArrowDown' && citySuggestions.length > 0) {
+                      event.preventDefault()
+                      setActiveCitySuggestion((index) => (index + 1) % citySuggestions.length)
+                    } else if (event.key === 'ArrowUp' && citySuggestions.length > 0) {
+                      event.preventDefault()
+                      setActiveCitySuggestion((index) => (index - 1 + citySuggestions.length) % citySuggestions.length)
+                    } else if (event.key === 'Enter') {
+                      event.preventDefault()
+                      const suggestion = citySuggestions[activeCitySuggestion]
+                      if (suggestion && !resolvingCity) void chooseCity(suggestion)
+                    } else if (event.key === 'Escape') {
+                      setCitySuggestionsOpen(false)
+                    }
+                  }}
                   required
-                >
-                  <option value="">{t('depot:logement.cityPlaceholder')}</option>
-                  {cityOptions.map((ville) => <option key={ville.id_ville} value={ville.nom_ville}>{ville.nom_ville}</option>)}
-                </select>
-                {cityLoadError && <p className="mb-2 text-sm text-red-600">{t('depot:logement.errors.citiesLoad')} {cityLoadError}</p>}
+                  />
+                  {citySuggestionsOpen && locVille.trim().length >= 3 && !selectedCity && !pendingCitySuggestion && (
+                  <div id="listing-city-suggestions" className="city-suggestions" role="listbox">
+                    {searchingCities || resolvingCity ? (
+                      <div className="city-suggestion-status">
+                        <Loader2 size={14} className="animate-spin" /> {t('depot:logement.citySearching')}
+                      </div>
+                    ) : citySearchError ? (
+                      <div className="city-suggestion-status city-suggestion-error">{citySearchError}</div>
+                    ) : citySuggestions.length > 0 ? (
+                      <>
+                        {citySuggestions.map((suggestion, index) => (
+                          <button
+                            key={`${suggestion.osm_type}-${suggestion.osm_id}`}
+                            id={`listing-city-option-${index}`}
+                            type="button"
+                            role="option"
+                            aria-selected={index === activeCitySuggestion}
+                            className="city-suggestion"
+                            onMouseEnter={() => setActiveCitySuggestion(index)}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => void chooseCity(suggestion)}
+                          >
+                            <MapPin size={14} />
+                            <span>{suggestion.nom_ville}</span>
+                            <small>{suggestion.nom_region}</small>
+                          </button>
+                        ))}
+                        <div className="city-suggestion-attribution">
+                          © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="city-suggestion-status">{t('depot:logement.cityNoResults')}</div>
+                    )}
+                  </div>
+                  )}
+                  {citySearchError && (!citySuggestionsOpen || locVille.trim().length < 3) && (
+                  <p className="mb-2 text-sm text-red-600">{citySearchError}</p>
+                  )}
+                  {pendingCitySuggestion && !user && (
+                    <p className="mb-2 text-sm text-blue-700">{t('depot:logement.cityPendingLogin')}</p>
+                  )}
+                </div>
 
                 <label className="lbl" htmlFor="listing-neighborhood">{t('depot:logement.neighborhoodLabel')}</label>
                 <input
@@ -1558,6 +1731,9 @@ const steps = stepsForRole(role)
                   style={{ marginBottom: 10 }}
                   value={locQuartier}
                   onChange={(e) => setLocQuartier(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') event.preventDefault()
+                  }}
                 />
                 <datalist id="quartiers-suggestions">
                   {(neighborhoodOptions.length
@@ -1577,6 +1753,9 @@ const steps = stepsForRole(role)
                   style={{ marginBottom: 10 }}
                   value={locAddr}
                   onChange={(e) => setLocAddr(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') event.preventDefault()
+                  }}
                 />
 
                 <InteractiveMap
@@ -1885,10 +2064,13 @@ const steps = stepsForRole(role)
                           onError={(event) => { event.currentTarget.src = LOGO_PLACEHOLDER }}
                         />
                       )}
+                      {i === 0 && (
+                        <span className="cover-label">{t('depot:photos.cover')}</span>
+                      )}
                       {!photoPreviews[i] && i !== 0 && (
                         <span className="ps-ph" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
                           <Camera size={22} />
-                          <span className="ps-t">{i === 0 ? t('depot:photos.cover') : t('depot:photos.photoN', { n: i + 1 })}</span>
+                          <span className="ps-t">{t('depot:photos.photoN', { n: i + 1 })}</span>
                         </span>
                       )}
                       {photoPreviews[i] && <img src={photoPreviews[i]!} alt={t('depot:photos.photoN', { n: i + 1 })} />}
@@ -2021,22 +2203,22 @@ const steps = stepsForRole(role)
           {/* NAV BUTTONS */}
           <div className="formnav">
             {cur > 0 && !isRenewal && (
-              <button className="btn-back" onClick={prevStep}>
+              <button type="button" className="btn-back" onClick={prevStep}>
                 <ArrowLeft size={16} /> {t('depot:back')}
               </button>
             )}
             {!isLast && !isRenewal && (
-              <button className="btn-next" onClick={nextStep}>
+              <button type="button" className="btn-next" onClick={nextStep}>
                 {t('depot:next')} <ArrowRight size={16} />
               </button>
             )}
             {isLast && !isRenewal && (
-              <button className="btn-publish" onClick={handlePublish} disabled={submitting || Boolean(publishedReference)}>
+              <button type="button" className="btn-publish" onClick={handlePublish} disabled={submitting || resolvingCity || Boolean(publishedReference)}>
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t('depot:publishButton')}
               </button>
             )}
             {isRenewal && !renewSuccess && (
-              <button className="btn-publish" onClick={handleRenouveler} disabled={renewing || loadingAnnonce}>
+              <button type="button" className="btn-publish" onClick={handleRenouveler} disabled={renewing || loadingAnnonce}>
                 {renewing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t('depot:renew')}
               </button>
             )}
@@ -2179,6 +2361,17 @@ const depotAnnonceDeuxCss = `
 .lbl .opt{font-weight:400;color:var(--gr2);font-size:11px;}
 .req{color:#cc3333;margin-left:2px;}
 .inp,.sel,.ta{width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 11px;font-size:13px;font-family:Arial,sans-serif;color:var(--dark);outline:none;background:#fff;}
+.city-autocomplete{position:relative;}
+.city-suggestions{position:absolute;top:calc(100% - 10px);left:0;right:0;z-index:60;max-height:240px;overflow-y:auto;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);}
+.city-suggestion{display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;border:0;border-bottom:1px solid #f0f0f0;background:#fff;color:var(--dark);text-align:left;cursor:pointer;}
+.city-suggestion:hover,.city-suggestion:focus{background:var(--cy-lt);outline:none;}
+.city-suggestion svg{flex-shrink:0;color:var(--cy);}
+.city-suggestion span{font-size:13px;font-weight:700;}
+.city-suggestion small{margin-left:auto;color:var(--gr2);font-size:11px;}
+.city-suggestion-status{display:flex;align-items:center;gap:7px;padding:12px;color:var(--gr2);font-size:12px;}
+.city-suggestion-error{color:#b42318;}
+.city-suggestion-attribution{padding:7px 10px;color:var(--gr2);font-size:10px;text-align:right;}
+.city-suggestion-attribution a{color:var(--cy);text-decoration:underline;}
 .inp:focus,.sel:focus,.ta:focus{border-color:var(--cy);}
 .ta{resize:vertical;min-height:90px;line-height:1.5;}
 .sel{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 11px center;padding-right:34px;cursor:pointer;}
@@ -2222,7 +2415,7 @@ const depotAnnonceDeuxCss = `
 .err.show{display:flex;}
 .realmap{position:relative;height:260px;border-radius:11px;overflow:hidden;border:1px solid var(--bd);background:#dce8d0;}
 .realmap .leaflet-container{height:100%;width:100%;}
-.dmap-hint{position:absolute;top:8px;left:10px;right:50px;font-size:10px;color:var(--gr1);background:rgba(255,255,255,.9);padding:5px 8px;border-radius:6px;display:flex;align-items:center;gap:5px;z-index:10;line-height:1.3;}
+.dmap-hint{position:absolute;top:8px;left:10px;right:50px;font-size:10px;color:var(--gr1);background:rgba(255,255,255,.9);padding:5px 8px;border-radius:6px;display:flex;align-items:center;gap:5px;z-index:10;line-height:1.3;pointer-events:none;}
 
 /* --- Sous-titres Localisation --- */
 .subtitle{margin:4px 0 6px;font-size:13px;font-weight:700;color:var(--dark);}
@@ -2235,7 +2428,7 @@ const depotAnnonceDeuxCss = `
 .photo-slot{aspect-ratio:4/3;border:2px dashed #cdd3c6;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;color:var(--gr2);background:#fafbf8;transition:all .15s;position:relative;overflow:hidden;}
 .photo-slot:hover{border-color:var(--cy);color:var(--cy);background:var(--cy-lt);}
 .photo-slot .ps-t{font-size:11px;font-weight:700;}
-.photo-slot.cover:after{content:"Couverture";position:absolute;top:6px;left:6px;background:var(--cy);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;}
+.photo-slot .cover-label{position:absolute;top:6px;left:6px;z-index:1;background:var(--cy);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;}
 .photo-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .photo-slot .photo-default{object-fit:contain;background:var(--cy-lt);padding:14px;}
 .photo-slot .ps-del{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:none;display:none;align-items:center;justify-content:center;cursor:pointer;font-size:13px;z-index:2;}
