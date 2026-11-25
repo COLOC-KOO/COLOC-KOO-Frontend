@@ -19,7 +19,6 @@ import {
   MessageCircleWarning,
   History,
   BarChart3,
-  Wrench,
   Store,
   Banknote,
   UserCog,
@@ -30,6 +29,7 @@ import {
   Rocket,
   EyeOff,
 } from "lucide-react";
+import { ServicesWandIcon } from "../ui/ServicesWandIcon";
 import { Logo } from "../Logo";
 import { roleLevel, useAuth } from "../../lib/auth";
 import { AccountSuspensionNotice } from "../site/AccountSuspensionNotice";
@@ -133,7 +133,7 @@ const navItems: NavSection[] = [
       {
         to: "/admin/services-colockoo",
         label: "Services Coloc'KOO",
-        icon: Wrench,
+        icon: ServicesWandIcon,
         // badge: 3,
         minRole: 2,
         description: "Acquisition et offres",
