@@ -306,28 +306,45 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }, [notificationOpen]);
 
   useEffect(() => {
+    let active = true;
     if (!searchQuery.trim()) {
       setSearchResults([]);
       setSearchOpen(false);
-      return;
+      return () => {
+        active = false;
+      };
     }
 
     const timer = window.setTimeout(async () => {
       setLoadingSearch(true);
       try {
         const results = await api.backofficeMembers({ q: searchQuery.trim() });
-        setSearchResults(results.slice(0, 5));
-        setSearchOpen(true);
+        if (active) {
+          setSearchResults(results.slice(0, 5));
+          setSearchOpen(true);
+        }
       } catch {
-        setSearchResults([]);
-        setSearchOpen(true);
+        if (active) {
+          setSearchResults([]);
+          setSearchOpen(true);
+        }
       } finally {
-        setLoadingSearch(false);
+        if (active) setLoadingSearch(false);
       }
     }, 250);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
   }, [searchQuery]);
+
+  const openMemberFromSearch = (member: BackofficeMember) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    navigate(`/admin/utilisateurs?userId=${encodeURIComponent(String(member.id))}`);
+  };
 
   const pendingPartnerRequests = partnerRequests.filter(
     (item) => item.statut === "en_attente",
@@ -586,9 +603,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                             .join(" ")
                             .trim() || result.email;
                         return (
-                          <div
+                          <button
                             key={result.id}
-                            className="px-3 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-0"
+                            type="button"
+                            role="option"
+                            aria-label={`Ouvrir la fiche de ${fullName}`}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => openMemberFromSearch(result)}
+                            className="w-full px-3 py-2.5 text-left hover:bg-white/5 border-b border-white/5 last:border-0 focus-visible:outline-none focus-visible:bg-white/10"
                           >
                             <div className="text-sm font-medium text-white">
                               {fullName}
@@ -599,7 +621,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                             <div className="text-[11px] uppercase tracking-wider text-brand-cyan mt-1">
                               {result.role}
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
