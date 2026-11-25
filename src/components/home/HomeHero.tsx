@@ -1,13 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Home, MapPin, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { LazyImage } from '../ui/LazyImage'
 import { LITE_HERO_GRADIENT } from '../ui/LazyBackgroundImage'
 import { useLiteMode } from '../../lib/useLiteMode'
+import type { VilleSuggestion } from '../../lib/api'
 import HeroImg from '../../assets/WhatsApp Image 2026-09-11 at 15.55.47.jpeg'
 import InstallAppPanel from '../../pages/compte/InstallAppPanel'
 
-type HomeHeroProps = { mode: 'chercher' | 'proposer'; onModeChange: (mode: 'chercher' | 'proposer') => void; searchTerm: string; onSearchTermChange: (value: string) => void; suggestions: string[]; onSearch: () => void }
+export type HomeLocationSuggestion = {
+  label: string
+  kind: 'city' | 'district'
+  context?: string
+  region?: string
+}
+
+type HomeHeroProps = {
+  mode: 'chercher' | 'proposer'
+  onModeChange: (mode: 'chercher' | 'proposer') => void
+  searchTerm: string
+  onSearchTermChange: (value: string) => void
+  suggestions: HomeLocationSuggestion[]
+  searchingLocations: boolean
+  locationSearchError: string
+  onSearch: () => void
+}
 
 function normalizeCity(value: string) {
   const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -16,12 +33,34 @@ function normalizeCity(value: string) {
     : normalized
 }
 
-export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, suggestions, onSearch }: HomeHeroProps) {
+export function HomeHero({
+  mode,
+  onModeChange,
+  searchTerm,
+  onSearchTermChange,
+  suggestions,
+  searchingLocations,
+  locationSearchError,
+  onSearch,
+}: HomeHeroProps) {
   const liteMode = useLiteMode()
+  const searchContainerRef = useRef<HTMLDivElement>(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hasSelectedCity, setHasSelectedCity] = useState(false)
   const [searchMessage, setSearchMessage] = useState('')
+  const [activeSuggestion, setActiveSuggestion] = useState(0)
   const { t } = useTranslation(['home', 'common'])
+
+  useEffect(() => {
+    function closeSuggestionsOnOutsideClick(event: PointerEvent) {
+      if (!searchContainerRef.current?.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', closeSuggestionsOnOutsideClick)
+    return () => document.removeEventListener('pointerdown', closeSuggestionsOnOutsideClick)
+  }, [])
   const heroTitle = t('home:hero.title')
   const highlightWord = 'colocation'
   const highlightIndex = heroTitle.toLowerCase().indexOf(highlightWord)
@@ -29,34 +68,32 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
   const titleHighlight = highlightIndex >= 0 ? heroTitle.slice(highlightIndex, highlightIndex + highlightWord.length) : ''
   const titleAfter = highlightIndex >= 0 ? heroTitle.slice(highlightIndex + highlightWord.length) : ''
   const visibleSuggestions = suggestions.slice(0, 8)
-  const chooseCity = (city: string) => { onSearchTermChange(city); setHasSelectedCity(true); setSearchMessage(''); setShowSuggestions(false) }
+  const chooseLocation = (location: HomeLocationSuggestion) => {
+    onSearchTermChange(location.label)
+    setHasSelectedCity(true)
+    setSearchMessage('')
+    setShowSuggestions(false)
+  }
   const submitSearch = () => {
     if (!hasSelectedCity) {
-      setSearchMessage('Choisissez d’abord une ville proposée.')
+      setSearchMessage(t('home:hero.selectLocation'))
       setShowSuggestions(true)
       return
     }
     onSearch()
   }
 
-  const filteredSuggestions = searchTerm
-    ? suggestions.filter((city) => normalizeCity(city).includes(normalizeCity(searchTerm))).slice(0, 8)
-    : visibleSuggestions
+  const filteredSuggestions = visibleSuggestions
 
   const handleSearchTermChange = (value: string) => {
     onSearchTermChange(value)
     setHasSelectedCity(false)
+    setActiveSuggestion(0)
     setShowSuggestions(true)
 
     const trimmedValue = value.trim()
     if (!trimmedValue) {
       setSearchMessage('')
-      return
-    }
-
-    const hasMatches = suggestions.some((city) => normalizeCity(city).includes(normalizeCity(trimmedValue)))
-    if (!hasMatches) {
-      setSearchMessage('Cette localité n’existe pas ou n’est pas encore disponible')
       return
     }
 
@@ -89,10 +126,10 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
         </h1>
         <p className="mb-5 text-[13px] italic text-white/65">{t('home:hero.subtitle')}</p>
         <div className="mb-4 flex flex-col gap-2.5 sm:flex-row">
-          <button type="button" onClick={() => { onModeChange('chercher'); setShowSuggestions(true) }} className={`flex items-center justify-center gap-1.5 rounded-3xl border-2 px-6 py-2.5 text-sm font-bold transition-all ${mode === 'chercher' ? 'border-brand-cyan bg-brand-cyan text-white' : 'border-white/50 bg-transparent text-white/85 hover:border-white hover:text-white'}`}><Users className="h-4 w-4" />{t('home:hero.search')}</button>
-          <button type="button" onClick={() => { onModeChange('proposer'); setShowSuggestions(true) }} className={`flex items-center justify-center gap-1.5 rounded-3xl border-2 px-6 py-2.5 text-sm font-bold transition-all ${mode === 'proposer' ? 'border-brand-green bg-brand-green text-white' : 'border-white/50 bg-transparent text-white/85 hover:border-white hover:text-white'}`}><Home className="h-4 w-4" />{t('home:hero.propose')}</button>
+          <button type="button" onClick={() => { onModeChange('chercher'); setShowSuggestions(false) }} className={`flex items-center justify-center gap-1.5 rounded-3xl border-2 px-6 py-2.5 text-sm font-bold transition-all ${mode === 'chercher' ? 'border-brand-cyan bg-brand-cyan text-white' : 'border-white/50 bg-transparent text-white/85 hover:border-white hover:text-white'}`}><Users className="h-4 w-4" />{t('home:hero.search')}</button>
+          <button type="button" onClick={() => { onModeChange('proposer'); setShowSuggestions(false) }} className={`flex items-center justify-center gap-1.5 rounded-3xl border-2 px-6 py-2.5 text-sm font-bold transition-all ${mode === 'proposer' ? 'border-brand-green bg-brand-green text-white' : 'border-white/50 bg-transparent text-white/85 hover:border-white hover:text-white'}`}><Home className="h-4 w-4" />{t('home:hero.propose')}</button>
         </div>
-        <div className="relative w-full max-w-[680px] sm:w-4/5">
+        <div ref={searchContainerRef} className="relative w-full max-w-[680px] sm:w-4/5">
           <form onSubmit={(event) => { event.preventDefault(); submitSearch() }}>
             <div className="flex items-center gap-2 rounded-xl bg-white py-1.5 pl-3.5 pr-1.5 shadow-lg">
               <MapPin className="h-5 w-5 shrink-0 text-brand-cyan" />
@@ -105,6 +142,26 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
                 onChange={(event) => handleSearchTermChange(event.target.value)}
                 onClick={() => setShowSuggestions(true)}
                 onFocus={() => setShowSuggestions(true)}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={showSuggestions}
+                aria-controls="home-location-suggestions"
+                aria-activedescendant={filteredSuggestions[activeSuggestion] ? `home-location-option-${activeSuggestion}` : undefined}
+                aria-busy={searchingLocations}
+                onKeyDown={(event) => {
+                  if (event.key === 'ArrowDown' && filteredSuggestions.length > 0) {
+                    event.preventDefault()
+                    setActiveSuggestion((index) => (index + 1) % filteredSuggestions.length)
+                  } else if (event.key === 'ArrowUp' && filteredSuggestions.length > 0) {
+                    event.preventDefault()
+                    setActiveSuggestion((index) => (index - 1 + filteredSuggestions.length) % filteredSuggestions.length)
+                  } else if (event.key === 'Enter' && showSuggestions && filteredSuggestions.length > 0 && !hasSelectedCity) {
+                    event.preventDefault()
+                    chooseLocation(filteredSuggestions[activeSuggestion])
+                  } else if (event.key === 'Escape') {
+                    setShowSuggestions(false)
+                  }
+                }}
                 className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-slate-400"
               />
               <button type="submit" className="shrink-0 rounded-lg bg-brand-green px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-green-dark">
@@ -112,19 +169,35 @@ export function HomeHero({ mode, onModeChange, searchTerm, onSearchTermChange, s
               </button>
             </div>
           </form>
-          {showSuggestions && filteredSuggestions.length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-[100] mt-1 overflow-hidden rounded-xl border border-gray-100 bg-white text-left shadow-xl">
-              {filteredSuggestions.map((city) => (
+          {showSuggestions && (searchTerm.trim() || filteredSuggestions.length > 0) && (
+            <div id="home-location-suggestions" role="listbox" className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-60 overflow-y-auto overscroll-contain rounded-xl border border-gray-100 bg-white text-left shadow-xl">
+              {searchingLocations ? (
+                <div className="px-3.5 py-3 text-xs text-slate-500">{t('home:hero.searchingLocations')}</div>
+              ) : filteredSuggestions.length > 0 ? filteredSuggestions.map((location, index) => (
                 <button
-                  key={city}
+                  key={`${location.kind}:${normalizeCity(location.label)}`}
+                  id={`home-location-option-${index}`}
                   type="button"
-                  onMouseDown={() => chooseCity(city)}
-                  className="flex w-full items-center gap-2 border-b border-gray-100 px-3.5 py-2.5 text-left text-sm text-foreground transition-colors last:border-none hover:bg-gray-50"
+                  role="option"
+                  aria-selected={index === activeSuggestion}
+                  onMouseEnter={() => setActiveSuggestion(index)}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => chooseLocation(location)}
+                  className={`flex w-full items-center gap-2 border-b border-gray-100 px-3.5 py-2.5 text-left text-sm text-foreground transition-colors last:border-none hover:bg-gray-50 ${index === activeSuggestion ? 'bg-gray-50' : ''}`}
                 >
                   <MapPin className="h-4 w-4 shrink-0 text-brand-cyan" />
-                  <span className="flex-1">{city}</span>
+                  <span className="flex-1">{location.label}</span>
+                  {location.context && <span className="text-xs text-slate-500">{location.context}</span>}
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">
+                    {location.kind === 'city' ? t('home:hero.city') : t('home:hero.district')}
+                  </span>
+                  {location.region && <span className="text-xs text-slate-500">{location.region}</span>}
                 </button>
-              ))}
+              )) : (
+                <div className="px-3.5 py-3 text-xs text-slate-500">
+                  {locationSearchError || t('home:hero.noLocationResults')}
+                </div>
+              )}
             </div>
           )}
         </div>
