@@ -421,6 +421,7 @@ const OffreModal = ({
                         <input
                             type="number"
                             min="0"
+                            step="100"
                             value={prixParJour}
                             onChange={(e) => setPrixParJour(parseInt(e.target.value) || 0)}
                             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
@@ -447,7 +448,7 @@ const OffreModal = ({
                                     type="number"
                                     min="0"
                                     max="100"
-                                    step="0.1"
+                                    step="1"
                                     value={reduction4Jours}
                                     onChange={(e) => setReduction4Jours(Number(e.target.value))}
                                     className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"
@@ -459,7 +460,7 @@ const OffreModal = ({
                                     type="number"
                                     min={reduction4Jours}
                                     max="100"
-                                    step="0.1"
+                                    step="1"
                                     value={reduction5Jours}
                                     onChange={(e) => setReduction5Jours(Number(e.target.value))}
                                     className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 outline-none focus:border-brand-cyan/50"

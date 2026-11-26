@@ -172,7 +172,8 @@ const BoosterModal = ({
             <label className="block text-sm text-white/60 mb-1">Prix (MGA)</label>
             <input
               type="number"
-              min="1"
+              min="0"
+              step="100"
               required
               value={prix}
               onChange={(e) => setPrix(parseInt(e.target.value) || 0)}

@@ -1952,6 +1952,8 @@ export default function AdminContratsEDL() {
                 </label>
                 <input
                   type="number"
+                  step="100"
+                  min="0"
                   value={newOffrePrix}
                   onChange={(e) => setNewOffrePrix(e.target.value)}
                   placeholder="Ex: 120000"
