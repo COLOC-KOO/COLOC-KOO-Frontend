@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -66,6 +66,8 @@ interface NavSection {
   minRole?: number;
   items: NavItem[];
 }
+
+let adminSidebarScrollTop = 0;
 
 // Tous les éléments de navigation de la maquette
 const navItems: NavSection[] = [
@@ -225,6 +227,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [showPartnerModal, setShowPartnerModal] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -246,6 +249,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const canManageServiceDemandes = viewRole >= 2;
   const location = useLocation();
   const navigate = useNavigate();
+
+  useLayoutEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+
+    sidebar.scrollTop = adminSidebarScrollTop;
+    const saveScrollPosition = () => {
+      adminSidebarScrollTop = sidebar.scrollTop;
+    };
+    sidebar.addEventListener("scroll", saveScrollPosition);
+
+    return () => sidebar.removeEventListener("scroll", saveScrollPosition);
+  }, []);
 
   // Filtrer les éléments de navigation selon le rôle
   const filteredNav = navItems
@@ -462,6 +478,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="flex">
         {/* Sidebar - comme dans la maquette */}
         <aside
+          ref={sidebarRef}
           id="admin-sidebar"
           className={`${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
