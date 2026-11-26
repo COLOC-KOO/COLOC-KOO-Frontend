@@ -2,7 +2,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell, Heart, FileText, Handshake, Wrench, Menu, X } from 'lucide-react'
+import { User, ChevronDown, Home, Search, Plus, Users, Phone, LogOut, UserCircle, Leaf, Bell, Heart, FileText, Handshake, Menu, X } from 'lucide-react'
+import { ServicesWandIcon } from '../ui/ServicesWandIcon'
 import { Logo, LogoMark, LogoName } from '../Logo'
 import { Button } from '../ui/Button'
 import { FlagIcon } from '../ui/FlagIcon'
@@ -474,7 +475,7 @@ export function SiteHeader() {
                         onClick={() => setUserMenuOpen(false)}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl hover:bg-muted transition-colors"
                       >
-                        <Wrench className="w-4 h-4 text-muted-foreground" />
+                        <ServicesWandIcon className="w-4 h-4 text-muted-foreground" />
                         <span>{t('colocKooServices', { ns: 'header' })}</span>
                       </Link>
                       {isColocataire && (
@@ -631,7 +632,7 @@ export function SiteHeader() {
                       <span className="text-sm font-semibold">{t('realEstateContracts', { ns: 'header' })}</span>
                     </Link>
                     <Link to="/services" className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted transition-colors" onClick={() => setOpen(false)}>
-                      <Wrench className="w-4 h-4 text-muted-foreground" />
+                      <ServicesWandIcon className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm font-semibold">{t('colocKooServices', { ns: 'header' })}</span>
                     </Link>
                     <button

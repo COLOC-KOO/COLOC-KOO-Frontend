@@ -75,6 +75,7 @@ export interface ContractDocumentRequest {
     moyen_paiement?: string | null
     reference_operateur?: string | null
     has_payment_proof?: boolean
+    has_archive?: boolean
     date_creation: string
     nom?: string
     prenom?: string
@@ -372,6 +373,18 @@ export interface Ville {
     nom_ville: string
     id_region: number
     nom_region: string
+}
+
+export interface VilleSuggestion {
+    id_ville?: number
+    id_region?: number
+    osm_type?: 'N' | 'W' | 'R'
+    osm_id?: number
+    nom_ville: string
+    nom_region: string
+    latitude?: number
+    longitude?: number
+    display_name?: string
 }
 
 export interface CreateAlertePayload {
@@ -1166,6 +1179,15 @@ export const api = {
     villes() {
         return request<Ville[]>('/meta/villes')
     },
+    suggestVilles(query: string) {
+        return request<VilleSuggestion[]>(`/geocode/cities?q=${encodeURIComponent(query)}`)
+    },
+    resolveVilleSuggestion(payload: Pick<VilleSuggestion, 'osm_type' | 'osm_id'>) {
+        return request<Ville>('/geocode/cities/resolve', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+    },
     createAlerte(payload: CreateAlertePayload) {
         return request<{ ok: boolean; id: number }>('/alertes', {
             method: 'POST',
@@ -1531,14 +1553,38 @@ export const api = {
             body,
         })
     },
-    getContractDocumentRequestDocument(id: number, password: string) {
-        return requestBlob(`/documents-contractuels/${id}/document`, {
+    uploadSignedContractAnnex(id: number, type: 'autorisation' | 'mandat', document: File) {
+        const body = new FormData()
+        body.set('document', document)
+        return request<{ ok: boolean; type: string }>(`/documents-contractuels/${id}/annexes/${type}`, {
             method: 'POST',
-            body: JSON.stringify({ password }),
+            body,
         })
+    },
+    createContractDocumentDownloadLink(id: number) {
+        return request<{ token: string; expires_in_seconds: number }>(`/documents-contractuels/${id}/download-link`, { method: 'POST' })
+    },
+    getContractDocumentByDownloadToken(token: string) {
+        return requestBlob(`/documents-contractuels/download/${encodeURIComponent(token)}`)
+    },
+    deleteContractDocumentRequest(id: number) {
+        return request<{ ok: boolean }>(`/documents-contractuels/${id}`, { method: 'DELETE' })
     },
     backofficeContractDocumentRequests() {
         return request<ContractDocumentRequest[]>('/backoffice/documents-contractuels')
+    },
+    getBackofficeContractTemplate(templateId: string) {
+        return request<{
+            template: { id: string; title: string }
+            paragraphs: Array<{ index: number; text: string }>
+            revisions: Array<{ id: number; version: number; edits: Record<string, string>; sha256: string; active: boolean; created_at: string }>
+        }>(`/backoffice/documents-contractuels/templates/${encodeURIComponent(templateId)}`)
+    },
+    saveBackofficeContractTemplate(templateId: string, edits: Record<string, string>) {
+        return request<{ ok: boolean; id: number; version: number; sha256: string }>(`/backoffice/documents-contractuels/templates/${encodeURIComponent(templateId)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ edits }),
+        })
     },
     async getBackofficeContractPaymentProof(id: number) {
         const token = getToken()

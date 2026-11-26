@@ -7,6 +7,7 @@
   "loading": "Recherche en cours...",
   "empty": "Aucune annonce trouvée",
   "emptySub": "Essayez de modifier vos filtres de recherche",
+  "emptyInLocation": "Aucune annonce n’est actuellement disponible à « {{location}} ». Essayez une autre ville ou revenez plus tard.",
   "postCta": "Cliquer ici pour déposer une annonce et trouver gratuitement vos prochains locataires.",
   "filters": {
     "types": {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -19,7 +19,6 @@ import {
   MessageCircleWarning,
   History,
   BarChart3,
-  Wrench,
   Store,
   Banknote,
   UserCog,
@@ -30,6 +29,7 @@ import {
   Rocket,
   EyeOff,
 } from "lucide-react";
+import { ServicesWandIcon } from "../ui/ServicesWandIcon";
 import { Logo } from "../Logo";
 import { roleLevel, useAuth } from "../../lib/auth";
 import { AccountSuspensionNotice } from "../site/AccountSuspensionNotice";
@@ -66,6 +66,8 @@ interface NavSection {
   minRole?: number;
   items: NavItem[];
 }
+
+let adminSidebarScrollTop = 0;
 
 // Tous les éléments de navigation de la maquette
 const navItems: NavSection[] = [
@@ -133,7 +135,7 @@ const navItems: NavSection[] = [
       {
         to: "/admin/services-colockoo",
         label: "Services Coloc'KOO",
-        icon: Wrench,
+        icon: ServicesWandIcon,
         // badge: 3,
         minRole: 2,
         description: "Acquisition et offres",
@@ -151,6 +153,13 @@ const navItems: NavSection[] = [
         icon: FileText,
         minRole: 2,
         description: "Documents et états des lieux",
+      },
+      {
+        to: "/admin/modeles-contrats",
+        label: "Modèles Contrats Immo",
+        icon: FileText,
+        minRole: 3,
+        description: "Édition des modèles et versions",
       },
       {
         to: "/admin/partenaires",
@@ -218,6 +227,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [showPartnerModal, setShowPartnerModal] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -239,6 +249,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const canManageServiceDemandes = viewRole >= 2;
   const location = useLocation();
   const navigate = useNavigate();
+
+  useLayoutEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+
+    sidebar.scrollTop = adminSidebarScrollTop;
+    const saveScrollPosition = () => {
+      adminSidebarScrollTop = sidebar.scrollTop;
+    };
+    sidebar.addEventListener("scroll", saveScrollPosition);
+
+    return () => sidebar.removeEventListener("scroll", saveScrollPosition);
+  }, []);
 
   // Filtrer les éléments de navigation selon le rôle
   const filteredNav = navItems
@@ -299,28 +322,45 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }, [notificationOpen]);
 
   useEffect(() => {
+    let active = true;
     if (!searchQuery.trim()) {
       setSearchResults([]);
       setSearchOpen(false);
-      return;
+      return () => {
+        active = false;
+      };
     }
 
     const timer = window.setTimeout(async () => {
       setLoadingSearch(true);
       try {
         const results = await api.backofficeMembers({ q: searchQuery.trim() });
-        setSearchResults(results.slice(0, 5));
-        setSearchOpen(true);
+        if (active) {
+          setSearchResults(results.slice(0, 5));
+          setSearchOpen(true);
+        }
       } catch {
-        setSearchResults([]);
-        setSearchOpen(true);
+        if (active) {
+          setSearchResults([]);
+          setSearchOpen(true);
+        }
       } finally {
-        setLoadingSearch(false);
+        if (active) setLoadingSearch(false);
       }
     }, 250);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
   }, [searchQuery]);
+
+  const openMemberFromSearch = (member: BackofficeMember) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    navigate(`/admin/utilisateurs?userId=${encodeURIComponent(String(member.id))}`);
+  };
 
   const pendingPartnerRequests = partnerRequests.filter(
     (item) => item.statut === "en_attente",
@@ -438,6 +478,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="flex">
         {/* Sidebar - comme dans la maquette */}
         <aside
+          ref={sidebarRef}
           id="admin-sidebar"
           className={`${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -579,9 +620,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                             .join(" ")
                             .trim() || result.email;
                         return (
-                          <div
+                          <button
                             key={result.id}
-                            className="px-3 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-0"
+                            type="button"
+                            role="option"
+                            aria-label={`Ouvrir la fiche de ${fullName}`}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => openMemberFromSearch(result)}
+                            className="w-full px-3 py-2.5 text-left hover:bg-white/5 border-b border-white/5 last:border-0 focus-visible:outline-none focus-visible:bg-white/10"
                           >
                             <div className="text-sm font-medium text-white">
                               {fullName}
@@ -592,7 +638,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                             <div className="text-[11px] uppercase tracking-wider text-brand-cyan mt-1">
                               {result.role}
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>

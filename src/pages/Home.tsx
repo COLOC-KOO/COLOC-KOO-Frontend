@@ -3,11 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { SiteLayout } from "../components/site/SiteLayout";
 import { Button } from "../components/ui/Button";
-import { api, annonceToListing, type ApiPartenaireCampagne, type Ville } from "../lib/api";
+import { api, annonceToListing, type ApiPartenaireCampagne, type Ville, type VilleSuggestion } from "../lib/api";
 import { CityInfo, Listing } from "../types";
 import { useAuth } from "../lib/auth";
 import { LOGO_PLACEHOLDER } from "../lib/placeholders";
-import { HomeHero } from "../components/home/HomeHero";
+import { HomeHero, type HomeLocationSuggestion } from "../components/home/HomeHero";
 import { FeaturedListingsSection } from "../components/home/FeaturedListingsSection";
 import { CitiesExploreSection } from "../components/home/CitiesExploreSection";
 import { HowItWorksSection } from "../components/home/HowItWorksSection";
@@ -17,6 +17,24 @@ import InstallAppPanel from "./compte/InstallAppPanel";
 const API_BASE_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:4000/api"
 ).replace(/\/api\/?$/, "");
+
+function normalizeLocation(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleLowerCase("fr");
+}
+
+function uniqueLocationSuggestions(suggestions: HomeLocationSuggestion[]) {
+  const seen = new Set<string>();
+  return suggestions.filter((suggestion) => {
+    const key = normalizeLocation(suggestion.label);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
 function normalizeCampaignImageUrl(value: string) {
   if (/^https?:\/\//i.test(value)) return value;
@@ -29,7 +47,10 @@ export default function Home() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("");
-  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [searchSuggestions, setSearchSuggestions] = useState<HomeLocationSuggestion[]>([]);
+  const [locationCandidates, setLocationCandidates] = useState<HomeLocationSuggestion[]>([]);
+  const [searchingLocations, setSearchingLocations] = useState(false);
+  const [locationSearchError, setLocationSearchError] = useState("");
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [cityCards, setCityCards] = useState<CityInfo[]>([]);
   const [partners, setPartners] = useState<ApiPartenaireCampagne[]>([]);
@@ -130,15 +151,26 @@ export default function Home() {
         setCampaigns(Array.isArray(campagnes) ? campagnes : []);
         setAvailableCities(villes);
 
-        const suggestionSet = new Set<string>();
+        const locationOptions: HomeLocationSuggestion[] = villes.map((ville) => ({
+          label: ville.nom_ville,
+          kind: "city",
+          region: ville.nom_region,
+        }));
         mapped.forEach((listing) => {
-          if (listing.city) suggestionSet.add(listing.city);
-          if (listing.district) suggestionSet.add(listing.district);
+          if (listing.city) {
+            locationOptions.push({ label: listing.city, kind: "city" });
+          }
+          if (listing.district) {
+            locationOptions.push({
+              label: listing.district,
+              kind: "district",
+              context: listing.city || undefined,
+            });
+          }
         });
-        villes.forEach((v) => {
-          if (v.nom_ville) suggestionSet.add(v.nom_ville);
-        });
-        setSearchSuggestions(Array.from(suggestionSet).slice(0, 50));
+        const uniqueLocations = uniqueLocationSuggestions(locationOptions);
+        setLocationCandidates(uniqueLocations);
+        setSearchSuggestions(uniqueLocations.slice(0, 8));
       })
       .catch((err) => {
         if (!cancelled) {
@@ -161,6 +193,58 @@ export default function Home() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const query = searchTerm.trim().replace(/\s+/g, " ");
+    const prefix = normalizeLocation(query);
+    if (!prefix) {
+      setSearchSuggestions(locationCandidates.slice(0, 8));
+      setSearchingLocations(false);
+      setLocationSearchError("");
+      return;
+    }
+
+    let cancelled = false;
+    const localMatches = locationCandidates.filter((candidate) =>
+      normalizeLocation(candidate.label).startsWith(prefix),
+    );
+    setSearchSuggestions(localMatches.slice(0, 8));
+    setLocationSearchError("");
+    setSearchingLocations(true);
+
+    const timer = window.setTimeout(() => {
+      api.suggestVilles(query)
+        .then((cities: VilleSuggestion[]) => {
+          if (cancelled) return;
+          const cityMatches: HomeLocationSuggestion[] = cities.map((city) => ({
+            label: city.nom_ville,
+            kind: "city",
+            region: city.nom_region,
+          }));
+          const localCities = localMatches.filter((candidate) => candidate.kind === "city");
+          const localDistricts = localMatches.filter((candidate) => candidate.kind === "district");
+          setSearchSuggestions(
+            uniqueLocationSuggestions([...localCities, ...cityMatches, ...localDistricts]).slice(0, 8),
+          );
+        })
+        .catch((requestError) => {
+          if (cancelled) return;
+          setLocationSearchError(
+            requestError instanceof Error
+              ? requestError.message
+              : t("home:hero.locationSearchError"),
+          );
+        })
+        .finally(() => {
+          if (!cancelled) setSearchingLocations(false);
+        });
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [searchTerm, locationCandidates, t]);
 
   useEffect(() => {
     if (!user) {
@@ -270,15 +354,16 @@ export default function Home() {
     (campaign) => String(campaign.id_ville ?? "") === selectedCityId,
   );
 
-  const handleSearch = () => {
+  const handleSearch = (location?: HomeLocationSuggestion) => {
     const query = searchTerm.trim();
 
     // === Mode "Je propose un logement" ===
     // On affiche les profils des candidats qui recherchent une colocation dans la ville.
     if (heroMode === "proposer") {
       const params = new URLSearchParams();
-      if (query) {
-        params.set("ville", query.replace(/\s+/g, " ").trim());
+      const selectedCity = location?.kind === "district" ? location.context : location?.label;
+      if (selectedCity || query) {
+        params.set("ville", (selectedCity || query).replace(/\s+/g, " ").trim());
       }
       navigate(`/profils-recherche-logement${params.toString() ? `?${params.toString()}` : ""}`);
       return;
@@ -292,7 +377,14 @@ export default function Home() {
 
     const params = new URLSearchParams();
     const normalizedQuery = query.replace(/\s+/g, " ").trim();
-    params.set("q", normalizedQuery);
+    if (location?.kind === "city") {
+      params.set("ville", location.label);
+    } else if (location?.kind === "district") {
+      if (location.context) params.set("ville", location.context);
+      params.set("quartier", location.label);
+    } else {
+      params.set("q", normalizedQuery);
+    }
     if (searchType) {
       params.set("type", searchType);
     }
@@ -314,6 +406,8 @@ export default function Home() {
         searchTerm={searchTerm}
         onSearchTermChange={setSearchTerm}
         suggestions={searchSuggestions}
+        searchingLocations={searchingLocations}
+        locationSearchError={locationSearchError}
         onSearch={handleSearch}
       />
       <section className="bg-brand-cyan-dark px-4 py-4 text-center">

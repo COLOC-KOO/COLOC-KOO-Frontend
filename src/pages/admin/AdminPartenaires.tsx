@@ -1302,7 +1302,7 @@ export default function AdminPartenaires() {
                       <input
                         type="number"
                         min="0"
-                        step="1"
+                        step="100"
                         required
                         value={partnerPricingDraft[level]}
                         onChange={(event) => setPartnerPricingDraft((current) => ({

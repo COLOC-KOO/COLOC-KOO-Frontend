@@ -106,7 +106,10 @@
     "refineLabel": "Fine-tune the location",
     "refineHint": "Depending on its location, your property can become more appealing. So be precise.",
     "cityLabel": "City",
-    "cityPlaceholder": "Choose a city",
+    "cityPlaceholder": "Type a city in Madagascar",
+    "citySearching": "Searching for cities…",
+    "cityNoResults": "No city found. Try a different spelling.",
+    "cityPendingLogin": "The city will be added after you sign in.",
     "neighborhoodLabel": "Neighborhood",
     "neighborhoodPlaceholder": "e.g. Isoraka",
     "addressLabel": "Address or landmark (optional)",
@@ -117,6 +120,8 @@
     "errors": {
       "locationRequired": "Please place your property on the map (required).",
       "citiesLoad": "Unable to load the list of cities.",
+      "citySearch": "Unable to search for cities right now.",
+      "cityResolve": "Unable to save the selected city.",
       "fieldsRequired": "Please fill in all required fields (*) before continuing."
     }
   },
@@ -241,7 +246,9 @@
     "welcomeBackConnected": "Welcome back! We are finalizing your listing publication…",
     "welcomeBackDraft": "Welcome back! Your draft has been restored — log in to publish it.",
     "errors": {
-      "engagementRequired": "You must confirm this commitment to continue."
+      "engagementRequired": "You must confirm this commitment to continue.",
+      "offerRequired": "Choose an offer before continuing.",
+      "emailRequired": "Add a valid email address to your account before publishing."
     }
   },
   "simulation": {

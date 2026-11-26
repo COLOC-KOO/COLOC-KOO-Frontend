@@ -66,12 +66,12 @@ export default function AdminUtilisateurs() {
     setSearchParams(searchParams, { replace: true })
   }
 
-  // Liens profonds depuis le tableau de bord, les annonces et le journal
+  // Liens profonds depuis le tableau de bord, les annonces, le journal et la recherche admin.
   useEffect(() => {
     const userId = searchParams.get('userId')
     if (userId) openFiche(userId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [searchParams])
 
   const loadUsers = () => {
     setLoading(true)

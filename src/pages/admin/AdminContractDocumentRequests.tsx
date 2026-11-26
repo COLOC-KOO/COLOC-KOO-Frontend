@@ -220,10 +220,10 @@ export default function AdminContractDocumentRequests({ onRequestsChanged }: { o
               </div>
             </div>
             {request.has_payment_proof && <button type="button" disabled={busyId === request.id_demande} onClick={() => void openPaymentProof(request.id_demande)} className="mt-3 w-full rounded-lg border border-brand-cyan/30 px-3 py-2 text-xs font-semibold text-brand-cyan hover:bg-brand-cyan/10 disabled:opacity-50 sm:w-auto">{busyId === request.id_demande ? 'Chargement…' : 'Voir la capture de paiement'}</button>}
-            <button type="button" disabled={busyId === request.id_demande} onClick={() => void openGeneratedDocument(request.id_demande)} className="mt-3 w-full rounded-lg border border-brand-cyan/30 px-3 py-2 text-xs font-semibold text-brand-cyan hover:bg-brand-cyan/10 disabled:opacity-50 sm:ml-2 sm:w-auto">{busyId === request.id_demande ? 'Chargement...' : 'Voir le document généré'}</button>
+            {request.has_archive && <button type="button" disabled={busyId === request.id_demande} onClick={() => void openGeneratedDocument(request.id_demande)} className="mt-3 w-full rounded-lg border border-brand-cyan/30 px-3 py-2 text-xs font-semibold text-brand-cyan hover:bg-brand-cyan/10 disabled:opacity-50 sm:ml-2 sm:w-auto">{busyId === request.id_demande ? 'Chargement...' : 'Voir le document généré'}</button>}
             <details className="mt-3 rounded-lg bg-black/10 p-3 text-xs text-white/70">
               <summary className="cursor-pointer break-words font-semibold">Document généré et confidentialité</summary>
-              <p className="mt-3">Les réponses ne sont pas conservées séparément. Le document généré est conservé en privé.</p>
+              <p className="mt-3">Les réponses d’une demande en attente sont chiffrées temporairement et effacées lors de la validation ou du refus. Le PDF/A final est conservé en privé.</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {Object.entries(request.donnees).map(([key, value]) => value ? <div key={key} className="min-w-0 break-words"><span className="text-white/40">{key.replace(/_/g, ' ')} : </span>{value}</div> : null)}
               </div>
@@ -242,7 +242,7 @@ export default function AdminContractDocumentRequests({ onRequestsChanged }: { o
                 <button type="button" disabled={busyId === request.id_demande} onClick={() => void update(request.id_demande, 'refuse')} className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 px-3 py-2 text-xs font-semibold text-red-200 hover:bg-red-400/10 disabled:opacity-50"><X className="h-3.5 w-3.5" />Refuser</button>
               </div>
             )}
-            {request.statut === 'valide' && <p className="mt-3 flex items-center gap-2 text-xs text-green-300"><Check className="h-4 w-4" />L’archive PDF/A est conservée en privé. Le demandeur peut télécharger une copie PDF chiffrée avec son propre mot de passe.</p>}
+            {request.statut === 'valide' && <p className="mt-3 flex items-center gap-2 text-xs text-green-300"><Check className="h-4 w-4" />Le PDF/A final et son empreinte SHA-256 sont conservés en privé.</p>}
             {request.statut === 'refuse' && <p className="mt-3 flex items-center gap-2 text-xs text-red-300"><AlertCircle className="h-4 w-4" />Demande refusée.</p>}
           </article>
         )

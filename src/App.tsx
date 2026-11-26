@@ -39,6 +39,7 @@ import AdminSuiviMissions from './pages/admin/AdminsuiviMission'
 import AdminServicesColockoo from './pages/admin/AdminServicecoloc'
 import AdminBooster from './pages/admin/AdminBooster'
 import AdminContratsEDL from './pages/admin/AdminContrat'
+import AdminContractTemplates from './pages/admin/AdminContractTemplates'
 import { useAuth } from './lib/auth'
 import { ConfigProvider } from './lib/config'
 import AdvertisingPopup from './components/site/AdvertisingPopup'
@@ -203,6 +204,7 @@ function AppRoutes() {
       <Route path="/admin/services-colockoo" element={<AdminRoute><AdminServicesColockoo /></AdminRoute>} />
       <Route path="/admin/boost-annonce" element={<AdminRoute><AdminBooster /></AdminRoute>} />
       <Route path="/admin/contrats-edl" element={<AdminRoute><AdminContratsEDL /></AdminRoute>} />
+      <Route path="/admin/modeles-contrats" element={<AdminRoute><AdminContractTemplates /></AdminRoute>} />
       {/* 404 */}
     <Route path="*" element={<NotFound />} />
   </Routes>

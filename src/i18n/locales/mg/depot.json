@@ -106,7 +106,10 @@
     "refineLabel": "Farito tsara ny misy azy",
     "refineHint": "Arakarakin'ny toerana misy azy dia mety hanintona olona bebe kokoa ilay trano. Noho izany, farito mazava tsara ",
     "cityLabel": "Tanàna",
-    "cityPlaceholder": "Misafidiana tanàna",
+    "cityPlaceholder": "Soraty ny anaran'ny tanàna eto Madagasikara",
+    "citySearching": "Mitady tanàna…",
+    "cityNoResults": "Tsy nahitana tanàna. Andramo soratana amin'ny fomba hafa.",
+    "cityPendingLogin": "Hampidirina ilay tanàna rehefa tafiditra ianao.",
     "neighborhoodLabel": "Faritra",
     "neighborhoodPlaceholder": "Ohatra: Isoraka",
     "addressLabel": "Adiresy na toerana akaiky (tsy voatery)",
@@ -117,6 +120,8 @@
     "errors": {
       "locationRequired": "Apetraho eo amin'ny sarintany ny fanananao (tsy maintsy atao).",
       "citiesLoad": "Tsy afaka nampiditra ny lisitry ny tanàna.",
+      "citySearch": "Tsy afaka mikaroka tanàna amin'izao fotoana izao.",
+      "cityResolve": "Tsy afaka mitahiry ilay tanàna voafidy.",
       "fieldsRequired": "Fenoy ny saha rehetra takiana (*) alohan'ny hanohizana."
     }
   },

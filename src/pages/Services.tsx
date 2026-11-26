@@ -490,9 +490,9 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
         )}
 
         {/* ===== CATALOGUE + PANIER ===== */}
-        <div className="grid lg:grid-cols-3 gap-8 items-start">
+        <div className="grid grid-cols-1 gap-8 items-start">
           {/* Liste des services */}
-          <div className="lg:col-span-2">
+          <div>
             <div className="mb-5">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-brand-green" />
@@ -629,7 +629,7 @@ export default function Services({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           {/* Panier / récap */}
-          <div className="lg:sticky lg:top-24">
+          <div>
             <div className="rounded-3xl border border-border/60 bg-white shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-brand-cyan to-brand-green px-6 py-4 text-white flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5" />

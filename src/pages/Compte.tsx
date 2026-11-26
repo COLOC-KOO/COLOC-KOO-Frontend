@@ -14,9 +14,9 @@ import {
   Settings,
   ShieldCheck,
   ShieldOff,
-  User,
-  Wrench
+  User
 } from 'lucide-react'
+import { ServicesWandIcon } from '../components/ui/ServicesWandIcon'
 import { SiteLayout } from '../components/site/SiteLayout'
 import { Button } from '../components/ui/Button'
 import { api, ApiAnnonce, AuthUser, AppareilConnecte, getWebSocketUrl, Langue } from '../lib/api'
@@ -543,7 +543,7 @@ export default function Compte() {
     {
       id: 'services',
       label: t('servicesTab'),
-      icon: Wrench
+      icon: ServicesWandIcon
     },
     {
       id: 'contrats-immo',
